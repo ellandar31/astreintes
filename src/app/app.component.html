@@ -40,7 +40,11 @@
       }
     </nav>
 
-    <app-empty-view [title]="activeTab"></app-empty-view>
+    @if (activeTab === "Exceptionnel") {
+      <app-exceptional-operations [user]="user"></app-exceptional-operations>
+    } @else {
+      <app-empty-view [title]="activeTab"></app-empty-view>
+    }
 
     @if (modalView === "profile") {
       <app-modal title="Profil" size="small" (closed)="closeModal()">

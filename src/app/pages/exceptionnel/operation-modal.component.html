@@ -1,0 +1,183 @@
+<app-modal [title]="title" size="large" (closed)="closed.emit()">
+  <form class="operation-form" #operationNgForm="ngForm" (ngSubmit)="save(operationNgForm)">
+    <section class="summary-panel" aria-label="Informations générales">
+      <label>
+        Initiateur
+        <input name="initiatorName" [(ngModel)]="form.initiatorName" required />
+      </label>
+
+      <label>
+        Responsable d'opération
+        <input name="operationManagerName" [(ngModel)]="form.operationManagerName" required />
+      </label>
+
+      <label>
+        Titre de l'opération
+        <input name="title" [(ngModel)]="form.title" required />
+      </label>
+
+      <label>
+        Statut
+        <select name="status" [(ngModel)]="form.status" required>
+          @for (status of statuses; track status) {
+            <option [ngValue]="status">{{ status }}</option>
+          }
+        </select>
+      </label>
+    </section>
+
+    <div class="timeline-grid">
+      <section class="timeline-panel" aria-labelledby="planned-title">
+        <p class="panel-kicker" id="planned-title">Prévisionnel</p>
+
+        <div class="date-grid">
+          <label>
+            Date de début
+            <input name="startDate" [(ngModel)]="form.startDate" required type="datetime-local" />
+          </label>
+
+          <label>
+            Date de fin
+            <input name="forecastEndDate" [(ngModel)]="form.forecastEndDate" type="datetime-local" />
+          </label>
+        </div>
+
+        <div class="users-box">
+          <h3>Utilisateurs</h3>
+
+          <div class="inline-form">
+            <label>
+              Utilisateur
+              <select name="plannedUser" [(ngModel)]="selectedPlannedUserId" [disabled]="!availableUsers('plannedUsers').length">
+                <option value="">Sélectionner un utilisateur</option>
+                @for (user of availableUsers("plannedUsers"); track user.id) {
+                  <option [ngValue]="user.id">{{ userLabel(user) }}</option>
+                }
+              </select>
+            </label>
+
+            <button
+              class="secondary-button"
+              [disabled]="!selectedPlannedUserId"
+              (click)="addParticipant('plannedUsers', selectedPlannedUserId)"
+              type="button"
+            >
+              Ajouter
+            </button>
+          </div>
+
+          <div class="tag-list">
+            @for (participant of form.plannedUsers; track participant.userId) {
+              <span class="tag">
+                {{ participant.displayName }} · visa {{ participant.visa.signed ? "signé" : "à signer" }}
+                <button (click)="removeParticipant('plannedUsers', participant)" title="Retirer" type="button">X</button>
+              </span>
+            } @empty {
+              <p class="muted">Aucun utilisateur</p>
+            }
+          </div>
+        </div>
+      </section>
+
+      <section class="timeline-panel" aria-labelledby="actual-title">
+        <p class="panel-kicker" id="actual-title">Réel</p>
+
+        <div class="date-grid">
+          <label>
+            Date de début
+            <input name="actualStartDate" [(ngModel)]="form.actualStartDate" type="datetime-local" />
+          </label>
+
+          <label>
+            Date de fin
+            <input name="actualEndDate" [(ngModel)]="form.actualEndDate" type="datetime-local" />
+          </label>
+        </div>
+
+        <div class="users-box">
+          <h3>Utilisateurs</h3>
+
+          <div class="inline-form">
+            <label>
+              Utilisateur
+              <select name="actualUser" [(ngModel)]="selectedActualUserId" [disabled]="!availableUsers('actualUsers').length">
+                <option value="">Sélectionner un utilisateur</option>
+                @for (user of availableUsers("actualUsers"); track user.id) {
+                  <option [ngValue]="user.id">{{ userLabel(user) }}</option>
+                }
+              </select>
+            </label>
+
+            <button
+              class="secondary-button"
+              [disabled]="!selectedActualUserId"
+              (click)="addParticipant('actualUsers', selectedActualUserId)"
+              type="button"
+            >
+              Ajouter
+            </button>
+          </div>
+
+          <div class="tag-list">
+            @for (participant of form.actualUsers; track participant.userId) {
+              <span class="tag">
+                {{ participant.displayName }} · visa {{ participant.visa.signed ? "signé" : "à signer" }}
+                <button (click)="removeParticipant('actualUsers', participant)" title="Retirer" type="button">X</button>
+              </span>
+            } @empty {
+              <p class="muted">Aucun utilisateur</p>
+            }
+          </div>
+        </div>
+      </section>
+    </div>
+
+    @if (operation) {
+      <section class="interventions-panel" aria-labelledby="interventions-title">
+        <div class="section-heading">
+          <div>
+            <p class="panel-kicker">Interventions</p>
+            <h3 id="interventions-title">Interventions rattachées</h3>
+          </div>
+
+          <button class="secondary-button" (click)="addIntervention.emit(operation)" type="button">
+            Ajouter une intervention
+          </button>
+        </div>
+
+        <div class="interventions-table-shell">
+          <table>
+            <thead>
+              <tr>
+                <th>Utilisateur</th>
+                <th>Début</th>
+                <th>Fin</th>
+                <th>Sur site</th>
+                <th>Visa agent</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (intervention of operation.interventions || []; track intervention.startDate + intervention.userId) {
+                <tr>
+                  <td>{{ intervention.userName || intervention.userEmail }}</td>
+                  <td>{{ formatDate(intervention.startDate || intervention.date) }}</td>
+                  <td>{{ formatDate(intervention.endDate) }}</td>
+                  <td>{{ intervention.wasOnSite ? "Oui" : "Non" }}</td>
+                  <td>{{ intervention.agentVisa.signed ? "Signé" : "À signer" }}</td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="5" class="empty-row">Aucune intervention.</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </section>
+    }
+
+    <div class="form-actions">
+      <button class="primary-button" [disabled]="operationNgForm.invalid" type="submit">Enregistrer</button>
+    </div>
+  </form>
+</app-modal>

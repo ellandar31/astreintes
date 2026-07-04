@@ -1,0 +1,37 @@
+<app-modal title="Ajouter une intervention" size="small" (closed)="closed.emit()">
+  <form class="operation-form" #interventionNgForm="ngForm" (ngSubmit)="save(interventionNgForm)">
+    <label>
+      Utilisateur
+      <select
+        name="interventionUser"
+        [ngModel]="form.userId"
+        (ngModelChange)="selectUser($event)"
+        required
+      >
+        <option value="">Sélectionner un utilisateur</option>
+        @for (user of users; track user.id) {
+          <option [ngValue]="user.id">{{ userLabel(user) }}</option>
+        }
+      </select>
+    </label>
+
+    <label>
+      Date de début
+      <input name="interventionStartDate" [(ngModel)]="form.startDate" required type="datetime-local" />
+    </label>
+
+    <label>
+      Date de fin
+      <input name="interventionEndDate" [(ngModel)]="form.endDate" required type="datetime-local" />
+    </label>
+
+    <label class="checkbox-label">
+      <input name="wasOnSite" [(ngModel)]="form.wasOnSite" type="checkbox" />
+      <span>Utilisateur sur site</span>
+    </label>
+   
+    <div class="form-actions">
+      <button class="primary-button" [disabled]="interventionNgForm.invalid" type="submit">Ajouter</button>
+    </div>
+  </form>
+</app-modal>

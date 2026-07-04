@@ -1,0 +1,20 @@
+.operation-form {
+  display: grid;
+  gap: 14px;
+}
+
+.checkbox-label {
+  align-items: center;
+  display: flex;
+  flex-direction: row;
+}
+
+.checkbox-label input {
+  min-height: auto;
+}
+
+.form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
