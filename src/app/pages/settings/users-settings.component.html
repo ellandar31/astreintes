@@ -1,0 +1,54 @@
+<section class="settings-section" aria-labelledby="users-title">
+  <div>
+    <p class="eyebrow">Administration</p>
+    <h3 id="users-title">Gestion des utilisateurs</h3>
+    <p class="muted">
+      Cette liste est alimentée automatiquement quand une personne se connecte à l'application.
+      Firebase Auth ne permet pas de lister tous les comptes directement depuis le navigateur.
+    </p>
+  </div>
+
+  <div class="role-help">
+    @for (role of roles; track role.value) {
+      <p><strong>{{ role.value }} - {{ role.label }}</strong> : {{ role.description }}</p>
+    }
+  </div>
+
+  <div class="settings-list">
+    @for (user of users; track user.id) {
+      <article class="settings-item settings-item-users">
+        <div>
+          <h4>{{ user.displayName || user.email }}</h4>
+          <p>{{ user.email }}</p>
+        </div>
+
+        <label>
+          Rôle
+          <select
+            [ngModel]="user.role"
+            (ngModelChange)="updateUserRole(user, roleValue($event))"
+            name="role-{{ user.id }}"
+          >
+            @for (role of roles; track role.value) {
+              <option [ngValue]="role.value">{{ role.value }} - {{ role.label }}</option>
+            }
+          </select>
+        </label>
+
+        <div class="item-actions">
+          
+          <button
+            class="icon-button danger"
+            (click)="deleteUser(user)"
+            type="button"
+            title="Supprimer l'utilisateur"
+            aria-label="Supprimer l'utilisateur">
+            🗑️
+          </button>
+        </div>
+      </article>
+    } @empty {
+      <p class="muted">Aucun utilisateur applicatif enregistré. Connectez-vous une première fois avec un compte.</p>
+    }
+  </div>
+</section>

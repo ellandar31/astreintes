@@ -10,7 +10,8 @@ import {
   signInWithPopup,
   signOut,
 } from "firebase/auth";
-import { auth, googleProvider } from "./firebase";
+import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
+import { auth, db, googleProvider } from "./firebase";
 import { ProfilePageComponent } from "./pages/profile-page.component";
 import { SettingsPageComponent } from "./pages/settings-page.component";
 import { EmptyViewComponent } from "./shared/empty-view.component";
@@ -55,6 +56,10 @@ export class AppComponent {
     onAuthStateChanged(this.auth, (currentUser) => {
       this.user = currentUser;
       this.loadingSession = false;
+
+      if (currentUser) {
+        void this.registerAuthenticatedUser(currentUser);
+      }
     });
   }
 
@@ -115,5 +120,26 @@ export class AppComponent {
   toggleAccountMode(): void {
     this.isCreatingAccount = !this.isCreatingAccount;
     this.error = "";
+  }
+
+  private async registerAuthenticatedUser(currentUser: User): Promise<void> {
+    const userReference = doc(db, "users", currentUser.uid);
+    const snapshot = await getDoc(userReference);
+    const userPayload = {
+      uid: currentUser.uid,
+      email: currentUser.email || "",
+      displayName: currentUser.displayName || "",
+      lastLoginAt: serverTimestamp(),
+    };
+
+    if (snapshot.exists()) {
+      await setDoc(userReference, userPayload, { merge: true });
+      return;
+    }
+
+    await setDoc(userReference, {
+      ...userPayload,
+      role: 1,
+    });
   }
 }

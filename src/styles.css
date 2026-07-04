@@ -19,7 +19,8 @@ body {
 }
 
 button,
-input {
+input,
+select {
   font: inherit;
 }
 
@@ -107,7 +108,8 @@ label {
   gap: 8px;
 }
 
-input {
+input,
+select {
   background: #fff;
   border: 1px solid #ccd6df;
   border-radius: 6px;
@@ -116,13 +118,16 @@ input {
   padding: 10px 12px;
 }
 
-input:focus {
+input:focus,
+select:focus {
   border-color: #21736d;
   box-shadow: 0 0 0 3px rgba(33, 115, 109, 0.15);
   outline: none;
 }
 
 .primary-button,
+.secondary-button,
+.danger-button,
 .google-button,
 .text-button,
 .icon-button,
@@ -137,6 +142,20 @@ input:focus {
   color: #fff;
   font-weight: 800;
   padding: 0 16px;
+}
+
+.secondary-button {
+  background: #eef4f5;
+  color: #1f3f47;
+  font-weight: 800;
+  padding: 0 14px;
+}
+
+.danger-button {
+  background: #fff1f2;
+  color: #a51d2d;
+  font-weight: 800;
+  padding: 0 14px;
 }
 
 .google-button {
@@ -160,6 +179,15 @@ input:focus {
   border-radius: 6px;
   color: #b42318;
   margin: 0;
+  padding: 10px 12px;
+}
+
+.success-message {
+  background: #ecfdf3;
+  border: 1px solid #bbf7d0;
+  border-radius: 6px;
+  color: #067647;
+  margin: 0 0 12px;
   padding: 10px 12px;
 }
 
@@ -228,9 +256,21 @@ input:focus {
   width: 20px;
 }
 
+
 .icon-button.danger {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
   background: #fff1f2;
   color: #a51d2d;
+}
+
+.icon-button.danger .material-symbols-outlined {
+  font-size: 20px;
 }
 
 .tabs {
@@ -387,6 +427,175 @@ input:focus {
   padding: 18px;
 }
 
+.settings-layout {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: 240px minmax(0, 1fr);
+  min-height: 620px;
+}
+
+.settings-menu {
+  border-right: 1px solid #dde5eb;
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  padding-right: 14px;
+}
+
+.settings-menu-button {
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  color: #526171;
+  font-weight: 800;
+  min-height: 38px;
+  padding: 0 12px;
+  text-align: left;
+}
+
+.settings-menu-button.active {
+  background: #174f5b;
+  color: #ffffff;
+}
+
+.settings-content {
+  min-width: 0;
+}
+
+.settings-section {
+  display: grid;
+  gap: 18px;
+}
+
+.settings-section h3,
+.settings-item h4 {
+  color: #1f2937;
+  margin: 0;
+}
+
+.settings-form {
+  background: #f7fafb;
+  border: 1px solid #dde5eb;
+  border-radius: 8px;
+  display: grid;
+  gap: 14px;
+  padding: 14px;
+}
+
+.form-grid,
+.inline-form {
+  display: grid;
+  gap: 12px;
+}
+
+.form-grid {
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+}
+
+.inline-form {
+  align-items: end;
+  grid-template-columns: minmax(220px, 1fr) minmax(130px, 170px) auto;
+}
+
+.inline-form-compact {
+  grid-template-columns: minmax(220px, 1fr) auto;
+}
+
+.settings-item {
+  align-items: center;
+  border: 1px solid #dde5eb;
+  border-radius: 8px;
+  display: flex;
+  gap: 16px;
+  grid-template-columns: minmax(180px, 1fr) minmax(160px, 1.2fr) auto;
+  padding: 12px;
+}
+
+/*
+.settings-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}*/
+
+.item-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+}
+
+.form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.tag-list,
+.item-tags {
+  display: flex;
+  flex-wrap: column;
+  gap: 8px;
+}
+
+.role-help {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.role-help p {
+  width: 100%;
+  margin: 0;
+}
+
+.tag,
+.item-tags span {
+  align-items: center;
+  background: #eef4f5;
+  border-radius: 999px;
+  color: #1f3f47;
+  display: inline-flex;
+  font-size: 0.82rem;
+  font-weight: 800;
+  gap: 8px;
+  min-height: 30px;
+  padding: 0 10px;
+}
+
+.tag button {
+  background: transparent;
+  border: 0;
+  color: inherit;
+  font-weight: 900;
+  padding: 0;
+}
+
+.settings-list {
+  display: grid;
+  gap: 10px;
+}
+
+
+
+.settings-item-users {
+  grid-template-columns: minmax(180px, 1fr) minmax(160px, 220px) minmax(160px, 1fr) auto;
+}
+
+.settings-item p {
+  color: #607080;
+  margin: 4px 0 0;
+}
+
+.role-help {
+  color: #607080;
+  font-size: 0.86rem;
+}
+
+.role-help p {
+  margin: 0;
+}
+
 @keyframes spin {
   to {
     transform: rotate(360deg);
@@ -427,5 +636,22 @@ input:focus {
     max-height: calc(100vh - 20px);
     min-height: auto;
     width: 100%;
+  }
+
+  .settings-layout {
+    grid-template-columns: 1fr;
+    min-height: auto;
+  }
+
+  .settings-menu {
+    border-right: 0;
+    border-bottom: 1px solid #dde5eb;
+    padding: 0 0 12px;
+  }
+
+  .inline-form,
+  .inline-form-compact,
+  .settings-item {
+    grid-template-columns: 1fr;
   }
 }

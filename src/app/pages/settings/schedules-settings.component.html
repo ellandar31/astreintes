@@ -1,0 +1,85 @@
+<section class="settings-section" aria-labelledby="schedules-title">
+  <div>
+    <p class="eyebrow">Paramétrage</p>
+    <h3 id="schedules-title">Gestion des horaires</h3>
+  </div>
+
+  <form class="settings-form" #scheduleNgForm="ngForm" (ngSubmit)="saveSchedule(scheduleNgForm)">
+    <div class="form-grid">
+      <label>
+        Jour
+        <select name="scheduleDay" [(ngModel)]="scheduleForm.day" required>
+          @for (day of days; track day) {
+            <option [ngValue]="day">{{ day }}</option>
+          }
+        </select>
+      </label>
+
+      <label>
+        Début HO
+        <input name="hoStart" [(ngModel)]="scheduleForm.hoStart" required type="time" />
+      </label>
+
+      <label>
+        Fin HO
+        <input name="hoEnd" [(ngModel)]="scheduleForm.hoEnd" required type="time" />
+      </label>
+
+      <label>
+        Début HNO
+        <input name="hnoStart" [(ngModel)]="scheduleForm.hnoStart" required type="time" />
+      </label>
+
+      <label>
+        Fin HNO
+        <input name="hnoEnd" [(ngModel)]="scheduleForm.hnoEnd" required type="time" />
+      </label>
+
+      <label>
+        Prime astreinte
+        <input name="standbyPrime" [(ngModel)]="scheduleForm.standbyPrime" min="0" step="0.01" type="number" />
+      </label>
+
+      <label>
+        Prime intervention
+        <input
+          name="interventionPrime"
+          [(ngModel)]="scheduleForm.interventionPrime"
+          min="0"
+          step="0.01"
+          type="number"
+        />
+      </label>
+    </div>
+
+    <div class="form-actions">
+      <button class="primary-button" [disabled]="scheduleNgForm.invalid" type="submit">
+        {{ editingScheduleId ? "Enregistrer la période" : "Ajouter la période" }}
+      </button>
+      <button class="text-button" (click)="resetScheduleForm(scheduleNgForm)" type="button">Réinitialiser</button>
+    </div>
+  </form>
+
+  <div class="settings-list">
+    @for (schedule of schedules; track schedule.id) {
+      <article class="settings-item">
+        <div>
+          <h4>{{ schedule.day }}</h4>
+          <p>HO {{ schedule.hoStart }}-{{ schedule.hoEnd }} · HNO {{ schedule.hnoStart }}-{{ schedule.hnoEnd }}</p>
+        </div>
+
+        <div class="item-tags">
+          <span>Astreinte {{ schedule.standbyPrime }} €</span>
+          <span>Intervention {{ schedule.interventionPrime }} €</span>
+        </div>
+
+        <div class="item-actions">
+          <button class="secondary-button" (click)="editSchedule(schedule)" type="button">Modifier</button>
+          <button class="danger-button" (click)="deleteSchedule(schedule)" type="button">Supprimer</button>
+        </div>
+      </article>
+    } @empty {
+      <p class="muted">Aucune règle horaire définie.</p>
+    }
+  </div>
+</section>

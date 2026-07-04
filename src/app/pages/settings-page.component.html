@@ -1,1 +1,32 @@
-<app-empty-view title="Paramétrage"></app-empty-view>
+<section class="settings-layout" aria-label="Paramétrage">
+  <aside class="settings-menu" aria-label="Menu de paramétrage">
+    @for (section of sections; track section.id) {
+      <button
+        class="settings-menu-button"
+        [class.active]="activeSection === section.id"
+        (click)="setSection(section.id)"
+        type="button"
+      >
+        {{ section.label }}
+      </button>
+    }
+  </aside>
+
+  <div class="settings-content">
+    @if (settingsError) {
+      <p class="error-message">{{ settingsError }}</p>
+    }
+
+    @if (settingsSuccess) {
+      <p class="success-message">{{ settingsSuccess }}</p>
+    }
+
+    @if (activeSection === "users") {
+      <app-users-settings (error)="showError($event)" (success)="showSuccess($event)"></app-users-settings>
+    } @else if (activeSection === "schedules") {
+      <app-schedules-settings (error)="showError($event)" (success)="showSuccess($event)"></app-schedules-settings>
+    } @else {
+      <app-teams-settings (error)="showError($event)" (success)="showSuccess($event)"></app-teams-settings>
+    }
+  </div>
+</section>

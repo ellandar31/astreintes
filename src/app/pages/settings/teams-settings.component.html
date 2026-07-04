@@ -1,0 +1,69 @@
+<section class="settings-section" aria-labelledby="teams-title">
+  <div>
+    <p class="eyebrow">Paramétrage</p>
+    <h3 id="teams-title">Gestion des équipes</h3>
+  </div>
+
+  <form class="settings-form" #teamNgForm="ngForm" (ngSubmit)="saveTeam(teamNgForm)">
+    <label>
+      Nom de l'équipe
+      <input name="teamName" [(ngModel)]="teamForm.name" required placeholder="Ex: Exploitation" />
+    </label>
+
+    <div class="inline-form inline-form-compact">
+      <label>
+        Utilisateur ou invité
+        <input
+          name="teamMemberEmail"
+          [(ngModel)]="teamForm.memberEmail"
+          placeholder="email@exemple.fr"
+          type="email"
+        />
+      </label>
+
+      <button class="secondary-button" (click)="addTeamMember()" type="button">Ajouter</button>
+    </div>
+
+    @if (teamForm.members.length) {
+      <div class="tag-list" aria-label="Membres de l'équipe">
+        @for (member of teamForm.members; track member) {
+          <span class="tag">
+            {{ member }}
+            <button (click)="removeTeamMember(member)" title="Retirer" type="button">X</button>
+          </span>
+        }
+      </div>
+    }
+
+    <div class="form-actions">
+      <button class="primary-button" [disabled]="teamNgForm.invalid" type="submit">
+        {{ editingTeamId ? "Enregistrer l'équipe" : "Créer l'équipe" }}
+      </button>
+      <button class="text-button" (click)="resetTeamForm(teamNgForm)" type="button">Réinitialiser</button>
+    </div>
+  </form>
+
+  <div class="settings-list">
+    @for (team of teams; track team.id) {
+      <article class="settings-item">
+        <div>
+          <h4>{{ team.name }}</h4>
+          <p>{{ team.members.length }} membre(s)</p>
+        </div>
+
+        <div class="item-tags">
+          @for (member of team.members; track member) {
+            <span>{{ member }}</span>
+          }
+        </div>
+
+        <div class="item-actions">
+          <button class="secondary-button" (click)="editTeam(team)" type="button">Modifier</button>
+          <button class="danger-button" (click)="deleteTeam(team)" type="button">Supprimer</button>
+        </div>
+      </article>
+    } @empty {
+      <p class="muted">Aucune équipe définie.</p>
+    }
+  </div>
+</section>
