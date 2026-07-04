@@ -41,7 +41,9 @@ export interface ExceptionalIntervention {
   userName: string;
   userEmail: string;
   wasOnSite: boolean;
-  agentVisa: SignatureVisa;  
+  agentVisa: SignatureVisa;
+  label: string;
+  comment: string;
 }
 
 export interface ExceptionalOperation {
@@ -89,4 +91,6 @@ export interface ExceptionalInterventionForm {
   userName: string;
   userEmail: string;
   wasOnSite: boolean;
+  label: string;
+  comment: string;
 }

@@ -19,7 +19,9 @@ export class InterventionModalComponent implements OnDestroy {
     userId: "",
     userName: "",
     userEmail: "",
-    wasOnSite: false,        
+    wasOnSite: false,
+    label: "",
+    comment: "",
   };
   @Input({ required: true }) operation: ExceptionalOperation | null = null;
   @Output() closed = new EventEmitter<void>();

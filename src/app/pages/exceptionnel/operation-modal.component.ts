@@ -5,6 +5,7 @@ import { Unsubscribe, collection, onSnapshot } from "firebase/firestore";
 import { db } from "../../firebase";
 import { ModalComponent } from "../../shared/modal.component";
 import {
+  ExceptionalIntervention,
   ExceptionalOperation,
   ExceptionalOperationForm,
   ExceptionalOperationStatus,
@@ -38,6 +39,12 @@ export class OperationModalComponent implements OnDestroy {
   @Input({ required: true }) statuses: ExceptionalOperationStatus[] = [];
   @Output() addIntervention = new EventEmitter<ExceptionalOperation>();
   @Output() closed = new EventEmitter<void>();
+  @Output() deleteIntervention = new EventEmitter<{ operation: ExceptionalOperation; index: number }>();
+  @Output() editIntervention = new EventEmitter<{
+    operation: ExceptionalOperation;
+    intervention: ExceptionalIntervention;
+    index: number;
+  }>();
   @Output() saved = new EventEmitter<ExceptionalOperationForm>();
 
   selectedActualUserId = "";

@@ -137,8 +137,10 @@
     [form]="operationForm"
     [operation]="selectedOperation"
     [statuses]="statuses"
-    (addIntervention)="openInterventionModal($event)"
+    (addIntervention)="openInterventionModal($event, undefined, undefined, true)"
     (closed)="closeModal()"
+    (deleteIntervention)="deleteIntervention($event.operation, $event.index)"
+    (editIntervention)="openInterventionModal($event.operation, $event.intervention, $event.index, true)"
     (saved)="saveOperation($event)"
   ></app-operation-modal>
 }
@@ -147,7 +149,7 @@
   <app-intervention-modal
     [form]="interventionForm"
     [operation]="selectedOperation"
-    (closed)="closeModal()"
+    (closed)="closeInterventionModal()"
     (saved)="saveIntervention($event)"
   ></app-intervention-modal>
 }

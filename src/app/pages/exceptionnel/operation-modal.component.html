@@ -154,20 +154,43 @@
                 <th>Fin</th>
                 <th>Sur site</th>
                 <th>Visa agent</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
-              @for (intervention of operation.interventions || []; track intervention.startDate + intervention.userId) {
+              @for (intervention of operation.interventions || []; track intervention.startDate + intervention.userId; let index = $index) {
                 <tr>
                   <td>{{ intervention.userName || intervention.userEmail }}</td>
                   <td>{{ formatDate(intervention.startDate || intervention.date) }}</td>
                   <td>{{ formatDate(intervention.endDate) }}</td>
                   <td>{{ intervention.wasOnSite ? "Oui" : "Non" }}</td>
                   <td>{{ intervention.agentVisa.signed ? "Signé" : "À signer" }}</td>
+                  <td>
+                    <div class="table-actions">
+                      <button
+                        class="action-button"
+                        (click)="$event.stopPropagation(); editIntervention.emit({ operation, intervention, index })"
+                        title="Modifier"
+                        aria-label="Modifier l'intervention"
+                        type="button"
+                      >
+                        ✎
+                      </button>
+                      <button
+                        class="action-button danger"
+                        (click)="$event.stopPropagation(); deleteIntervention.emit({ operation, index })"
+                        title="Supprimer"
+                        aria-label="Supprimer l'intervention"
+                        type="button"
+                      >
+                        X
+                      </button>
+                    </div>
+                  </td>
                 </tr>
               } @empty {
                 <tr>
-                  <td colspan="5" class="empty-row">Aucune intervention.</td>
+                  <td colspan="6" class="empty-row">Aucune intervention.</td>
                 </tr>
               }
             </tbody>

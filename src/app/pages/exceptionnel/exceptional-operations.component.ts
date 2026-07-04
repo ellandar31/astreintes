@@ -14,6 +14,7 @@ import {
 } from "firebase/firestore";
 import { db } from "../../firebase";
 import {
+  ExceptionalIntervention,
   ExceptionalInterventionForm,
   ExceptionalOperation,
   ExceptionalOperationForm,
@@ -52,6 +53,8 @@ export class ExceptionalOperationsComponent implements OnDestroy {
   selectedStatusFilters: ExceptionalOperationStatus[] = [];
   modalMode: ModalMode | null = null;
   selectedOperation: ExceptionalOperation | null = null;
+  selectedInterventionIndex: number | null = null;
+  shouldReturnToOperationModal = false;
   sortDirection: SortDirection = "asc";
   sortField: SortField = "startDate";
   operations: ExceptionalOperation[] = [];
@@ -71,6 +74,11 @@ export class ExceptionalOperationsComponent implements OnDestroy {
     this.operations = snapshot.docs
       .map((document) => ({ id: document.id, ...document.data() }) as ExceptionalOperation)
       .sort((first, second) => (first.startDate || "").localeCompare(second.startDate || ""));
+
+    if (this.selectedOperation) {
+      this.selectedOperation =
+        this.operations.find((operation) => operation.id === this.selectedOperation?.id) || this.selectedOperation;
+    }
   });
 
   ngOnDestroy(): void {
@@ -115,24 +123,47 @@ export class ExceptionalOperationsComponent implements OnDestroy {
     this.modalMode = "edit";
   }
 
-  openInterventionModal(operation: ExceptionalOperation): void {
+  openInterventionModal(
+    operation: ExceptionalOperation,
+    intervention?: ExceptionalIntervention,
+    index?: number,
+    returnToOperationModal = false,
+  ): void {
     this.selectedOperation = operation;
-    this.interventionForm = {
-      startDate: "",
-      endDate: "",
-      userId: "",
-      userName: "",
-      userEmail: "",
-      wasOnSite: false,
-      label: "",
-      comment: "",
-    };
+    this.selectedInterventionIndex = typeof index === "number" ? index : null;
+    this.shouldReturnToOperationModal = returnToOperationModal;
+    this.interventionForm = intervention
+      ? {
+          startDate: intervention.startDate || intervention.date || "",
+          endDate: intervention.endDate || "",
+          userId: intervention.userId || "",
+          userName: intervention.userName || "",
+          userEmail: intervention.userEmail || "",
+          wasOnSite: Boolean(intervention.wasOnSite),
+          label: intervention.label || "",
+          comment: intervention.comment || "",
+        }
+      : this.createEmptyInterventionForm();
     this.modalMode = "intervention";
   }
 
   closeModal(): void {
     this.modalMode = null;
     this.selectedOperation = null;
+    this.selectedInterventionIndex = null;
+    this.shouldReturnToOperationModal = false;
+  }
+
+  closeInterventionModal(): void {
+    this.selectedInterventionIndex = null;
+
+    if (this.shouldReturnToOperationModal && this.selectedOperation) {
+      this.modalMode = "edit";
+      this.shouldReturnToOperationModal = false;
+      return;
+    }
+
+    this.closeModal();
   }
 
   async saveOperation(form: ExceptionalOperationForm): Promise<void> {
@@ -168,28 +199,70 @@ export class ExceptionalOperationsComponent implements OnDestroy {
       return;
     }
 
+    const interventionPayload = {
+      startDate: form.startDate,
+      date: form.startDate,
+      endDate: form.endDate,
+      userId: form.userId,
+      userName: form.userName,
+      userEmail: form.userEmail,
+      wasOnSite: form.wasOnSite,
+      agentVisa:
+        this.selectedInterventionIndex !== null
+          ? this.selectedOperation.interventions[this.selectedInterventionIndex]?.agentVisa || this.createEmptyVisa()
+          : this.createEmptyVisa(),
+      label: form.label.trim(),
+      comment: form.comment.trim(),
+    };
+    const interventions = [...(this.selectedOperation.interventions || [])];
+
+    if (this.selectedInterventionIndex !== null) {
+      interventions[this.selectedInterventionIndex] = interventionPayload;
+    } else {
+      interventions.push(interventionPayload);
+    }
+
     await setDoc(
       doc(db, "exceptionalOperations", this.selectedOperation.id),
       {
-        interventions: [
-          ...(this.selectedOperation.interventions || []),
-          {
-            startDate: form.startDate,
-            date: form.startDate,
-            endDate: form.endDate,
-            userId: form.userId,
-            userName: form.userName,
-            userEmail: form.userEmail,
-            wasOnSite: form.wasOnSite,
-            agentVisa: this.createEmptyVisa(),
-          },
-        ],
+        interventions,
         updatedAt: serverTimestamp(),
       },
       { merge: true },
     );
 
-    this.closeModal();
+    this.selectedOperation = {
+      ...this.selectedOperation,
+      interventions,
+    };
+    this.closeInterventionModal();
+  }
+
+  async deleteIntervention(operation: ExceptionalOperation, index: number): Promise<void> {
+    const currentOperation = this.operations.find((item) => item.id === operation.id) || operation;
+    const interventions = [...(currentOperation.interventions || [])];
+
+    if (index < 0 || index >= interventions.length) {
+      return;
+    }
+
+    interventions.splice(index, 1);
+
+    await setDoc(
+      doc(db, "exceptionalOperations", currentOperation.id),
+      {
+        interventions,
+        updatedAt: serverTimestamp(),
+      },
+      { merge: true },
+    );
+
+    if (this.selectedOperation?.id === currentOperation.id) {
+      this.selectedOperation = {
+        ...this.selectedOperation,
+        interventions,
+      };
+    }
   }
 
   setSort(field: SortField): void {
@@ -261,6 +334,19 @@ export class ExceptionalOperationsComponent implements OnDestroy {
       status: "Brouillon" as ExceptionalOperationStatus,
       plannedUsers: [] as OperationParticipant[],
       actualUsers: [] as OperationParticipant[],
+    };
+  }
+
+  private createEmptyInterventionForm(): ExceptionalInterventionForm {
+    return {
+      startDate: "",
+      endDate: "",
+      userId: "",
+      userName: "",
+      userEmail: "",
+      wasOnSite: false,
+      label: "",
+      comment: "",
     };
   }
 

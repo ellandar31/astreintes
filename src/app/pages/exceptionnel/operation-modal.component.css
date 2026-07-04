@@ -136,6 +136,29 @@ th {
   font-weight: 900;
 }
 
+.table-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.action-button {
+  align-items: center;
+  background: #eef4f5;
+  border: 0;
+  border-radius: 6px;
+  color: #1f3f47;
+  display: inline-flex;
+  font-weight: 900;
+  height: 30px;
+  justify-content: center;
+  width: 30px;
+}
+
+.action-button.danger {
+  background: #fff1f2;
+  color: #a51d2d;
+}
+
 .empty-row {
   color: #607080;
   text-align: center;
