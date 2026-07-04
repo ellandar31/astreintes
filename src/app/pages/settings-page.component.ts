@@ -1,5 +1,6 @@
 import { CommonModule } from "@angular/common";
 import { Component } from "@angular/core";
+import { HolidaysSettingsComponent } from "./settings/holidays-settings.component";
 import { SchedulesSettingsComponent } from "./settings/schedules-settings.component";
 import { SettingsSection } from "./settings/settings.models";
 import { TeamsSettingsComponent } from "./settings/teams-settings.component";
@@ -10,6 +11,7 @@ import { UsersSettingsComponent } from "./settings/users-settings.component";
   standalone: true,
   imports: [
     CommonModule,
+    HolidaysSettingsComponent,
     SchedulesSettingsComponent,
     TeamsSettingsComponent,
     UsersSettingsComponent,
@@ -21,6 +23,7 @@ export class SettingsPageComponent {
     { id: "users", label: "Gestion des utilisateurs" },
     { id: "teams", label: "Gestion des équipes" },
     { id: "schedules", label: "Gestion des horaires" },
+    { id: "holidays", label: "Gestion des jours fériés" },
   ];
 
   activeSection: SettingsSection = "users";

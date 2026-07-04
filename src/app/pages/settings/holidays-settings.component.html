@@ -1,0 +1,107 @@
+<section class="settings-section" aria-labelledby="holidays-title">
+  <div>
+    <p class="eyebrow">Paramétrage</p>
+    <h3 id="holidays-title">Gestion des jours fériés</h3>
+    <p class="muted">Chargement depuis l'API officielle calendrier.api.gouv.fr, puis sauvegarde en base.</p>
+  </div>
+
+  <form class="settings-form" #importNgForm="ngForm" (ngSubmit)="loadOfficialHolidays()">
+    <div class="form-grid">
+      <label>
+        Zone
+        <select name="holidayZone" [(ngModel)]="importForm.zone" required>
+          @for (zone of zones; track zone.id) {
+            <option [ngValue]="zone.id">{{ zone.label }}</option>
+          }
+        </select>
+      </label>
+
+      <label>
+        Année
+        <input name="holidayYear" [(ngModel)]="importForm.year" min="2003" max="2035" required type="number" />
+      </label>
+    </div>
+
+    <div class="form-actions">
+      <button class="primary-button" [disabled]="importNgForm.invalid || isLoadingOfficialHolidays" type="submit">
+        Charger les jours officiels
+      </button>
+      <button
+        class="secondary-button"
+        [disabled]="!importedHolidays.length"
+        (click)="saveImportedHolidays()"
+        type="button"
+      >
+        Enregistrer le chargement
+      </button>
+    </div>
+  </form>
+
+  @if (importedHolidays.length) {
+    <div class="settings-list">
+      @for (holiday of importedHolidays; track holiday.id) {
+        <article class="settings-item">
+          <div>
+            <h4>{{ holiday.label }}</h4>
+            <p>{{ holiday.date }} · {{ zoneLabel(holiday.zone) }}</p>
+          </div>
+          <div class="item-tags">
+            <span>{{ holiday.source }}</span>
+          </div>
+        </article>
+      }
+    </div>
+  }
+
+  <form class="settings-form" #manualNgForm="ngForm" (ngSubmit)="saveManualHoliday(manualNgForm)">
+    <div>
+      <p class="eyebrow">Ajout manuel</p>
+    </div>
+
+    <div class="form-grid">
+      <label>
+        Zone
+        <select name="manualHolidayZone" [(ngModel)]="manualForm.zone" required>
+          @for (zone of zones; track zone.id) {
+            <option [ngValue]="zone.id">{{ zone.label }}</option>
+          }
+        </select>
+      </label>
+
+      <label>
+        Date
+        <input name="manualHolidayDate" [(ngModel)]="manualForm.date" required type="date" />
+      </label>
+
+      <label>
+        Libellé
+        <input name="manualHolidayLabel" [(ngModel)]="manualForm.label" required placeholder="Ex: Pont exceptionnel" />
+      </label>
+    </div>
+
+    <div class="form-actions">
+      <button class="primary-button" [disabled]="manualNgForm.invalid" type="submit">Ajouter le jour férié</button>
+    </div>
+  </form>
+
+  <div class="settings-list">
+    @for (holiday of holidays; track holiday.id) {
+      <article class="settings-item">
+        <div>
+          <h4>{{ holiday.label }}</h4>
+          <p>{{ holiday.date }} · {{ zoneLabel(holiday.zone) }}</p>
+        </div>
+
+        <div class="item-tags">
+          <span>{{ holiday.source }}</span>
+        </div>
+
+        <div class="item-actions">
+          <button class="danger-button" (click)="deleteHoliday(holiday)" type="button">Supprimer</button>
+        </div>
+      </article>
+    } @empty {
+      <p class="muted">Aucun jour férié configuré.</p>
+    }
+  </div>
+</section>

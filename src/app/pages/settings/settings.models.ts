@@ -1,4 +1,4 @@
-export type SettingsSection = "teams" | "schedules" | "users";
+export type SettingsSection = "teams" | "schedules" | "users" | "holidays";
 export type ScheduleDay = "Lundi" | "Mardi" | "Mercredi" | "Jeudi" | "Vendredi" | "Samedi" | "Dimanche" | "Jour férié";
 export type UserRole = 0 | 1 | 2;
 
@@ -26,4 +26,12 @@ export interface ManagedUser {
   displayName: string;
   role: UserRole;
   lastLoginAt?: unknown;
+}
+
+export interface PublicHoliday {
+  id: string;
+  date: string;
+  label: string;
+  zone: string;
+  source: "api.gouv.fr" | "manual";
 }

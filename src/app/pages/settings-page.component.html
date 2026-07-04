@@ -25,8 +25,10 @@
       <app-users-settings (error)="showError($event)" (success)="showSuccess($event)"></app-users-settings>
     } @else if (activeSection === "schedules") {
       <app-schedules-settings (error)="showError($event)" (success)="showSuccess($event)"></app-schedules-settings>
-    } @else {
+    } @else if (activeSection === "teams") {
       <app-teams-settings (error)="showError($event)" (success)="showSuccess($event)"></app-teams-settings>
+    } @else {
+      <app-holidays-settings (error)="showError($event)" (success)="showSuccess($event)"></app-holidays-settings>
     }
   </div>
 </section>
