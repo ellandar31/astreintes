@@ -1,0 +1,31 @@
+.editable-table-wrapper {
+    overflow-x: auto;
+  }
+  
+  .editable-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+  }
+  
+  .editable-table th {
+    background: #f7f9fb;
+    font-weight: 600;
+    text-align: left;
+    padding: 12px;
+    border-bottom: 2px solid #dde5eb;
+  }
+  
+  .editable-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid #eef2f6;
+  }
+  
+  .editable-table input {
+    width: 100%;
+    min-height: 36px;
+  }
+  
+  .editable-table tr:hover {
+    background: #fafbfc;
+  }

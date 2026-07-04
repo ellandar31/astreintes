@@ -4,13 +4,14 @@ import { FormsModule, NgForm } from "@angular/forms";
 import { FirebaseError } from "firebase/app";
 import { Unsubscribe, addDoc, collection, deleteDoc, doc, onSnapshot, setDoc } from "firebase/firestore";
 import { db } from "../../firebase";
-import { ScheduleDay, ScheduleRule } from "./settings.models";
+import { ScheduleDay, ScheduleRule, } from "./settings.models";
 
 @Component({
   selector: "app-schedules-settings",
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: "./schedules-settings.component.html",
+  styleUrls: ['./schedules-settings.component.scss']
 })
 export class SchedulesSettingsComponent implements OnDestroy {
   @Output() error = new EventEmitter<string>();
@@ -38,6 +39,12 @@ export class SchedulesSettingsComponent implements OnDestroy {
     standbyPrime: 0,
     interventionPrime: 0,
   };
+  
+  scheduleByDay: Record<string, Omit<ScheduleRule, "id">> = {};
+
+  constructor() {
+    this.initializeScheduleByDay();
+  }
 
   private readonly unsubscribe: Unsubscribe = onSnapshot(
     collection(db, "scheduleRules"),
@@ -64,6 +71,23 @@ export class SchedulesSettingsComponent implements OnDestroy {
       standbyPrime: schedule.standbyPrime,
       interventionPrime: schedule.interventionPrime,
     };
+  }
+
+  private initializeScheduleByDay(): void {
+    this.scheduleByDay = Object.fromEntries(
+      this.days.map((day) => [
+        day,
+        {
+          day,
+          hoStart: "08:00",
+          hoEnd: "18:00",
+          hnoStart: "18:00",
+          hnoEnd: "08:00",
+          standbyPrime: 0,
+          interventionPrime: 0,
+        },
+      ]),
+    );
   }
 
   async saveSchedule(form: NgForm): Promise<void> {
@@ -120,5 +144,31 @@ export class SchedulesSettingsComponent implements OnDestroy {
         ? `Erreur Firebase (${error.code}) : ${error.message}`
         : "Erreur pendant l'enregistrement de l'horaire.",
     );
+  }
+
+  async saveAllSchedules(): Promise<void> {
+    try {
+      const operations = this.days.map((day) => {
+        const schedule = this.scheduleByDay[day];
+  
+        const payload = {
+          day,
+          hoStart: schedule.hoStart,
+          hoEnd: schedule.hoEnd,
+          hnoStart: schedule.hnoStart,
+          hnoEnd: schedule.hnoEnd,
+          standbyPrime: Number(schedule.standbyPrime) || 0,
+          interventionPrime: Number(schedule.interventionPrime) || 0,
+        };
+  
+        return setDoc(doc(db, "scheduleRules", day), payload);
+      });
+  
+      await Promise.all(operations);
+  
+      this.success.emit("Horaires enregistrés.");
+    } catch (error) {
+      this.emitError(error);
+    }
   }
 }
