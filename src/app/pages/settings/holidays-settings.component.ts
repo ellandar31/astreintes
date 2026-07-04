@@ -13,6 +13,7 @@ type HolidaySourceResponse = Record<string, string>;
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: "./holidays-settings.component.html",
+  styleUrls: ["./settings-common.scss"],
 })
 export class HolidaysSettingsComponent implements OnDestroy {
   @Output() error = new EventEmitter<string>();

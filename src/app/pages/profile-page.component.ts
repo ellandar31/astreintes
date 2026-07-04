@@ -5,6 +5,7 @@ import { User } from "firebase/auth";
   selector: "app-profile-page",
   standalone: true,
   templateUrl: "./profile-page.component.html",
+  styleUrl: "./profile-page.component.css",
 })
 export class ProfilePageComponent {
   @Input({ required: true }) user: User | null = null;

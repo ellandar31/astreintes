@@ -11,7 +11,7 @@ import { ScheduleDay, ScheduleRule, } from "./settings.models";
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: "./schedules-settings.component.html",
-  styleUrls: ['./schedules-settings.component.scss']
+  styleUrls: ["./settings-common.scss", "./schedules-settings.component.scss"],
 })
 export class SchedulesSettingsComponent implements OnDestroy {
   @Output() error = new EventEmitter<string>();

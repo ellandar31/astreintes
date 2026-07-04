@@ -6,6 +6,7 @@ export type ModalSize = "small" | "large";
   selector: "app-modal",
   standalone: true,
   templateUrl: "./modal.component.html",
+  styleUrl: "./modal.component.css",
 })
 export class ModalComponent {
   @Input({ required: true }) title = "";

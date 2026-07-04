@@ -17,6 +17,7 @@ import { UsersSettingsComponent } from "./settings/users-settings.component";
     UsersSettingsComponent,
   ],
   templateUrl: "./settings-page.component.html",
+  styleUrl: "./settings-page.component.css",
 })
 export class SettingsPageComponent {
   readonly sections: Array<{ id: SettingsSection; label: string }> = [

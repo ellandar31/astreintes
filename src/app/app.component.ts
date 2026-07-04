@@ -33,6 +33,7 @@ type ModalView = "profile" | "settings";
     SettingsPageComponent,
   ],
   templateUrl: "./app.component.html",
+  styleUrl: "./app.component.css",
 })
 export class AppComponent {
   private readonly auth: Auth = auth;

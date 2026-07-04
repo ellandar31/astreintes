@@ -1,0 +1,34 @@
+.page-view {
+  align-content: start;
+  background: #ffffff;
+  display: grid;
+  gap: 18px;
+  min-height: 220px;
+  padding: 0;
+}
+
+.profile-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.profile-field {
+  background: #f7fafb;
+  border: 1px solid #dde5eb;
+  border-radius: 8px;
+  display: grid;
+  gap: 6px;
+  padding: 14px;
+}
+
+.profile-field span {
+  color: #607080;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.profile-field strong {
+  color: #1f2937;
+  overflow-wrap: anywhere;
+}

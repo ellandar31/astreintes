@@ -1,0 +1,47 @@
+.settings-layout {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: 240px minmax(0, 1fr);
+  min-height: 620px;
+}
+
+.settings-menu {
+  align-content: start;
+  border-right: 1px solid #dde5eb;
+  display: grid;
+  gap: 8px;
+  padding-right: 14px;
+}
+
+.settings-menu-button {
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  color: #526171;
+  font-weight: 800;
+  min-height: 38px;
+  padding: 0 12px;
+  text-align: left;
+}
+
+.settings-menu-button.active {
+  background: #174f5b;
+  color: #ffffff;
+}
+
+.settings-content {
+  min-width: 0;
+}
+
+@media (max-width: 760px) {
+  .settings-layout {
+    grid-template-columns: 1fr;
+    min-height: auto;
+  }
+
+  .settings-menu {
+    border-right: 0;
+    border-bottom: 1px solid #dde5eb;
+    padding: 0 0 12px;
+  }
+}

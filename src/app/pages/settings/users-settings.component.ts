@@ -11,6 +11,7 @@ import { ManagedUser, UserRole } from "./settings.models";
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: "./users-settings.component.html",
+  styleUrls: ["./settings-common.scss"],
 })
 export class UsersSettingsComponent implements OnDestroy {
   @Output() error = new EventEmitter<string>();

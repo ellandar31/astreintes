@@ -11,6 +11,7 @@ import { Team } from "./settings.models";
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: "./teams-settings.component.html",
+  styleUrls: ["./settings-common.scss"],
 })
 export class TeamsSettingsComponent implements OnDestroy {
   @Output() error = new EventEmitter<string>();
