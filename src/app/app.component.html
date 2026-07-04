@@ -1,0 +1,109 @@
+@if (loadingSession) {
+  <main class="center-screen">
+    <div class="loader" aria-label="Chargement"></div>
+  </main>
+} @else if (user) {
+  <main class="app-shell">
+    <header class="top-bar">
+      <div>
+        <p class="eyebrow">Astreintes et travaux</p>
+        <h1>Suivi des astreintes</h1>
+      </div>
+
+      <div class="top-actions" aria-label="Actions utilisateur">
+        <button class="icon-button" [title]="'Profil - ' + displayName" (click)="showProfile()" type="button">
+          <span class="button-icon" aria-hidden="true">P</span>
+          <span>Profil</span>
+        </button>
+        <button class="icon-button" title="Paramétrage" (click)="showSettings()" type="button">
+          <span class="button-icon" aria-hidden="true">S</span>
+          <span>Paramétrage</span>
+        </button>
+        <button class="icon-button danger" (click)="logout()" title="Déconnexion" type="button">
+          <span class="button-icon" aria-hidden="true">X</span>
+          <span>Déconnexion</span>
+        </button>
+      </div>
+    </header>
+
+    <nav class="tabs" aria-label="Sections de l'application">
+      @for (tab of tabs; track tab) {
+        <button
+          [attr.aria-current]="activeTab === tab ? 'page' : null"
+          [class.active]="activeTab === tab"
+          class="tab"
+          (click)="selectTab(tab)"
+          type="button"
+        >
+          {{ tab }}
+        </button>
+      }
+    </nav>
+
+    <app-empty-view [title]="activeTab"></app-empty-view>
+
+    @if (modalView === "profile") {
+      <app-modal title="Profil" size="small" (closed)="closeModal()">
+        <app-profile-page [user]="user"></app-profile-page>
+      </app-modal>
+    } @else if (modalView === "settings") {
+      <app-modal title="Paramétrage" size="large" (closed)="closeModal()">
+        <app-settings-page></app-settings-page>
+      </app-modal>
+    }
+  </main>
+} @else {
+  <main class="auth-layout">
+    <section class="auth-panel" aria-labelledby="auth-title">
+      <div>
+        <p class="eyebrow">Astreintes et travaux</p>
+        <h1 id="auth-title">Connexion</h1>
+        <p class="muted">Accédez au suivi des astreintes avec votre compte.</p>
+      </div>
+
+      <form class="auth-form" #authForm="ngForm" (ngSubmit)="loginWithEmail(authForm)">
+        <label>
+          Email
+          <input
+            autocomplete="email"
+            inputmode="email"
+            name="email"
+            [(ngModel)]="email"
+            placeholder="nom@entreprise.fr"
+            required
+            type="email"
+          />
+        </label>
+
+        <label>
+          Mot de passe
+          <input
+            [autocomplete]="isCreatingAccount ? 'new-password' : 'current-password'"
+            minlength="6"
+            name="password"
+            [(ngModel)]="password"
+            placeholder="6 caractères minimum"
+            required
+            type="password"
+          />
+        </label>
+
+        @if (error) {
+          <p class="error-message">{{ error }}</p>
+        }
+
+        <button class="primary-button" [disabled]="isSubmitting || authForm.invalid" type="submit">
+          {{ isCreatingAccount ? "Créer le compte" : "Se connecter" }}
+        </button>
+      </form>
+
+      <button class="google-button" [disabled]="isSubmitting" (click)="loginWithGoogle()" type="button">
+        Continuer avec Google
+      </button>
+
+      <button class="text-button" (click)="toggleAccountMode()" type="button">
+        {{ isCreatingAccount ? "J'ai déjà un compte" : "Créer un compte email" }}
+      </button>
+    </section>
+  </main>
+}
