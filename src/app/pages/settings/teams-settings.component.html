@@ -12,23 +12,29 @@
 
     <div class="inline-form inline-form-compact">
       <label>
-        Utilisateur ou invité
-        <input
-          name="teamMemberEmail"
-          [(ngModel)]="teamForm.memberEmail"
-          placeholder="email@exemple.fr"
-          type="email"
-        />
+        Utilisateur
+        <select name="teamMemberId" [(ngModel)]="teamForm.selectedMemberId" [disabled]="!availableUsers().length">
+          <option value="">Sélectionner un utilisateur</option>
+          @for (user of availableUsers(); track user.id) {
+            <option [ngValue]="user.id">{{ userLabel(user) }}</option>
+          }
+        </select>
       </label>
 
-      <button class="secondary-button" (click)="addTeamMember()" type="button">Ajouter</button>
+      <button class="secondary-button" [disabled]="!teamForm.selectedMemberId" (click)="addTeamMember()" type="button">
+        Ajouter
+      </button>
     </div>
+
+    @if (!users.length) {
+      <p class="muted">Aucun utilisateur disponible. Les utilisateurs apparaissent ici après une connexion à l'application.</p>
+    }
 
     @if (teamForm.members.length) {
       <div class="tag-list" aria-label="Membres de l'équipe">
         @for (member of teamForm.members; track member) {
           <span class="tag">
-            {{ member }}
+            {{ memberLabel(member) }}
             <button (click)="removeTeamMember(member)" title="Retirer" type="button">X</button>
           </span>
         }
@@ -53,7 +59,7 @@
 
         <div class="item-tags">
           @for (member of team.members; track member) {
-            <span>{{ member }}</span>
+            <span>{{ memberLabel(member) }}</span>
           }
         </div>
 
