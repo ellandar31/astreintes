@@ -1,0 +1,109 @@
+<app-modal [title]="modalTitle" [size]="isEditing ? 'large' : 'small'" (closed)="closed.emit()">
+  <form class="period-form" #periodNgForm="ngForm" (ngSubmit)="save(periodNgForm)">
+    <label>
+      Utilisateur
+      <select name="regularUser" [ngModel]="form.userId" (ngModelChange)="selectUser($event)" required>
+        <option value="">Sélectionner un utilisateur</option>
+        @for (user of users; track user.id) {
+          <option [ngValue]="user.id">{{ userLabel(user) }}</option>
+        }
+      </select>
+    </label>
+
+    <div class="date-row">
+      <label>
+        Date de début
+        @if (isEditing) {
+          <input
+            name="regularStartDate"
+            [ngModel]="startDateValue"
+            (ngModelChange)="updateStartDate($event)"
+            required
+            type="datetime-local"
+          />
+        } @else {
+          <input
+            name="regularStartDate"
+            [ngModel]="startDateValue"
+            (ngModelChange)="updateStartDate($event)"
+            required
+            type="date"
+          />
+        }
+      </label>
+
+      <label>
+        Date de fin
+        @if (isEditing) {
+          <input
+            name="regularEndDate"
+            [ngModel]="endDateValue"
+            (ngModelChange)="updateEndDate($event)"
+            required
+            type="datetime-local"
+          />
+        } @else {
+          <input
+            name="regularEndDate"
+            [ngModel]="endDateValue"
+            (ngModelChange)="updateEndDate($event)"
+            required
+            type="date"
+          />
+        }
+      </label>
+    </div>
+
+    @if (isEditing) {
+      <section class="interventions-section" aria-labelledby="regular-period-interventions-title">
+        <div class="section-heading">
+          <div>
+            <p class="panel-kicker">Interventions</p>
+            <h3 id="regular-period-interventions-title">Interventions rattachées</h3>
+          </div>
+          <button class="secondary-button compact-button" (click)="addIntervention()" type="button">
+            Ajouter une intervention
+          </button>
+        </div>
+
+        @if (interventions.length) {
+          <div class="interventions-table">
+            <div class="interventions-row interventions-header">
+              <span>Utilisateur</span>
+              <span>Début</span>
+              <span>Fin</span>
+              <span>Commentaire</span>
+              <span>Actions</span>
+            </div>
+
+            @for (intervention of interventions; track intervention.id) {
+              <div class="interventions-row">
+                <span>{{ intervention.userName || intervention.userEmail }}</span>
+                <span>{{ formatDateTime(intervention.startDate) }}</span>
+                <span>{{ formatDateTime(intervention.endDate) }}</span>
+                <span class="comment-cell">{{ intervention.comment || "-" }}</span>
+                <span class="action-cell">
+                  <button class="secondary-button compact-button" (click)="editIntervention(intervention)" type="button">
+                    ✎
+                  </button>
+                  <button class="danger-button compact-button" (click)="deleteIntervention(intervention)" type="button">                    
+                    X
+                  </button>
+                </span>
+              </div>
+            }
+          </div>
+        } @else {
+          <p class="empty-interventions">Aucune intervention associée.</p>
+        }
+      </section>
+    }
+
+    <div class="form-actions">
+      <button class="primary-button" [disabled]="periodNgForm.invalid" type="submit">Enregistrer</button>
+      @if (isEditing) {
+        <button class="danger-button" (click)="deletePeriod()" type="button">Supprimer</button>
+      }
+    </div>
+  </form>
+</app-modal>

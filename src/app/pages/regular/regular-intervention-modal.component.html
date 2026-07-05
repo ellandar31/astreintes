@@ -1,0 +1,36 @@
+<app-modal [title]="modalTitle" size="small" (closed)="closed.emit()">
+  <form class="intervention-form" #interventionNgForm="ngForm" (ngSubmit)="save(interventionNgForm)">
+    <label>
+      Utilisateur
+      <select name="regularInterventionUser" [ngModel]="form.userId" (ngModelChange)="selectUser($event)" required>
+        <option value="">Sélectionner un utilisateur</option>
+        @for (user of users; track user.id) {
+          <option [ngValue]="user.id">{{ userLabel(user) }}</option>
+        }
+      </select>
+    </label>
+
+    <label>
+      Date de début
+      <input name="regularInterventionStartDate" [(ngModel)]="form.startDate" required type="datetime-local" />
+    </label>
+
+    <label>
+      Date de fin
+      <input name="regularInterventionEndDate" [(ngModel)]="form.endDate" required type="datetime-local" />
+    </label>
+
+    <label>
+      Commentaire
+      <textarea name="regularInterventionComment" [(ngModel)]="form.comment" rows="4"></textarea>
+    </label>
+
+    @if (error) {
+      <p class="error-message">{{ error }}</p>
+    }
+
+    <div class="form-actions">
+      <button class="primary-button" [disabled]="interventionNgForm.invalid" type="submit">Enregistrer</button>
+    </div>
+  </form>
+</app-modal>

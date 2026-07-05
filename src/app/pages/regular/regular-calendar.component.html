@@ -1,0 +1,99 @@
+<section class="regular-view" aria-labelledby="regular-title">
+  <header class="regular-toolbar">
+    <div>
+      <p class="eyebrow">Régulier</p>
+      <h2 id="regular-title">Planning d'astreinte</h2>
+    </div>
+
+    <div class="regular-actions">
+      <label>
+        Équipe
+        <select [(ngModel)]="selectedTeamId" name="regularTeam">
+          @for (team of teams; track team.id) {
+            <option [ngValue]="team.id">{{ team.name }}</option>
+          }
+        </select>
+      </label>
+
+      <button class="primary-button" [disabled]="!selectedTeamId" (click)="openPeriodModal()" type="button">
+        Ajouter une période d'astreinte
+      </button>
+      <button class="secondary-button" (click)="openInterventionModal()" type="button">
+        Ajouter une intervention
+      </button>
+    </div>
+  </header>
+
+  <div class="month-navigation" aria-label="Navigation mensuelle">
+    <button class="month-button" (click)="previousMonth()" title="Mois précédent" type="button">‹</button>
+    <h3>{{ monthLabel }}</h3>
+    <button class="month-button" (click)="nextMonth()" title="Mois suivant" type="button">›</button>
+  </div>
+
+  <div class="calendar-shell">
+    <div class="week-header">
+      @for (weekDay of weekDays; track weekDay) {
+        <span>{{ weekDay }}</span>
+      }
+    </div>
+
+    <div class="month-grid">
+      @for (day of calendarDays; track day.dateKey) {
+        @let publicHoliday = publicHolidayForDay(day);
+        <article
+          class="day-cell"
+          [class.outside-month]="!day.isCurrentMonth"
+          [class.public-holiday]="publicHoliday"
+          [title]="publicHoliday?.label || ''"
+        >
+          <div class="day-heading">
+            <span class="day-number">{{ day.dayNumber }}</span>
+            @if (publicHoliday) {
+              <span class="holiday-label">{{ publicHoliday.label }}</span>
+            }
+          </div>
+
+          <div class="period-list">
+            @for (period of periodsForDay(day); track period.id) {
+              <div
+                class="period-bar"
+                [class.period-start]="isPeriodStart(day, period)"
+                [class]="'period-bar color-' + (getPeriodColor(period) % 6)"
+                [title]="period.userName"
+                (dblclick)="openEditPeriodModal(period)"
+              >
+                <span>{{ period.userName }}</span>
+              </div>
+            }
+          </div>
+        </article>
+      }
+    </div>
+  </div>
+</section>
+
+@if (isPeriodModalOpen) {
+  <app-regular-period-modal
+    [form]="periodForm"
+    [interventions]="editingPeriodInterventions"
+    [isEditing]="!!editingPeriodId"
+    [users]="selectedTeamUsers"
+    (closed)="closePeriodModal()"
+    (deleted)="deletePeriod()"
+    (interventionAdded)="openInterventionForCurrentPeriod()"
+    (interventionDeleted)="deleteIntervention($event)"
+    (interventionEdited)="openEditInterventionModal($event)"
+    (saved)="savePeriod($event)"
+  ></app-regular-period-modal>
+}
+
+@if (isInterventionModalOpen) {
+  <app-regular-intervention-modal
+    [error]="interventionError"
+    [form]="interventionForm"
+    [isEditing]="!!editingInterventionId"
+    [users]="sortedUsers"
+    (closed)="closeInterventionModal()"
+    (saved)="saveIntervention($event)"
+  ></app-regular-intervention-modal>
+}

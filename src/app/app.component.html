@@ -40,7 +40,9 @@
       }
     </nav>
 
-    @if (activeTab === "Exceptionnel") {
+    @if (activeTab === "Régulier") {
+      <app-regular-calendar></app-regular-calendar>
+    } @else if (activeTab === "Exceptionnel") {
       <app-exceptional-operations [user]="user"></app-exceptional-operations>
     } @else {
       <app-empty-view [title]="activeTab"></app-empty-view>

@@ -1,0 +1,102 @@
+.period-form {
+  display: grid;
+  gap: 14px;
+}
+
+.form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.interventions-section {
+  border-top: 1px solid #dde5eb;
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+  padding-top: 14px;
+
+  
+  padding: 12px;
+  border: 1px solid #dde5eb;
+  border-radius: 8px;  
+}
+
+.section-heading h3 {
+  color: #1f2937;
+  font-size: 1rem;
+  margin: 0;
+}
+
+.section-heading {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.interventions-table {
+  border: 1px solid #dde5eb;
+  border-radius: 8px;
+  overflow: auto;
+}
+
+.interventions-row {
+  align-items: center;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: minmax(130px, 1.2fr) minmax(120px, 1fr) minmax(120px, 1fr) minmax(120px, 1fr) minmax(150px, auto);
+  padding: 8px 10px;
+}
+
+.interventions-row + .interventions-row {
+  border-top: 1px solid #dde5eb;
+}
+
+.interventions-header {
+  background: #f7fafb;
+  color: #526171;
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.comment-cell {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.action-cell {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.compact-button {
+  min-height: 32px;
+  padding: 6px 10px;
+}
+
+.empty-interventions {
+  color: #667085;
+  margin: 0;
+}
+
+.date-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+
+.panel-kicker {
+  color: #12736b;
+  font-size: 0.72rem;
+  font-weight: 900;
+  margin: 0;
+  text-transform: uppercase;
+}

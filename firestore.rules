@@ -22,6 +22,14 @@ service cloud.firestore {
       allow read, write: if isSignedIn();
     }
 
+    match /regularOnCallPeriods/{periodId} {
+      allow read, write: if isSignedIn();
+    }
+
+    match /regularInterventions/{interventionId} {
+      allow read, write: if isSignedIn();
+    }
+
     match /users/{userId} {
       allow read, write: if isSignedIn();
     }
