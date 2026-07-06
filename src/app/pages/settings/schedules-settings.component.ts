@@ -34,10 +34,6 @@ export class SchedulesSettingsComponent implements OnDestroy {
     day: "Lundi" as ScheduleDay,
     hoStart: "08:00",
     hoEnd: "18:00",
-    hnoStart: "18:00",
-    hnoEnd: "08:00",
-    standbyPrime: 0,
-    interventionPrime: 0,
   };
   
   scheduleByDay: Record<string, Omit<ScheduleRule, "id">> = {};
@@ -66,10 +62,6 @@ export class SchedulesSettingsComponent implements OnDestroy {
       day: schedule.day,
       hoStart: schedule.hoStart,
       hoEnd: schedule.hoEnd,
-      hnoStart: schedule.hnoStart,
-      hnoEnd: schedule.hnoEnd,
-      standbyPrime: schedule.standbyPrime,
-      interventionPrime: schedule.interventionPrime,
     };
   }
 
@@ -81,10 +73,6 @@ export class SchedulesSettingsComponent implements OnDestroy {
           day,
           hoStart: "08:00",
           hoEnd: "18:00",
-          hnoStart: "18:00",
-          hnoEnd: "08:00",
-          standbyPrime: 0,
-          interventionPrime: 0,
         },
       ]),
     );
@@ -97,8 +85,6 @@ export class SchedulesSettingsComponent implements OnDestroy {
 
     const payload = {
       ...this.scheduleForm,
-      standbyPrime: Number(this.scheduleForm.standbyPrime) || 0,
-      interventionPrime: Number(this.scheduleForm.interventionPrime) || 0,
     };
 
     try {
@@ -130,10 +116,6 @@ export class SchedulesSettingsComponent implements OnDestroy {
       day: "Lundi",
       hoStart: "08:00",
       hoEnd: "18:00",
-      hnoStart: "18:00",
-      hnoEnd: "08:00",
-      standbyPrime: 0,
-      interventionPrime: 0,
     };
     form?.resetForm(this.scheduleForm);
   }
@@ -155,10 +137,6 @@ export class SchedulesSettingsComponent implements OnDestroy {
           day,
           hoStart: schedule.hoStart,
           hoEnd: schedule.hoEnd,
-          hnoStart: schedule.hnoStart,
-          hnoEnd: schedule.hnoEnd,
-          standbyPrime: Number(schedule.standbyPrime) || 0,
-          interventionPrime: Number(schedule.interventionPrime) || 0,
         };
   
         return setDoc(doc(db, "scheduleRules", day), payload);

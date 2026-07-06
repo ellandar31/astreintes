@@ -12,10 +12,6 @@
             <th>Jour</th>
             <th>Début HO</th>
             <th>Fin HO</th>
-            <th>Début HNO</th>
-            <th>Fin HNO</th>
-            <th>Prime astreinte</th>
-            <th>Prime intervention</th>
           </tr>
         </thead>
 
@@ -42,43 +38,6 @@
                 />
               </td>
 
-              <td>
-                <input
-                  type="time"
-                  name="hnoStart-{{ day }}"
-                  [(ngModel)]="scheduleByDay[day].hnoStart"
-                  required
-                />
-              </td>
-
-              <td>
-                <input
-                  type="time"
-                  name="hnoEnd-{{ day }}"
-                  [(ngModel)]="scheduleByDay[day].hnoEnd"
-                  required
-                />
-              </td>
-
-              <td>
-                <input
-                  type="number"
-                  name="standbyPrime-{{ day }}"
-                  [(ngModel)]="scheduleByDay[day].standbyPrime"
-                  min="0"
-                  step="0.01"
-                />
-              </td>
-
-              <td>
-                <input
-                  type="number"
-                  name="interventionPrime-{{ day }}"
-                  [(ngModel)]="scheduleByDay[day].interventionPrime"
-                  min="0"
-                  step="0.01"
-                />
-              </td>
             </tr>
           }
         </tbody>

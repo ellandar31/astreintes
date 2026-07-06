@@ -13,10 +13,6 @@ export interface ScheduleRule {
   day: ScheduleDay;
   hoStart: string;
   hoEnd: string;
-  hnoStart: string;
-  hnoEnd: string;
-  standbyPrime: number;
-  interventionPrime: number;
 }
 
 export interface ManagedUser {

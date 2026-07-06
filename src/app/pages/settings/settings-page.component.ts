@@ -1,10 +1,10 @@
 import { CommonModule } from "@angular/common";
 import { Component } from "@angular/core";
-import { HolidaysSettingsComponent } from "./settings/holidays-settings.component";
-import { SchedulesSettingsComponent } from "./settings/schedules-settings.component";
-import { SettingsSection } from "./settings/settings.models";
-import { TeamsSettingsComponent } from "./settings/teams-settings.component";
-import { UsersSettingsComponent } from "./settings/users-settings.component";
+import { HolidaysSettingsComponent } from "./holidays-settings.component";
+import { SchedulesSettingsComponent } from "./schedules-settings.component";
+import { SettingsSection } from "./settings.models";
+import { TeamsSettingsComponent } from "./teams-settings.component";
+import { UsersSettingsComponent } from "./users-settings.component";
 
 @Component({
   selector: "app-settings-page",
