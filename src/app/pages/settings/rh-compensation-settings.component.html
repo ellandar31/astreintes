@@ -1,49 +1,71 @@
 <section class="settings-section">
   <p class="eyebrow">Paramétrage RH</p>
   <h3>Paramétrage du calcul des indemnités RH</h3>
+  <form (ngSubmit)="saveCompensationRules()">
+    <h4>Astreintes</h4>
 
-  <h4>Astreintes</h4>
-  <div class="editable-table-wrapper">
-    <table class="editable-table">
-      <thead>
-        <tr>
-          <th>Type d’astreinte</th>
-          <th>Coefficient astreinte (€/heure)</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (row of onCallCompensationRows; track row) {
+    <div class="editable-table-wrapper">
+      <table class="editable-table">
+        <thead>
           <tr>
-            <td><strong>{{ row }}</strong></td>
-            <td><input type="number" min="0" step="0.01" placeholder="0.00" /></td>
+            <th>Type d’astreinte</th>
+            <th>Coefficient astreinte</th>
           </tr>
-        }
-      </tbody>
-    </table>
-  </div>
+        </thead>
+        <tbody>
+          @for (row of onCallRows; track row.id) {
+            <tr>
+              <td><strong>{{ row.label }}</strong></td>
+              <td>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  name="onCall-{{ row.id }}"
+                  [(ngModel)]="row.coefficient"
+                />
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
 
-  <h4>Interventions / travaux / repos compensatoire</h4>
-  <div class="editable-table-wrapper">
-    <table class="editable-table">
-      <thead>
-        <tr>
-          <th>Plage</th>
-          <th>Coefficient interventions</th>
-          <th>Coefficient travaux</th>
-          <th>Coefficient repos compensatoire</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (row of compensationRows; track row) {
+    <h4>Interventions / travaux / repos compensatoire</h4>
+
+    <div class="editable-table-wrapper">
+      <table class="editable-table">
+        <thead>
           <tr>
-            <td><strong>{{ row }}</strong></td>
-            <td><input type="number" min="0" step="0.01" placeholder="0.00" /></td>
-            <td><input type="number" min="0" step="0.01" placeholder="0.00" /></td>
-            <td><input type="number" min="0" step="0.01" placeholder="0.00" /></td>
+            <th>Plage</th>
+            <th>Coefficient interventions</th>
+            <th>Coefficient travaux</th>
+            <th>Coefficient repos compensatoire</th>
           </tr>
-        }
-      </tbody>
-    </table>
-    Arrondi automatiquement à l'heure supérieure
-  </div>
+        </thead>
+        <tbody>
+          @for (row of periodRows; track row.id) {
+            <tr>
+              <td><strong>{{ row.label }}</strong></td>
+              <td>
+                <input type="number" min="0" step="0.01" name="intervention-{{ row.id }}" [(ngModel)]="row.interventionCoefficient" />
+              </td>
+              <td>
+                <input type="number" min="0" step="0.01" name="work-{{ row.id }}" [(ngModel)]="row.workCoefficient" />
+              </td>
+              <td>
+                <input type="number" min="0" step="0.01" name="rest-{{ row.id }}" [(ngModel)]="row.restCoefficient" />
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+      Arrondi automatiquement à l'heure supérieure
+    </div>
+
+    <div class="form-actions">
+      <button class="primary-button" type="submit">Enregistrer les règles RH</button>
+    </div>
+  </form>
+    
 </section>
