@@ -27,7 +27,7 @@ export class SettingsPageComponent {
   readonly sections: Array<{ id: SettingsSection; label: string }> = [
     { id: "users", label: "Gestion des utilisateurs" },
     { id: "teams", label: "Gestion des équipes" },
-    { id: "schedules", label: "Gestion des horaires" },
+    { id: "schedules", label: "Gestion des horaires HO" },
     { id: "holidays", label: "Gestion des jours fériés" },
     { id: "rhControls", label: "Gestion des Contrôles RH" },
     { id: "rhCompensation", label: "Gestion des indemnités RH" },

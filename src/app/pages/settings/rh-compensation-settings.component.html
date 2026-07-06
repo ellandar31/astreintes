@@ -1,7 +1,49 @@
 <section class="settings-section">
   <p class="eyebrow">Paramétrage RH</p>
-  <h3>Calcul des indemnités RH</h3>
-  <p class="muted">
-    Paramétrage des règles d’indemnisation : astreinte, intervention, nuit, week-end, jour férié et déplacement.
-  </p>
+  <h3>Paramétrage du calcul des indemnités RH</h3>
+
+  <h4>Astreintes</h4>
+  <div class="editable-table-wrapper">
+    <table class="editable-table">
+      <thead>
+        <tr>
+          <th>Type d’astreinte</th>
+          <th>Coefficient astreinte (€/heure)</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of onCallCompensationRows; track row) {
+          <tr>
+            <td><strong>{{ row }}</strong></td>
+            <td><input type="number" min="0" step="0.01" placeholder="0.00" /></td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <h4>Interventions / travaux / repos compensatoire</h4>
+  <div class="editable-table-wrapper">
+    <table class="editable-table">
+      <thead>
+        <tr>
+          <th>Plage</th>
+          <th>Coefficient interventions</th>
+          <th>Coefficient travaux</th>
+          <th>Coefficient repos compensatoire</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of compensationRows; track row) {
+          <tr>
+            <td><strong>{{ row }}</strong></td>
+            <td><input type="number" min="0" step="0.01" placeholder="0.00" /></td>
+            <td><input type="number" min="0" step="0.01" placeholder="0.00" /></td>
+            <td><input type="number" min="0" step="0.01" placeholder="0.00" /></td>
+          </tr>
+        }
+      </tbody>
+    </table>
+    Arrondi automatiquement à l'heure supérieure
+  </div>
 </section>
