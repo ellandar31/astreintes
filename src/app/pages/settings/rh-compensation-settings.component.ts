@@ -8,7 +8,7 @@ import { Component, EventEmitter, Output } from "@angular/core";
   templateUrl: "./rh-compensation-settings.component.html",
   styleUrls: ["./settings-common.scss", "./rh-compensation-settings.component.scss"],
 })
-export class RhControlsSettingsComponent {
+export class RhCompensationSettingsComponent {
   @Output() error = new EventEmitter<string>();
   @Output() success = new EventEmitter<string>();
 }
