@@ -25,6 +25,8 @@ export class SettingsPageComponent {
     { id: "teams", label: "Gestion des équipes" },
     { id: "schedules", label: "Gestion des horaires" },
     { id: "holidays", label: "Gestion des jours fériés" },
+    { id: "rhControls", label: "Gestion des Contrôles RH" },
+    { id: "rhCompensation", label: "Gestion des indemnités RH" },
   ];
 
   activeSection: SettingsSection = "users";
