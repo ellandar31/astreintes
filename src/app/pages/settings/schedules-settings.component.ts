@@ -45,9 +45,19 @@ export class SchedulesSettingsComponent implements OnDestroy {
   private readonly unsubscribe: Unsubscribe = onSnapshot(
     collection(db, "scheduleRules"),
     (snapshot) => {
+      this.initializeScheduleByDay();
+
       this.schedules = snapshot.docs
         .map((document) => ({ id: document.id, ...document.data() }) as ScheduleRule)
         .sort((first, second) => this.days.indexOf(first.day) - this.days.indexOf(second.day));
+
+      for (const schedule of this.schedules) {
+        this.scheduleByDay[schedule.day] = {
+          day: schedule.day,
+          hoStart: schedule.hoStart || "08:00",
+          hoEnd: schedule.hoEnd || "18:00",
+        };
+      }
     },
     (error) => this.emitError(error),
   );
