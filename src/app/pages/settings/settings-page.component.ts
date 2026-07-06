@@ -5,6 +5,8 @@ import { SchedulesSettingsComponent } from "./schedules-settings.component";
 import { SettingsSection } from "./settings.models";
 import { TeamsSettingsComponent } from "./teams-settings.component";
 import { UsersSettingsComponent } from "./users-settings.component";
+import { RhControlsSettingsComponent } from "./rh-controls-settings.component";
+import { RhCompensationSettingsComponent } from "./rh-compensation-settings.component";
 
 @Component({
   selector: "app-settings-page",
@@ -15,6 +17,8 @@ import { UsersSettingsComponent } from "./users-settings.component";
     SchedulesSettingsComponent,
     TeamsSettingsComponent,
     UsersSettingsComponent,
+    RhControlsSettingsComponent,
+    RhCompensationSettingsComponent,
   ],
   templateUrl: "./settings-page.component.html",
   styleUrl: "./settings-page.component.css",
