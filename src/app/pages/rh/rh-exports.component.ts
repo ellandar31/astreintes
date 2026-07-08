@@ -37,6 +37,12 @@ interface PeriodCompensationRule {
   restCoefficient: number;
 }
 
+interface CalculationSegment {
+  startDate: string;
+  endDate: string;
+  hours: number;
+}
+
 interface ExportOperation {
   title: string;
   exportTitle: string;
@@ -141,7 +147,7 @@ export class RhExportsComponent implements OnDestroy {
     this.downloadFile(
       `${this.slug(operation.title)}_${this.selectedMonth}.doc`,
       "application/msword;charset=utf-8",
-      this.buildWordHtml(template, [operation]),
+      this.buildWordHtml(template, [operation], templateId),
     );
     this.exportMessage = `Export Word généré pour ${operation.title}.`;
   }
@@ -243,7 +249,7 @@ export class RhExportsComponent implements OnDestroy {
       });
   }
 
-  private buildWordHtml(template: WordExportTemplate, operations: ExportOperation[]): string {
+  private buildWordHtml(template: WordExportTemplate, operations: ExportOperation[], templateId: ExportTemplateId): string {
     return `
       <!doctype html>
       <html>
@@ -263,9 +269,10 @@ export class RhExportsComponent implements OnDestroy {
             .operation { page-break-after: always; }
             .operation:last-child { page-break-after: auto; }
             .muted { color: #526171; }
+            .calculation-detail { font-size: 9pt; }
           </style>
         </head>
-        <body>${operations.map((operation) => this.operationHtml(operation)).join("")}</body>
+        <body>${operations.map((operation) => this.operationHtml(operation, templateId)).join("")}</body>
       </html>
     `;
   }
@@ -298,21 +305,21 @@ export class RhExportsComponent implements OnDestroy {
           </table>
           <br />
           <table>
-            <tr><td class="title" colspan="6">Astreinte</td></tr>
-            <tr><th>Utilisateur</th><th>Début</th><th>Fin</th><th>Type indemnisation</th><th>Heures</th><th>Coefficient</th></tr>
+            <tr><td class="title" colspan="7">Astreinte</td></tr>
+            <tr><th>Utilisateur</th><th>Début</th><th>Fin</th><th>Type indemnisation</th><th>Détail calcul</th><th>Heures</th><th>Coefficient</th></tr>
             ${onCallRows
               .map(
-                (row) => `<tr><td>${this.escape(row.name)}</td><td>${this.formatRange(row.startDate, row.startDate)}</td><td>${this.formatRange(row.endDate, row.endDate)}</td><td>${this.escape(row.label)}</td><td>${row.hours}</td><td>${row.coefficient}</td></tr>`,
+                (row) => `<tr><td>${this.escape(row.name)}</td><td>${this.formatRange(row.startDate, row.startDate)}</td><td>${this.formatRange(row.endDate, row.endDate)}</td><td>${this.escape(row.label)}</td><td>${this.escape(this.segmentDetails(row.segments))}</td><td>${row.hours}</td><td>${row.coefficient}</td></tr>`,
               )
               .join("")}
           </table>
           <br />
           <table>
-            <tr><td class="title" colspan="8">Interventions / travaux</td></tr>
-            <tr><th>Utilisateur</th><th>Début</th><th>Fin</th><th>Plage</th><th>Heures</th><th>Coefficient</th><th>Repos compensatoire</th><th>Commentaire</th></tr>
+            <tr><td class="title" colspan="9">Interventions / travaux</td></tr>
+            <tr><th>Utilisateur</th><th>Début</th><th>Fin</th><th>Plage</th><th>Détail calcul</th><th>Heures</th><th>Coefficient</th><th>Repos compensatoire</th><th>Commentaire</th></tr>
             ${interventionRows
               .map(
-                (row) => `<tr><td>${this.escape(row.userName)}</td><td>${this.formatRange(row.startDate, row.startDate)}</td><td>${this.formatRange(row.endDate, row.endDate)}</td><td>${this.escape(row.label)}</td><td>${row.hours}</td><td>${row.coefficient}</td><td>${row.restCoefficient}</td><td>${this.escape(row.comment)}</td></tr>`,
+                (row) => `<tr><td>${this.escape(row.userName)}</td><td>${this.formatRange(row.startDate, row.startDate)}</td><td>${this.formatRange(row.endDate, row.endDate)}</td><td>${this.escape(row.label)}</td><td>${this.escape(this.segmentDetails(row.segments))}</td><td>${row.hours}</td><td>${row.coefficient}</td><td>${row.restCoefficient}</td><td>${this.escape(row.comment)}</td></tr>`,
               )
               .join("")}
           </table>
@@ -321,7 +328,7 @@ export class RhExportsComponent implements OnDestroy {
     `;
   }
 
-  private operationHtml(operation: ExportOperation): string {
+  private operationHtml(operation: ExportOperation, templateId: ExportTemplateId): string {
     return `
       <section class="operation">
         <h1>${this.escape(operation.exportTitle)}</h1>
@@ -339,6 +346,8 @@ export class RhExportsComponent implements OnDestroy {
         <p class="muted">Pensez à demander au Directeur de Garde l'autorisation d'accès aux bâtiments en dehors des heures ouvrables.</p>
         <h3>Interventions au cours de l'astreinte</h3>
         ${this.interventionsTable(operation.interventions)}
+        <h3>Détail des calculs RH</h3>
+        ${this.compensationDetailsHtml(operation, templateId)}
       </section>
     `;
   }
@@ -372,39 +381,77 @@ export class RhExportsComponent implements OnDestroy {
     `;
   }
 
-  private onCallCompensationRows(operation: ExportOperation): Array<{ name: string; startDate: string; endDate: string; label: string; hours: number; coefficient: number }> {
+  private compensationDetailsHtml(operation: ExportOperation, templateId: ExportTemplateId): string {
+    const isWork = templateId === "exceptionalWork";
+    const onCallRows = this.onCallCompensationRows(operation);
+    const interventionRows = this.interventionCompensationRows(operation, isWork);
+
+    return `
+      <table class="calculation-detail">
+        <thead><tr><th>Type</th><th>Agent</th><th>Règle</th><th>Calcul retenu</th><th>Total heures</th><th>Coefficient</th><th>Repos</th></tr></thead>
+        <tbody>
+          ${
+            onCallRows.length
+              ? onCallRows
+                  .map((row) => `<tr><td>Astreinte</td><td>${this.escape(row.name)}</td><td>${this.escape(row.label)}</td><td>${this.escape(this.segmentDetails(row.segments))}</td><td>${row.hours}</td><td>${row.coefficient}</td><td></td></tr>`)
+                  .join("")
+              : `<tr><td>Astreinte</td><td colspan="6" class="muted">Aucun segment calculé.</td></tr>`
+          }
+          ${
+            interventionRows.length
+              ? interventionRows
+                  .map((row) => `<tr><td>${isWork ? "Travaux" : "Intervention"}</td><td>${this.escape(row.userName)}</td><td>${this.escape(row.label)}</td><td>${this.escape(this.segmentDetails(row.segments))}</td><td>${row.hours}</td><td>${row.coefficient}</td><td>${row.restCoefficient}</td></tr>`)
+                  .join("")
+              : `<tr><td>${isWork ? "Travaux" : "Intervention"}</td><td colspan="6" class="muted">Aucun segment calculé.</td></tr>`
+          }
+        </tbody>
+      </table>
+      <p class="muted">Le calcul est effectué par pas de 15 minutes, puis les pas consécutifs retenus sont regroupés pour faciliter le contrôle.</p>
+    `;
+  }
+
+  private onCallCompensationRows(operation: ExportOperation): Array<{ name: string; startDate: string; endDate: string; label: string; hours: number; coefficient: number; segments: CalculationSegment[] }> {
     return operation.actualUsers.flatMap((user) => {
-      const weekHours = this.splitHoursByPredicate(user.startDate, user.endDate, (date) => !this.isWeekendOrHoliday(date));
-      const weekendHolidayHours = this.splitHoursByPredicate(user.startDate, user.endDate, (date) => this.isWeekendOrHoliday(date));
+      const weekSegments = this.splitHourSegmentsByPredicate(user.startDate, user.endDate, (date) => !this.isWeekendOrHoliday(date));
+      const weekendHolidaySegments = this.splitHourSegmentsByPredicate(user.startDate, user.endDate, (date) => this.isWeekendOrHoliday(date));
       const weekRule = this.onCallCompensationRules.find((rule) => rule.id === "week");
       const weekendRule = this.onCallCompensationRules.find((rule) => rule.id === "weekendHoliday");
 
       return [
-        { name: user.name, startDate: user.startDate, endDate: user.endDate, label: weekRule?.label || "Semaine", hours: weekHours, coefficient: weekRule?.coefficient || 0 },
-        { name: user.name, startDate: user.startDate, endDate: user.endDate, label: weekendRule?.label || "Samedi / Dimanche / Jour férié", hours: weekendHolidayHours, coefficient: weekendRule?.coefficient || 0 },
+        { name: user.name, startDate: user.startDate, endDate: user.endDate, label: weekRule?.label || "Semaine", hours: this.totalHours(weekSegments), coefficient: weekRule?.coefficient || 0, segments: weekSegments },
+        { name: user.name, startDate: user.startDate, endDate: user.endDate, label: weekendRule?.label || "Samedi / Dimanche / Jour férié", hours: this.totalHours(weekendHolidaySegments), coefficient: weekendRule?.coefficient || 0, segments: weekendHolidaySegments },
       ].filter((row) => row.hours > 0);
     });
   }
 
-  private interventionCompensationRows(operation: ExportOperation, isWork: boolean): Array<{ userName: string; startDate: string; endDate: string; label: string; hours: number; coefficient: number; restCoefficient: number; comment: string }> {
+  private interventionCompensationRows(operation: ExportOperation, isWork: boolean): Array<{ userName: string; startDate: string; endDate: string; label: string; hours: number; coefficient: number; restCoefficient: number; comment: string; segments: CalculationSegment[] }> {
     return operation.interventions.flatMap((intervention) =>
       this.periodCompensationRules
-        .map((rule) => ({
-          userName: intervention.userName,
-          startDate: intervention.startDate,
-          endDate: intervention.endDate,
-          label: rule.label,
-          hours: this.hoursForPeriodRule(intervention.startDate, intervention.endDate, rule.id),
-          coefficient: isWork ? rule.workCoefficient : rule.interventionCoefficient,
-          restCoefficient: rule.restCoefficient,
-          comment: intervention.comment,
-        }))
+        .map((rule) => {
+          const segments = this.segmentsForPeriodRule(intervention.startDate, intervention.endDate, rule.id);
+
+          return {
+            userName: intervention.userName,
+            startDate: intervention.startDate,
+            endDate: intervention.endDate,
+            label: rule.label,
+            hours: this.totalHours(segments),
+            coefficient: isWork ? rule.workCoefficient : rule.interventionCoefficient,
+            restCoefficient: rule.restCoefficient,
+            comment: intervention.comment,
+            segments,
+          };
+        })
         .filter((row) => row.hours > 0),
     );
   }
 
   private hoursForPeriodRule(startValue: string, endValue: string, ruleId: string): number {
-    return this.splitHoursByPredicate(startValue, endValue, (date) => {
+    return this.totalHours(this.segmentsForPeriodRule(startValue, endValue, ruleId));
+  }
+
+  private segmentsForPeriodRule(startValue: string, endValue: string, ruleId: string): CalculationSegment[] {
+    return this.splitHourSegmentsByPredicate(startValue, endValue, (date) => {
       const hour = date.getHours() + date.getMinutes() / 60;
       const day = date.getDay();
       const isHoliday = this.isPublicHoliday(date);
@@ -419,20 +466,58 @@ export class RhExportsComponent implements OnDestroy {
   }
 
   private splitHoursByPredicate(startValue: string, endValue: string, predicate: (date: Date) => boolean): number {
-    if (!startValue || !endValue) return 0;
+    return this.totalHours(this.splitHourSegmentsByPredicate(startValue, endValue, predicate));
+  }
+
+  private splitHourSegmentsByPredicate(startValue: string, endValue: string, predicate: (date: Date) => boolean): CalculationSegment[] {
+    if (!startValue || !endValue) return [];
     const end = new Date(endValue);
-    let total = 0;
+    const segments: CalculationSegment[] = [];
     let cursor = new Date(startValue);
 
     while (cursor < end) {
       const next = new Date(cursor);
       next.setMinutes(cursor.getMinutes() + 15, 0, 0);
       const segmentEnd = next < end ? next : end;
-      if (predicate(cursor)) total += (segmentEnd.getTime() - cursor.getTime()) / 36e5;
+
+      if (predicate(cursor)) {
+        const lastSegment = segments.at(-1);
+        const segmentHours = (segmentEnd.getTime() - cursor.getTime()) / 36e5;
+
+        if (lastSegment && new Date(lastSegment.endDate).getTime() === cursor.getTime()) {
+          lastSegment.endDate = segmentEnd.toISOString();
+          lastSegment.hours = this.roundHours(lastSegment.hours + segmentHours);
+        } else {
+          segments.push({
+            startDate: cursor.toISOString(),
+            endDate: segmentEnd.toISOString(),
+            hours: this.roundHours(segmentHours),
+          });
+        }
+      }
+
       cursor = segmentEnd;
     }
 
-    return Math.round(total * 100) / 100;
+    return segments;
+  }
+
+  private totalHours(segments: CalculationSegment[]): number {
+    return this.roundHours(segments.reduce((total, segment) => total + segment.hours, 0));
+  }
+
+  private roundHours(value: number): number {
+    return Math.round(value * 100) / 100;
+  }
+
+  private segmentDetails(segments: CalculationSegment[]): string {
+    if (!segments.length) {
+      return "Aucun segment retenu";
+    }
+
+    return segments
+      .map((segment) => `${this.formatRange(segment.startDate, segment.endDate)} = ${segment.hours} h`)
+      .join(" ; ");
   }
 
   private overlapsSelectedMonth(startValue: string, endValue: string): boolean {
