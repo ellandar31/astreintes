@@ -1,0 +1,22 @@
+<section class="rh-layout" aria-label="RH">
+  <aside class="rh-menu" aria-label="Menu RH">
+    @for (section of sections; track section.id) {
+      <button
+        class="rh-menu-button"
+        [class.active]="activeSection === section.id"
+        (click)="setSection(section.id)"
+        type="button"
+      >
+        {{ section.label }}
+      </button>
+    }
+  </aside>
+
+  <div class="rh-content">
+    @if (activeSection === "controls") {
+      <app-rh-controls></app-rh-controls>
+    } @else if (activeSection === "exports") {
+      <app-rh-exports></app-rh-exports>
+    }
+  </div>
+</section>

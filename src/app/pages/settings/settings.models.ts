@@ -1,4 +1,4 @@
-export type SettingsSection = "teams" | "users" | "schedules" | "holidays" | "rhControls" | "rhCompensation";
+export type SettingsSection = "teams" | "users" | "schedules" | "holidays" | "rhControls" | "rhCompensation" | "rhExports";
 export type ScheduleDay = "Lundi" | "Mardi" | "Mercredi" | "Jeudi" | "Vendredi" | "Samedi" | "Dimanche" | "Jour férié";
 export type UserRole = 0 | 1 | 2;
 

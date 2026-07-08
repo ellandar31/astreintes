@@ -1,0 +1,47 @@
+.settings-section-header {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+}
+
+.compensation-form {
+  display: grid;
+  gap: 16px;
+}
+
+.compensation-block {
+  border: 1px solid #dde5eb;
+  border-radius: 8px;
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+}
+
+.compensation-block h4 {
+  color: #1f2937;
+  margin: 0;
+}
+
+.editable-table-wrapper {
+  overflow: auto;
+}
+
+.editable-table {
+  border-collapse: collapse;
+  min-width: 680px;
+  width: 100%;
+}
+
+.editable-table th,
+.editable-table td {
+  border-bottom: 1px solid #dde5eb;
+  padding: 10px 12px;
+  text-align: left;
+}
+
+.editable-table th {
+  background: #f7fafb;
+  color: #526171;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+}

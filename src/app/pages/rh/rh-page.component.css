@@ -1,0 +1,48 @@
+:host {
+  align-self: stretch;
+  display: block;
+  width: 100%;
+}
+
+.rh-layout {
+  align-items: start;
+  display: grid;
+  gap: 16px;
+  grid-template-columns: 240px minmax(0, 1fr);
+  width: 100%;
+}
+
+.rh-menu {
+  background: #ffffff;
+  border: 1px solid #dde5eb;
+  border-radius: 8px;
+  display: grid;
+  gap: 6px;
+  padding: 10px;
+}
+
+.rh-menu-button {
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  color: #526171;
+  font-weight: 900;
+  min-height: 38px;
+  padding: 0 12px;
+  text-align: left;
+}
+
+.rh-menu-button.active {
+  background: #174f5b;
+  color: #ffffff;
+}
+
+.rh-content {
+  min-width: 0;
+}
+
+@media (max-width: 860px) {
+  .rh-layout {
+    grid-template-columns: 1fr;
+  }
+}

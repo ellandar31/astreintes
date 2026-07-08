@@ -1,16 +1,29 @@
 .settings-layout {
+  align-items: start;
   display: grid;
-  gap: 18px;
-  grid-template-columns: 240px minmax(0, 1fr);
+  gap: 16px;
+  grid-template-columns: 260px minmax(0, 1fr);
   min-height: 620px;
 }
 
 .settings-menu {
-  align-content: start;
-  border-right: 1px solid #dde5eb;
+  background: #ffffff;
+  border: 1px solid #dde5eb;
+  border-radius: 8px;
   display: grid;
-  gap: 8px;
-  padding-right: 14px;
+  gap: 6px;
+  padding: 12px;
+}
+
+.settings-menu-heading {
+  border-bottom: 1px solid #dde5eb;
+  margin-bottom: 6px;
+  padding: 2px 4px 10px;
+}
+
+.settings-menu-heading h3 {
+  color: #1f2937;
+  margin: 0;
 }
 
 .settings-menu-button {
@@ -18,7 +31,7 @@
   border: 0;
   border-radius: 6px;
   color: #526171;
-  font-weight: 800;
+  font-weight: 900;
   min-height: 38px;
   padding: 0 12px;
   text-align: left;
@@ -30,18 +43,16 @@
 }
 
 .settings-content {
+  background: #ffffff;
+  border: 1px solid #dde5eb;
+  border-radius: 8px;
   min-width: 0;
+  padding: 16px;
 }
 
 @media (max-width: 760px) {
   .settings-layout {
     grid-template-columns: 1fr;
     min-height: auto;
-  }
-
-  .settings-menu {
-    border-right: 0;
-    border-bottom: 1px solid #dde5eb;
-    padding: 0 0 12px;
   }
 }

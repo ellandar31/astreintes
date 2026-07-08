@@ -1,5 +1,10 @@
 <section class="settings-layout" aria-label="Paramétrage">
   <aside class="settings-menu" aria-label="Menu de paramétrage">
+    <div class="settings-menu-heading">
+      <p class="eyebrow">Modules</p>
+      <h3>Paramétrage</h3>
+    </div>
+
     @for (section of sections; track section.id) {
       <button
         class="settings-menu-button"
@@ -33,6 +38,8 @@
       <app-rh-controls-settings (error)="showError($event)" (success)="showSuccess($event)"></app-rh-controls-settings>
     } @else if (activeSection === "rhCompensation") {
       <app-rh-compensation-settings (error)="showError($event)" (success)="showSuccess($event)"></app-rh-compensation-settings>
+    } @else if (activeSection === "rhExports") {
+      <app-rh-export-templates-settings (error)="showError($event)" (success)="showSuccess($event)"></app-rh-export-templates-settings>
     }
   </div>
 </section>

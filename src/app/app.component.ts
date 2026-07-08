@@ -15,6 +15,7 @@ import { auth, db, googleProvider } from "./firebase";
 import { ExceptionalOperationsComponent } from "./pages/exceptionnel/exceptional-operations.component";
 import { ProfilePageComponent } from "./pages/profile/profile-page.component";
 import { RegularCalendarComponent } from "./pages/regular/regular-calendar.component";
+import { RhPageComponent } from "./pages/rh/rh-page.component";
 import { SettingsPageComponent } from "./pages/settings/settings-page.component";
 import { EmptyViewComponent } from "./shared/empty-view.component";
 import { ModalComponent } from "./shared/modal.component";
@@ -34,6 +35,7 @@ type ModalView = "profile" | "settings";
     ModalComponent,
     ProfilePageComponent,
     RegularCalendarComponent,
+    RhPageComponent,
     SettingsPageComponent,
   ],
   templateUrl: "./app.component.html",

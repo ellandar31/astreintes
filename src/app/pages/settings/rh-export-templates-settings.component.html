@@ -1,0 +1,28 @@
+<section class="settings-section">
+  <div class="settings-section-header">
+    <div>
+      <p class="eyebrow">Paramétrage RH</p>
+      <h3>Modèles Word d'export</h3>
+    </div>
+  </div>
+
+  <div class="template-grid">
+    @for (template of templates; track template.id) {
+      <article class="template-item">
+        <div>
+          <h4>{{ template.label }}</h4>
+          <p>{{ template.fileName || "Aucun fichier référencé" }}</p>
+        </div>
+
+        <label class="file-button">
+          Choisir un Word
+          <input accept=".doc,.docx" (change)="setTemplateFile(template, $event)" type="file" />
+        </label>
+      </article>
+    }
+  </div>
+
+  <div class="form-actions">
+    <button class="primary-button" (click)="saveTemplates()" type="button">Enregistrer les modèles</button>
+  </div>
+</section>

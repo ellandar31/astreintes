@@ -1,0 +1,72 @@
+:host {
+  display: block;
+}
+
+.rh-panel {
+  background: #ffffff;
+  border: 1px solid #dde5eb;
+  border-radius: 8px;
+  display: grid;
+  gap: 16px;
+  padding: 16px;
+}
+
+.rh-panel-header {
+  align-items: end;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  justify-content: space-between;
+}
+
+.rh-panel-header h2,
+.export-item h3 {
+  color: #1f2937;
+  margin: 0;
+}
+
+.period-control {
+  min-width: 180px;
+}
+
+.export-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.export-item {
+  border: 1px solid #dde5eb;
+  border-radius: 8px;
+  display: grid;
+  gap: 14px;
+  padding: 14px;
+}
+
+.export-item p {
+  color: #607080;
+  margin: 6px 0 0;
+}
+
+.export-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.file-button {
+  align-items: center;
+  background: #eef4f5;
+  border-radius: 6px;
+  color: #1f3f47;
+  cursor: pointer;
+  display: inline-flex;
+  font-weight: 900;
+  min-height: 38px;
+  padding: 0 12px;
+}
+
+.file-button input {
+  display: none;
+}

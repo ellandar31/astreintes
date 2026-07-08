@@ -1,0 +1,36 @@
+<section class="rh-panel" aria-labelledby="rh-exports-title">
+  <header class="rh-panel-header">
+    <div>
+      <p class="eyebrow">Exports RH</p>
+      <h2 id="rh-exports-title">Modèles Word et exports</h2>
+    </div>
+
+    <label class="period-control">
+      Période
+      <input [(ngModel)]="selectedMonth" name="exportMonth" type="month" />
+    </label>
+  </header>
+
+  <div class="export-grid">
+    @for (template of templates; track template.id) {
+      <article class="export-item">
+        <div>
+          <h3>{{ template.label }}</h3>
+          <p>{{ template.fileName || "Aucun modèle sélectionné" }}</p>
+        </div>
+
+        <div class="export-actions">
+          <label class="file-button">
+            Choisir
+            <input accept=".doc,.docx" (change)="setTemplateFile(template, $event)" type="file" />
+          </label>
+          <button class="secondary-button" (click)="prepareExport(template)" type="button">Préparer</button>
+        </div>
+      </article>
+    }
+  </div>
+
+  @if (exportMessage) {
+    <p class="success-message">{{ exportMessage }}</p>
+  }
+</section>

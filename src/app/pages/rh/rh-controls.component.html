@@ -1,0 +1,72 @@
+<section class="rh-panel" aria-labelledby="rh-controls-title">
+  <header class="rh-panel-header">
+    <div>
+      <p class="eyebrow">Contrôles RH</p>
+      <h2 id="rh-controls-title">Synthèse des temps et jours particuliers</h2>
+    </div>
+
+    <div class="rh-filters" aria-label="Filtres RH">
+      <label>
+        Mois
+        <select [(ngModel)]="selectedMonth" name="rhMonth">
+          @for (month of monthOptions; track month) {
+            <option [ngValue]="month">{{ formatMonth(month) }}</option>
+          }
+        </select>
+      </label>
+
+      <label>
+        Semaine
+        <select [(ngModel)]="selectedWeek" name="rhWeek">
+          @for (week of weekOptions; track week) {
+            <option [ngValue]="week">{{ week }}</option>
+          }
+        </select>
+      </label>
+
+      <label>
+        Trimestre
+        <select [(ngModel)]="selectedQuarter" name="rhQuarter">
+          @for (quarter of quarterOptions; track quarter) {
+            <option [ngValue]="quarter">{{ formatQuarter(quarter) }}</option>
+          }
+        </select>
+      </label>
+    </div>
+  </header>
+
+  <div class="rh-table-shell">
+    <table class="rh-table">
+      <thead>
+        <tr>
+          <th>Utilisateur</th>
+          <th>Astreinte 15 j</th>
+          <th>Astreinte mois</th>
+          <th>Samedis</th>
+          <th>Dimanches</th>
+          <th>Jours fériés</th>
+          <th>Travaux semaine</th>
+          <th>Travaux trimestre</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of rows; track row.userId) {
+          <tr>
+            <td>{{ row.userLabel }}</td>
+            <td>{{ row.onCallHoursLast15Days }} h</td>
+            <td>{{ row.onCallHoursMonth }} h</td>
+            <td>{{ row.saturdayCount }}</td>
+            <td>{{ row.sundayCount }}</td>
+            <td>{{ row.holidayCount }}</td>
+            <td>{{ row.exceptionalWorkHoursWeek }} h</td>
+            <td>{{ row.exceptionalWorkHoursQuarter }} h</td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="8">Aucune donnée utilisateur.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</section>

@@ -1,71 +1,74 @@
 <section class="settings-section">
-  <p class="eyebrow">Paramétrage RH</p>
-  <h3>Paramétrage du calcul des indemnités RH</h3>
-  <form (ngSubmit)="saveCompensationRules()">
-    <h4>Astreintes</h4>
-
-    <div class="editable-table-wrapper">
-      <table class="editable-table">
-        <thead>
-          <tr>
-            <th>Type d’astreinte</th>
-            <th>Coefficient astreinte</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (row of onCallRows; track row.id) {
-            <tr>
-              <td><strong>{{ row.label }}</strong></td>
-              <td>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  name="onCall-{{ row.id }}"
-                  [(ngModel)]="row.coefficient"
-                />
-              </td>
-            </tr>
-          }
-        </tbody>
-      </table>
+  <div class="settings-section-header">
+    <div>
+      <p class="eyebrow">Paramétrage RH</p>
+      <h3>Calcul des indemnités</h3>
     </div>
+  </div>
 
-    <h4>Interventions / travaux / repos compensatoire</h4>
+  <form class="compensation-form" (ngSubmit)="saveCompensationRules()">
+    <section class="compensation-block">
+      <h4>Astreintes</h4>
 
-    <div class="editable-table-wrapper">
-      <table class="editable-table">
-        <thead>
-          <tr>
-            <th>Plage</th>
-            <th>Coefficient interventions</th>
-            <th>Coefficient travaux</th>
-            <th>Coefficient repos compensatoire</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (row of periodRows; track row.id) {
+      <div class="editable-table-wrapper">
+        <table class="editable-table">
+          <thead>
             <tr>
-              <td><strong>{{ row.label }}</strong></td>
-              <td>
-                <input type="number" min="0" step="0.01" name="intervention-{{ row.id }}" [(ngModel)]="row.interventionCoefficient" />
-              </td>
-              <td>
-                <input type="number" min="0" step="0.01" name="work-{{ row.id }}" [(ngModel)]="row.workCoefficient" />
-              </td>
-              <td>
-                <input type="number" min="0" step="0.01" name="rest-{{ row.id }}" [(ngModel)]="row.restCoefficient" />
-              </td>
+              <th>Type d'astreinte</th>
+              <th>Coefficient astreinte</th>
             </tr>
-          }
-        </tbody>
-      </table>
-      Arrondi automatiquement à l'heure supérieure
-    </div>
+          </thead>
+          <tbody>
+            @for (row of onCallRows; track row.id) {
+              <tr>
+                <td><strong>{{ row.label }}</strong></td>
+                <td>
+                  <input type="number" min="0" step="0.01" name="onCall-{{ row.id }}" [(ngModel)]="row.coefficient" />
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="compensation-block">
+      <h4>Interventions, travaux et repos compensatoire</h4>
+
+      <div class="editable-table-wrapper">
+        <table class="editable-table">
+          <thead>
+            <tr>
+              <th>Plage</th>
+              <th>Coefficient interventions</th>
+              <th>Coefficient travaux</th>
+              <th>Coefficient repos</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of periodRows; track row.id) {
+              <tr>
+                <td><strong>{{ row.label }}</strong></td>
+                <td>
+                  <input type="number" min="0" step="0.01" name="intervention-{{ row.id }}" [(ngModel)]="row.interventionCoefficient" />
+                </td>
+                <td>
+                  <input type="number" min="0" step="0.01" name="work-{{ row.id }}" [(ngModel)]="row.workCoefficient" />
+                </td>
+                <td>
+                  <input type="number" min="0" step="0.01" name="rest-{{ row.id }}" [(ngModel)]="row.restCoefficient" />
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <p class="muted">Arrondi automatiquement à l'heure supérieure.</p>
+    </section>
 
     <div class="form-actions">
       <button class="primary-button" type="submit">Enregistrer les règles RH</button>
     </div>
   </form>
-    
 </section>

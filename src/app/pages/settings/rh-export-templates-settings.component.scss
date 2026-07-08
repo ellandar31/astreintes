@@ -1,0 +1,46 @@
+.settings-section-header {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+}
+
+.template-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.template-item {
+  border: 1px solid #dde5eb;
+  border-radius: 8px;
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+}
+
+.template-item h4,
+.template-item p {
+  margin: 0;
+}
+
+.template-item p {
+  color: #607080;
+  margin-top: 6px;
+}
+
+.file-button {
+  align-items: center;
+  background: #eef4f5;
+  border-radius: 6px;
+  color: #1f3f47;
+  cursor: pointer;
+  display: inline-flex;
+  font-weight: 900;
+  justify-content: center;
+  min-height: 38px;
+  padding: 0 12px;
+}
+
+.file-button input {
+  display: none;
+}

@@ -44,6 +44,8 @@
       <app-regular-calendar></app-regular-calendar>
     } @else if (activeTab === "Exceptionnel") {
       <app-exceptional-operations [user]="user"></app-exceptional-operations>
+    } @else if (activeTab === "RH") {
+      <app-rh-page></app-rh-page>
     } @else {
       <app-empty-view [title]="activeTab"></app-empty-view>
     }
