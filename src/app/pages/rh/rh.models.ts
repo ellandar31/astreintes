@@ -22,16 +22,29 @@ export interface RhPublicHoliday {
 }
 
 export interface RhExceptionalIntervention {
+  date?: string;
   startDate: string;
   endDate: string;
   userId: string;
   userName: string;
   userEmail: string;
+  wasOnSite?: boolean;
+  label?: string;
+  comment?: string;
 }
 
 export interface RhExceptionalOperation {
   id: string;
   type: "astreinte" | "travaux";
+  initiatorName: string;
+  operationManagerName: string;
+  title: string;
+  startDate: string;
+  forecastEndDate: string;
+  actualStartDate: string;
+  actualEndDate: string;
+  plannedUsers?: Array<{ userId: string; displayName: string; email: string }>;
+  actualUsers?: Array<{ userId: string; displayName: string; email: string }>;
   interventions?: RhExceptionalIntervention[];
 }
 
