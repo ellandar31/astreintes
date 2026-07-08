@@ -1,9 +1,7 @@
 import { CommonModule } from "@angular/common";
 import { Component, OnDestroy } from "@angular/core";
 import { FormsModule } from "@angular/forms";
-import { FirebaseError } from "firebase/app";
-import { Unsubscribe, addDoc, collection, deleteDoc, doc, onSnapshot, serverTimestamp, updateDoc } from "firebase/firestore";
-import { db } from "../../firebase";
+import { FirebaseStore, StoreUnsubscribe } from "../../store/firebase.store";
 import {
   RegularIntervention,
   RegularInterventionForm,
@@ -49,54 +47,53 @@ export class RegularCalendarComponent implements OnDestroy {
   teams: RegularTeam[] = [];
   users: RegularUser[] = [];
 
-  private readonly unsubscribes: Unsubscribe[] = [
-    onSnapshot(collection(db, "teams"), (snapshot) => {
-      this.teams = snapshot.docs
-        .map((document) => {
-          const data = document.data();
+  private readonly unsubscribes: StoreUnsubscribe[];
+
+  constructor(private readonly firebaseStore: FirebaseStore) {
+    this.unsubscribes = [
+      this.firebaseStore.watchCollection<Record<string, unknown> & { id: string }>("teams", (teams) => {
+        this.teams = teams
+          .map((data) => {
           return {
-            id: document.id,
+            id: data.id,
             name: String(data["name"] || ""),
             members: Array.isArray(data["members"]) ? data["members"].map(String) : [],
           };
         })
         .sort((first, second) => first.name.localeCompare(second.name));
 
-      if (!this.selectedTeamId && this.teams.length) {
-        this.selectedTeamId = this.teams[0].id;
-      }
-    }),
-    onSnapshot(collection(db, "users"), (snapshot) => {
-      this.users = snapshot.docs
-        .map((document) => ({ id: document.id, ...document.data() }) as RegularUser)
-        .filter((user) => Boolean(user.email))
-        .sort((first, second) => this.userLabel(first).localeCompare(this.userLabel(second)));
-    }),
-    onSnapshot(collection(db, "regularOnCallPeriods"), (snapshot) => {
-      this.periods = snapshot.docs.map((document) => ({ id: document.id, ...document.data() }) as RegularOnCallPeriod);
-    }),
-    onSnapshot(
-      collection(db, "regularInterventions"),
-      (snapshot) => {
-        this.interventions = snapshot.docs.map((document) => ({ id: document.id, ...document.data() }) as RegularIntervention);
-      },
-      (error) => {
-        this.interventionError = this.toFirebaseErrorMessage(error, "Impossible de charger les interventions.");
-      },
-    ),
-    onSnapshot(collection(db, "publicHolidays"), (snapshot) => {
-      this.publicHolidays = snapshot.docs
-        .map((document) => {
-          const data = document.data();
-          return {
-            id: document.id,
-            date: String(data["date"] || ""),
-            label: String(data["label"] || "Jour ferie"),
-          };
-        })
-        .filter((holiday) => Boolean(holiday.date));
-    }),
-  ];
+        if (!this.selectedTeamId && this.teams.length) {
+          this.selectedTeamId = this.teams[0].id;
+        }
+      }),
+      this.firebaseStore.watchCollection<RegularUser>("users", (users) => {
+        this.users = users.filter((user) => Boolean(user.email)).sort((first, second) => this.userLabel(first).localeCompare(this.userLabel(second)));
+      }),
+      this.firebaseStore.watchCollection<RegularOnCallPeriod>("regularOnCallPeriods", (periods) => {
+        this.periods = periods;
+      }),
+      this.firebaseStore.watchCollection<RegularIntervention>(
+        "regularInterventions",
+        (interventions) => {
+          this.interventions = interventions;
+        },
+        (error) => {
+          this.interventionError = this.toFirebaseErrorMessage(error, "Impossible de charger les interventions.");
+        },
+      ),
+      this.firebaseStore.watchCollection<Record<string, unknown> & { id: string }>("publicHolidays", (holidays) => {
+        this.publicHolidays = holidays
+          .map((data) => {
+            return {
+              id: data.id,
+              date: String(data["date"] || ""),
+              label: String(data["label"] || "Jour ferie"),
+            };
+          })
+          .filter((holiday) => Boolean(holiday.date));
+      }),
+    ];
+  }
 
   ngOnDestroy(): void {
     this.unsubscribes.forEach((unsubscribe) => unsubscribe());
@@ -242,21 +239,21 @@ export class RegularCalendarComponent implements OnDestroy {
     }
 
     if (this.editingPeriodId) {
-      await updateDoc(doc(db, "regularOnCallPeriods", this.editingPeriodId), {
+      await this.firebaseStore.updateDocument("regularOnCallPeriods", this.editingPeriodId, {
         ...form,
         teamId: this.selectedTeamId,
-        updatedAt: serverTimestamp(),
+        updatedAt: this.firebaseStore.timestamp(),
       });
 
       this.closePeriodModal();
       return;
     }
 
-    await addDoc(collection(db, "regularOnCallPeriods"), {
+    await this.firebaseStore.addDocument("regularOnCallPeriods", {
       ...form,
       teamId: this.selectedTeamId,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
+      createdAt: this.firebaseStore.timestamp(),
+      updatedAt: this.firebaseStore.timestamp(),
     });
 
     this.closePeriodModal();
@@ -284,15 +281,15 @@ export class RegularCalendarComponent implements OnDestroy {
         comment: form.comment.trim(),
         periodId: parentPeriod.id,
         teamId: parentPeriod.teamId,
-        updatedAt: serverTimestamp(),
+        updatedAt: this.firebaseStore.timestamp(),
       };
 
       if (this.editingInterventionId) {
-        await updateDoc(doc(db, "regularInterventions", this.editingInterventionId), payload);
+        await this.firebaseStore.updateDocument("regularInterventions", this.editingInterventionId, payload);
       } else {
-        await addDoc(collection(db, "regularInterventions"), {
+        await this.firebaseStore.addDocument("regularInterventions", {
           ...payload,
-          createdAt: serverTimestamp(),
+          createdAt: this.firebaseStore.timestamp(),
         });
       }
 
@@ -310,7 +307,7 @@ export class RegularCalendarComponent implements OnDestroy {
     }
 
     try {
-      await deleteDoc(doc(db, "regularInterventions", intervention.id));
+      await this.firebaseStore.deleteDocument("regularInterventions", intervention.id);
     } catch (error) {
       this.interventionError = this.toFirebaseErrorMessage(error, "Impossible de supprimer l'intervention.");
       this.isInterventionModalOpen = true;
@@ -328,7 +325,7 @@ export class RegularCalendarComponent implements OnDestroy {
       return;
     }
 
-    await deleteDoc(doc(db, "regularOnCallPeriods", this.editingPeriodId));
+    await this.firebaseStore.deleteDocument("regularOnCallPeriods", this.editingPeriodId);
     this.closePeriodModal();
   }
 
@@ -471,7 +468,7 @@ export class RegularCalendarComponent implements OnDestroy {
   }
 
   private toFirebaseErrorMessage(error: unknown, fallback: string): string {
-    if (error instanceof FirebaseError) {
+    if (this.firebaseStore.isFirebaseError(error)) {
       if (error.code === "permission-denied") {
         return `${fallback} Les règles Firestore ne permettent pas encore cette opération.`;
       }

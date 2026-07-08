@@ -1,18 +1,7 @@
 import { CommonModule } from "@angular/common";
 import { Component, Input, OnDestroy } from "@angular/core";
 import { FormsModule } from "@angular/forms";
-import { User } from "firebase/auth";
-import {
-  Unsubscribe,
-  addDoc,
-  collection,
-  deleteDoc,
-  doc,
-  onSnapshot,
-  serverTimestamp,
-  setDoc,
-} from "firebase/firestore";
-import { db } from "../../firebase";
+import { AuthenticatedUser, FirebaseStore, StoreUnsubscribe } from "../../store/firebase.store";
 import {
   ExceptionalIntervention,
   ExceptionalInterventionForm,
@@ -38,7 +27,7 @@ import { OperationModalComponent } from "./operation-modal.component";
   styleUrl: "./exceptional-operations.component.css",
 })
 export class ExceptionalOperationsComponent implements OnDestroy {
-  @Input({ required: true }) user: User | null = null;
+  @Input({ required: true }) user: AuthenticatedUser | null = null;
 
   readonly statuses: ExceptionalOperationStatus[] = ["Brouillon", "Planifiée", "En cours", "Signé Agent", "Signé Directeur", "Terminée", "Annulée"];
 
@@ -70,16 +59,19 @@ export class ExceptionalOperationsComponent implements OnDestroy {
     comment: "",
   };
 
-  private readonly unsubscribe: Unsubscribe = onSnapshot(collection(db, "exceptionalOperations"), (snapshot) => {
-    this.operations = snapshot.docs
-      .map((document) => ({ id: document.id, ...document.data() }) as ExceptionalOperation)
+  private readonly unsubscribe: StoreUnsubscribe;
+
+  constructor(private readonly firebaseStore: FirebaseStore) {
+    this.unsubscribe = this.firebaseStore.watchCollection<ExceptionalOperation>("exceptionalOperations", (operations) => {
+      this.operations = operations
       .sort((first, second) => (first.startDate || "").localeCompare(second.startDate || ""));
 
-    if (this.selectedOperation) {
-      this.selectedOperation =
-        this.operations.find((operation) => operation.id === this.selectedOperation?.id) || this.selectedOperation;
-    }
-  });
+      if (this.selectedOperation) {
+        this.selectedOperation =
+          this.operations.find((operation) => operation.id === this.selectedOperation?.id) || this.selectedOperation;
+      }
+    });
+  }
 
   ngOnDestroy(): void {
     this.unsubscribe();
@@ -175,15 +167,15 @@ export class ExceptionalOperationsComponent implements OnDestroy {
       actualUsers: form.actualUsers || [],
       visas: this.selectedOperation?.visas || this.createEmptyOperationVisas(),
       interventions: this.selectedOperation?.interventions || [],
-      updatedAt: serverTimestamp(),
+      updatedAt: this.firebaseStore.timestamp(),
     };
 
     if (this.selectedOperation) {
-      await setDoc(doc(db, "exceptionalOperations", this.selectedOperation.id), payload, { merge: true });
+      await this.firebaseStore.setDocument("exceptionalOperations", this.selectedOperation.id, payload, { merge: true });
     } else {
-      await addDoc(collection(db, "exceptionalOperations"), {
+      await this.firebaseStore.addDocument("exceptionalOperations", {
         ...payload,
-        createdAt: serverTimestamp(),
+        createdAt: this.firebaseStore.timestamp(),
       });
     }
 
@@ -191,7 +183,7 @@ export class ExceptionalOperationsComponent implements OnDestroy {
   }
 
   async deleteOperation(operation: ExceptionalOperation): Promise<void> {
-    await deleteDoc(doc(db, "exceptionalOperations", operation.id));
+    await this.firebaseStore.deleteDocument("exceptionalOperations", operation.id);
   }
 
   async saveIntervention(form: ExceptionalInterventionForm): Promise<void> {
@@ -222,11 +214,12 @@ export class ExceptionalOperationsComponent implements OnDestroy {
       interventions.push(interventionPayload);
     }
 
-    await setDoc(
-      doc(db, "exceptionalOperations", this.selectedOperation.id),
+    await this.firebaseStore.setDocument(
+      "exceptionalOperations",
+      this.selectedOperation.id,
       {
         interventions,
-        updatedAt: serverTimestamp(),
+        updatedAt: this.firebaseStore.timestamp(),
       },
       { merge: true },
     );
@@ -248,11 +241,12 @@ export class ExceptionalOperationsComponent implements OnDestroy {
 
     interventions.splice(index, 1);
 
-    await setDoc(
-      doc(db, "exceptionalOperations", currentOperation.id),
+    await this.firebaseStore.setDocument(
+      "exceptionalOperations",
+      currentOperation.id,
       {
         interventions,
-        updatedAt: serverTimestamp(),
+        updatedAt: this.firebaseStore.timestamp(),
       },
       { merge: true },
     );

@@ -1,10 +1,8 @@
 import { CommonModule } from "@angular/common";
 import { Component, EventEmitter, OnDestroy, Output } from "@angular/core";
 import { FormsModule, NgForm } from "@angular/forms";
-import { FirebaseError } from "firebase/app";
-import { Unsubscribe, addDoc, collection, deleteDoc, doc, onSnapshot, setDoc } from "firebase/firestore";
-import { db } from "../../firebase";
-import { ScheduleDay, ScheduleRule, } from "./settings.models";
+import { FirebaseStore, StoreUnsubscribe } from "../../store/firebase.store";
+import { ScheduleDay, ScheduleRule } from "./settings.models";
 
 @Component({
   selector: "app-schedules-settings",
@@ -17,16 +15,7 @@ export class SchedulesSettingsComponent implements OnDestroy {
   @Output() error = new EventEmitter<string>();
   @Output() success = new EventEmitter<string>();
 
-  readonly days: ScheduleDay[] = [
-    "Lundi",
-    "Mardi",
-    "Mercredi",
-    "Jeudi",
-    "Vendredi",
-    "Samedi",
-    "Dimanche",
-    "Jour férié",
-  ];
+  readonly days: ScheduleDay[] = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche", "Jour férié"];
 
   editingScheduleId: string | null = null;
   schedules: ScheduleRule[] = [];
@@ -39,22 +28,20 @@ export class SchedulesSettingsComponent implements OnDestroy {
     standbyPrime: 0,
     interventionPrime: 0,
   };
-  
   scheduleByDay: Record<string, Omit<ScheduleRule, "id">> = {};
 
-  constructor() {
-    this.initializeScheduleByDay();
-  }
+  private readonly unsubscribe: StoreUnsubscribe;
 
-  private readonly unsubscribe: Unsubscribe = onSnapshot(
-    collection(db, "scheduleRules"),
-    (snapshot) => {
-      this.schedules = snapshot.docs
-        .map((document) => ({ id: document.id, ...document.data() }) as ScheduleRule)
-        .sort((first, second) => this.days.indexOf(first.day) - this.days.indexOf(second.day));
-    },
-    (error) => this.emitError(error),
-  );
+  constructor(private readonly firebaseStore: FirebaseStore) {
+    this.initializeScheduleByDay();
+    this.unsubscribe = this.firebaseStore.watchCollection<ScheduleRule>(
+      "scheduleRules",
+      (schedules) => {
+        this.schedules = schedules.sort((first, second) => this.days.indexOf(first.day) - this.days.indexOf(second.day));
+      },
+      (error) => this.emitError(error),
+    );
+  }
 
   ngOnDestroy(): void {
     this.unsubscribe();
@@ -73,23 +60,6 @@ export class SchedulesSettingsComponent implements OnDestroy {
     };
   }
 
-  private initializeScheduleByDay(): void {
-    this.scheduleByDay = Object.fromEntries(
-      this.days.map((day) => [
-        day,
-        {
-          day,
-          hoStart: "08:00",
-          hoEnd: "18:00",
-          hnoStart: "18:00",
-          hnoEnd: "08:00",
-          standbyPrime: 0,
-          interventionPrime: 0,
-        },
-      ]),
-    );
-  }
-
   async saveSchedule(form: NgForm): Promise<void> {
     if (form.invalid) {
       return;
@@ -103,9 +73,9 @@ export class SchedulesSettingsComponent implements OnDestroy {
 
     try {
       if (this.editingScheduleId) {
-        await setDoc(doc(db, "scheduleRules", this.editingScheduleId), payload);
+        await this.firebaseStore.setDocument("scheduleRules", this.editingScheduleId, payload);
       } else {
-        await addDoc(collection(db, "scheduleRules"), payload);
+        await this.firebaseStore.addDocument("scheduleRules", payload);
       }
 
       this.resetScheduleForm(form);
@@ -117,7 +87,7 @@ export class SchedulesSettingsComponent implements OnDestroy {
 
   async deleteSchedule(schedule: ScheduleRule): Promise<void> {
     try {
-      await deleteDoc(doc(db, "scheduleRules", schedule.id));
+      await this.firebaseStore.deleteDocument("scheduleRules", schedule.id);
       this.success.emit("Horaire supprimé.");
     } catch (error) {
       this.emitError(error);
@@ -138,19 +108,11 @@ export class SchedulesSettingsComponent implements OnDestroy {
     form?.resetForm(this.scheduleForm);
   }
 
-  private emitError(error: unknown): void {
-    this.error.emit(
-      error instanceof FirebaseError
-        ? `Erreur Firebase (${error.code}) : ${error.message}`
-        : "Erreur pendant l'enregistrement de l'horaire.",
-    );
-  }
-
   async saveAllSchedules(): Promise<void> {
     try {
       const operations = this.days.map((day) => {
         const schedule = this.scheduleByDay[day];
-  
+
         const payload = {
           day,
           hoStart: schedule.hoStart,
@@ -160,15 +122,36 @@ export class SchedulesSettingsComponent implements OnDestroy {
           standbyPrime: Number(schedule.standbyPrime) || 0,
           interventionPrime: Number(schedule.interventionPrime) || 0,
         };
-  
-        return setDoc(doc(db, "scheduleRules", day), payload);
+
+        return this.firebaseStore.setDocument("scheduleRules", day, payload);
       });
-  
+
       await Promise.all(operations);
-  
+
       this.success.emit("Horaires enregistrés.");
     } catch (error) {
       this.emitError(error);
     }
+  }
+
+  private initializeScheduleByDay(): void {
+    this.scheduleByDay = Object.fromEntries(
+      this.days.map((day) => [
+        day,
+        {
+          day,
+          hoStart: "08:00",
+          hoEnd: "18:00",
+          hnoStart: "18:00",
+          hnoEnd: "08:00",
+          standbyPrime: 0,
+          interventionPrime: 0,
+        },
+      ]),
+    );
+  }
+
+  private emitError(error: unknown): void {
+    this.error.emit(this.firebaseStore.firebaseErrorMessage(error, "Erreur pendant l'enregistrement de l'horaire."));
   }
 }

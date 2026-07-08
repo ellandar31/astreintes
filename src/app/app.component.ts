@@ -1,23 +1,13 @@
 import { CommonModule } from "@angular/common";
 import { Component } from "@angular/core";
 import { FormsModule, NgForm } from "@angular/forms";
-import {
-  Auth,
-  User,
-  createUserWithEmailAndPassword,
-  onAuthStateChanged,
-  signInWithEmailAndPassword,
-  signInWithPopup,
-  signOut,
-} from "firebase/auth";
-import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
-import { auth, db, googleProvider } from "./firebase";
 import { ExceptionalOperationsComponent } from "./pages/exceptionnel/exceptional-operations.component";
 import { ProfilePageComponent } from "./pages/profile-page.component";
 import { RegularCalendarComponent } from "./pages/regular/regular-calendar.component";
 import { SettingsPageComponent } from "./pages/settings-page.component";
 import { EmptyViewComponent } from "./shared/empty-view.component";
 import { ModalComponent } from "./shared/modal.component";
+import { AuthenticatedUser, FirebaseStore } from "./store/firebase.store";
 
 const tabs = ["Régulier", "Exceptionnel", "Validation", "RH"] as const;
 type TabName = (typeof tabs)[number];
@@ -40,8 +30,6 @@ type ModalView = "profile" | "settings";
   styleUrl: "./app.component.css",
 })
 export class AppComponent {
-  private readonly auth: Auth = auth;
-
   readonly tabs = tabs;
   activeTab: TabName = "Régulier";
   email = "";
@@ -51,19 +39,19 @@ export class AppComponent {
   loadingSession = true;
   modalView: ModalView | null = null;
   password = "";
-  user: User | null = null;
+  user: AuthenticatedUser | null = null;
 
   get displayName(): string {
     return this.user?.displayName || this.user?.email || "Utilisateur";
   }
 
-  constructor() {
-    onAuthStateChanged(this.auth, (currentUser) => {
+  constructor(private readonly firebaseStore: FirebaseStore) {
+    this.firebaseStore.onAuthStateChanged((currentUser) => {
       this.user = currentUser;
       this.loadingSession = false;
 
       if (currentUser) {
-        void this.registerAuthenticatedUser(currentUser);
+        void this.firebaseStore.registerAuthenticatedUser(currentUser);
       }
     });
   }
@@ -94,9 +82,9 @@ export class AppComponent {
 
     try {
       if (this.isCreatingAccount) {
-        await createUserWithEmailAndPassword(this.auth, this.email, this.password);
+        await this.firebaseStore.createUserWithEmailAndPassword(this.email, this.password);
       } else {
-        await signInWithEmailAndPassword(this.auth, this.email, this.password);
+        await this.firebaseStore.signInWithEmailAndPassword(this.email, this.password);
       }
     } catch {
       this.error = "Connexion impossible. Vérifiez l'adresse email et le mot de passe.";
@@ -110,7 +98,7 @@ export class AppComponent {
     this.isSubmitting = true;
 
     try {
-      await signInWithPopup(this.auth, googleProvider);
+      await this.firebaseStore.signInWithGoogle();
     } catch {
       this.error = "Connexion Google impossible pour le moment.";
     } finally {
@@ -119,32 +107,11 @@ export class AppComponent {
   }
 
   async logout(): Promise<void> {
-    await signOut(this.auth);
+    await this.firebaseStore.signOut();
   }
 
   toggleAccountMode(): void {
     this.isCreatingAccount = !this.isCreatingAccount;
     this.error = "";
-  }
-
-  private async registerAuthenticatedUser(currentUser: User): Promise<void> {
-    const userReference = doc(db, "users", currentUser.uid);
-    const snapshot = await getDoc(userReference);
-    const userPayload = {
-      uid: currentUser.uid,
-      email: currentUser.email || "",
-      displayName: currentUser.displayName || "",
-      lastLoginAt: serverTimestamp(),
-    };
-
-    if (snapshot.exists()) {
-      await setDoc(userReference, userPayload, { merge: true });
-      return;
-    }
-
-    await setDoc(userReference, {
-      ...userPayload,
-      role: 1,
-    });
   }
 }

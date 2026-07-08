@@ -1,9 +1,7 @@
 import { CommonModule } from "@angular/common";
 import { Component, EventEmitter, OnDestroy, Output } from "@angular/core";
 import { FormsModule, NgForm } from "@angular/forms";
-import { FirebaseError } from "firebase/app";
-import { Unsubscribe, collection, deleteDoc, doc, onSnapshot, setDoc } from "firebase/firestore";
-import { db } from "../../firebase";
+import { FirebaseStore, StoreUnsubscribe } from "../../store/firebase.store";
 import { PublicHoliday } from "./settings.models";
 
 type HolidaySourceResponse = Record<string, string>;
@@ -48,15 +46,17 @@ export class HolidaysSettingsComponent implements OnDestroy {
     label: "",
   };
 
-  private readonly unsubscribe: Unsubscribe = onSnapshot(
-    collection(db, "publicHolidays"),
-    (snapshot) => {
-      this.holidays = snapshot.docs
-        .map((document) => ({ id: document.id, ...document.data() }) as PublicHoliday)
-        .sort((first, second) => first.date.localeCompare(second.date));
-    },
-    (error) => this.emitError(error),
-  );
+  private readonly unsubscribe: StoreUnsubscribe;
+
+  constructor(private readonly firebaseStore: FirebaseStore) {
+    this.unsubscribe = this.firebaseStore.watchCollection<PublicHoliday>(
+      "publicHolidays",
+      (holidays) => {
+        this.holidays = holidays.sort((first, second) => first.date.localeCompare(second.date));
+      },
+      (error) => this.emitError(error),
+    );
+  }
 
   ngOnDestroy(): void {
     this.unsubscribe();
@@ -95,7 +95,7 @@ export class HolidaysSettingsComponent implements OnDestroy {
     try {
       await Promise.all(
         this.importedHolidays.map((holiday) =>
-          setDoc(doc(db, "publicHolidays", holiday.id), {
+          this.firebaseStore.setDocument("publicHolidays", holiday.id, {
             date: holiday.date,
             label: holiday.label,
             zone: holiday.zone,
@@ -118,7 +118,7 @@ export class HolidaysSettingsComponent implements OnDestroy {
     const holiday = this.toHoliday(this.manualForm.zone, this.manualForm.date, this.manualForm.label, "manual");
 
     try {
-      await setDoc(doc(db, "publicHolidays", holiday.id), {
+      await this.firebaseStore.setDocument("publicHolidays", holiday.id, {
         date: holiday.date,
         label: holiday.label,
         zone: holiday.zone,
@@ -137,7 +137,7 @@ export class HolidaysSettingsComponent implements OnDestroy {
 
   async deleteHoliday(holiday: PublicHoliday): Promise<void> {
     try {
-      await deleteDoc(doc(db, "publicHolidays", holiday.id));
+      await this.firebaseStore.deleteDocument("publicHolidays", holiday.id);
       this.success.emit("Jour férié supprimé.");
     } catch (error) {
       this.emitError(error);
@@ -160,11 +160,9 @@ export class HolidaysSettingsComponent implements OnDestroy {
 
   private emitError(error: unknown): void {
     this.error.emit(
-      error instanceof FirebaseError
-        ? `Erreur Firebase (${error.code}) : ${error.message}`
-        : error instanceof Error
-          ? error.message
-          : "Erreur pendant la gestion des jours fériés.",
+      error instanceof Error && !this.firebaseStore.isFirebaseError(error)
+        ? error.message
+        : this.firebaseStore.firebaseErrorMessage(error, "Erreur pendant la gestion des jours fériés."),
     );
   }
 }

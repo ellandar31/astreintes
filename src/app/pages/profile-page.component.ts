@@ -1,5 +1,5 @@
 import { Component, Input } from "@angular/core";
-import { User } from "firebase/auth";
+import { AuthenticatedUser } from "../store/firebase.store";
 
 @Component({
   selector: "app-profile-page",
@@ -8,7 +8,7 @@ import { User } from "firebase/auth";
   styleUrl: "./profile-page.component.css",
 })
 export class ProfilePageComponent {
-  @Input({ required: true }) user: User | null = null;
+  @Input({ required: true }) user: AuthenticatedUser | null = null;
 
   get displayName(): string {
     return this.user?.displayName || "Non renseigné";
