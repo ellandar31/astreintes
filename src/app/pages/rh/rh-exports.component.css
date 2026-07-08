@@ -20,7 +20,7 @@
 }
 
 .rh-panel-header h2,
-.export-item h3 {
+.export-section h3 {
   color: #1f2937;
   margin: 0;
 }
@@ -29,28 +29,56 @@
   min-width: 180px;
 }
 
-.export-grid {
-  display: grid;
-  gap: 12px;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-}
-
-.export-item {
+.export-section {
   border: 1px solid #dde5eb;
   border-radius: 8px;
   display: grid;
-  gap: 14px;
+  gap: 12px;
   padding: 14px;
 }
 
-.export-item p {
+.export-section p {
   color: #607080;
   margin: 6px 0 0;
 }
 
-.export-actions {
+.export-section-heading {
   align-items: center;
   display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
+  justify-content: space-between;
+}
+
+.export-table-shell {
+  border: 1px solid #dde5eb;
+  border-radius: 8px;
+  overflow: auto;
+}
+
+.export-table {
+  border-collapse: collapse;
+  min-width: 760px;
+  width: 100%;
+}
+
+.export-table th,
+.export-table td {
+  border-bottom: 1px solid #dde5eb;
+  padding: 9px 10px;
+  text-align: left;
+}
+
+.export-table th {
+  background: #f7fafb;
+  color: #526171;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+}
+
+.export-table tr:last-child td {
+  border-bottom: 0;
+}
+
+.compact-button {
+  min-height: 32px;
+  padding: 6px 10px;
 }

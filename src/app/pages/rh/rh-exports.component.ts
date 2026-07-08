@@ -119,6 +119,37 @@ export class RhExportsComponent implements OnDestroy {
     this.exportMessage = `${operations.length} opération(s) exportée(s) avec le modèle ${template.fileName}.`;
   }
 
+  exportOperation(templateId: ExportTemplateId, operation: ExportOperation): void {
+    this.exportMessage = "";
+    const template = this.templateFor(templateId);
+
+    if (!template.fileName) {
+      this.exportMessage = "Aucun modèle Word n'est configuré pour cet export dans les paramètres RH.";
+      return;
+    }
+
+    const html = this.buildWordHtml(template, [operation]);
+    const blob = new Blob(["\ufeff", html], { type: "application/msword;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${this.slug(operation.title)}_${this.selectedMonth}.doc`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+
+    this.exportMessage = `Export généré pour ${operation.title}.`;
+  }
+
+  exportRows(templateId: ExportTemplateId): ExportOperation[] {
+    return this.operationsForTemplate(templateId);
+  }
+
+  templateFor(templateId: ExportTemplateId): WordExportTemplate {
+    return this.templates.find((template) => template.id === templateId) || this.templates[0];
+  }
+
   private operationsForTemplate(templateId: ExportTemplateId): ExportOperation[] {
     if (templateId === "regular") {
       return this.regularPeriods
@@ -340,7 +371,7 @@ export class RhExportsComponent implements OnDestroy {
     };
   }
 
-  private formatRange(startValue: string, endValue: string): string {
+  formatRange(startValue: string, endValue: string): string {
     return `${this.formatDate(startValue)} ${this.formatTime(startValue)} - ${this.formatDate(endValue)} ${this.formatTime(endValue)}`;
   }
 

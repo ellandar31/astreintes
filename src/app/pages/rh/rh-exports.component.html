@@ -2,7 +2,7 @@
   <header class="rh-panel-header">
     <div>
       <p class="eyebrow">Exports RH</p>
-      <h2 id="rh-exports-title">Exports Word</h2>
+      <h2 id="rh-exports-title">Exports Word par astreinte</h2>
     </div>
 
     <label class="period-control">
@@ -11,28 +11,144 @@
     </label>
   </header>
 
-  <div class="export-grid">
-    @for (template of templates; track template.id) {
-      <article class="export-item">
-        <div>
-          <h3>{{ template.label }}</h3>
-          <p>
-            @if (template.fileName) {
-              Modèle configuré : {{ template.fileName }}
-            } @else {
-              Aucun modèle configuré dans les paramètres RH
-            }
-          </p>
-        </div>
+  <section class="export-section" aria-labelledby="regular-export-title">
+    <div class="export-section-heading">
+      <div>
+        <h3 id="regular-export-title">Astreintes régulières</h3>
+        <p>{{ templateFor("regular").fileName || "Aucun modèle Word configuré" }}</p>
+      </div>
+    </div>
 
-        <div class="export-actions">
-          <button class="primary-button" [disabled]="!template.fileName" (click)="exportTemplate(template)" type="button">
-            Exporter
-          </button>
-        </div>
-      </article>
-    }
-  </div>
+    <div class="export-table-shell">
+      <table class="export-table">
+        <thead>
+          <tr>
+            <th>Astreinte</th>
+            <th>Période</th>
+            <th>Interventions</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (operation of exportRows("regular"); track operation.title + operation.forecastStartDate) {
+            <tr>
+              <td>{{ operation.title }}</td>
+              <td>{{ formatRange(operation.forecastStartDate, operation.forecastEndDate) }}</td>
+              <td>{{ operation.interventions.length }}</td>
+              <td>
+                <button
+                  class="primary-button compact-button"
+                  [disabled]="!templateFor('regular').fileName"
+                  (click)="exportOperation('regular', operation)"
+                  type="button"
+                >
+                  Exporter
+                </button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="4">Aucune astreinte régulière sur la période.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="export-section" aria-labelledby="exceptional-on-call-export-title">
+    <div class="export-section-heading">
+      <div>
+        <h3 id="exceptional-on-call-export-title">Astreintes exceptionnelles</h3>
+        <p>{{ templateFor("exceptionalOnCall").fileName || "Aucun modèle Word configuré" }}</p>
+      </div>
+    </div>
+
+    <div class="export-table-shell">
+      <table class="export-table">
+        <thead>
+          <tr>
+            <th>Opération</th>
+            <th>Initiateur</th>
+            <th>Période</th>
+            <th>Interventions</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (operation of exportRows("exceptionalOnCall"); track operation.title + operation.forecastStartDate) {
+            <tr>
+              <td>{{ operation.title }}</td>
+              <td>{{ operation.initiatorName || "-" }}</td>
+              <td>{{ formatRange(operation.forecastStartDate, operation.forecastEndDate) }}</td>
+              <td>{{ operation.interventions.length }}</td>
+              <td>
+                <button
+                  class="primary-button compact-button"
+                  [disabled]="!templateFor('exceptionalOnCall').fileName"
+                  (click)="exportOperation('exceptionalOnCall', operation)"
+                  type="button"
+                >
+                  Exporter
+                </button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="5">Aucune astreinte exceptionnelle sur la période.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="export-section" aria-labelledby="exceptional-work-export-title">
+    <div class="export-section-heading">
+      <div>
+        <h3 id="exceptional-work-export-title">Travaux supplémentaires</h3>
+        <p>{{ templateFor("exceptionalWork").fileName || "Aucun modèle Word configuré" }}</p>
+      </div>
+    </div>
+
+    <div class="export-table-shell">
+      <table class="export-table">
+        <thead>
+          <tr>
+            <th>Opération</th>
+            <th>Initiateur</th>
+            <th>Période</th>
+            <th>Interventions</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (operation of exportRows("exceptionalWork"); track operation.title + operation.forecastStartDate) {
+            <tr>
+              <td>{{ operation.title }}</td>
+              <td>{{ operation.initiatorName || "-" }}</td>
+              <td>{{ formatRange(operation.forecastStartDate, operation.forecastEndDate) }}</td>
+              <td>{{ operation.interventions.length }}</td>
+              <td>
+                <button
+                  class="primary-button compact-button"
+                  [disabled]="!templateFor('exceptionalWork').fileName"
+                  (click)="exportOperation('exceptionalWork', operation)"
+                  type="button"
+                >
+                  Exporter
+                </button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="5">Aucun travail supplémentaire sur la période.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
 
   @if (exportMessage) {
     <p class="success-message">{{ exportMessage }}</p>
