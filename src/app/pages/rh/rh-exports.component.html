@@ -36,14 +36,23 @@
               <td>{{ formatRange(operation.forecastStartDate, operation.forecastEndDate) }}</td>
               <td>{{ operation.interventions.length }}</td>
               <td>
-                <button
-                  class="primary-button compact-button"
-                  [disabled]="!templateFor('regular').fileName"
-                  (click)="exportOperation('regular', operation)"
-                  type="button"
-                >
-                  Exporter
-                </button>
+                <div class="action-buttons">
+                  <button
+                    class="primary-button compact-button"
+                    [disabled]="!templateFor('regular').fileName"
+                    (click)="exportOperation('regular', operation)"
+                    type="button"
+                  >
+                    Word
+                  </button>
+                  <button
+                    class="secondary-button compact-button"
+                    (click)="exportExcelOperation('regular', operation)"
+                    type="button"
+                  >
+                    Excel
+                  </button>
+                </div>
               </td>
             </tr>
           } @empty {
@@ -83,14 +92,23 @@
               <td>{{ formatRange(operation.forecastStartDate, operation.forecastEndDate) }}</td>
               <td>{{ operation.interventions.length }}</td>
               <td>
-                <button
-                  class="primary-button compact-button"
-                  [disabled]="!templateFor('exceptionalOnCall').fileName"
-                  (click)="exportOperation('exceptionalOnCall', operation)"
-                  type="button"
-                >
-                  Exporter
-                </button>
+                <div class="action-buttons">
+                  <button
+                    class="primary-button compact-button"
+                    [disabled]="!templateFor('exceptionalOnCall').fileName"
+                    (click)="exportOperation('exceptionalOnCall', operation)"
+                    type="button"
+                  >
+                    Word
+                  </button>
+                  <button
+                    class="secondary-button compact-button"
+                    (click)="exportExcelOperation('exceptionalOnCall', operation)"
+                    type="button"
+                  >
+                    Excel
+                  </button>
+                </div>
               </td>
             </tr>
           } @empty {
@@ -130,14 +148,23 @@
               <td>{{ formatRange(operation.forecastStartDate, operation.forecastEndDate) }}</td>
               <td>{{ operation.interventions.length }}</td>
               <td>
-                <button
-                  class="primary-button compact-button"
-                  [disabled]="!templateFor('exceptionalWork').fileName"
-                  (click)="exportOperation('exceptionalWork', operation)"
-                  type="button"
-                >
-                  Exporter
-                </button>
+                <div class="action-buttons">
+                  <button
+                    class="primary-button compact-button"
+                    [disabled]="!templateFor('exceptionalWork').fileName"
+                    (click)="exportOperation('exceptionalWork', operation)"
+                    type="button"
+                  >
+                    Word
+                  </button>
+                  <button
+                    class="secondary-button compact-button"
+                    (click)="exportExcelOperation('exceptionalWork', operation)"
+                    type="button"
+                  >
+                    Excel
+                  </button>
+                </div>
               </td>
             </tr>
           } @empty {

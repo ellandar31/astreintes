@@ -82,3 +82,10 @@
   min-height: 32px;
   padding: 6px 10px;
 }
+
+.action-buttons {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
