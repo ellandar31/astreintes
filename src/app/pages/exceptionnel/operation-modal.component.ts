@@ -4,6 +4,7 @@ import { FormsModule, NgForm } from "@angular/forms";
 import { Unsubscribe, collection, onSnapshot } from "firebase/firestore";
 import { db } from "../../firebase";
 import { ModalComponent } from "../../shared/modal.component";
+import { createEmptyVisa } from "../../shared/visa.models";
 import {
   ExceptionalIntervention,
   ExceptionalOperation,
@@ -124,11 +125,6 @@ export class OperationModalComponent implements OnDestroy {
   }
 
   private createEmptyVisa(): SignatureVisa {
-    return {
-      signed: false,
-      signedAt: "",
-      signedByName: "",
-      signedByUid: "",
-    };
+    return createEmptyVisa();
   }
 }

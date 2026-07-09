@@ -4,6 +4,7 @@ import { FormsModule } from "@angular/forms";
 import { FirebaseError } from "firebase/app";
 import { Unsubscribe, addDoc, collection, deleteDoc, doc, onSnapshot, serverTimestamp, updateDoc } from "firebase/firestore";
 import { db } from "../../firebase";
+import { createEmptyVisa } from "../../shared/visa.models";
 import {
   RegularIntervention,
   RegularInterventionForm,
@@ -245,6 +246,8 @@ export class RegularCalendarComponent implements OnDestroy {
       await updateDoc(doc(db, "regularOnCallPeriods", this.editingPeriodId), {
         ...form,
         teamId: this.selectedTeamId,
+        agentVisa: this.periods.find((period) => period.id === this.editingPeriodId)?.agentVisa || createEmptyVisa(),
+        directorVisa: this.periods.find((period) => period.id === this.editingPeriodId)?.directorVisa || createEmptyVisa(),
         updatedAt: serverTimestamp(),
       });
 
@@ -255,6 +258,8 @@ export class RegularCalendarComponent implements OnDestroy {
     await addDoc(collection(db, "regularOnCallPeriods"), {
       ...form,
       teamId: this.selectedTeamId,
+      agentVisa: createEmptyVisa(),
+      directorVisa: createEmptyVisa(),
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     });
@@ -284,6 +289,7 @@ export class RegularCalendarComponent implements OnDestroy {
         comment: form.comment.trim(),
         periodId: parentPeriod.id,
         teamId: parentPeriod.teamId,
+        agentVisa: this.interventions.find((intervention) => intervention.id === this.editingInterventionId)?.agentVisa || createEmptyVisa(),
         updatedAt: serverTimestamp(),
       };
 

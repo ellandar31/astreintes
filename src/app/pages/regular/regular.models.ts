@@ -1,3 +1,5 @@
+import { SignatureVisa } from "../../shared/visa.models";
+
 export interface RegularTeam {
   id: string;
   name: string;
@@ -18,6 +20,8 @@ export interface RegularOnCallPeriod {
   userEmail: string;
   startDate: string;
   endDate: string;
+  agentVisa?: SignatureVisa;
+  directorVisa?: SignatureVisa;
 }
 
 export interface RegularOnCallPeriodForm {
@@ -38,6 +42,7 @@ export interface RegularIntervention {
   startDate: string;
   endDate: string;
   comment: string;
+  agentVisa?: SignatureVisa;
 }
 
 export interface RegularInterventionForm {

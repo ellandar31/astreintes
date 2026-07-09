@@ -32,3 +32,89 @@
   color: #1f2937;
   overflow-wrap: anywhere;
 }
+
+.signature-form {
+  display: grid;
+  gap: 14px;
+}
+
+.signature-form label {
+  color: #263442;
+  display: grid;
+  font-weight: 800;
+  gap: 6px;
+}
+
+.signature-form input[type="text"],
+.signature-form input[type="file"] {
+  border: 1px solid #cbd6df;
+  border-radius: 6px;
+  min-height: 38px;
+  padding: 8px 10px;
+}
+
+.profile-check {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+}
+
+.signature-modes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.signature-modes button {
+  background: #eef4f6;
+  border: 1px solid #cbd6df;
+  border-radius: 6px;
+  color: #263442;
+  cursor: pointer;
+  min-height: 34px;
+  padding: 7px 12px;
+}
+
+.signature-modes button.active {
+  background: #315f6b;
+  border-color: #315f6b;
+  color: #ffffff;
+}
+
+.signature-pad-shell {
+  display: grid;
+  gap: 8px;
+}
+
+.signature-pad-shell canvas {
+  border: 1px solid #cbd6df;
+  border-radius: 6px;
+  height: 120px;
+  touch-action: none;
+  width: 100%;
+}
+
+.signature-preview {
+  border: 1px solid #dde5eb;
+  border-radius: 8px;
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+}
+
+.signature-preview span {
+  color: #607080;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.signature-preview img {
+  max-height: 90px;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+.compact-button {
+  min-height: 32px;
+  padding: 6px 10px;
+}

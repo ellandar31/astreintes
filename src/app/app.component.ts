@@ -17,6 +17,7 @@ import { ProfilePageComponent } from "./pages/profile/profile-page.component";
 import { RegularCalendarComponent } from "./pages/regular/regular-calendar.component";
 import { RhPageComponent } from "./pages/rh/rh-page.component";
 import { SettingsPageComponent } from "./pages/settings/settings-page.component";
+import { ValidationPageComponent } from "./pages/validation/validation-page.component";
 import { EmptyViewComponent } from "./shared/empty-view.component";
 import { ModalComponent } from "./shared/modal.component";
 
@@ -37,6 +38,7 @@ type ModalView = "profile" | "settings";
     RegularCalendarComponent,
     RhPageComponent,
     SettingsPageComponent,
+    ValidationPageComponent,
   ],
   templateUrl: "./app.component.html",
   styleUrl: "./app.component.css",

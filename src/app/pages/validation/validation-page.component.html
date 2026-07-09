@@ -1,0 +1,160 @@
+<section class="validation-page" aria-labelledby="validation-title">
+  <header class="validation-header">
+    <div>
+      <p class="eyebrow">Validation</p>
+      <h2 id="validation-title">Visas à traiter</h2>
+    </div>
+
+    @if (canSelectUser) {
+      <label>
+        Utilisateur
+        <select [(ngModel)]="selectedUserId" name="selectedUser">
+          @for (item of users; track item.id) {
+            <option [value]="item.id">{{ userLabel(item) }}</option>
+          }
+        </select>
+      </label>
+    }
+  </header>
+
+  @for (section of validationSections; track section.title) {
+    <section class="validation-section" [attr.aria-label]="section.title">
+      <h3>{{ section.title }}</h3>
+
+      <div class="validation-table-shell">
+        <table class="validation-table">
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>Élément</th>
+              <th>Personne</th>
+              <th>Période</th>
+              <th>Visa</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of section.items; track item.id) {
+              <tr>
+                <td>{{ item.category }}</td>
+                <td>{{ item.title }}</td>
+                <td>{{ item.userLabel }}</td>
+                <td>{{ formatDateTime(item.startDate) }} - {{ formatDateTime(item.endDate) }}</td>
+                <td>
+                  @if (item.visa.signed) {
+                    <span class="signed">Signé le {{ formatDateTime(item.visa.signedAt) }}</span>
+                  } @else {
+                    <span class="pending">À signer</span>
+                  }
+                </td>
+                <td>
+                  <div class="actions">
+                    <button class="secondary-button compact-button" (click)="openItem(item)" type="button">Consulter</button>
+                    <button class="primary-button compact-button" (click)="signItem(item)" type="button">
+                      {{ item.visa.signed ? "Reviser" : "Viser" }}
+                    </button>
+                    @if (canDeleteVisa(item)) {
+                      <button class="danger-button compact-button" (click)="deleteVisa(item)" type="button">Supprimer</button>
+                    }
+                  </div>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="6">{{ section.emptyText }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+  }
+
+  @if (validationMessage) {
+    <p class="success-message">{{ validationMessage }}</p>
+  }
+</section>
+
+@if (selectedItem) {
+  <app-modal title="Consultation" size="large" (closed)="closeItem()">
+    <section class="item-details">
+      <p class="eyebrow">{{ selectedItem.category }}</p>
+      <h3>{{ selectedItem.title }}</h3>
+
+      <dl>
+        <div>
+          <dt>Personne</dt>
+          <dd>{{ selectedItem.userLabel }}</dd>
+        </div>
+        <div>
+          <dt>Début</dt>
+          <dd>{{ formatDateTime(selectedItem.startDate) }}</dd>
+        </div>
+        <div>
+          <dt>Fin</dt>
+          <dd>{{ formatDateTime(selectedItem.endDate) }}</dd>
+        </div>
+        <div>
+          <dt>Visa actuel</dt>
+          <dd>
+            @if (selectedItem.visa.signed) {
+              {{ selectedItem.visa.signedByName }} - {{ formatDateTime(selectedItem.visa.signedAt) }}
+            } @else {
+              Non signé
+            }
+          </dd>
+        </div>
+      </dl>
+
+      @if (selectedItem.visa.signatureValue && selectedItem.visa.signatureMode !== "name") {
+        <img class="visa-preview" [src]="selectedItem.visa.signatureValue" alt="Visa" />
+      } @else if (selectedItem.visa.signed) {
+        <p class="name-visa">{{ selectedItem.visa.signatureValue || selectedItem.visa.signedByName }}</p>
+      }
+
+      <section class="progress-section" aria-labelledby="visa-progress-title">
+        <h4 id="visa-progress-title">Avancement des visas</h4>
+
+        <div class="progress-table-shell">
+          <table class="progress-table">
+            <thead>
+              <tr>
+                <th>Rôle</th>
+                <th>Personne</th>
+                <th>Statut</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (progress of selectedItemVisaProgress; track progress.id) {
+                <tr>
+                  <td>{{ progress.role }}</td>
+                  <td>{{ progress.userLabel }}</td>
+                  <td>
+                    @if (progress.visa.signed) {
+                      <span class="signed">Signé par {{ progress.visa.signedByName }}</span>
+                    } @else {
+                      <span class="pending">À signer</span>
+                    }
+                  </td>
+                  <td>{{ progress.visa.signed ? formatDateTime(progress.visa.signedAt) : "-" }}</td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="4">Aucun autre visa associé.</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <div class="modal-actions">
+        <button class="primary-button" (click)="signItem(selectedItem)" type="button">Mettre mon visa</button>
+        @if (canDeleteVisa(selectedItem)) {
+          <button class="danger-button" (click)="deleteVisa(selectedItem)" type="button">Supprimer mon visa</button>
+        }
+      </div>
+    </section>
+  </app-modal>
+}

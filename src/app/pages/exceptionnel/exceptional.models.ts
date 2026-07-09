@@ -1,3 +1,6 @@
+export type { SignatureVisa } from "../../shared/visa.models";
+import type { SignatureVisa } from "../../shared/visa.models";
+
 export type ExceptionalOperationType = "astreinte" | "travaux";
 export type ExceptionalOperationStatus =
   | "Brouillon"
@@ -11,13 +14,6 @@ export type SortField = "initiatorName" | "title" | "startDate" | "status" | "ty
 export type SortDirection = "asc" | "desc";
 export type ModalMode = "create-astreinte" | "create-travaux" | "edit" | "intervention";
 export type FilterField = SortField | null;
-
-export interface SignatureVisa {
-  signed: boolean;
-  signedAt: string;
-  signedByName: string;
-  signedByUid: string;
-}
 
 export interface OperationParticipant {
   userId: string;
@@ -62,6 +58,8 @@ export interface ExceptionalOperation {
   plannedUsers: OperationParticipant[];
   actualUsers: OperationParticipant[];
   visas: {
+    initiatorGlobal?: SignatureVisa;
+    directorGlobal?: SignatureVisa;
     plannedInitiator: SignatureVisa;
     plannedDirector: SignatureVisa;
     actualInitiator: SignatureVisa;

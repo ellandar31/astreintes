@@ -1,0 +1,183 @@
+:host {
+  display: block;
+}
+
+.validation-page {
+  align-content: start;
+  display: grid;
+  gap: 16px;
+  margin: 0 auto;
+  max-width: 1180px;
+  padding: 10px 0 24px;
+}
+
+.validation-header {
+  align-items: end;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  justify-content: space-between;
+}
+
+.validation-header h2 {
+  color: #1f2937;
+  margin: 0;
+}
+
+.validation-header label {
+  color: #263442;
+  display: grid;
+  font-weight: 800;
+  gap: 6px;
+  min-width: 260px;
+}
+
+.validation-header select {
+  border: 1px solid #cbd6df;
+  border-radius: 6px;
+  min-height: 38px;
+  padding: 8px 10px;
+}
+
+.validation-table-shell {
+  background: #ffffff;
+  border: 1px solid #dde5eb;
+  border-radius: 8px;
+  overflow: auto;
+}
+
+.validation-section {
+  display: grid;
+  gap: 10px;
+}
+
+.validation-section h3,
+.progress-section h4 {
+  color: #1f2937;
+  margin: 0;
+}
+
+.validation-table {
+  border-collapse: collapse;
+  min-width: 940px;
+  width: 100%;
+}
+
+.validation-table th,
+.validation-table td {
+  border-bottom: 1px solid #dde5eb;
+  padding: 10px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.validation-table th {
+  background: #f7fafb;
+  color: #526171;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.compact-button {
+  min-height: 32px;
+  padding: 6px 10px;
+}
+
+.signed {
+  color: #1b6b48;
+  font-weight: 800;
+}
+
+.pending {
+  color: #8a5a16;
+  font-weight: 800;
+}
+
+.item-details {
+  display: grid;
+  gap: 14px;
+}
+
+.item-details h3 {
+  color: #1f2937;
+  margin: 0;
+}
+
+.item-details dl {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  margin: 0;
+}
+
+.item-details dt {
+  color: #607080;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.item-details dd {
+  color: #1f2937;
+  margin: 3px 0 0;
+}
+
+.visa-preview {
+  border: 1px solid #dde5eb;
+  border-radius: 8px;
+  max-height: 120px;
+  max-width: 320px;
+  object-fit: contain;
+  padding: 8px;
+}
+
+.name-visa {
+  border: 1px solid #dde5eb;
+  border-radius: 8px;
+  color: #1f2937;
+  font-size: 1.15rem;
+  font-weight: 800;
+  margin: 0;
+  padding: 12px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.progress-section {
+  display: grid;
+  gap: 10px;
+}
+
+.progress-table-shell {
+  border: 1px solid #dde5eb;
+  border-radius: 8px;
+  overflow: auto;
+}
+
+.progress-table {
+  border-collapse: collapse;
+  min-width: 640px;
+  width: 100%;
+}
+
+.progress-table th,
+.progress-table td {
+  border-bottom: 1px solid #dde5eb;
+  padding: 9px 10px;
+  text-align: left;
+}
+
+.progress-table th {
+  background: #f7fafb;
+  color: #526171;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+}

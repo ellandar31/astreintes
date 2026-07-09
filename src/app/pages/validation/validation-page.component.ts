@@ -1,0 +1,624 @@
+import { CommonModule } from "@angular/common";
+import { Component, Input, OnChanges, OnDestroy, SimpleChanges } from "@angular/core";
+import { FormsModule } from "@angular/forms";
+import { User } from "firebase/auth";
+import { Unsubscribe, collection, doc, onSnapshot, setDoc, updateDoc } from "firebase/firestore";
+import { db } from "../../firebase";
+import { ModalComponent } from "../../shared/modal.component";
+import { SignatureProfile, SignatureVisa, createEmptyVisa } from "../../shared/visa.models";
+import { ExceptionalOperation } from "../exceptionnel/exceptional.models";
+import { RegularIntervention, RegularOnCallPeriod } from "../regular/regular.models";
+
+type ValidationItemKind =
+  | "regular-period-agent"
+  | "regular-period-director"
+  | "regular-intervention-agent"
+  | "exceptional-participant-planned"
+  | "exceptional-participant-actual"
+  | "exceptional-intervention-agent"
+  | "exceptional-operation-initiator"
+  | "exceptional-operation-director";
+
+interface AppUser extends SignatureProfile {
+  id: string;
+  uid?: string;
+  displayName: string;
+  email: string;
+  role?: number;
+}
+
+interface ValidationItem {
+  id: string;
+  kind: ValidationItemKind;
+  category: string;
+  title: string;
+  userLabel: string;
+  startDate: string;
+  endDate: string;
+  visa: SignatureVisa;
+  payload: RegularOnCallPeriod | RegularIntervention | ExceptionalOperation;
+  index?: number;
+}
+
+interface VisaProgressItem {
+  id: string;
+  role: string;
+  userLabel: string;
+  visa: SignatureVisa;
+}
+
+interface ValidationSection {
+  title: string;
+  emptyText: string;
+  items: ValidationItem[];
+}
+
+@Component({
+  selector: "app-validation-page",
+  standalone: true,
+  imports: [CommonModule, FormsModule, ModalComponent],
+  templateUrl: "./validation-page.component.html",
+  styleUrl: "./validation-page.component.css",
+})
+export class ValidationPageComponent implements OnChanges, OnDestroy {
+  @Input({ required: true }) user: User | null = null;
+
+  exceptionalOperations: ExceptionalOperation[] = [];
+  profile: AppUser | null = null;
+  regularInterventions: RegularIntervention[] = [];
+  regularPeriods: RegularOnCallPeriod[] = [];
+  selectedItem: ValidationItem | null = null;
+  selectedUserId = "";
+  users: AppUser[] = [];
+  validationMessage = "";
+
+  private readonly unsubscribes: Unsubscribe[] = [
+    onSnapshot(collection(db, "users"), (snapshot) => {
+      this.users = snapshot.docs
+        .map((document) => ({ id: document.id, ...document.data() }) as AppUser)
+        .filter((item) => Boolean(item.email))
+        .sort((first, second) => this.userLabel(first).localeCompare(this.userLabel(second)));
+      this.refreshProfile();
+    }),
+    onSnapshot(collection(db, "regularOnCallPeriods"), (snapshot) => {
+      this.regularPeriods = snapshot.docs.map((document) => ({ id: document.id, ...document.data() }) as RegularOnCallPeriod);
+    }),
+    onSnapshot(collection(db, "regularInterventions"), (snapshot) => {
+      this.regularInterventions = snapshot.docs.map((document) => ({ id: document.id, ...document.data() }) as RegularIntervention);
+    }),
+    onSnapshot(collection(db, "exceptionalOperations"), (snapshot) => {
+      this.exceptionalOperations = snapshot.docs.map((document) => ({ id: document.id, ...document.data() }) as ExceptionalOperation);
+    }),
+  ];
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (!changes["user"]) {
+      return;
+    }
+
+    this.selectedUserId = this.user?.uid || "";
+    this.refreshProfile();
+  }
+
+  ngOnDestroy(): void {
+    this.unsubscribes.forEach((unsubscribe) => unsubscribe());
+  }
+
+  get canSelectUser(): boolean {
+    return Boolean(this.profile?.isDirector || this.profile?.role === 0);
+  }
+
+  get selectedUser(): AppUser | undefined {
+    return this.users.find((item) => item.id === this.selectedUserId || item.uid === this.selectedUserId);
+  }
+
+  get validationItems(): ValidationItem[] {
+    const selectedId = this.selectedUserId || this.user?.uid || "";
+    const selectedEmail = this.selectedUser?.email || this.user?.email || "";
+    const items: ValidationItem[] = [];
+
+    this.regularPeriods.forEach((period) => {
+      if (this.matchesUser(period.userId, period.userEmail, selectedId, selectedEmail)) {
+        items.push({
+          id: `regular-period-agent-${period.id}`,
+          kind: "regular-period-agent",
+          category: "Astreinte régulière",
+          title: period.userName || period.userEmail,
+          userLabel: period.userName || period.userEmail,
+          startDate: period.startDate,
+          endDate: period.endDate,
+          visa: period.agentVisa || createEmptyVisa(),
+          payload: period,
+        });
+      }
+
+      if (this.profile?.isDirector) {
+        items.push({
+          id: `regular-period-director-${period.id}`,
+          kind: "regular-period-director",
+          category: "Astreinte régulière - visa directeur",
+          title: period.userName || period.userEmail,
+          userLabel: period.userName || period.userEmail,
+          startDate: period.startDate,
+          endDate: period.endDate,
+          visa: period.directorVisa || createEmptyVisa(),
+          payload: period,
+        });
+      }
+    });
+
+
+    this.exceptionalOperations.forEach((operation) => {
+      if (this.matchesUser(operation.initiatorUid, operation.initiatorName, selectedId, selectedEmail)) {
+        items.push(this.operationGlobalItem(operation, "exceptional-operation-initiator"));
+      }
+
+      if (this.profile?.isDirector) {
+        items.push(this.operationGlobalItem(operation, "exceptional-operation-director"));
+      }
+
+      (operation.plannedUsers || []).forEach((participant, index) => {
+        if (!this.matchesUser(participant.userId, participant.email, selectedId, selectedEmail)) {
+          return;
+        }
+
+        items.push({
+          id: `exceptional-planned-${operation.id}-${participant.userId}`,
+          kind: "exceptional-participant-planned",
+          category: "Opération exceptionnelle - prévisionnel",
+          title: operation.title,
+          userLabel: participant.displayName || participant.email,
+          startDate: operation.startDate,
+          endDate: operation.forecastEndDate || operation.startDate,
+          visa: participant.visa || createEmptyVisa(),
+          payload: operation,
+          index,
+        });
+      });
+
+      (operation.actualUsers || []).forEach((participant, index) => {
+        if (!this.matchesUser(participant.userId, participant.email, selectedId, selectedEmail)) {
+          return;
+        }
+
+        items.push({
+          id: `exceptional-actual-${operation.id}-${participant.userId}`,
+          kind: "exceptional-participant-actual",
+          category: "Opération exceptionnelle - réel",
+          title: operation.title,
+          userLabel: participant.displayName || participant.email,
+          startDate: operation.actualStartDate || operation.startDate,
+          endDate: operation.actualEndDate || operation.forecastEndDate || operation.startDate,
+          visa: participant.visa || createEmptyVisa(),
+          payload: operation,
+          index,
+        });
+      });
+
+    });
+
+    return items.sort((first, second) => (first.startDate || "").localeCompare(second.startDate || ""));
+  }
+
+  get intervenantVisaItems(): ValidationItem[] {
+    return this.validationItems.filter((item) =>
+      [
+        "regular-period-agent",
+        "exceptional-participant-planned",
+        "exceptional-participant-actual",
+      ].includes(item.kind),
+    );
+  }
+
+  get initiatorVisaItems(): ValidationItem[] {
+    return this.validationItems.filter((item) => item.kind === "exceptional-operation-initiator");
+  }
+
+  get directorVisaItems(): ValidationItem[] {
+    return this.validationItems.filter((item) =>
+      ["regular-period-director", "exceptional-operation-director"].includes(item.kind),
+    );
+  }
+
+  get validationSections(): ValidationSection[] {
+    return [
+      {
+        title: "Visa des intervenants",
+        emptyText: "Aucun visa d'intervenant à afficher pour cet utilisateur.",
+        items: this.intervenantVisaItems,
+      },
+      {
+        title: "Visa des initiateurs",
+        emptyText: "Aucun visa d'initiateur à afficher pour cet utilisateur.",
+        items: this.initiatorVisaItems,
+      },
+      {
+        title: "Visa directeur",
+        emptyText: "Aucun visa directeur à afficher pour cet utilisateur.",
+        items: this.directorVisaItems,
+      },
+    ];
+  }
+
+  get selectedItemVisaProgress(): VisaProgressItem[] {
+    if (!this.selectedItem) {
+      return [];
+    }
+
+    if (this.isRegularPayload(this.selectedItem.payload)) {
+      const payload = this.selectedItem.payload;
+      const period =
+        "periodId" in payload
+          ? this.regularPeriods.find((item) => item.id === payload.periodId)
+          : payload;
+
+      if (!period) {
+        return [];
+      }
+
+      const interventions = this.regularInterventions.filter((intervention) => intervention.periodId === period.id);
+
+      return [
+        {
+          id: `regular-period-agent-${period.id}`,
+          role: "Intervenant astreinte",
+          userLabel: period.userName || period.userEmail,
+          visa: period.agentVisa || createEmptyVisa(),
+        },
+        {
+          id: `regular-period-director-${period.id}`,
+          role: "Directeur astreinte",
+          userLabel: "Directeur",
+          visa: period.directorVisa || createEmptyVisa(),
+        },
+        ...interventions.map((intervention) => ({
+          id: `regular-intervention-${intervention.id}`,
+          role: "Intervenant intervention",
+          userLabel: intervention.userName || intervention.userEmail,
+          visa: intervention.agentVisa || createEmptyVisa(),
+        })),
+      ];
+    }
+
+    const operation = this.selectedItem.payload as ExceptionalOperation;
+
+    return [
+      {
+        id: `exceptional-operation-initiator-${operation.id}`,
+        role: "Initiateur",
+        userLabel: operation.initiatorName || "Initiateur",
+        visa: operation.visas?.initiatorGlobal || operation.visas?.actualInitiator || createEmptyVisa(),
+      },
+      {
+        id: `exceptional-operation-director-${operation.id}`,
+        role: "Directeur",
+        userLabel: "Directeur",
+        visa: operation.visas?.directorGlobal || operation.visas?.actualDirector || createEmptyVisa(),
+      },
+      ...(operation.plannedUsers || []).map((participant) => ({
+        id: `exceptional-planned-${operation.id}-${participant.userId}`,
+        role: "Intervenant prévisionnel",
+        userLabel: participant.displayName || participant.email,
+        visa: participant.visa || createEmptyVisa(),
+      })),
+      ...(operation.actualUsers || []).map((participant) => ({
+        id: `exceptional-actual-${operation.id}-${participant.userId}`,
+        role: "Intervenant réel",
+        userLabel: participant.displayName || participant.email,
+        visa: participant.visa || createEmptyVisa(),
+      })),
+      ...(operation.interventions || []).map((intervention, index) => ({
+        id: `exceptional-intervention-${operation.id}-${index}`,
+        role: "Intervenant intervention",
+        userLabel: intervention.userName || intervention.userEmail,
+        visa: intervention.agentVisa || createEmptyVisa(),
+      })),
+    ];
+  }
+
+  openItem(item: ValidationItem): void {
+    this.selectedItem = item;
+  }
+
+  closeItem(): void {
+    this.selectedItem = null;
+  }
+
+  async signItem(item: ValidationItem): Promise<void> {
+    if (!this.user) {
+      return;
+    }
+
+    const visa = this.buildVisa();
+    let updatedPayload = item.payload;
+
+    if (item.kind === "regular-period-agent" || item.kind === "regular-period-director") {
+      const field = item.kind === "regular-period-agent" ? "agentVisa" : "directorVisa";
+      const period = item.payload as RegularOnCallPeriod;
+      const updatedPeriod = {
+        ...period,
+        [field]: visa,
+      };
+
+      await updateDoc(doc(db, "regularOnCallPeriods", (item.payload as RegularOnCallPeriod).id), {
+        [field]: visa,
+      });
+      this.regularPeriods = this.regularPeriods.map((currentPeriod) =>
+        currentPeriod.id === updatedPeriod.id ? updatedPeriod : currentPeriod,
+      );
+      updatedPayload = updatedPeriod;
+
+      if (item.kind === "regular-period-agent") {
+        await this.updateRegularInterventionVisas(updatedPeriod, visa);
+      }
+    } else if (item.kind === "regular-intervention-agent") {
+      const intervention = item.payload as RegularIntervention;
+      const updatedIntervention = {
+        ...intervention,
+        agentVisa: visa,
+      };
+
+      await updateDoc(doc(db, "regularInterventions", (item.payload as RegularIntervention).id), {
+        agentVisa: visa,
+      });
+      this.regularInterventions = this.regularInterventions.map((currentIntervention) =>
+        currentIntervention.id === updatedIntervention.id ? updatedIntervention : currentIntervention,
+      );
+      updatedPayload = updatedIntervention;
+    } else {
+      updatedPayload = await this.signExceptionalItem(item, visa);
+    }
+
+    this.selectedItem = {
+      ...item,
+      visa,
+      payload: updatedPayload,
+    };
+    this.validationMessage = "Visa enregistré.";
+  }
+
+  formatDateTime(value: string): string {
+    if (!value) {
+      return "-";
+    }
+
+    return new Intl.DateTimeFormat("fr-FR", { dateStyle: "short", timeStyle: "short" }).format(new Date(value));
+  }
+
+  async deleteVisa(item: ValidationItem): Promise<void> {
+    if (!this.canDeleteVisa(item)) {
+      return;
+    }
+
+    const emptyVisa = createEmptyVisa();
+    let updatedPayload = item.payload;
+
+    if (item.kind === "regular-period-agent" || item.kind === "regular-period-director") {
+      const field = item.kind === "regular-period-agent" ? "agentVisa" : "directorVisa";
+      const period = item.payload as RegularOnCallPeriod;
+      const updatedPeriod = {
+        ...period,
+        [field]: emptyVisa,
+      };
+
+      await updateDoc(doc(db, "regularOnCallPeriods", (item.payload as RegularOnCallPeriod).id), {
+        [field]: emptyVisa,
+      });
+      this.regularPeriods = this.regularPeriods.map((currentPeriod) =>
+        currentPeriod.id === updatedPeriod.id ? updatedPeriod : currentPeriod,
+      );
+      updatedPayload = updatedPeriod;
+
+      if (item.kind === "regular-period-agent") {
+        await this.updateRegularInterventionVisas(updatedPeriod, emptyVisa);
+      }
+    } else if (item.kind === "regular-intervention-agent") {
+      const intervention = item.payload as RegularIntervention;
+      const updatedIntervention = {
+        ...intervention,
+        agentVisa: emptyVisa,
+      };
+
+      await updateDoc(doc(db, "regularInterventions", (item.payload as RegularIntervention).id), {
+        agentVisa: emptyVisa,
+      });
+      this.regularInterventions = this.regularInterventions.map((currentIntervention) =>
+        currentIntervention.id === updatedIntervention.id ? updatedIntervention : currentIntervention,
+      );
+      updatedPayload = updatedIntervention;
+    } else {
+      updatedPayload = await this.signExceptionalItem(item, emptyVisa);
+    }
+
+    this.selectedItem = {
+      ...item,
+      visa: emptyVisa,
+      payload: updatedPayload,
+    };
+    this.validationMessage = "Visa supprimé.";
+  }
+
+  canDeleteVisa(item: ValidationItem): boolean {
+    return Boolean(item.visa.signed && item.visa.signedByUid === this.user?.uid);
+  }
+
+  userLabel(user: AppUser): string {
+    return user.displayName ? `${user.displayName} (${user.email})` : user.email;
+  }
+
+  private refreshProfile(): void {
+    if (!this.user) {
+      this.profile = null;
+      return;
+    }
+
+    this.profile = this.users.find((item) => item.id === this.user?.uid || item.uid === this.user?.uid) || null;
+
+    if (!this.selectedUserId) {
+      this.selectedUserId = this.user.uid;
+    }
+  }
+
+  private operationGlobalItem(operation: ExceptionalOperation, kind: "exceptional-operation-initiator" | "exceptional-operation-director"): ValidationItem {
+    const isDirector = kind === "exceptional-operation-director";
+    const visa = isDirector
+      ? operation.visas?.directorGlobal || operation.visas?.actualDirector || createEmptyVisa()
+      : operation.visas?.initiatorGlobal || operation.visas?.actualInitiator || createEmptyVisa();
+
+    return {
+      id: `${kind}-${operation.id}`,
+      kind,
+      category: isDirector ? "Opération exceptionnelle - visa directeur" : "Opération exceptionnelle - visa initiateur",
+      title: operation.title,
+      userLabel: isDirector ? "Directeur" : operation.initiatorName,
+      startDate: operation.startDate,
+      endDate: operation.actualEndDate || operation.forecastEndDate || operation.startDate,
+      visa,
+      payload: operation,
+    };
+  }
+
+  private async signExceptionalItem(item: ValidationItem, visa: SignatureVisa): Promise<ExceptionalOperation> {
+    const operation = item.payload as ExceptionalOperation;
+    const payload: Partial<ExceptionalOperation> = {};
+
+    if (item.kind === "exceptional-participant-planned" && typeof item.index === "number") {
+      const plannedUsers = [...(operation.plannedUsers || [])];
+      plannedUsers[item.index] = { ...plannedUsers[item.index], visa };
+      payload.plannedUsers = plannedUsers;
+    } else if (item.kind === "exceptional-participant-actual" && typeof item.index === "number") {
+      const actualUsers = [...(operation.actualUsers || [])];
+      actualUsers[item.index] = { ...actualUsers[item.index], visa };
+      payload.actualUsers = actualUsers;
+    } else if (item.kind === "exceptional-intervention-agent" && typeof item.index === "number") {
+      const interventions = [...(operation.interventions || [])];
+      interventions[item.index] = { ...interventions[item.index], agentVisa: visa };
+      payload.interventions = interventions;
+    } else if (item.kind === "exceptional-operation-initiator") {
+      payload.visas = {
+        ...operation.visas,
+        initiatorGlobal: visa,
+        actualInitiator: visa,
+      };
+    } else if (item.kind === "exceptional-operation-director") {
+      payload.visas = {
+        ...operation.visas,
+        directorGlobal: visa,
+        actualDirector: visa,
+      };
+    }
+
+    this.applyExceptionalInterventionVisa(item, operation, payload, visa);
+
+    await setDoc(doc(db, "exceptionalOperations", operation.id), payload, { merge: true });
+    const updatedOperation = {
+      ...operation,
+      ...payload,
+    };
+    this.exceptionalOperations = this.exceptionalOperations.map((currentOperation) =>
+      currentOperation.id === updatedOperation.id ? updatedOperation : currentOperation,
+    );
+
+    return updatedOperation;
+  }
+
+  private async updateRegularInterventionVisas(period: RegularOnCallPeriod, visa: SignatureVisa): Promise<void> {
+    const interventions = this.regularInterventions.filter(
+      (intervention) =>
+        intervention.periodId === period.id &&
+        this.matchesUser(intervention.userId, intervention.userEmail, period.userId, period.userEmail),
+    );
+
+    await Promise.all(
+      interventions.map((intervention) =>
+        updateDoc(doc(db, "regularInterventions", intervention.id), {
+          agentVisa: visa,
+        }),
+      ),
+    );
+    this.regularInterventions = this.regularInterventions.map((intervention) =>
+      interventions.some((updatedIntervention) => updatedIntervention.id === intervention.id)
+        ? { ...intervention, agentVisa: visa }
+        : intervention,
+    );
+  }
+
+  private applyExceptionalInterventionVisa(
+    item: ValidationItem,
+    operation: ExceptionalOperation,
+    payload: Partial<ExceptionalOperation>,
+    visa: SignatureVisa,
+  ): void {
+    const targetUser = this.itemUserReference(item, operation);
+
+    if (!targetUser.userId && !targetUser.email) {
+      return;
+    }
+
+    const interventions = payload.interventions || [...(operation.interventions || [])];
+    payload.interventions = interventions.map((intervention) => {
+      if (!this.matchesUser(intervention.userId, intervention.userEmail, targetUser.userId, targetUser.email)) {
+        return intervention;
+      }
+
+      return {
+        ...intervention,
+        agentVisa: visa,
+      };
+    });
+  }
+
+  private itemUserReference(item: ValidationItem, operation: ExceptionalOperation): { userId: string; email: string } {
+    if (item.kind === "exceptional-participant-planned" && typeof item.index === "number") {
+      const participant = operation.plannedUsers?.[item.index];
+      return { userId: participant?.userId || "", email: participant?.email || "" };
+    }
+
+    if (item.kind === "exceptional-participant-actual" && typeof item.index === "number") {
+      const participant = operation.actualUsers?.[item.index];
+      return { userId: participant?.userId || "", email: participant?.email || "" };
+    }
+
+    if (item.kind === "exceptional-operation-initiator") {
+      return { userId: operation.initiatorUid || "", email: this.user?.email || "" };
+    }
+
+    if (item.kind === "exceptional-operation-director") {
+      return { userId: this.user?.uid || "", email: this.user?.email || "" };
+    }
+
+    if (item.kind === "exceptional-intervention-agent" && typeof item.index === "number") {
+      const intervention = operation.interventions?.[item.index];
+      return { userId: intervention?.userId || "", email: intervention?.userEmail || "" };
+    }
+
+    return { userId: "", email: "" };
+  }
+
+  private buildVisa(): SignatureVisa {
+    const mode = this.profile?.signatureMode || "name";
+    const signatureValue =
+      mode === "image"
+        ? this.profile?.signatureImage || this.profile?.signatureName || this.user?.email || ""
+        : mode === "draw"
+          ? this.profile?.signatureDrawing || this.profile?.signatureName || this.user?.email || ""
+          : this.profile?.signatureName || this.user?.displayName || this.user?.email || "";
+
+    return {
+      signed: true,
+      signedAt: new Date().toISOString(),
+      signedByName: this.profile?.signatureName || this.user?.displayName || this.user?.email || "",
+      signedByUid: this.user?.uid || "",
+      signatureMode: mode,
+      signatureValue,
+    };
+  }
+
+  private matchesUser(userId: string | undefined, emailOrName: string | undefined, selectedId: string, selectedEmail: string): boolean {
+    return Boolean(userId && userId === selectedId) || Boolean(emailOrName && selectedEmail && emailOrName === selectedEmail);
+  }
+
+  private isRegularPayload(payload: ValidationItem["payload"]): payload is RegularOnCallPeriod | RegularIntervention {
+    return "teamId" in payload && !("type" in payload);
+  }
+}

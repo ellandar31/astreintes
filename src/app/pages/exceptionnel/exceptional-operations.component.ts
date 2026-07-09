@@ -13,6 +13,7 @@ import {
   setDoc,
 } from "firebase/firestore";
 import { db } from "../../firebase";
+import { createEmptyVisa } from "../../shared/visa.models";
 import {
   ExceptionalIntervention,
   ExceptionalInterventionForm,
@@ -352,20 +353,17 @@ export class ExceptionalOperationsComponent implements OnDestroy {
 
   private createEmptyOperationVisas() {
     return {
-      plannedInitiator: this.createEmptyVisa(),
-      plannedDirector: this.createEmptyVisa(),
-      actualInitiator: this.createEmptyVisa(),
-      actualDirector: this.createEmptyVisa(),
+      initiatorGlobal: createEmptyVisa(),
+      directorGlobal: createEmptyVisa(),
+      plannedInitiator: createEmptyVisa(),
+      plannedDirector: createEmptyVisa(),
+      actualInitiator: createEmptyVisa(),
+      actualDirector: createEmptyVisa(),
     };
   }
 
   private createEmptyVisa(): SignatureVisa {
-    return {
-      signed: false,
-      signedAt: "",
-      signedByName: "",
-      signedByUid: "",
-    };
+    return createEmptyVisa();
   }
 
   private compareOperations(first: ExceptionalOperation, second: ExceptionalOperation): number {

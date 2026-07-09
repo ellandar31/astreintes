@@ -15,4 +15,76 @@
       <strong>{{ email }}</strong>
     </div>
   </div>
+
+  <form class="signature-form" (ngSubmit)="saveProfile()">
+    <label class="profile-check">
+      <input [(ngModel)]="profile.isDirector" name="isDirector" type="checkbox" />
+      Directeur
+    </label>
+
+    <label>
+      Nom utilisé pour le visa
+      <input [(ngModel)]="profile.signatureName" name="signatureName" type="text" />
+    </label>
+
+    <div class="signature-modes" aria-label="Mode de signature">
+      <button
+        [class.active]="profile.signatureMode === 'name'"
+        (click)="updateSignatureMode('name')"
+        type="button"
+      >
+        Nom
+      </button>
+      <button
+        [class.active]="profile.signatureMode === 'image'"
+        (click)="updateSignatureMode('image')"
+        type="button"
+      >
+        Image
+      </button>
+      <button
+        [class.active]="profile.signatureMode === 'draw'"
+        (click)="updateSignatureMode('draw')"
+        type="button"
+      >
+        Pad
+      </button>
+    </div>
+
+    <label>
+      Image de signature
+      <input accept="image/*" (change)="loadSignatureImage($event)" type="file" />
+    </label>
+
+    <div class="signature-pad-shell">
+      <canvas
+        #signaturePad
+        width="520"
+        height="150"
+        (mousedown)="startDrawing($event)"
+        (mousemove)="draw($event)"
+        (mouseup)="stopDrawing()"
+        (mouseleave)="stopDrawing()"
+        (touchstart)="startDrawing($event)"
+        (touchmove)="draw($event)"
+        (touchend)="stopDrawing()"
+      ></canvas>
+      <button class="secondary-button compact-button" (click)="clearDrawing()" type="button">Effacer le pad</button>
+    </div>
+
+    <div class="signature-preview">
+      <span>Aperçu</span>
+      @if (signaturePreview) {
+        <img [src]="signaturePreview" alt="Signature" />
+      } @else {
+        <strong>{{ profile.signatureName || displayName }}</strong>
+      }
+    </div>
+
+    <button class="primary-button" type="submit">Enregistrer le profil</button>
+
+    @if (message) {
+      <p class="success-message">{{ message }}</p>
+    }
+  </form>
 </section>
