@@ -279,7 +279,7 @@ export class RegularCalendarComponent implements OnDestroy {
 
     if (!parentPeriod) {
       this.interventionError =
-        "Aucune astreinte régulière ne couvre cette intervention pour cet utilisateur. Créez d'abord la période d'astreinte correspondante.";
+        "L'intervention doit être entièrement comprise dans une période d'astreinte régulière existante pour cet utilisateur.";
       return;
     }
 

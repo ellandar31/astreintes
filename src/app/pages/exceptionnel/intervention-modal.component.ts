@@ -23,6 +23,7 @@ export class InterventionModalComponent implements OnDestroy {
     label: "",
     comment: "",
   };
+  @Input() error = "";
   @Input({ required: true }) operation: ExceptionalOperation | null = null;
   @Output() closed = new EventEmitter<void>();
   @Output() saved = new EventEmitter<ExceptionalInterventionForm>();

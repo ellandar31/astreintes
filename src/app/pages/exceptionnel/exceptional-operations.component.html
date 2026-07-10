@@ -147,6 +147,7 @@
 
 @if (modalMode === "intervention" && selectedOperation) {
   <app-intervention-modal
+    [error]="interventionError"
     [form]="interventionForm"
     [operation]="selectedOperation"
     (closed)="closeInterventionModal()"

@@ -59,6 +59,7 @@ export class ExceptionalOperationsComponent implements OnDestroy {
   sortDirection: SortDirection = "asc";
   sortField: SortField = "startDate";
   operations: ExceptionalOperation[] = [];
+  interventionError = "";
   operationForm = this.createEmptyOperationForm("astreinte");
   interventionForm = {
     startDate: "",
@@ -138,6 +139,7 @@ export class ExceptionalOperationsComponent implements OnDestroy {
     this.selectedOperation = operation;
     this.selectedInterventionIndex = typeof index === "number" ? index : null;
     this.shouldReturnToOperationModal = returnToOperationModal;
+    this.interventionError = "";
     this.interventionForm = intervention
       ? {
           startDate: intervention.startDate || intervention.date || "",
@@ -158,10 +160,12 @@ export class ExceptionalOperationsComponent implements OnDestroy {
     this.selectedOperation = null;
     this.selectedInterventionIndex = null;
     this.shouldReturnToOperationModal = false;
+    this.interventionError = "";
   }
 
   closeInterventionModal(): void {
     this.selectedInterventionIndex = null;
+    this.interventionError = "";
 
     if (this.shouldReturnToOperationModal && this.selectedOperation) {
       this.modalMode = "edit";
@@ -214,6 +218,15 @@ export class ExceptionalOperationsComponent implements OnDestroy {
 
   async saveIntervention(form: ExceptionalInterventionForm): Promise<void> {
     if (!this.selectedOperation) {
+      return;
+    }
+
+    this.interventionError = "";
+
+    const interventionValidationError = this.validateIntervention(form, this.selectedOperation);
+
+    if (interventionValidationError) {
+      this.interventionError = interventionValidationError;
       return;
     }
 
@@ -382,6 +395,29 @@ export class ExceptionalOperationsComponent implements OnDestroy {
 
   private createEmptyVisa(): SignatureVisa {
     return createEmptyVisa();
+  }
+
+  private validateIntervention(form: ExceptionalInterventionForm, operation: ExceptionalOperation): string {
+    if (form.endDate <= form.startDate) {
+      return "La date de fin doit être postérieure à la date de début.";
+    }
+
+    const matchingActualPeriod = (operation.actualUsers || []).find(
+      (participant) =>
+        this.matchesUser(participant.userId, participant.email, form.userId, form.userEmail) &&
+        participant.startDate <= form.startDate &&
+        participant.endDate >= form.endDate,
+    );
+
+    if (matchingActualPeriod) {
+      return "";
+    }
+
+    return "L'intervention doit être entièrement comprise dans une période réelle de cet utilisateur.";
+  }
+
+  private matchesUser(userId: string | undefined, email: string | undefined, selectedId: string, selectedEmail: string): boolean {
+    return Boolean(userId && userId === selectedId) || Boolean(email && selectedEmail && email === selectedEmail);
   }
 
   private normalizeOperation(operation: ExceptionalOperation): ExceptionalOperation {
