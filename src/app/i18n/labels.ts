@@ -11,7 +11,7 @@ export const APP_LABELS = {
       noAssociatedVisa: "Aucun autre visa associé.",
       notSigned: "Non signé",
       signedBy: "Signé par",
-      signedOn: "Signé le",
+      signedOn: "Signé",
       toSign: "À signer",
     },
     table: {
@@ -37,6 +37,7 @@ export const APP_LABELS = {
       exceptionalActual: "Opération exceptionnelle - réel",
       exceptionalDirectorVisa: "Opération exceptionnelle - visa directeur",
       exceptionalInitiatorVisa: "Opération exceptionnelle - visa initiateur",
+      exceptionalOperation: "Opération exceptionnelle",
       exceptionalPlanned: "Opération exceptionnelle - prévisionnel",
       regularOnCall: "Astreinte régulière",
       regularOnCallDirectorVisa: "Astreinte régulière - visa directeur",

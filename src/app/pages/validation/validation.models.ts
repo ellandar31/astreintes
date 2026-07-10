@@ -6,6 +6,7 @@ export type ValidationItemKind =
   | "regular-period-agent"
   | "regular-period-director"
   | "regular-intervention-agent"
+  | "exceptional-operation-agent"
   | "exceptional-participant-planned"
   | "exceptional-participant-actual"
   | "exceptional-intervention-agent"
@@ -31,6 +32,8 @@ export interface ValidationItem {
   visa: SignatureVisa;
   payload: RegularOnCallPeriod | RegularIntervention | ExceptionalOperation;
   index?: number;
+  userEmail?: string;
+  userId?: string;
 }
 
 export interface VisaProgressItem {

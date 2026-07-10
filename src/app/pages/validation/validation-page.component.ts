@@ -129,43 +129,11 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
         items.push(this.operationGlobalItem(operation, "exceptional-operation-director"));
       }
 
-      (operation.plannedUsers || []).forEach((participant, index) => {
-        if (!this.matchesUser(participant.userId, participant.email, selectedId, selectedEmail)) {
-          return;
-        }
+      const userOperationItem = this.exceptionalOperationAgentItem(operation, selectedId, selectedEmail);
 
-        items.push({
-          id: `exceptional-planned-${operation.id}-${participant.userId}-${index}`,
-          kind: "exceptional-participant-planned",
-          category: this.labels.validation.categories.exceptionalPlanned,
-          title: operation.title,
-          userLabel: participant.displayName || participant.email,
-          startDate: participant.startDate || operation.startDate,
-          endDate: participant.endDate || operation.forecastEndDate || operation.startDate,
-          visa: participant.visa || createEmptyVisa(),
-          payload: operation,
-          index,
-        });
-      });
-
-      (operation.actualUsers || []).forEach((participant, index) => {
-        if (!this.matchesUser(participant.userId, participant.email, selectedId, selectedEmail)) {
-          return;
-        }
-
-        items.push({
-          id: `exceptional-actual-${operation.id}-${participant.userId}-${index}`,
-          kind: "exceptional-participant-actual",
-          category: this.labels.validation.categories.exceptionalActual,
-          title: operation.title,
-          userLabel: participant.displayName || participant.email,
-          startDate: participant.startDate || operation.actualStartDate || operation.startDate,
-          endDate: participant.endDate || operation.actualEndDate || operation.forecastEndDate || operation.startDate,
-          visa: participant.visa || createEmptyVisa(),
-          payload: operation,
-          index,
-        });
-      });
+      if (userOperationItem) {
+        items.push(userOperationItem);
+      }
 
     });
 
@@ -176,8 +144,7 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
     return this.validationItems.filter((item) =>
       [
         "regular-period-agent",
-        "exceptional-participant-planned",
-        "exceptional-participant-actual",
+        "exceptional-operation-agent",
       ].includes(item.kind),
     );
   }
@@ -427,6 +394,10 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
   }
 
   canDeleteVisa(item: ValidationItem): boolean {
+    if (item.kind === "exceptional-operation-agent") {
+      return this.exceptionalItemVisas(item).some((visa) => visa.signed && visa.signedByUid === this.user?.uid);
+    }
+
     return Boolean(item.visa.signed && item.visa.signedByUid === this.user?.uid);
   }
 
@@ -466,6 +437,44 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
     };
   }
 
+  private exceptionalOperationAgentItem(operation: ExceptionalOperation, selectedId: string, selectedEmail: string): ValidationItem | null {
+    const participants = [
+      ...(operation.plannedUsers || []),
+      ...(operation.actualUsers || []),
+    ].filter((participant) => this.matchesUser(participant.userId, participant.email, selectedId, selectedEmail));
+
+    if (!participants.length) {
+      return null;
+    }
+
+    const startDates = participants
+      .map((participant) => participant.startDate || operation.actualStartDate || operation.startDate)
+      .filter(Boolean)
+      .sort();
+    const endDates = participants
+      .map((participant) => participant.endDate || operation.actualEndDate || operation.forecastEndDate || operation.startDate)
+      .filter(Boolean)
+      .sort();
+    const visas = participants.map((participant) => participant.visa || createEmptyVisa());
+    const isSigned = visas.length > 0 && visas.every((visa) => visa.signed);
+    const firstParticipant = participants[0];
+    const firstSignedVisa = visas.find((visa) => visa.signed);
+
+    return {
+      id: `exceptional-operation-agent-${operation.id}-${selectedId || selectedEmail}`,
+      kind: "exceptional-operation-agent",
+      category: this.labels.validation.categories.exceptionalOperation,
+      title: operation.title,
+      userLabel: firstParticipant.displayName || firstParticipant.email,
+      startDate: startDates[0] || operation.startDate,
+      endDate: endDates.at(-1) || operation.actualEndDate || operation.forecastEndDate || operation.startDate,
+      visa: isSigned ? firstSignedVisa || visas[0] : createEmptyVisa(),
+      payload: operation,
+      userEmail: firstParticipant.email || selectedEmail,
+      userId: firstParticipant.userId || selectedId,
+    };
+  }
+
   private isRegularPeriodReadyForDirector(period: RegularOnCallPeriod): boolean {
     const interventions = this.regularInterventions.filter((intervention) => intervention.periodId === period.id);
 
@@ -491,7 +500,16 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
     const operation = item.payload as ExceptionalOperation;
     const payload: Partial<ExceptionalOperation> = {};
 
-    if (item.kind === "exceptional-participant-planned" && typeof item.index === "number") {
+    if (item.kind === "exceptional-operation-agent") {
+      const plannedUsers = (operation.plannedUsers || []).map((participant) =>
+        this.matchesUser(participant.userId, participant.email, item.userId || "", item.userEmail || "") ? { ...participant, visa } : participant,
+      );
+      const actualUsers = (operation.actualUsers || []).map((participant) =>
+        this.matchesUser(participant.userId, participant.email, item.userId || "", item.userEmail || "") ? { ...participant, visa } : participant,
+      );
+      payload.plannedUsers = plannedUsers;
+      payload.actualUsers = actualUsers;
+    } else if (item.kind === "exceptional-participant-planned" && typeof item.index === "number") {
       const plannedUsers = [...(operation.plannedUsers || [])];
       plannedUsers[item.index] = { ...plannedUsers[item.index], visa };
       payload.plannedUsers = plannedUsers;
@@ -578,6 +596,10 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
   }
 
   private itemUserReference(item: ValidationItem, operation: ExceptionalOperation): { userId: string; email: string } {
+    if (item.kind === "exceptional-operation-agent") {
+      return { userId: item.userId || "", email: item.userEmail || "" };
+    }
+
     if (item.kind === "exceptional-participant-planned" && typeof item.index === "number") {
       const participant = operation.plannedUsers?.[item.index];
       return { userId: participant?.userId || "", email: participant?.email || "" };
@@ -629,6 +651,21 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
 
   private isRegularPayload(payload: ValidationItem["payload"]): payload is RegularOnCallPeriod | RegularIntervention {
     return "teamId" in payload && !("type" in payload);
+  }
+
+  private exceptionalItemVisas(item: ValidationItem): SignatureVisa[] {
+    if (item.kind !== "exceptional-operation-agent") {
+      return [item.visa];
+    }
+
+    const operation = item.payload as ExceptionalOperation;
+
+    return [
+      ...(operation.plannedUsers || []),
+      ...(operation.actualUsers || []),
+    ]
+      .filter((participant) => this.matchesUser(participant.userId, participant.email, item.userId || "", item.userEmail || ""))
+      .map((participant) => participant.visa || createEmptyVisa());
   }
 
   private fromFirestore<T extends { id: string }>(id: string, data: Record<string, unknown>): T {

@@ -42,7 +42,7 @@
                 <td>{{ formatDateTime(item.startDate) }} - {{ formatDateTime(item.endDate) }}</td>
                 <td>
                   @if (item.visa.signed) {
-                    <span class="signed">{{ labels.common.statuses.signedOn }} {{ formatDateTime(item.visa.signedAt) }}</span>
+                    <span class="signed">{{ labels.common.statuses.signedOn }}</span>
                   } @else {
                     <span class="pending">{{ labels.common.statuses.toSign }}</span>
                   }
