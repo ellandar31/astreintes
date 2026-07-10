@@ -4,6 +4,7 @@
       <label>
         Initiateur
         <select
+          class="user-select"
           name="initiatorUid"
           [ngModel]="form.initiatorUid"
           (ngModelChange)="selectInitiator($event)"
@@ -11,7 +12,7 @@
         >
           <option value="">Sélectionner un utilisateur</option>
           @for (user of users; track user.id) {
-            <option [ngValue]="user.id">{{ userLabel(user) }}</option>
+            <option [ngValue]="user.id" [title]="userLabel(user)">{{ userLabel(user) }}</option>
           }
         </select>
       </label>
@@ -58,10 +59,10 @@
           <div class="inline-form">
             <label>
               Utilisateur
-              <select name="plannedUser" [(ngModel)]="selectedPlannedUserId" [disabled]="!availableUsers('plannedUsers').length">
+              <select class="user-select" name="plannedUser" [(ngModel)]="selectedPlannedUserId" [disabled]="!availableUsers('plannedUsers').length">
                 <option value="">Sélectionner un utilisateur</option>
                 @for (user of availableUsers("plannedUsers"); track user.id) {
-                  <option [ngValue]="user.id">{{ userLabel(user) }}</option>
+                  <option [ngValue]="user.id" [title]="userLabel(user)">{{ userLabel(user) }}</option>
                 }
               </select>
             </label>
@@ -110,10 +111,10 @@
           <div class="inline-form">
             <label>
               Utilisateur
-              <select name="actualUser" [(ngModel)]="selectedActualUserId" [disabled]="!availableUsers('actualUsers').length">
+              <select class="user-select" name="actualUser" [(ngModel)]="selectedActualUserId" [disabled]="!availableUsers('actualUsers').length">
                 <option value="">Sélectionner un utilisateur</option>
                 @for (user of availableUsers("actualUsers"); track user.id) {
-                  <option [ngValue]="user.id">{{ userLabel(user) }}</option>
+                  <option [ngValue]="user.id" [title]="userLabel(user)">{{ userLabel(user) }}</option>
                 }
               </select>
             </label>

@@ -2,10 +2,10 @@
   <form class="intervention-form" #interventionNgForm="ngForm" (ngSubmit)="save(interventionNgForm)">
     <label>
       Utilisateur
-      <select name="regularInterventionUser" [ngModel]="form.userId" (ngModelChange)="selectUser($event)" required>
+      <select class="user-select" name="regularInterventionUser" [ngModel]="form.userId" (ngModelChange)="selectUser($event)" required>
         <option value="">Sélectionner un utilisateur</option>
         @for (user of users; track user.id) {
-          <option [ngValue]="user.id">{{ userLabel(user) }}</option>
+          <option [ngValue]="user.id" [title]="userLabel(user)">{{ userLabel(user) }}</option>
         }
       </select>
     </label>

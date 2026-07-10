@@ -120,6 +120,14 @@ select {
   padding: 10px 12px;
 }
 
+select.user-select {
+  max-width: 18rem;
+  min-width: 11rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+}
+
 input:focus,
 select:focus {
   border-color: #21736d;
