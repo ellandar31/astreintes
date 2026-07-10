@@ -32,6 +32,7 @@ export interface ValidationItem {
   visa: SignatureVisa;
   payload: RegularOnCallPeriod | RegularIntervention | ExceptionalOperation;
   index?: number;
+  isGlobalAction?: boolean;
   userEmail?: string;
   userId?: string;
 }

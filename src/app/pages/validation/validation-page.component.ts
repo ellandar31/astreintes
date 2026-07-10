@@ -100,6 +100,7 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
           userLabel: period.userName || period.userEmail,
           startDate: period.startDate,
           endDate: period.endDate,
+          isGlobalAction: true,
           visa: period.agentVisa || createEmptyVisa(),
           payload: period,
         });
@@ -391,7 +392,7 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
       );
       updatedPayload = updatedPeriod;
 
-      if (item.kind === "regular-period-agent") {
+      if (item.kind === "regular-period-agent" && item.isGlobalAction) {
         await this.updateRegularInterventionVisas(updatedPeriod, visa);
       }
     } else if (item.kind === "regular-intervention-agent") {
@@ -458,7 +459,7 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
       );
       updatedPayload = updatedPeriod;
 
-      if (item.kind === "regular-period-agent") {
+      if (item.kind === "regular-period-agent" && item.isGlobalAction) {
         await this.updateRegularInterventionVisas(updatedPeriod, emptyVisa);
       }
     } else if (item.kind === "regular-intervention-agent") {
@@ -570,6 +571,7 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
       endDate: endDates.at(-1) || operation.actualEndDate || operation.forecastEndDate || operation.startDate,
       visa: isSigned ? firstSignedVisa || visas[0] : createEmptyVisa(),
       payload: operation,
+      isGlobalAction: true,
       userEmail: firstParticipant.email || selectedEmail,
       userId: firstParticipant.userId || selectedId,
     };
@@ -635,7 +637,9 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
       };
     }
 
-    this.applyExceptionalInterventionVisa(item, operation, payload, visa);
+    if (item.kind === "exceptional-operation-agent" && item.isGlobalAction) {
+      this.applyExceptionalInterventionVisa(item, operation, payload, visa);
+    }
 
     await setDoc(doc(db, "exceptionalOperations", operation.id), payload, { merge: true });
     const updatedOperation = {
