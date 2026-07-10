@@ -8,6 +8,7 @@
           name="initiatorUid"
           [ngModel]="form.initiatorUid"
           (ngModelChange)="selectInitiator($event)"
+          [disabled]="isLocked"
           required
         >
           <option value="">Sélectionner un utilisateur</option>
@@ -19,22 +20,14 @@
 
       <label>
         Responsable d'opération
-        <input name="operationManagerName" [(ngModel)]="form.operationManagerName" required />
+        <input name="operationManagerName" [(ngModel)]="form.operationManagerName" [disabled]="isLocked" required />
       </label>
 
       <label>
         Titre de l'opération
-        <input name="title" [(ngModel)]="form.title" required />
+        <input name="title" [(ngModel)]="form.title" [disabled]="isLocked" required />
       </label>
-
-      <label>
-        Statut
-        <select name="status" [(ngModel)]="form.status" required>
-          @for (status of statuses; track status) {
-            <option [ngValue]="status">{{ status }}</option>
-          }
-        </select>
-      </label>
+      
     </section>
 
     <div class="timeline-grid">
@@ -44,26 +37,28 @@
         <div class="users-box">
           <h3>Utilisateurs et dates prévisionnelles</h3>
 
-          <div class="inline-form">
-            <label>
-              Utilisateur
-              <select class="user-select" name="plannedUser" [(ngModel)]="selectedPlannedUserId" [disabled]="!availableUsers().length">
-                <option value="">Sélectionner un utilisateur</option>
-                @for (user of availableUsers(); track user.id) {
-                  <option [ngValue]="user.id" [title]="userLabel(user)">{{ userLabel(user) }}</option>
-                }
-              </select>
-            </label>
+          @if (!isLocked) {
+            <div class="inline-form">
+              <label>
+                Utilisateur
+                <select class="user-select" name="plannedUser" [(ngModel)]="selectedPlannedUserId" [disabled]="!availableUsers().length">
+                  <option value="">Sélectionner un utilisateur</option>
+                  @for (user of availableUsers(); track user.id) {
+                    <option [ngValue]="user.id" [title]="userLabel(user)">{{ userLabel(user) }}</option>
+                  }
+                </select>
+              </label>
 
-            <button
-              class="secondary-button"
-              [disabled]="!selectedPlannedUserId"
-              (click)="addParticipant('plannedUsers', selectedPlannedUserId)"
-              type="button"
-            >
-              Ajouter
-            </button>
-          </div>
+              <button
+                class="secondary-button"
+                [disabled]="!selectedPlannedUserId"
+                (click)="addParticipant('plannedUsers', selectedPlannedUserId)"
+                type="button"
+              >
+                Ajouter
+              </button>
+            </div>
+          }
 
           <div class="participant-list">
             @for (participant of form.plannedUsers; track $index; let participantIndex = $index) {
@@ -74,15 +69,17 @@
 
                 <label>
                   Début
-                  <input [name]="'plannedStartDate' + participantIndex" [(ngModel)]="participant.startDate" required type="datetime-local" />
+                  <input [name]="'plannedStartDate' + participantIndex" [(ngModel)]="participant.startDate" [disabled]="isLocked" required type="datetime-local" />
                 </label>
 
                 <label>
                   Fin
-                  <input [name]="'plannedEndDate' + participantIndex" [(ngModel)]="participant.endDate" required type="datetime-local" />
+                  <input [name]="'plannedEndDate' + participantIndex" [(ngModel)]="participant.endDate" [disabled]="isLocked" required type="datetime-local" />
                 </label>
 
-                <button class="remove-button" (click)="removeParticipant('plannedUsers', participantIndex)" title="Retirer" type="button">X</button>
+                @if (!isLocked) {
+                  <button class="remove-button" (click)="removeParticipant('plannedUsers', participantIndex)" title="Retirer" type="button">X</button>
+                }
               </div>
             } @empty {
               <p class="muted">Aucun utilisateur</p>
@@ -97,36 +94,40 @@
         <div class="users-box">
           <div class="users-box-heading">
             <h3>Utilisateurs et dates réelles</h3>
-            <button
-              class="secondary-button compact-button"
-              [disabled]="form.actualUsers.length > 0 || !form.plannedUsers.length"
-              (click)="initializeActualFromPlanned()"
-              type="button"
-            >
-              Initialiser depuis le prévisionnel
-            </button>
+            @if (!isLocked) {
+              <button
+                class="secondary-button compact-button"
+                [disabled]="form.actualUsers.length > 0 || !form.plannedUsers.length"
+                (click)="initializeActualFromPlanned()"
+                type="button"
+              >
+                Initialiser depuis le prévisionnel
+              </button>
+            }
           </div>
 
-          <div class="inline-form">
-            <label>
-              Utilisateur
-              <select class="user-select" name="actualUser" [(ngModel)]="selectedActualUserId" [disabled]="!availableUsers().length">
-                <option value="">Sélectionner un utilisateur</option>
-                @for (user of availableUsers(); track user.id) {
-                  <option [ngValue]="user.id" [title]="userLabel(user)">{{ userLabel(user) }}</option>
-                }
-              </select>
-            </label>
+          @if (!isLocked) {
+            <div class="inline-form">
+              <label>
+                Utilisateur
+                <select class="user-select" name="actualUser" [(ngModel)]="selectedActualUserId" [disabled]="!availableUsers().length">
+                  <option value="">Sélectionner un utilisateur</option>
+                  @for (user of availableUsers(); track user.id) {
+                    <option [ngValue]="user.id" [title]="userLabel(user)">{{ userLabel(user) }}</option>
+                  }
+                </select>
+              </label>
 
-            <button
-              class="secondary-button"
-              [disabled]="!selectedActualUserId"
-              (click)="addParticipant('actualUsers', selectedActualUserId)"
-              type="button"
-            >
-              Ajouter
-            </button>
-          </div>
+              <button
+                class="secondary-button"
+                [disabled]="!selectedActualUserId"
+                (click)="addParticipant('actualUsers', selectedActualUserId)"
+                type="button"
+              >
+                Ajouter
+              </button>
+            </div>
+          }
 
           <div class="participant-list">
             @for (participant of form.actualUsers; track $index; let participantIndex = $index) {
@@ -137,15 +138,17 @@
 
                 <label>
                   Début
-                  <input [name]="'actualStartDate' + participantIndex" [(ngModel)]="participant.startDate" required type="datetime-local" />
+                  <input [name]="'actualStartDate' + participantIndex" [(ngModel)]="participant.startDate" [disabled]="isLocked" required type="datetime-local" />
                 </label>
 
                 <label>
                   Fin
-                  <input [name]="'actualEndDate' + participantIndex" [(ngModel)]="participant.endDate" required type="datetime-local" />
+                  <input [name]="'actualEndDate' + participantIndex" [(ngModel)]="participant.endDate" [disabled]="isLocked" required type="datetime-local" />
                 </label>
 
-                <button class="remove-button" (click)="removeParticipant('actualUsers', participantIndex)" title="Retirer" type="button">X</button>
+                @if (!isLocked) {
+                  <button class="remove-button" (click)="removeParticipant('actualUsers', participantIndex)" title="Retirer" type="button">X</button>
+                }
               </div>
             } @empty {
               <p class="muted">Aucun utilisateur</p>
@@ -163,9 +166,11 @@
             <h3 id="interventions-title">Interventions rattachées</h3>
           </div>
 
-          <button class="secondary-button" (click)="addIntervention.emit(operation)" type="button">
-            Ajouter une intervention
-          </button>
+          @if (!isLocked) {
+            <button class="secondary-button" (click)="addIntervention.emit(operation)" type="button">
+              Ajouter une intervention
+            </button>
+          }
         </div>
 
         <div class="interventions-table-shell">
@@ -177,7 +182,7 @@
                 <th>Fin</th>
                 <th>Sur site</th>
                 <th>Visa agent</th>
-                <th>Actions</th>
+                  <th>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -188,28 +193,30 @@
                   <td>{{ formatDate(intervention.endDate) }}</td>
                   <td>{{ intervention.wasOnSite ? "Oui" : "Non" }}</td>
                   <td>{{ intervention.agentVisa.signed ? "Signé" : "À signer" }}</td>
-                  <td>
-                    <div class="table-actions">
-                      <button
-                        class="action-button"
-                        (click)="$event.stopPropagation(); editIntervention.emit({ operation, intervention, index })"
-                        title="Modifier"
-                        aria-label="Modifier l'intervention"
-                        type="button"
-                      >
-                        ✎
-                      </button>
-                      <button
-                        class="action-button danger"
-                        (click)="$event.stopPropagation(); deleteIntervention.emit({ operation, index })"
-                        title="Supprimer"
-                        aria-label="Supprimer l'intervention"
-                        type="button"
-                      >
-                        X
-                      </button>
-                    </div>
-                  </td>
+                  @if (!isLocked) {
+                    <td>
+                      <div class="table-actions">
+                        <button
+                          class="action-button"
+                          (click)="$event.stopPropagation(); editIntervention.emit({ operation, intervention, index })"
+                          title="Modifier"
+                          aria-label="Modifier l'intervention"
+                          type="button"
+                        >
+                          ✎
+                        </button>
+                        <button
+                          class="action-button danger"
+                          (click)="$event.stopPropagation(); deleteIntervention.emit({ operation, index })"
+                          title="Supprimer"
+                          aria-label="Supprimer l'intervention"
+                          type="button"
+                        >
+                          X
+                        </button>
+                      </div>
+                    </td>
+                  }
                 </tr>
               } @empty {
                 <tr>
@@ -226,7 +233,11 @@
       @if (validationError) {
         <p class="form-error">{{ validationError }}</p>
       }
+      @if (isLocked) {
+        <p class="sent-rh-message">Envoyé aux RH le {{ operation?.sentToRhAt }}</p>
+      } @else {
       <button class="primary-button" [disabled]="operationNgForm.invalid" type="submit">Enregistrer</button>
+      }
     </div>
   </form>
 </app-modal>

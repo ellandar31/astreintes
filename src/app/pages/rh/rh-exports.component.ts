@@ -1,7 +1,7 @@
 import { CommonModule } from "@angular/common";
 import { Component, OnDestroy } from "@angular/core";
 import { FormsModule } from "@angular/forms";
-import { Unsubscribe, collection, doc, onSnapshot, serverTimestamp, updateDoc } from "firebase/firestore";
+import { Unsubscribe, collection, deleteField, doc, onSnapshot, serverTimestamp, updateDoc } from "firebase/firestore";
 import { db } from "../../firebase";
 import { SignatureVisa, createEmptyVisa } from "../../shared/visa.models";
 import { RhExceptionalOperation, RhRegularPeriod } from "./rh.models";
@@ -204,6 +204,16 @@ export class RhExportsComponent implements OnDestroy {
     });
 
     this.exportMessage = `${operation.title} marqué comme envoyé aux RH.`;
+  }
+
+  async unmarkSentToRh(operation: ExportOperation): Promise<void> {
+    this.exportMessage = "";
+
+    await updateDoc(doc(db, operation.sourceCollection, operation.sourceId), {
+      sentToRhAt: deleteField(),
+    });
+
+    this.exportMessage = `Envoi RH supprimé pour ${operation.title}.`;
   }
 
   exportRows(templateId: ExportTemplateId): ExportOperation[] {

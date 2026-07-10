@@ -60,14 +60,15 @@
                   >
                     Excel
                   </button>
-                  <button
-                    class="secondary-button compact-button"
-                    [disabled]="!!operation.sentToRhAt"
-                    (click)="markSentToRh(operation)"
-                    type="button"
-                  >
-                    {{ operation.sentToRhAt ? "Envoyé RH" : "Envoyer RH" }}
-                  </button>
+                  @if (operation.sentToRhAt) {
+                    <button class="danger-button compact-button" (click)="unmarkSentToRh(operation)" type="button">
+                      Annuler envoi RH
+                    </button>
+                  } @else {
+                    <button class="secondary-button compact-button" (click)="markSentToRh(operation)" type="button">
+                      Envoyer RH
+                    </button>
+                  }
                 </div>
               </td>
             </tr>
@@ -132,14 +133,15 @@
                   >
                     Excel
                   </button>
-                  <button
-                    class="secondary-button compact-button"
-                    [disabled]="!!operation.sentToRhAt"
-                    (click)="markSentToRh(operation)"
-                    type="button"
-                  >
-                    {{ operation.sentToRhAt ? "Envoyé RH" : "Envoyer RH" }}
-                  </button>
+                  @if (operation.sentToRhAt) {
+                    <button class="danger-button compact-button" (click)="unmarkSentToRh(operation)" type="button">
+                      Annuler envoi RH
+                    </button>
+                  } @else {
+                    <button class="secondary-button compact-button" (click)="markSentToRh(operation)" type="button">
+                      Envoyer RH
+                    </button>
+                  }
                 </div>
               </td>
             </tr>
@@ -204,14 +206,15 @@
                   >
                     Excel
                   </button>
-                  <button
-                    class="secondary-button compact-button"
-                    [disabled]="!!operation.sentToRhAt"
-                    (click)="markSentToRh(operation)"
-                    type="button"
-                  >
-                    {{ operation.sentToRhAt ? "Envoyé RH" : "Envoyer RH" }}
-                  </button>
+                  @if (operation.sentToRhAt) {
+                    <button class="danger-button compact-button" (click)="unmarkSentToRh(operation)" type="button">
+                      Annuler envoi RH
+                    </button>
+                  } @else {
+                    <button class="secondary-button compact-button" (click)="markSentToRh(operation)" type="button">
+                      Envoyer RH
+                    </button>
+                  }
                 </div>
               </td>
             </tr>

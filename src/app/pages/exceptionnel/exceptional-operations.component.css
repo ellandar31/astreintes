@@ -106,51 +106,6 @@ th {
   width: 100%;
 }
 
-.status-filter-menu {
-  background: #ffffff;
-  border: 1px solid #dde5eb;
-  border-radius: 6px;
-  display: grid;
-  gap: 6px;
-  margin-top: 8px;
-  padding: 8px;
-  width: 100%;
-}
-
-.status-filter-option {
-  align-items: center;
-  display: flex;
-  flex-direction: row;
-  font-size: 0.82rem;
-  font-weight: 800;
-  gap: 8px;
-}
-
-.status-filter-option input {
-  min-height: auto;
-}
-
-.clear-filter-button {
-  background: transparent;
-  border: 0;
-  color: #174f5b;
-  font-size: 0.8rem;
-  font-weight: 900;
-  justify-self: start;
-  padding: 0;
-}
-
-.status-pill {
-  background: #eef4f5;
-  border-radius: 999px;
-  color: #1f3f47;
-  display: inline-flex;
-  font-size: 0.82rem;
-  font-weight: 800;
-  min-height: 28px;
-  padding: 5px 10px;
-}
-
 .action-button {
   align-items: center;
   background: #eef4f5;

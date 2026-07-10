@@ -2,7 +2,7 @@
   <form class="period-form" #periodNgForm="ngForm" (ngSubmit)="save(periodNgForm)">
     <label>
       Utilisateur
-      <select class="user-select" name="regularUser" [ngModel]="form.userId" (ngModelChange)="selectUser($event)" required>
+      <select class="user-select" name="regularUser" [disabled]="isLocked"  [ngModel]="form.userId" (ngModelChange)="selectUser($event)" required>
         <option value="">Sélectionner un utilisateur</option>
         @for (user of users; track user.id) {
           <option [ngValue]="user.id" [title]="userLabel(user)">{{ userLabel(user) }}</option>
@@ -20,6 +20,7 @@
             (ngModelChange)="updateStartDate($event)"
             required
             type="datetime-local"
+            [disabled]="isLocked"
           />
         } @else {
           <input
@@ -28,6 +29,7 @@
             (ngModelChange)="updateStartDate($event)"
             required
             type="date"
+            [disabled]="isLocked"
           />
         }
       </label>
@@ -41,6 +43,7 @@
             (ngModelChange)="updateEndDate($event)"
             required
             type="datetime-local"
+            [disabled]="isLocked"
           />
         } @else {
           <input
@@ -49,6 +52,7 @@
             (ngModelChange)="updateEndDate($event)"
             required
             type="date"
+            [disabled]="isLocked"
           />
         }
       </label>
@@ -61,9 +65,11 @@
             <p class="panel-kicker">Interventions</p>
             <h3 id="regular-period-interventions-title">Interventions rattachées</h3>
           </div>
-          <button class="secondary-button compact-button" (click)="addIntervention()" type="button">
-            Ajouter une intervention
-          </button>
+          @if (!isLocked) {
+            <button class="secondary-button compact-button" (click)="addIntervention()" type="button">
+              Ajouter une intervention
+            </button>
+          }
         </div>
 
         @if (interventions.length) {
@@ -83,12 +89,14 @@
                 <span>{{ formatDateTime(intervention.endDate) }}</span>
                 <span class="comment-cell">{{ intervention.comment || "-" }}</span>
                 <span class="action-cell">
-                  <button class="secondary-button compact-button" (click)="editIntervention(intervention)" type="button">
-                    ✎
-                  </button>
-                  <button class="danger-button compact-button" (click)="deleteIntervention(intervention)" type="button">                    
-                    X
-                  </button>
+                  @if (!isLocked) {
+                    <button class="secondary-button compact-button" (click)="editIntervention(intervention)" type="button">
+                      ✎
+                    </button>
+                    <button class="danger-button compact-button" (click)="deleteIntervention(intervention)" type="button">                    
+                      X
+                    </button>
+                  }
                 </span>
               </div>
             }
@@ -98,12 +106,16 @@
         }
       </section>
     }
-
-    <div class="form-actions">
-      <button class="primary-button" [disabled]="periodNgForm.invalid" type="submit">Enregistrer</button>
-      @if (isEditing) {
-        <button class="danger-button" (click)="deletePeriod()" type="button">Supprimer</button>
-      }
-    </div>
+    @if (!isLocked) {
+      <div class="form-actions">
+        <button class="primary-button" [disabled]="periodNgForm.invalid" type="submit">Enregistrer</button>
+        @if (isEditing) {
+          <button class="danger-button" (click)="deletePeriod()" type="button">Supprimer</button>
+        }
+      </div>
+    } @else {
+      <!--<p class="sent-rh-message">Envoyé aux RH le {{ formatSentToRhDate(sentToRhAt) }}</p>-->
+      <p class="sent-rh-message">Envoyé aux RH le {{ sentToRhAt }}</p>
+    }
   </form>
 </app-modal>

@@ -19,7 +19,6 @@ import {
   ExceptionalInterventionForm,
   ExceptionalOperation,
   ExceptionalOperationForm,
-  ExceptionalOperationStatus,
   ExceptionalOperationType,
   FilterField,
   ModalMode,
@@ -41,17 +40,13 @@ import { OperationModalComponent } from "./operation-modal.component";
 export class ExceptionalOperationsComponent implements OnDestroy {
   @Input({ required: true }) user: User | null = null;
 
-  readonly statuses: ExceptionalOperationStatus[] = ["Brouillon", "Planifiée", "En cours", "Signé Agent", "Signé Directeur", "Terminée", "Annulée"];
-
   activeFilterField: FilterField = null;
   filters: Record<SortField, string> = {
     type: "",
     initiatorName: "",
     title: "",
     startDate: "",
-    status: "",
   };
-  selectedStatusFilters: ExceptionalOperationStatus[] = [];
   modalMode: ModalMode | null = null;
   selectedOperation: ExceptionalOperation | null = null;
   selectedInterventionIndex: number | null = null;
@@ -94,8 +89,7 @@ export class ExceptionalOperationsComponent implements OnDestroy {
           this.matchesFilter(operation.type, this.filters.type) &&
           this.matchesFilter(operation.initiatorName, this.filters.initiatorName) &&
           this.matchesFilter(operation.title, this.filters.title) &&
-          this.matchesFilter(this.formatDate(operation.startDate), this.filters.startDate) &&
-          this.matchesStatusFilter(operation.status)
+          this.matchesFilter(this.formatDate(operation.startDate), this.filters.startDate)
         );
       })
       .sort((first, second) => this.compareOperations(first, second));
@@ -119,7 +113,6 @@ export class ExceptionalOperationsComponent implements OnDestroy {
       forecastEndDate: operation.forecastEndDate || "",
       actualStartDate: operation.actualStartDate || "",
       actualEndDate: operation.actualEndDate || "",
-      status: operation.status,
       plannedUsers: this.normalizeParticipants(operation.plannedUsers || [], operation.startDate, operation.forecastEndDate || operation.startDate),
       actualUsers: this.normalizeParticipants(
         operation.actualUsers || [],
@@ -136,6 +129,10 @@ export class ExceptionalOperationsComponent implements OnDestroy {
     index?: number,
     returnToOperationModal = false,
   ): void {
+    if (this.isSentToRh(operation)) {
+      return;
+    }
+
     this.selectedOperation = operation;
     this.selectedInterventionIndex = typeof index === "number" ? index : null;
     this.shouldReturnToOperationModal = returnToOperationModal;
@@ -177,6 +174,10 @@ export class ExceptionalOperationsComponent implements OnDestroy {
   }
 
   async saveOperation(form: ExceptionalOperationForm): Promise<void> {
+    if (this.selectedOperation && this.isSentToRh(this.selectedOperation)) {
+      return;
+    }
+
     const plannedUsers = this.normalizeParticipants(form.plannedUsers || [], form.startDate, form.forecastEndDate || form.startDate);
     const actualUsers = this.normalizeParticipants(
       form.actualUsers || [],
@@ -213,11 +214,20 @@ export class ExceptionalOperationsComponent implements OnDestroy {
   }
 
   async deleteOperation(operation: ExceptionalOperation): Promise<void> {
+    if (this.isSentToRh(operation)) {
+      return;
+    }
+
     await deleteDoc(doc(db, "exceptionalOperations", operation.id));
   }
 
   async saveIntervention(form: ExceptionalInterventionForm): Promise<void> {
     if (!this.selectedOperation) {
+      return;
+    }
+
+    if (this.isSentToRh(this.selectedOperation)) {
+      this.interventionError = "Cette opération a été envoyée aux RH et ne peut plus être modifiée.";
       return;
     }
 
@@ -271,6 +281,11 @@ export class ExceptionalOperationsComponent implements OnDestroy {
 
   async deleteIntervention(operation: ExceptionalOperation, index: number): Promise<void> {
     const currentOperation = this.operations.find((item) => item.id === operation.id) || operation;
+
+    if (this.isSentToRh(currentOperation)) {
+      return;
+    }
+
     const interventions = [...(currentOperation.interventions || [])];
 
     if (index < 0 || index >= interventions.length) {
@@ -318,27 +333,6 @@ export class ExceptionalOperationsComponent implements OnDestroy {
     this.activeFilterField = this.activeFilterField === field ? null : field;
   }
 
-  clearFilter(field: SortField): void {
-    this.filters[field] = "";
-
-    if (field === "status") {
-      this.selectedStatusFilters = [];
-    }
-  }
-
-  toggleStatusFilter(status: ExceptionalOperationStatus): void {
-    if (this.selectedStatusFilters.includes(status)) {
-      this.selectedStatusFilters = this.selectedStatusFilters.filter((currentStatus) => currentStatus !== status);
-      return;
-    }
-
-    this.selectedStatusFilters = [...this.selectedStatusFilters, status];
-  }
-
-  isStatusFilterSelected(status: ExceptionalOperationStatus): boolean {
-    return this.selectedStatusFilters.includes(status);
-  }
-
   operationTypeLabel(type: ExceptionalOperationType): string {
     return type === "astreinte" ? "Astreinte exceptionnelle" : "Travail exceptionnel";
   }
@@ -352,6 +346,10 @@ export class ExceptionalOperationsComponent implements OnDestroy {
     return date || value;
   }
 
+  isSentToRh(operation: ExceptionalOperation | null | undefined): boolean {
+    return Boolean(operation?.sentToRhAt);
+  }
+
   private createEmptyOperationForm(type: ExceptionalOperationType) {
     return {
       type,
@@ -363,7 +361,6 @@ export class ExceptionalOperationsComponent implements OnDestroy {
       forecastEndDate: "",
       actualStartDate: "",
       actualEndDate: "",
-      status: "Brouillon" as ExceptionalOperationStatus,
       plannedUsers: [] as OperationParticipant[],
       actualUsers: [] as OperationParticipant[],
     };
@@ -464,14 +461,6 @@ export class ExceptionalOperationsComponent implements OnDestroy {
     };
   }
 
-  private compareOperations(first: ExceptionalOperation, second: ExceptionalOperation): number {
-    const firstValue = String(first[this.sortField] || "").toLowerCase();
-    const secondValue = String(second[this.sortField] || "").toLowerCase();
-    const result = firstValue.localeCompare(secondValue);
-
-    return this.sortDirection === "asc" ? result : -result;
-  }
-
   private matchesFilter(value: string, filter: string): boolean {
     const normalizedFilter = filter.trim().toLowerCase();
 
@@ -482,11 +471,24 @@ export class ExceptionalOperationsComponent implements OnDestroy {
     return value.toLowerCase().includes(normalizedFilter);
   }
 
-  private matchesStatusFilter(status: ExceptionalOperationStatus): boolean {
-    if (!this.selectedStatusFilters.length) {
-      return true;
+  private compareOperations(first: ExceptionalOperation, second: ExceptionalOperation): number {
+    const firstValue = this.sortValue(first, this.sortField);
+    const secondValue = this.sortValue(second, this.sortField);
+    const result = firstValue.localeCompare(secondValue, "fr-FR", { numeric: true, sensitivity: "base" });
+
+    return this.sortDirection === "asc" ? result : -result;
+  }
+
+  private sortValue(operation: ExceptionalOperation, field: SortField): string {
+    if (field === "type") {
+      return this.operationTypeLabel(operation.type);
     }
 
-    return this.selectedStatusFilters.includes(status);
+    if (field === "startDate") {
+      return operation.startDate || "";
+    }
+
+    return operation[field] || "";
   }
+
 }

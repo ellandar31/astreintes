@@ -9,7 +9,6 @@ import {
   ExceptionalIntervention,
   ExceptionalOperation,
   ExceptionalOperationForm,
-  ExceptionalOperationStatus,
   OperationParticipant,
   SelectableUser,
   SignatureVisa,
@@ -33,12 +32,11 @@ export class OperationModalComponent implements OnDestroy {
     forecastEndDate: "",
     actualStartDate: "",
     actualEndDate: "",
-    status: "Brouillon",
     plannedUsers: [],
     actualUsers: [],
   };
+  @Input() isLocked = false;
   @Input() operation: ExceptionalOperation | null = null;
-  @Input({ required: true }) statuses: ExceptionalOperationStatus[] = [];
   @Output() addIntervention = new EventEmitter<ExceptionalOperation>();
   @Output() closed = new EventEmitter<void>();
   @Output() deleteIntervention = new EventEmitter<{ operation: ExceptionalOperation; index: number }>();
@@ -70,6 +68,10 @@ export class OperationModalComponent implements OnDestroy {
   }
 
   save(form: NgForm): void {
+    if (this.isLocked) {
+      return;
+    }
+
     this.validationError = "";
 
     if (form.invalid) {
@@ -97,6 +99,17 @@ export class OperationModalComponent implements OnDestroy {
 
     const [date] = value.split("T");
     return date || value;
+  }
+
+  formatDateTime(value: string | undefined): string {
+    if (!value) {
+      return "";
+    }
+
+    return new Intl.DateTimeFormat("fr-FR", {
+      dateStyle: "short",
+      timeStyle: "short",
+    }).format(new Date(value));
   }
 
   selectInitiator(userId: string): void {

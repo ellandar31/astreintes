@@ -63,31 +63,6 @@
               <input class="header-filter" [(ngModel)]="filters.startDate" name="startDateFilter" placeholder="AAAA-MM-JJ" />
             }
           </th>
-          <th>
-            <div class="header-cell">
-              <span>Statut</span>
-              <button class="header-icon" (click)="setSort('status')" title="Trier" type="button">{{ sortIndicator("status") }}</button>
-              <button class="header-icon" (click)="toggleFilter('status')" title="Filtrer" type="button">⌕</button>
-            </div>
-            @if (activeFilterField === "status") {
-              <div class="status-filter-menu" aria-label="Filtre multi-sélection des statuts">
-                @for (status of statuses; track status) {
-                  <label class="status-filter-option">
-                    <input
-                      type="checkbox"
-                      [checked]="isStatusFilterSelected(status)"
-                      (change)="toggleStatusFilter(status)"
-                    />
-                    <span>{{ status }}</span>
-                  </label>
-                }
-
-                @if (selectedStatusFilters.length) {
-                  <button class="clear-filter-button" (click)="clearFilter('status')" type="button">Effacer</button>
-                }
-              </div>
-            }
-          </th>
           <th>Actions</th>
         </tr>
       </thead>
@@ -98,33 +73,70 @@
             <td>{{ operationTypeLabel(operation.type) }}</td>
             <td>{{ operation.initiatorName }}</td>
             <td>{{ operation.title }}</td>
-            <td>{{ formatDate(operation.startDate) }}</td>
-            <td>
-              <span class="status-pill">{{ operation.status }}</span>
-            </td>
+            <td>{{ formatDate(operation.startDate) }}</td>            
             <td>
               <div class="table-actions">
-                <button class="action-button" (click)="openEditModal(operation)" title="Modifier" aria-label="Modifier" type="button">
-                  ✎
-                </button>
-                <button class="action-button danger" (click)="deleteOperation(operation)" title="Supprimer" aria-label="Supprimer" type="button">
-                  X
-                </button>
-                <button
-                  class="action-button"
-                  (click)="openInterventionModal(operation)"
-                  title="Ajouter une intervention"
-                  aria-label="Ajouter une intervention"
-                  type="button"
-                >
-                  +
-                </button>
+                @if (isSentToRh(operation)) {
+                  <button
+                    class="action-button"
+                    (click)="openEditModal(operation)"
+                    title="Consulter"
+                    attr.aria-label="Consulter"
+                    type="button"
+                  >
+                    <svg
+                      aria-hidden="true"
+                      viewBox="0 0 24 24"
+                      width="20"
+                      height="20"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12"></path>
+                      <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                  </button>
+                } @else {
+                  <button
+                    class="action-button"
+                    (click)="openEditModal(operation)"
+                    [disabled]="isSentToRh(operation)"
+                    title="Modifier"
+                    attr.aria-label="Modifier"
+                    type="button"
+                  >
+                    ✎
+                  </button>
+                  <button
+                    class="action-button danger"
+                    [disabled]="isSentToRh(operation)"
+                    (click)="deleteOperation(operation)"
+                    title="Supprimer"
+                    aria-label="Supprimer"
+                    type="button"
+                  >
+                    X
+                  </button>
+                  <button
+                    class="action-button"
+                    [disabled]="isSentToRh(operation)"
+                    (click)="openInterventionModal(operation)"
+                    title="Ajouter une intervention"
+                    aria-label="Ajouter une intervention"
+                    type="button"
+                  >
+                    +
+                  </button>
+                }
               </div>
             </td>
           </tr>
         } @empty {
           <tr>
-            <td colspan="6" class="empty-row">Aucune opération exceptionnelle.</td>
+            <td colspan="5" class="empty-row">Aucune opération exceptionnelle.</td>
           </tr>
         }
       </tbody>
@@ -135,8 +147,8 @@
 @if (modalMode === "create-astreinte" || modalMode === "create-travaux" || modalMode === "edit") {
   <app-operation-modal
     [form]="operationForm"
+    [isLocked]="isSentToRh(selectedOperation)"
     [operation]="selectedOperation"
-    [statuses]="statuses"
     (addIntervention)="openInterventionModal($event, undefined, undefined, true)"
     (closed)="closeModal()"
     (deleteIntervention)="deleteIntervention($event.operation, $event.index)"

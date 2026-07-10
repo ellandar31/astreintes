@@ -154,6 +154,10 @@ export class RegularCalendarComponent implements OnDestroy {
       .sort((first, second) => first.startDate.localeCompare(second.startDate));
   }
 
+  get editingPeriod(): RegularOnCallPeriod | undefined {
+    return this.periods.find((period) => period.id === this.editingPeriodId);
+  }
+
   previousMonth(): void {
     this.currentMonth = new Date(this.currentMonth.getFullYear(), this.currentMonth.getMonth() - 1, 1);
   }
@@ -201,6 +205,11 @@ export class RegularCalendarComponent implements OnDestroy {
       return;
     }
 
+    if (this.isPeriodSentToRh(currentPeriod)) {
+      this.interventionError = "Cette astreinte a été envoyée aux RH et ne peut plus être modifiée.";
+      return;
+    }
+
     this.editingInterventionId = null;
     this.interventionPeriodId = currentPeriod.id;
     this.interventionError = "";
@@ -209,6 +218,12 @@ export class RegularCalendarComponent implements OnDestroy {
   }
 
   openEditInterventionModal(intervention: RegularIntervention): void {
+    const parentPeriod = this.periodForIntervention(intervention);
+
+    if (this.isPeriodSentToRh(parentPeriod)) {
+      return;
+    }
+
     this.editingInterventionId = intervention.id;
     this.interventionPeriodId = intervention.periodId;
     this.interventionError = "";
@@ -232,6 +247,12 @@ export class RegularCalendarComponent implements OnDestroy {
 
   async savePeriod(form: RegularOnCallPeriodForm): Promise<void> {
     if (!this.selectedTeamId) {
+      return;
+    }
+
+    const currentPeriod = this.editingPeriodId ? this.periods.find((period) => period.id === this.editingPeriodId) : null;
+
+    if (this.isPeriodSentToRh(currentPeriod)) {
       return;
     }
 
@@ -283,6 +304,11 @@ export class RegularCalendarComponent implements OnDestroy {
       return;
     }
 
+    if (this.isPeriodSentToRh(parentPeriod)) {
+      this.interventionError = "Cette astreinte a été envoyée aux RH et ne peut plus être modifiée.";
+      return;
+    }
+
     try {
       const payload = {
         ...form,
@@ -309,6 +335,10 @@ export class RegularCalendarComponent implements OnDestroy {
   }
 
   async deleteIntervention(intervention: RegularIntervention): Promise<void> {
+    if (this.isPeriodSentToRh(this.periodForIntervention(intervention))) {
+      return;
+    }
+
     const shouldDelete = window.confirm("Supprimer cette intervention ?");
 
     if (!shouldDelete) {
@@ -325,6 +355,12 @@ export class RegularCalendarComponent implements OnDestroy {
 
   async deletePeriod(): Promise<void> {
     if (!this.editingPeriodId) {
+      return;
+    }
+
+    const currentPeriod = this.periods.find((period) => period.id === this.editingPeriodId);
+
+    if (this.isPeriodSentToRh(currentPeriod)) {
       return;
     }
 
@@ -354,6 +390,10 @@ export class RegularCalendarComponent implements OnDestroy {
 
   userLabel(user: RegularUser): string {
     return user.displayName ? `${user.displayName} (${user.email})` : user.email;
+  }
+
+  isPeriodSentToRh(period: RegularOnCallPeriod | null | undefined): boolean {
+    return Boolean(period?.sentToRhAt);
   }
 
   getPeriodColor(period: RegularOnCallPeriod): number {
@@ -425,6 +465,10 @@ export class RegularCalendarComponent implements OnDestroy {
     return this.periods.find(
       (period) => period.userId === form.userId && period.startDate <= form.startDate && period.endDate >= form.endDate,
     );
+  }
+
+  private periodForIntervention(intervention: RegularIntervention): RegularOnCallPeriod | undefined {
+    return this.periods.find((period) => period.id === intervention.periodId);
   }
 
   private validatePeriod(form: RegularOnCallPeriodForm): string {

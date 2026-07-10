@@ -20,6 +20,8 @@ export class RegularPeriodModalComponent {
   };
   @Input() interventions: RegularIntervention[] = [];
   @Input() isEditing = false;
+  @Input() isLocked = false;
+  @Input() sentToRhAt?: string;
   @Input({ required: true }) users: RegularUser[] = [];
   @Output() closed = new EventEmitter<void>();
   @Output() deleted = new EventEmitter<void>();
@@ -41,6 +43,10 @@ export class RegularPeriodModalComponent {
   }
 
   save(form: NgForm): void {
+    if (this.isLocked) {
+      return;
+    }
+
     if (form.invalid) {
       return;
     }
@@ -62,18 +68,34 @@ export class RegularPeriodModalComponent {
   }
 
   deletePeriod(): void {
+    if (this.isLocked) {
+      return;
+    }
+
     this.deleted.emit();
   }
 
   deleteIntervention(intervention: RegularIntervention): void {
+    if (this.isLocked) {
+      return;
+    }
+
     this.interventionDeleted.emit(intervention);
   }
 
   addIntervention(): void {
+    if (this.isLocked) {
+      return;
+    }
+
     this.interventionAdded.emit();
   }
 
   editIntervention(intervention: RegularIntervention): void {
+    if (this.isLocked) {
+      return;
+    }
+
     this.interventionEdited.emit(intervention);
   }
 
@@ -86,6 +108,10 @@ export class RegularPeriodModalComponent {
       dateStyle: "short",
       timeStyle: "short",
     }).format(new Date(value));
+  }
+
+  formatSentToRhDate(value: string | undefined): string {
+    return this.formatDateTime(value || "");
   }
 
   updateStartDate(value: string): void {

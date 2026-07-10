@@ -77,6 +77,8 @@
     [form]="periodForm"
     [interventions]="editingPeriodInterventions"
     [isEditing]="!!editingPeriodId"
+    [isLocked]="isPeriodSentToRh(editingPeriod)"
+    [sentToRhAt]="editingPeriod?.sentToRhAt"
     [users]="selectedTeamUsers"
     (closed)="closePeriodModal()"
     (deleted)="deletePeriod()"

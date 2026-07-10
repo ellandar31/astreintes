@@ -22,6 +22,7 @@ export interface RegularOnCallPeriod {
   endDate: string;
   agentVisa?: SignatureVisa;
   directorVisa?: SignatureVisa;
+  sentToRhAt?: string;
 }
 
 export interface RegularOnCallPeriodForm {

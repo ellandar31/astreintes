@@ -2,15 +2,7 @@ export type { SignatureVisa } from "../../shared/visa.models";
 import type { SignatureVisa } from "../../shared/visa.models";
 
 export type ExceptionalOperationType = "astreinte" | "travaux";
-export type ExceptionalOperationStatus =
-  | "Brouillon"
-  | "Planifiée"
-  | "En cours"
-  | "Signé Agent"
-  | "Signé Directeur"
-  | "Terminée"
-  | "Annulée";
-export type SortField = "initiatorName" | "title" | "startDate" | "status" | "type";
+export type SortField = "initiatorName" | "title" | "startDate" | "type";
 export type SortDirection = "asc" | "desc";
 export type ModalMode = "create-astreinte" | "create-travaux" | "edit" | "intervention";
 export type FilterField = SortField | null;
@@ -56,7 +48,6 @@ export interface ExceptionalOperation {
   forecastEndDate: string;
   actualStartDate: string;
   actualEndDate: string;
-  status: ExceptionalOperationStatus;
   plannedUsers: OperationParticipant[];
   actualUsers: OperationParticipant[];
   visas: {
@@ -68,6 +59,7 @@ export interface ExceptionalOperation {
     actualDirector: SignatureVisa;
   };
   interventions: ExceptionalIntervention[];
+  sentToRhAt?: string;
 }
 
 export interface ExceptionalOperationForm {
@@ -80,7 +72,6 @@ export interface ExceptionalOperationForm {
   forecastEndDate: string;
   actualStartDate: string;
   actualEndDate: string;
-  status: ExceptionalOperationStatus;
   plannedUsers: OperationParticipant[];
   actualUsers: OperationParticipant[];
 }
