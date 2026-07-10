@@ -1,5 +1,5 @@
 import { CommonModule } from "@angular/common";
-import { Component, ElementRef, Input, OnChanges, OnDestroy, SimpleChanges, ViewChild } from "@angular/core";
+import { Component, ElementRef, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { User, updateProfile } from "firebase/auth";
 import { Unsubscribe, doc, onSnapshot, setDoc } from "firebase/firestore";
@@ -15,6 +15,9 @@ import { SignatureProfile, VisaSignatureMode } from "../../shared/visa.models";
 })
 export class ProfilePageComponent implements OnChanges, OnDestroy {
   @Input({ required: true }) user: User | null = null;
+
+  @Output() saved = new EventEmitter<void>();
+  
   @ViewChild("signaturePad") signaturePad?: ElementRef<HTMLCanvasElement>;
 
   profile: SignatureProfile = {
@@ -109,6 +112,7 @@ export class ProfilePageComponent implements OnChanges, OnDestroy {
       { merge: true },
     );
       this.message = "Profil enregistré.";
+      this.saved.emit();
     } catch (error) {
       this.message = "Impossible d'enregistrer le profil.";
       console.error(error);
