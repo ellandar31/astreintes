@@ -1,4 +1,4 @@
-<app-modal [title]="modalTitle" [size]="isEditing ? 'large' : 'small'" (closed)="closed.emit()">
+<app-modal [title]="modalTitle" size="large" (closed)="closed.emit()">
   <form class="period-form" [class.consultation-mode]="isLocked" #periodNgForm="ngForm" (ngSubmit)="save(periodNgForm)">
     <div class="period-summary-grid">
       <label>
