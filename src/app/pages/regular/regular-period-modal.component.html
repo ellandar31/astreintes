@@ -114,8 +114,7 @@
         }
       </div>
     } @else {
-      <!--<p class="sent-rh-message">Envoyé aux RH le {{ formatSentToRhDate(sentToRhAt) }}</p>-->
-      <p class="sent-rh-message">Envoyé aux RH le {{ sentToRhAt }}</p>
+      <p class="sent-rh-message">Envoyé aux RH le {{ formatDateTime(sentToRhAt) }}</p>
     }
   </form>
 </app-modal>

@@ -101,15 +101,17 @@ export class OperationModalComponent implements OnDestroy {
     return date || value;
   }
 
-  formatDateTime(value: string | undefined): string {
-    if (!value) {
+  formatDateTime(value: unknown): string {
+    const date = this.toDate(value);
+
+    if (!date) {
       return "";
     }
 
     return new Intl.DateTimeFormat("fr-FR", {
       dateStyle: "short",
       timeStyle: "short",
-    }).format(new Date(value));
+    }).format(date);
   }
 
   selectInitiator(userId: string): void {
@@ -167,6 +169,32 @@ export class OperationModalComponent implements OnDestroy {
 
   userLabel(user: SelectableUser): string {
     return user.displayName ? `${user.displayName} (${user.email})` : user.email;
+  }
+
+  private toDate(value: unknown): Date | null {
+    if (!value) {
+      return null;
+    }
+
+    if (value instanceof Date) {
+      return value;
+    }
+
+    if (typeof value === "string" || typeof value === "number") {
+      const date = new Date(value);
+      return Number.isNaN(date.getTime()) ? null : date;
+    }
+
+    if (typeof value === "object" && "toDate" in value && typeof value.toDate === "function") {
+      return value.toDate();
+    }
+
+    if (typeof value === "object" && "seconds" in value && typeof value.seconds === "number") {
+      const nanoseconds = "nanoseconds" in value && typeof value.nanoseconds === "number" ? value.nanoseconds : 0;
+      return new Date(value.seconds * 1000 + Math.floor(nanoseconds / 1000000));
+    }
+
+    return null;
   }
 
   private createEmptyVisa(): SignatureVisa {

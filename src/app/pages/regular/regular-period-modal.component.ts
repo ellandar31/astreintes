@@ -21,7 +21,7 @@ export class RegularPeriodModalComponent {
   @Input() interventions: RegularIntervention[] = [];
   @Input() isEditing = false;
   @Input() isLocked = false;
-  @Input() sentToRhAt?: string;
+  @Input() sentToRhAt?: unknown;
   @Input({ required: true }) users: RegularUser[] = [];
   @Output() closed = new EventEmitter<void>();
   @Output() deleted = new EventEmitter<void>();
@@ -99,19 +99,21 @@ export class RegularPeriodModalComponent {
     this.interventionEdited.emit(intervention);
   }
 
-  formatDateTime(value: string): string {
-    if (!value) {
+  formatDateTime(value: unknown): string {
+    const date = this.toDate(value);
+
+    if (!date) {
       return "";
     }
 
     return new Intl.DateTimeFormat("fr-FR", {
       dateStyle: "short",
       timeStyle: "short",
-    }).format(new Date(value));
+    }).format(date);
   }
 
-  formatSentToRhDate(value: string | undefined): string {
-    return this.formatDateTime(value || "");
+  formatSentToRhDate(value: unknown): string {
+    return this.formatDateTime(value);
   }
 
   updateStartDate(value: string): void {
@@ -128,6 +130,32 @@ export class RegularPeriodModalComponent {
 
   private toDateOnly(value: string): string {
     return value.slice(0, 10);
+  }
+
+  private toDate(value: unknown): Date | null {
+    if (!value) {
+      return null;
+    }
+
+    if (value instanceof Date) {
+      return value;
+    }
+
+    if (typeof value === "string" || typeof value === "number") {
+      const date = new Date(value);
+      return Number.isNaN(date.getTime()) ? null : date;
+    }
+
+    if (typeof value === "object" && "toDate" in value && typeof value.toDate === "function") {
+      return value.toDate();
+    }
+
+    if (typeof value === "object" && "seconds" in value && typeof value.seconds === "number") {
+      const nanoseconds = "nanoseconds" in value && typeof value.nanoseconds === "number" ? value.nanoseconds : 0;
+      return new Date(value.seconds * 1000 + Math.floor(nanoseconds / 1000000));
+    }
+
+    return null;
   }
 
   private withDefaultTime(value: string, time: string): string {
