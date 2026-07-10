@@ -230,13 +230,13 @@ export class RhExportsComponent implements OnDestroy {
           actualEndDate: actualEnd,
           plannedUsers: (operation.plannedUsers || []).map((user) => ({
             name: user.displayName || user.email,
-            startDate: forecastStart,
-            endDate: forecastEnd,
+            startDate: user.startDate || forecastStart,
+            endDate: user.endDate || forecastEnd,
           })),
           actualUsers: (operation.actualUsers || []).map((user) => ({
             name: user.displayName || user.email,
-            startDate: actualStart,
-            endDate: actualEnd,
+            startDate: user.startDate || actualStart,
+            endDate: user.endDate || actualEnd,
           })),
           interventions: (operation.interventions || []).map((intervention) => ({
             userName: intervention.userName || intervention.userEmail,

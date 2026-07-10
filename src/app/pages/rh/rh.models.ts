@@ -43,8 +43,8 @@ export interface RhExceptionalOperation {
   forecastEndDate: string;
   actualStartDate: string;
   actualEndDate: string;
-  plannedUsers?: Array<{ userId: string; displayName: string; email: string }>;
-  actualUsers?: Array<{ userId: string; displayName: string; email: string }>;
+  plannedUsers?: Array<{ userId: string; displayName: string; email: string; startDate?: string; endDate?: string }>;
+  actualUsers?: Array<{ userId: string; displayName: string; email: string; startDate?: string; endDate?: string }>;
   interventions?: RhExceptionalIntervention[];
 }
 

@@ -51,6 +51,7 @@ export class OperationModalComponent implements OnDestroy {
 
   selectedActualUserId = "";
   selectedPlannedUserId = "";
+  validationError = "";
   users: SelectableUser[] = [];
 
   private readonly unsubscribe: Unsubscribe = onSnapshot(collection(db, "users"), (snapshot) => {
@@ -69,7 +70,16 @@ export class OperationModalComponent implements OnDestroy {
   }
 
   save(form: NgForm): void {
+    this.validationError = "";
+
     if (form.invalid) {
+      return;
+    }
+
+    const overlapError = this.participantOverlapError();
+
+    if (overlapError) {
+      this.validationError = overlapError;
       return;
     }
 
@@ -99,7 +109,7 @@ export class OperationModalComponent implements OnDestroy {
   addParticipant(listName: "plannedUsers" | "actualUsers", userId: string): void {
     const user = this.users.find((item) => item.id === userId);
 
-    if (!user || this.form[listName].some((participant) => participant.userId === user.id)) {
+    if (!user) {
       return;
     }
 
@@ -109,6 +119,8 @@ export class OperationModalComponent implements OnDestroy {
         userId: user.id,
         displayName: user.displayName || user.email,
         email: user.email,
+        startDate: this.defaultParticipantStartDate(listName, user.id),
+        endDate: this.defaultParticipantEndDate(listName, user.id),
         visa: this.createEmptyVisa(),
       },
     ];
@@ -120,12 +132,24 @@ export class OperationModalComponent implements OnDestroy {
     }
   }
 
-  removeParticipant(listName: "plannedUsers" | "actualUsers", participant: OperationParticipant): void {
-    this.form[listName] = this.form[listName].filter((item) => item.userId !== participant.userId);
+  removeParticipant(listName: "plannedUsers" | "actualUsers", index: number): void {
+    this.form[listName] = this.form[listName].filter((_, currentIndex) => currentIndex !== index);
   }
 
-  availableUsers(listName: "plannedUsers" | "actualUsers"): SelectableUser[] {
-    return this.users.filter((user) => !this.form[listName].some((participant) => participant.userId === user.id));
+  initializeActualFromPlanned(): void {
+    if (this.form.actualUsers.length || !this.form.plannedUsers.length) {
+      return;
+    }
+
+    this.form.actualUsers = this.form.plannedUsers.map((participant) => ({
+      ...participant,
+      visa: this.createEmptyVisa(),
+    }));
+    this.selectedActualUserId = "";
+  }
+
+  availableUsers(): SelectableUser[] {
+    return this.users;
   }
 
   userLabel(user: SelectableUser): string {
@@ -134,5 +158,57 @@ export class OperationModalComponent implements OnDestroy {
 
   private createEmptyVisa(): SignatureVisa {
     return createEmptyVisa();
+  }
+
+  private defaultParticipantStartDate(listName: "plannedUsers" | "actualUsers", userId: string): string {
+    if (listName === "actualUsers") {
+      const plannedParticipant = this.form.plannedUsers.find((participant) => participant.userId === userId);
+      return plannedParticipant?.startDate || this.form.actualStartDate || this.form.startDate || "";
+    }
+
+    return this.form.startDate || "";
+  }
+
+  private defaultParticipantEndDate(listName: "plannedUsers" | "actualUsers", userId: string): string {
+    if (listName === "actualUsers") {
+      const plannedParticipant = this.form.plannedUsers.find((participant) => participant.userId === userId);
+      return plannedParticipant?.endDate || this.form.actualEndDate || this.form.forecastEndDate || "";
+    }
+
+    return this.form.forecastEndDate || "";
+  }
+
+  private participantOverlapError(): string {
+    return this.listOverlapError("plannedUsers", "prévisionnel") || this.listOverlapError("actualUsers", "réel");
+  }
+
+  private listOverlapError(listName: "plannedUsers" | "actualUsers", label: string): string {
+    const participants = this.form[listName];
+
+    for (let firstIndex = 0; firstIndex < participants.length; firstIndex += 1) {
+      const first = participants[firstIndex];
+
+      for (let secondIndex = firstIndex + 1; secondIndex < participants.length; secondIndex += 1) {
+        const second = participants[secondIndex];
+
+        if (first.userId !== second.userId) {
+          continue;
+        }
+
+        if (this.dateRangesOverlap(first.startDate, first.endDate, second.startDate, second.endDate)) {
+          return `Les périodes ${label} de ${first.displayName || first.email} se recouvrent.`;
+        }
+      }
+    }
+
+    return "";
+  }
+
+  private dateRangesOverlap(firstStart: string, firstEnd: string, secondStart: string, secondEnd: string): boolean {
+    if (!firstStart || !firstEnd || !secondStart || !secondEnd) {
+      return false;
+    }
+
+    return firstStart < secondEnd && secondStart < firstEnd;
   }
 }

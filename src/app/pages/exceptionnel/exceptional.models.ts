@@ -19,6 +19,8 @@ export interface OperationParticipant {
   userId: string;
   displayName: string;
   email: string;
+  startDate: string;
+  endDate: string;
   visa: SignatureVisa;
 }
 

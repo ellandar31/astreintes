@@ -73,7 +73,7 @@ export class ExceptionalOperationsComponent implements OnDestroy {
 
   private readonly unsubscribe: Unsubscribe = onSnapshot(collection(db, "exceptionalOperations"), (snapshot) => {
     this.operations = snapshot.docs
-      .map((document) => ({ id: document.id, ...document.data() }) as ExceptionalOperation)
+      .map((document) => this.normalizeOperation({ id: document.id, ...document.data() } as ExceptionalOperation))
       .sort((first, second) => (first.startDate || "").localeCompare(second.startDate || ""));
 
     if (this.selectedOperation) {
@@ -119,8 +119,12 @@ export class ExceptionalOperationsComponent implements OnDestroy {
       actualStartDate: operation.actualStartDate || "",
       actualEndDate: operation.actualEndDate || "",
       status: operation.status,
-      plannedUsers: [...(operation.plannedUsers || [])],
-      actualUsers: [...(operation.actualUsers || [])],
+      plannedUsers: this.normalizeParticipants(operation.plannedUsers || [], operation.startDate, operation.forecastEndDate || operation.startDate),
+      actualUsers: this.normalizeParticipants(
+        operation.actualUsers || [],
+        operation.actualStartDate || operation.startDate,
+        operation.actualEndDate || operation.forecastEndDate || operation.startDate,
+      ),
     };
     this.modalMode = "edit";
   }
@@ -169,12 +173,24 @@ export class ExceptionalOperationsComponent implements OnDestroy {
   }
 
   async saveOperation(form: ExceptionalOperationForm): Promise<void> {
+    const plannedUsers = this.normalizeParticipants(form.plannedUsers || [], form.startDate, form.forecastEndDate || form.startDate);
+    const actualUsers = this.normalizeParticipants(
+      form.actualUsers || [],
+      form.actualStartDate || form.startDate,
+      form.actualEndDate || form.forecastEndDate || form.startDate,
+    );
+    const plannedRange = this.participantRange(plannedUsers);
+    const actualRange = this.participantRange(actualUsers);
     const payload = {
       ...form,
       initiatorUid: form.initiatorUid || "",
       operationManagerUid: this.selectedOperation?.operationManagerUid || "",
-      plannedUsers: form.plannedUsers || [],
-      actualUsers: form.actualUsers || [],
+      startDate: plannedRange.startDate || form.startDate || "",
+      forecastEndDate: plannedRange.endDate || form.forecastEndDate || "",
+      actualStartDate: actualRange.startDate || form.actualStartDate || "",
+      actualEndDate: actualRange.endDate || form.actualEndDate || "",
+      plannedUsers,
+      actualUsers,
       visas: this.selectedOperation?.visas || this.createEmptyOperationVisas(),
       interventions: this.selectedOperation?.interventions || [],
       updatedAt: serverTimestamp(),
@@ -366,6 +382,50 @@ export class ExceptionalOperationsComponent implements OnDestroy {
 
   private createEmptyVisa(): SignatureVisa {
     return createEmptyVisa();
+  }
+
+  private normalizeOperation(operation: ExceptionalOperation): ExceptionalOperation {
+    const plannedUsers = this.normalizeParticipants(operation.plannedUsers || [], operation.startDate, operation.forecastEndDate || operation.startDate);
+    const actualUsers = this.normalizeParticipants(
+      operation.actualUsers || [],
+      operation.actualStartDate || operation.startDate,
+      operation.actualEndDate || operation.forecastEndDate || operation.startDate,
+    );
+    const plannedRange = this.participantRange(plannedUsers);
+    const actualRange = this.participantRange(actualUsers);
+
+    return {
+      ...operation,
+      startDate: operation.startDate || plannedRange.startDate,
+      forecastEndDate: operation.forecastEndDate || plannedRange.endDate,
+      actualStartDate: operation.actualStartDate || actualRange.startDate,
+      actualEndDate: operation.actualEndDate || actualRange.endDate,
+      plannedUsers,
+      actualUsers,
+    };
+  }
+
+  private normalizeParticipants(
+    participants: OperationParticipant[],
+    fallbackStartDate: string,
+    fallbackEndDate: string,
+  ): OperationParticipant[] {
+    return participants.map((participant) => ({
+      ...participant,
+      startDate: participant.startDate || fallbackStartDate || "",
+      endDate: participant.endDate || fallbackEndDate || "",
+      visa: participant.visa || this.createEmptyVisa(),
+    }));
+  }
+
+  private participantRange(participants: OperationParticipant[]): { startDate: string; endDate: string } {
+    const startDates = participants.map((participant) => participant.startDate).filter(Boolean).sort();
+    const endDates = participants.map((participant) => participant.endDate).filter(Boolean).sort();
+
+    return {
+      startDate: startDates[0] || "",
+      endDate: endDates.at(-1) || "",
+    };
   }
 
   private compareOperations(first: ExceptionalOperation, second: ExceptionalOperation): number {

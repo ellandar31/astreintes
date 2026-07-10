@@ -41,27 +41,15 @@
       <section class="timeline-panel" aria-labelledby="planned-title">
         <p class="panel-kicker" id="planned-title">Prévisionnel</p>
 
-        <div class="date-grid">
-          <label>
-            Date de début
-            <input name="startDate" [(ngModel)]="form.startDate" required type="datetime-local" />
-          </label>
-
-          <label>
-            Date de fin
-            <input name="forecastEndDate" [(ngModel)]="form.forecastEndDate" type="datetime-local" />
-          </label>
-        </div>
-
         <div class="users-box">
-          <h3>Utilisateurs</h3>
+          <h3>Utilisateurs et dates prévisionnelles</h3>
 
           <div class="inline-form">
             <label>
               Utilisateur
-              <select class="user-select" name="plannedUser" [(ngModel)]="selectedPlannedUserId" [disabled]="!availableUsers('plannedUsers').length">
+              <select class="user-select" name="plannedUser" [(ngModel)]="selectedPlannedUserId" [disabled]="!availableUsers().length">
                 <option value="">Sélectionner un utilisateur</option>
-                @for (user of availableUsers("plannedUsers"); track user.id) {
+                @for (user of availableUsers(); track user.id) {
                   <option [ngValue]="user.id" [title]="userLabel(user)">{{ userLabel(user) }}</option>
                 }
               </select>
@@ -77,12 +65,25 @@
             </button>
           </div>
 
-          <div class="tag-list">
-            @for (participant of form.plannedUsers; track participant.userId) {
-              <span class="tag">
-                {{ participant.displayName }} · visa {{ participant.visa.signed ? "signé" : "à signer" }}
-                <button (click)="removeParticipant('plannedUsers', participant)" title="Retirer" type="button">X</button>
-              </span>
+          <div class="participant-list">
+            @for (participant of form.plannedUsers; track $index; let participantIndex = $index) {
+              <div class="participant-row">
+                <div class="participant-name">
+                  <strong>{{ participant.displayName }}</strong>
+                </div>
+
+                <label>
+                  Début
+                  <input [name]="'plannedStartDate' + participantIndex" [(ngModel)]="participant.startDate" required type="datetime-local" />
+                </label>
+
+                <label>
+                  Fin
+                  <input [name]="'plannedEndDate' + participantIndex" [(ngModel)]="participant.endDate" required type="datetime-local" />
+                </label>
+
+                <button class="remove-button" (click)="removeParticipant('plannedUsers', participantIndex)" title="Retirer" type="button">X</button>
+              </div>
             } @empty {
               <p class="muted">Aucun utilisateur</p>
             }
@@ -93,27 +94,25 @@
       <section class="timeline-panel" aria-labelledby="actual-title">
         <p class="panel-kicker" id="actual-title">Réel</p>
 
-        <div class="date-grid">
-          <label>
-            Date de début
-            <input name="actualStartDate" [(ngModel)]="form.actualStartDate" type="datetime-local" />
-          </label>
-
-          <label>
-            Date de fin
-            <input name="actualEndDate" [(ngModel)]="form.actualEndDate" type="datetime-local" />
-          </label>
-        </div>
-
         <div class="users-box">
-          <h3>Utilisateurs</h3>
+          <div class="users-box-heading">
+            <h3>Utilisateurs et dates réelles</h3>
+            <button
+              class="secondary-button compact-button"
+              [disabled]="form.actualUsers.length > 0 || !form.plannedUsers.length"
+              (click)="initializeActualFromPlanned()"
+              type="button"
+            >
+              Initialiser depuis le prévisionnel
+            </button>
+          </div>
 
           <div class="inline-form">
             <label>
               Utilisateur
-              <select class="user-select" name="actualUser" [(ngModel)]="selectedActualUserId" [disabled]="!availableUsers('actualUsers').length">
+              <select class="user-select" name="actualUser" [(ngModel)]="selectedActualUserId" [disabled]="!availableUsers().length">
                 <option value="">Sélectionner un utilisateur</option>
-                @for (user of availableUsers("actualUsers"); track user.id) {
+                @for (user of availableUsers(); track user.id) {
                   <option [ngValue]="user.id" [title]="userLabel(user)">{{ userLabel(user) }}</option>
                 }
               </select>
@@ -129,12 +128,25 @@
             </button>
           </div>
 
-          <div class="tag-list">
-            @for (participant of form.actualUsers; track participant.userId) {
-              <span class="tag">
-                {{ participant.displayName }} · visa {{ participant.visa.signed ? "signé" : "à signer" }}
-                <button (click)="removeParticipant('actualUsers', participant)" title="Retirer" type="button">X</button>
-              </span>
+          <div class="participant-list">
+            @for (participant of form.actualUsers; track $index; let participantIndex = $index) {
+              <div class="participant-row">
+                <div class="participant-name">
+                  <strong>{{ participant.displayName }}</strong>
+                </div>
+
+                <label>
+                  Début
+                  <input [name]="'actualStartDate' + participantIndex" [(ngModel)]="participant.startDate" required type="datetime-local" />
+                </label>
+
+                <label>
+                  Fin
+                  <input [name]="'actualEndDate' + participantIndex" [(ngModel)]="participant.endDate" required type="datetime-local" />
+                </label>
+
+                <button class="remove-button" (click)="removeParticipant('actualUsers', participantIndex)" title="Retirer" type="button">X</button>
+              </div>
             } @empty {
               <p class="muted">Aucun utilisateur</p>
             }
@@ -211,6 +223,9 @@
     }
 
     <div class="form-actions">
+      @if (validationError) {
+        <p class="form-error">{{ validationError }}</p>
+      }
       <button class="primary-button" [disabled]="operationNgForm.invalid" type="submit">Enregistrer</button>
     </div>
   </form>

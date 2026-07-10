@@ -27,7 +27,7 @@
 
 .modal-window-large {
   min-height: min(760px, calc(100vh - 36px));
-  width: min(100%, 1120px);
+  width: min(100%, 1280px);
 }
 
 .modal-header {

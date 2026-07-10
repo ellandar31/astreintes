@@ -135,13 +135,13 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
         }
 
         items.push({
-          id: `exceptional-planned-${operation.id}-${participant.userId}`,
+          id: `exceptional-planned-${operation.id}-${participant.userId}-${index}`,
           kind: "exceptional-participant-planned",
           category: this.labels.validation.categories.exceptionalPlanned,
           title: operation.title,
           userLabel: participant.displayName || participant.email,
-          startDate: operation.startDate,
-          endDate: operation.forecastEndDate || operation.startDate,
+          startDate: participant.startDate || operation.startDate,
+          endDate: participant.endDate || operation.forecastEndDate || operation.startDate,
           visa: participant.visa || createEmptyVisa(),
           payload: operation,
           index,
@@ -154,13 +154,13 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
         }
 
         items.push({
-          id: `exceptional-actual-${operation.id}-${participant.userId}`,
+          id: `exceptional-actual-${operation.id}-${participant.userId}-${index}`,
           kind: "exceptional-participant-actual",
           category: this.labels.validation.categories.exceptionalActual,
           title: operation.title,
           userLabel: participant.displayName || participant.email,
-          startDate: operation.actualStartDate || operation.startDate,
-          endDate: operation.actualEndDate || operation.forecastEndDate || operation.startDate,
+          startDate: participant.startDate || operation.actualStartDate || operation.startDate,
+          endDate: participant.endDate || operation.actualEndDate || operation.forecastEndDate || operation.startDate,
           visa: participant.visa || createEmptyVisa(),
           payload: operation,
           index,
@@ -283,14 +283,14 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
         userLabel: this.labels.validation.roles.director,
         visa: operation.visas?.directorGlobal || operation.visas?.actualDirector || createEmptyVisa(),
       },
-      ...(operation.plannedUsers || []).map((participant) => ({
-        id: `exceptional-planned-${operation.id}-${participant.userId}`,
+      ...(operation.plannedUsers || []).map((participant, index) => ({
+        id: `exceptional-planned-${operation.id}-${participant.userId}-${index}`,
         role: this.labels.validation.roles.plannedStakeholder,
         userLabel: participant.displayName || participant.email,
         visa: participant.visa || createEmptyVisa(),
       })),
-      ...(operation.actualUsers || []).map((participant) => ({
-        id: `exceptional-actual-${operation.id}-${participant.userId}`,
+      ...(operation.actualUsers || []).map((participant, index) => ({
+        id: `exceptional-actual-${operation.id}-${participant.userId}-${index}`,
         role: this.labels.validation.roles.realStakeholder,
         userLabel: participant.displayName || participant.email,
         visa: participant.visa || createEmptyVisa(),
