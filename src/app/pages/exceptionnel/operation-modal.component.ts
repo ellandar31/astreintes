@@ -25,6 +25,7 @@ import {
 export class OperationModalComponent implements OnDestroy {
   @Input({ required: true }) form: ExceptionalOperationForm = {
     type: "astreinte",
+    initiatorUid: "",
     initiatorName: "",
     operationManagerName: "",
     title: "",
@@ -86,6 +87,13 @@ export class OperationModalComponent implements OnDestroy {
 
     const [date] = value.split("T");
     return date || value;
+  }
+
+  selectInitiator(userId: string): void {
+    const selectedUser = this.users.find((user) => user.id === userId);
+
+    this.form.initiatorUid = userId;
+    this.form.initiatorName = selectedUser?.displayName || selectedUser?.email || "";
   }
 
   addParticipant(listName: "plannedUsers" | "actualUsers", userId: string): void {

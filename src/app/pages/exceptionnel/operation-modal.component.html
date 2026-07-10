@@ -3,7 +3,17 @@
     <section class="summary-panel" aria-label="Informations générales">
       <label>
         Initiateur
-        <input name="initiatorName" [(ngModel)]="form.initiatorName" required />
+        <select
+          name="initiatorUid"
+          [ngModel]="form.initiatorUid"
+          (ngModelChange)="selectInitiator($event)"
+          required
+        >
+          <option value="">Sélectionner un utilisateur</option>
+          @for (user of users; track user.id) {
+            <option [ngValue]="user.id">{{ userLabel(user) }}</option>
+          }
+        </select>
       </label>
 
       <label>

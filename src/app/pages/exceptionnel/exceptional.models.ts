@@ -70,6 +70,7 @@ export interface ExceptionalOperation {
 
 export interface ExceptionalOperationForm {
   type: ExceptionalOperationType;
+  initiatorUid: string;
   initiatorName: string;
   operationManagerName: string;
   title: string;

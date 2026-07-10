@@ -18,7 +18,6 @@ export class ProfilePageComponent implements OnChanges, OnDestroy {
   @ViewChild("signaturePad") signaturePad?: ElementRef<HTMLCanvasElement>;
 
   profile: SignatureProfile = {
-    isDirector: false,
     signatureMode: "name",
     signatureName: "",
     signatureImage: "",
@@ -64,7 +63,6 @@ export class ProfilePageComponent implements OnChanges, OnDestroy {
     this.unsubscribe = onSnapshot(doc(db, "users", this.user.uid), (snapshot) => {
       const data = snapshot.data() as SignatureProfile | undefined;
       this.profile = {
-        isDirector: Boolean(data?.isDirector),
         signatureMode: data?.signatureMode || "name",
         signatureName: data?.signatureName || this.user?.displayName || this.user?.email || "",
         signatureImage: data?.signatureImage || "",

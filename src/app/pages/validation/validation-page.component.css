@@ -51,8 +51,7 @@
   gap: 10px;
 }
 
-.validation-section h3,
-.progress-section h4 {
+.validation-section h3 {
   color: #1f2937;
   margin: 0;
 }
@@ -97,87 +96,4 @@
 .pending {
   color: #8a5a16;
   font-weight: 800;
-}
-
-.item-details {
-  display: grid;
-  gap: 14px;
-}
-
-.item-details h3 {
-  color: #1f2937;
-  margin: 0;
-}
-
-.item-details dl {
-  display: grid;
-  gap: 10px;
-  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-  margin: 0;
-}
-
-.item-details dt {
-  color: #607080;
-  font-size: 0.82rem;
-  font-weight: 800;
-}
-
-.item-details dd {
-  color: #1f2937;
-  margin: 3px 0 0;
-}
-
-.visa-preview {
-  border: 1px solid #dde5eb;
-  border-radius: 8px;
-  max-height: 120px;
-  max-width: 320px;
-  object-fit: contain;
-  padding: 8px;
-}
-
-.name-visa {
-  border: 1px solid #dde5eb;
-  border-radius: 8px;
-  color: #1f2937;
-  font-size: 1.15rem;
-  font-weight: 800;
-  margin: 0;
-  padding: 12px;
-}
-
-.modal-actions {
-  display: flex;
-  justify-content: flex-end;
-}
-
-.progress-section {
-  display: grid;
-  gap: 10px;
-}
-
-.progress-table-shell {
-  border: 1px solid #dde5eb;
-  border-radius: 8px;
-  overflow: auto;
-}
-
-.progress-table {
-  border-collapse: collapse;
-  min-width: 640px;
-  width: 100%;
-}
-
-.progress-table th,
-.progress-table td {
-  border-bottom: 1px solid #dde5eb;
-  padding: 9px 10px;
-  text-align: left;
-}
-
-.progress-table th {
-  background: #f7fafb;
-  color: #526171;
-  font-size: 0.78rem;
-  text-transform: uppercase;
 }

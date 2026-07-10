@@ -110,6 +110,7 @@ export class ExceptionalOperationsComponent implements OnDestroy {
     this.selectedOperation = operation;
     this.operationForm = {
       type: operation.type,
+      initiatorUid: operation.initiatorUid || "",
       initiatorName: operation.initiatorName,
       operationManagerName: operation.operationManagerName || "",
       title: operation.title,
@@ -170,7 +171,7 @@ export class ExceptionalOperationsComponent implements OnDestroy {
   async saveOperation(form: ExceptionalOperationForm): Promise<void> {
     const payload = {
       ...form,
-      initiatorUid: this.user?.uid || "",
+      initiatorUid: form.initiatorUid || "",
       operationManagerUid: this.selectedOperation?.operationManagerUid || "",
       plannedUsers: form.plannedUsers || [],
       actualUsers: form.actualUsers || [],
@@ -325,6 +326,7 @@ export class ExceptionalOperationsComponent implements OnDestroy {
   private createEmptyOperationForm(type: ExceptionalOperationType) {
     return {
       type,
+      initiatorUid: this.user?.uid || "",
       initiatorName: this.user?.displayName || this.user?.email || "Utilisateur",
       operationManagerName: "",
       title: "",

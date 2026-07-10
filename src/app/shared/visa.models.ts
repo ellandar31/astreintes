@@ -1,7 +1,6 @@
 export type VisaSignatureMode = "name" | "image" | "draw";
 
 export interface SignatureProfile {
-  isDirector?: boolean;
   signatureMode?: VisaSignatureMode;
   signatureName?: string;
   signatureImage?: string;

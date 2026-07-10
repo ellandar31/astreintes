@@ -21,6 +21,7 @@ export class UsersSettingsComponent implements OnDestroy {
     { value: 0, label: "Administrateur", description: "Accès complet, incluant les droits utilisateur." },
     { value: 1, label: "Utilisateur", description: "Accès standard par défaut." },
     { value: 2, label: "Initiateur", description: "Droits utilisateur inclus, avec capacité d'initier." },
+    { value: 3, label: "Directeur", description: "Droits utilisateur inclus, avec capacité de viser les validations directeur." },
   ];
 
   users: ManagedUser[] = [];

@@ -1,62 +1,19 @@
-import { CommonModule } from "@angular/common";
+﻿import { CommonModule } from "@angular/common";
 import { Component, Input, OnChanges, OnDestroy, SimpleChanges } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { User } from "firebase/auth";
 import { Unsubscribe, collection, doc, onSnapshot, setDoc, updateDoc } from "firebase/firestore";
 import { db } from "../../firebase";
-import { ModalComponent } from "../../shared/modal.component";
-import { SignatureProfile, SignatureVisa, createEmptyVisa } from "../../shared/visa.models";
+import { SignatureVisa, createEmptyVisa } from "../../shared/visa.models";
 import { ExceptionalOperation } from "../exceptionnel/exceptional.models";
 import { RegularIntervention, RegularOnCallPeriod } from "../regular/regular.models";
-
-type ValidationItemKind =
-  | "regular-period-agent"
-  | "regular-period-director"
-  | "regular-intervention-agent"
-  | "exceptional-participant-planned"
-  | "exceptional-participant-actual"
-  | "exceptional-intervention-agent"
-  | "exceptional-operation-initiator"
-  | "exceptional-operation-director";
-
-interface AppUser extends SignatureProfile {
-  id: string;
-  uid?: string;
-  displayName: string;
-  email: string;
-  role?: number;
-}
-
-interface ValidationItem {
-  id: string;
-  kind: ValidationItemKind;
-  category: string;
-  title: string;
-  userLabel: string;
-  startDate: string;
-  endDate: string;
-  visa: SignatureVisa;
-  payload: RegularOnCallPeriod | RegularIntervention | ExceptionalOperation;
-  index?: number;
-}
-
-interface VisaProgressItem {
-  id: string;
-  role: string;
-  userLabel: string;
-  visa: SignatureVisa;
-}
-
-interface ValidationSection {
-  title: string;
-  emptyText: string;
-  items: ValidationItem[];
-}
+import { ValidationConsultationModalComponent } from "./validation-consultation-modal.component";
+import { AppUser, ValidationItem, ValidationSection, VisaProgressItem } from "./validation.models";
 
 @Component({
   selector: "app-validation-page",
   standalone: true,
-  imports: [CommonModule, FormsModule, ModalComponent],
+  imports: [CommonModule, FormsModule, ValidationConsultationModalComponent],
   templateUrl: "./validation-page.component.html",
   styleUrl: "./validation-page.component.css",
 })
@@ -105,7 +62,19 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
   }
 
   get canSelectUser(): boolean {
-    return Boolean(this.profile?.isDirector || this.profile?.role === 0);
+    return this.isAdmin;
+  }
+
+  get isAdmin(): boolean {
+    return Number(this.profile?.role) === 0;
+  }
+
+  get canViewInitiatorSection(): boolean {
+    return this.isAdmin || Number(this.profile?.role) === 2;
+  }
+
+  get canViewDirectorSection(): boolean {
+    return this.isAdmin || Number(this.profile?.role) === 3;
   }
 
   get selectedUser(): AppUser | undefined {
@@ -122,7 +91,7 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
         items.push({
           id: `regular-period-agent-${period.id}`,
           kind: "regular-period-agent",
-          category: "Astreinte régulière",
+          category: "Astreinte rÃ©guliÃ¨re",
           title: period.userName || period.userEmail,
           userLabel: period.userName || period.userEmail,
           startDate: period.startDate,
@@ -132,11 +101,11 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
         });
       }
 
-      if (this.profile?.isDirector) {
+      if (this.canViewDirectorSection && this.isRegularPeriodReadyForDirector(period)) {
         items.push({
           id: `regular-period-director-${period.id}`,
           kind: "regular-period-director",
-          category: "Astreinte régulière - visa directeur",
+          category: "Astreinte rÃ©guliÃ¨re - visa directeur",
           title: period.userName || period.userEmail,
           userLabel: period.userName || period.userEmail,
           startDate: period.startDate,
@@ -153,7 +122,7 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
         items.push(this.operationGlobalItem(operation, "exceptional-operation-initiator"));
       }
 
-      if (this.profile?.isDirector) {
+      if (this.canViewDirectorSection && this.isExceptionalOperationReadyForDirector(operation)) {
         items.push(this.operationGlobalItem(operation, "exceptional-operation-director"));
       }
 
@@ -165,7 +134,7 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
         items.push({
           id: `exceptional-planned-${operation.id}-${participant.userId}`,
           kind: "exceptional-participant-planned",
-          category: "Opération exceptionnelle - prévisionnel",
+          category: "OpÃ©ration exceptionnelle - prÃ©visionnel",
           title: operation.title,
           userLabel: participant.displayName || participant.email,
           startDate: operation.startDate,
@@ -184,7 +153,7 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
         items.push({
           id: `exceptional-actual-${operation.id}-${participant.userId}`,
           kind: "exceptional-participant-actual",
-          category: "Opération exceptionnelle - réel",
+          category: "OpÃ©ration exceptionnelle - rÃ©el",
           title: operation.title,
           userLabel: participant.displayName || participant.email,
           startDate: operation.actualStartDate || operation.startDate,
@@ -211,33 +180,49 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
   }
 
   get initiatorVisaItems(): ValidationItem[] {
+    if (!this.canViewInitiatorSection) {
+      return [];
+    }
+
     return this.validationItems.filter((item) => item.kind === "exceptional-operation-initiator");
   }
 
   get directorVisaItems(): ValidationItem[] {
+    if (!this.canViewDirectorSection) {
+      return [];
+    }
+
     return this.validationItems.filter((item) =>
       ["regular-period-director", "exceptional-operation-director"].includes(item.kind),
     );
   }
 
   get validationSections(): ValidationSection[] {
-    return [
+    const sections: ValidationSection[] = [
       {
         title: "Visa des intervenants",
         emptyText: "Aucun visa d'intervenant à afficher pour cet utilisateur.",
         items: this.intervenantVisaItems,
       },
-      {
+    ];
+
+    if (this.canViewInitiatorSection) {
+      sections.push({
         title: "Visa des initiateurs",
         emptyText: "Aucun visa d'initiateur à afficher pour cet utilisateur.",
         items: this.initiatorVisaItems,
-      },
-      {
+      });
+    }
+
+    if (this.canViewDirectorSection) {
+      sections.push({
         title: "Visa directeur",
         emptyText: "Aucun visa directeur à afficher pour cet utilisateur.",
         items: this.directorVisaItems,
-      },
-    ];
+      });
+    }
+
+    return sections;
   }
 
   get selectedItemVisaProgress(): VisaProgressItem[] {
@@ -297,13 +282,13 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
       },
       ...(operation.plannedUsers || []).map((participant) => ({
         id: `exceptional-planned-${operation.id}-${participant.userId}`,
-        role: "Intervenant prévisionnel",
+        role: "Intervenant prÃ©visionnel",
         userLabel: participant.displayName || participant.email,
         visa: participant.visa || createEmptyVisa(),
       })),
       ...(operation.actualUsers || []).map((participant) => ({
         id: `exceptional-actual-${operation.id}-${participant.userId}`,
-        role: "Intervenant réel",
+        role: "Intervenant rÃ©el",
         userLabel: participant.displayName || participant.email,
         visa: participant.visa || createEmptyVisa(),
       })),
@@ -374,7 +359,7 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
       visa,
       payload: updatedPayload,
     };
-    this.validationMessage = "Visa enregistré.";
+    this.validationMessage = "Visa enregistrÃ©.";
   }
 
   formatDateTime(value: string): string {
@@ -435,7 +420,7 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
       visa: emptyVisa,
       payload: updatedPayload,
     };
-    this.validationMessage = "Visa supprimé.";
+    this.validationMessage = "Visa supprimÃ©.";
   }
 
   canDeleteVisa(item: ValidationItem): boolean {
@@ -468,7 +453,7 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
     return {
       id: `${kind}-${operation.id}`,
       kind,
-      category: isDirector ? "Opération exceptionnelle - visa directeur" : "Opération exceptionnelle - visa initiateur",
+      category: isDirector ? "OpÃ©ration exceptionnelle - visa directeur" : "OpÃ©ration exceptionnelle - visa initiateur",
       title: operation.title,
       userLabel: isDirector ? "Directeur" : operation.initiatorName,
       startDate: operation.startDate,
@@ -476,6 +461,27 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
       visa,
       payload: operation,
     };
+  }
+
+  private isRegularPeriodReadyForDirector(period: RegularOnCallPeriod): boolean {
+    const interventions = this.regularInterventions.filter((intervention) => intervention.periodId === period.id);
+
+    return this.isVisaSigned(period.agentVisa) && interventions.every((intervention) => this.isVisaSigned(intervention.agentVisa));
+  }
+
+  private isExceptionalOperationReadyForDirector(operation: ExceptionalOperation): boolean {
+    const initiatorVisa = operation.visas?.initiatorGlobal || operation.visas?.actualInitiator;
+    const participantVisas = [
+      ...(operation.plannedUsers || []).map((participant) => participant.visa),
+      ...(operation.actualUsers || []).map((participant) => participant.visa),
+      ...(operation.interventions || []).map((intervention) => intervention.agentVisa),
+    ];
+
+    return this.isVisaSigned(initiatorVisa) && participantVisas.every((visa) => this.isVisaSigned(visa));
+  }
+
+  private isVisaSigned(visa: SignatureVisa | undefined): boolean {
+    return Boolean(visa?.signed);
   }
 
   private async signExceptionalItem(item: ValidationItem, visa: SignatureVisa): Promise<ExceptionalOperation> {
@@ -622,3 +628,4 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
     return "teamId" in payload && !("type" in payload);
   }
 }
+
