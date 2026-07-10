@@ -53,7 +53,7 @@
     }
 
     @if (modalView === "profile") {
-      <app-modal title="Profil" size="small" (closed)="closeModal()">
+      <app-modal title="Profil" size="large" (closed)="closeModal()">
         <app-profile-page [user]="user"></app-profile-page>
       </app-modal>
     } @else if (modalView === "settings") {

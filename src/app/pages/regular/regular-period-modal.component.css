@@ -3,11 +3,27 @@
   gap: 14px;
 }
 
+.period-summary-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(220px, 0.8fr) minmax(220px, 1fr) minmax(220px, 1fr);
+}
+
 .form-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
   justify-content: space-between;
+}
+
+.sent-rh-message {
+  background: #fff1f2;
+  border: 1px solid #fecdd3;
+  border-radius: 6px;
+  color: #a51d2d;
+  font-weight: 900;
+  margin: 0;
+  padding: 10px 12px;
 }
 
 .interventions-section {
@@ -51,6 +67,14 @@
   padding: 8px 10px;
 }
 
+.consultation-mode .interventions-row {
+  grid-template-columns: minmax(130px, 1.2fr) minmax(120px, 1fr) minmax(120px, 1fr) minmax(120px, 1fr);
+}
+
+.consultation-mode .action-cell {
+  display: none;
+}
+
 .interventions-row + .interventions-row {
   border-top: 1px solid #dde5eb;
 }
@@ -86,17 +110,16 @@
   margin: 0;
 }
 
-.date-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-
-
 .panel-kicker {
   color: #12736b;
   font-size: 0.72rem;
   font-weight: 900;
   margin: 0;
   text-transform: uppercase;
+}
+
+@media (max-width: 900px) {
+  .period-summary-grid {
+    grid-template-columns: 1fr;
+  }
 }

@@ -236,7 +236,7 @@
         <p class="form-error">{{ validationError }}</p>
       }
       @if (isLocked) {
-        <p class="sent-rh-message">Envoyé aux RH le {{ formatDateTime(operation?.sentToRhAt) }}</p>
+        <p class="sent-rh-message">Envoyé aux RH le <strong>{{ formatDateTime(operation?.sentToRhAt) }}</strong></p>
       } @else {
       <button class="primary-button" [disabled]="operationNgForm.invalid" type="submit">Enregistrer</button>
       }

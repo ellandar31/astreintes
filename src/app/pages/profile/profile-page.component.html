@@ -4,83 +4,86 @@
     <h2 id="profile-title">Mon profil</h2>
   </div>
 
-  <div class="profile-grid">
-    <div class="profile-field">
-      <span>Nom</span>
-      <strong>{{ displayName }}</strong>
-    </div>
+  <div class="profile-layout">
+    <section class="profile-panel" aria-labelledby="profile-global-title">
+      <div>
+        <p class="panel-kicker">Options globales</p>
+        <h3 id="profile-global-title">Informations</h3>
+      </div>
 
-    <div class="profile-field">
-      <span>Email</span>
-      <strong>{{ email }}</strong>
-    </div>
-  </div>
-
-  <form class="signature-form" (ngSubmit)="saveProfile()">
-
-    <label>
-      Nom utilisé pour le visa
-      <input [(ngModel)]="profile.signatureName" name="signatureName" type="text" />
-    </label>
-
-    <div class="signature-modes" aria-label="Mode de signature">
-      <button
-        [class.active]="profile.signatureMode === 'name'"
-        (click)="updateSignatureMode('name')"
-        type="button"
-      >
+      <label>
         Nom
-      </button>
-      <button
-        [class.active]="profile.signatureMode === 'image'"
-        (click)="updateSignatureMode('image')"
-        type="button"
-      >
-        Image
-      </button>
-      <button
-        [class.active]="profile.signatureMode === 'draw'"
-        (click)="updateSignatureMode('draw')"
-        type="button"
-      >
-        Pad
-      </button>
-    </div>
+        <input [(ngModel)]="profile.displayName" name="displayName" type="text" placeholder="Nom affiché" />
+      </label>
 
-    <label>
-      Image de signature
-      <input accept="image/*" (change)="loadSignatureImage($event)" type="file" />
-    </label>
+      <div class="profile-field">
+        <span>Email</span>
+        <strong>{{ email }}</strong>
+      </div>
 
-    <div class="signature-pad-shell">
-      <canvas
-        #signaturePad
-        width="520"
-        height="150"
-        (mousedown)="startDrawing($event)"
-        (mousemove)="draw($event)"
-        (mouseup)="stopDrawing()"
-        (mouseleave)="stopDrawing()"
-        (touchstart)="startDrawing($event)"
-        (touchmove)="draw($event)"
-        (touchend)="stopDrawing()"
-      ></canvas>
-      <button class="secondary-button compact-button" (click)="clearDrawing()" type="button">Effacer le pad</button>
-    </div>
+      <label>
+        Nom utilisé pour le visa
+        <input [(ngModel)]="profile.signatureName" name="signatureName" type="text" />
+      </label>
+    </section>
 
-    <div class="signature-preview">
-      <span>Aperçu</span>
-      @if (signaturePreview) {
-        <img [src]="signaturePreview" alt="Signature" />
-      } @else {
-        <strong>{{ profile.signatureName || displayName }}</strong>
+    <section class="profile-panel signature-panel" aria-labelledby="profile-signature-title">
+      <div>
+        <p class="panel-kicker">Signature</p>
+        <h3 id="profile-signature-title">Visa</h3>
+      </div>
+
+      <div class="signature-modes" aria-label="Mode de signature">
+        <button [class.active]="profile.signatureMode === 'name'" (click)="updateSignatureMode('name')" type="button">
+          Nom
+        </button>
+        <button [class.active]="profile.signatureMode === 'image'" (click)="updateSignatureMode('image')" type="button">
+          Image
+        </button>
+        <button [class.active]="profile.signatureMode === 'draw'" (click)="updateSignatureMode('draw')" type="button">
+          Pad
+        </button>
+      </div>
+
+      <label>
+        Image de signature
+        <input accept="image/*" (change)="loadSignatureImage($event)" type="file" />
+      </label>
+
+      <div class="signature-pad-shell">
+        <canvas
+          #signaturePad
+          width="520"
+          height="150"
+          (mousedown)="startDrawing($event)"
+          (mousemove)="draw($event)"
+          (mouseup)="stopDrawing()"
+          (mouseleave)="stopDrawing()"
+          (touchstart)="startDrawing($event)"
+          (touchmove)="draw($event)"
+          (touchend)="stopDrawing()"
+        ></canvas>
+        <button class="secondary-button compact-button" (click)="clearDrawing()" type="button">Effacer le pad</button>
+      </div>
+
+      <div class="signature-preview">
+        <span>Aperçu</span>
+        @if (signaturePreview) {
+          <img [src]="signaturePreview" alt="Signature" />
+        } @else {
+          <strong>{{ profile.signatureName || displayedName || email }}</strong>
+        }
+      </div>
+    </section>
+
+    <div class="profile-actions">
+      <button class="primary-button" [disabled]="isSaving" (click)="saveProfile()" type="button">
+        {{ isSaving ? "Enregistrement..." : "Enregistrer le profil" }}
+      </button>
+
+      @if (message) {
+        <p class="success-message">{{ message }}</p>
       }
     </div>
-
-    <button class="primary-button" type="submit">Enregistrer le profil</button>
-
-    @if (message) {
-      <p class="success-message">{{ message }}</p>
-    }
-  </form>
+  </div>
 </section>

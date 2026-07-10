@@ -1,16 +1,16 @@
 <app-modal [title]="modalTitle" [size]="isEditing ? 'large' : 'small'" (closed)="closed.emit()">
-  <form class="period-form" #periodNgForm="ngForm" (ngSubmit)="save(periodNgForm)">
-    <label>
-      Utilisateur
-      <select class="user-select" name="regularUser" [disabled]="isLocked"  [ngModel]="form.userId" (ngModelChange)="selectUser($event)" required>
+  <form class="period-form" [class.consultation-mode]="isLocked" #periodNgForm="ngForm" (ngSubmit)="save(periodNgForm)">
+    <div class="period-summary-grid">
+      <label>
+        Utilisateur
+        <select class="user-select" name="regularUser" [disabled]="isLocked"  [ngModel]="form.userId" (ngModelChange)="selectUser($event)" required>
         <option value="">Sélectionner un utilisateur</option>
         @for (user of users; track user.id) {
           <option [ngValue]="user.id" [title]="userLabel(user)">{{ userLabel(user) }}</option>
         }
-      </select>
-    </label>
+        </select>
+      </label>
 
-    <div class="date-row">
       <label>
         Date de début
         @if (isEditing) {
@@ -79,7 +79,9 @@
               <span>Début</span>
               <span>Fin</span>
               <span>Commentaire</span>
-              <span>Actions</span>
+              @if (!isLocked) {
+                <span>Actions</span>
+              }
             </div>
 
             @for (intervention of interventions; track intervention.id) {
@@ -114,7 +116,7 @@
         }
       </div>
     } @else {
-      <p class="sent-rh-message">Envoyé aux RH le {{ formatDateTime(sentToRhAt) }}</p>
+      <p class="sent-rh-message">Envoyé aux RH le <strong>{{ formatDateTime(sentToRhAt) }}</strong></p>
     }
   </form>
 </app-modal>

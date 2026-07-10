@@ -7,10 +7,32 @@
   padding: 0;
 }
 
-.profile-grid {
+.profile-layout {
   display: grid;
-  gap: 12px;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  grid-template-columns: minmax(260px, 0.8fr) minmax(420px, 1.2fr);
+}
+
+.profile-panel {
+  border: 1px solid #dde5eb;
+  border-radius: 8px;
+  display: grid;
+  gap: 14px;
+  padding: 14px;
+}
+
+.profile-panel h3 {
+  color: #1f2937;
+  font-size: 1rem;
+  margin: 0;
+}
+
+.panel-kicker {
+  color: #12736b;
+  font-size: 0.72rem;
+  font-weight: 900;
+  margin: 0;
+  text-transform: uppercase;
 }
 
 .profile-field {
@@ -19,7 +41,7 @@
   border-radius: 8px;
   display: grid;
   gap: 6px;
-  padding: 14px;
+  padding: 12px;
 }
 
 .profile-field span {
@@ -33,30 +55,23 @@
   overflow-wrap: anywhere;
 }
 
-.signature-form {
-  display: grid;
-  gap: 14px;
-}
-
-.signature-form label {
+.profile-layout label {
   color: #263442;
   display: grid;
   font-weight: 800;
   gap: 6px;
 }
 
-.signature-form input[type="text"],
-.signature-form input[type="file"] {
+.profile-layout input[type="text"],
+.profile-layout input[type="file"] {
   border: 1px solid #cbd6df;
   border-radius: 6px;
   min-height: 38px;
   padding: 8px 10px;
 }
 
-.profile-check {
-  align-items: center;
-  display: flex;
-  gap: 8px;
+.signature-panel {
+  align-content: start;
 }
 
 .signature-modes {
@@ -99,6 +114,7 @@
   border-radius: 8px;
   display: grid;
   gap: 8px;
+  min-height: 112px;
   padding: 12px;
 }
 
@@ -114,7 +130,22 @@
   object-fit: contain;
 }
 
+.profile-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  grid-column: 1 / -1;
+  justify-content: flex-end;
+}
+
 .compact-button {
   min-height: 32px;
   padding: 6px 10px;
+}
+
+@media (max-width: 900px) {
+  .profile-layout {
+    grid-template-columns: 1fr;
+  }
 }

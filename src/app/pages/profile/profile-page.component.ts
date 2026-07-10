@@ -1,7 +1,7 @@
 import { CommonModule } from "@angular/common";
 import { Component, ElementRef, Input, OnChanges, OnDestroy, SimpleChanges, ViewChild } from "@angular/core";
 import { FormsModule } from "@angular/forms";
-import { User } from "firebase/auth";
+import { User, updateProfile } from "firebase/auth";
 import { Unsubscribe, doc, onSnapshot, setDoc } from "firebase/firestore";
 import { db } from "../../firebase";
 import { SignatureProfile, VisaSignatureMode } from "../../shared/visa.models";
@@ -18,18 +18,24 @@ export class ProfilePageComponent implements OnChanges, OnDestroy {
   @ViewChild("signaturePad") signaturePad?: ElementRef<HTMLCanvasElement>;
 
   profile: SignatureProfile = {
+    displayName: "",
     signatureMode: "name",
     signatureName: "",
     signatureImage: "",
     signatureDrawing: "",
   };
   isDrawing = false;
+  isSaving = false;
   message = "";
 
   private unsubscribe: Unsubscribe | null = null;
 
   get displayName(): string {
-    return this.user?.displayName || "Non renseigné";
+    return this.profile.displayName || this.user?.displayName || "";
+  }
+
+  get displayedName(): string {
+    return this.displayName || "Non renseigné";
   }
 
   get email(): string {
@@ -63,6 +69,7 @@ export class ProfilePageComponent implements OnChanges, OnDestroy {
     this.unsubscribe = onSnapshot(doc(db, "users", this.user.uid), (snapshot) => {
       const data = snapshot.data() as SignatureProfile | undefined;
       this.profile = {
+        displayName: data?.displayName || this.user?.displayName || "",
         signatureMode: data?.signatureMode || "name",
         signatureName: data?.signatureName || this.user?.displayName || this.user?.email || "",
         signatureImage: data?.signatureImage || "",
@@ -80,15 +87,34 @@ export class ProfilePageComponent implements OnChanges, OnDestroy {
       return;
     }
 
+    this.isSaving = true;
+    this.message = "";
+
+    try {
+      const displayName = this.profile.displayName?.trim() || "";
+      const signatureName = this.profile.signatureName?.trim() || displayName || this.user.displayName || this.user.email || "";
+
+      if (displayName && displayName !== this.user.displayName) {
+        await updateProfile(this.user, { displayName });
+      }
+
     await setDoc(
       doc(db, "users", this.user.uid),
       {
         ...this.profile,
-        signatureName: this.profile.signatureName?.trim() || this.user.displayName || this.user.email || "",
+        displayName,
+        email: this.user.email || "",
+        signatureName,
       },
       { merge: true },
     );
-    this.message = "Profil de visa enregistré.";
+      this.message = "Profil enregistré.";
+    } catch (error) {
+      this.message = "Impossible d'enregistrer le profil.";
+      console.error(error);
+    } finally {
+      this.isSaving = false;
+    }
   }
 
   updateSignatureMode(mode: VisaSignatureMode): void {
