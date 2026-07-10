@@ -1,5 +1,6 @@
 import { CommonModule } from "@angular/common";
 import { Component, EventEmitter, Input, Output } from "@angular/core";
+import { APP_LABELS } from "../../i18n/labels";
 import { ModalComponent } from "../../shared/modal.component";
 import { ValidationItem, VisaProgressItem } from "./validation.models";
 
@@ -11,6 +12,7 @@ import { ValidationItem, VisaProgressItem } from "./validation.models";
   styleUrl: "./validation-consultation-modal.component.css",
 })
 export class ValidationConsultationModalComponent {
+  readonly labels = APP_LABELS;
   @Input({ required: true }) item: ValidationItem | null = null;
   @Input() canDelete = false;
   @Input() progressItems: VisaProgressItem[] = [];

@@ -279,10 +279,10 @@ export class ExceptionalOperationsComponent implements OnDestroy {
 
   sortIndicator(field: SortField): string {
     if (this.sortField !== field) {
-      return "⇅";
+      return "â‡…";
     }
 
-    return this.sortDirection === "asc" ? "↑" : "↓";
+    return this.sortDirection === "asc" ? "â†‘" : "â†“";
   }
 
   toggleFilter(field: SortField): void {

@@ -1,9 +1,11 @@
-﻿import { CommonModule } from "@angular/common";
+import { CommonModule } from "@angular/common";
 import { Component, Input, OnChanges, OnDestroy, SimpleChanges } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { User } from "firebase/auth";
 import { Unsubscribe, collection, doc, onSnapshot, setDoc, updateDoc } from "firebase/firestore";
 import { db } from "../../firebase";
+import { APP_LABELS } from "../../i18n/labels";
+import { normalizeObjectTextEncoding } from "../../i18n/text-encoding";
 import { SignatureVisa, createEmptyVisa } from "../../shared/visa.models";
 import { ExceptionalOperation } from "../exceptionnel/exceptional.models";
 import { RegularIntervention, RegularOnCallPeriod } from "../regular/regular.models";
@@ -19,6 +21,7 @@ import { AppUser, ValidationItem, ValidationSection, VisaProgressItem } from "./
 })
 export class ValidationPageComponent implements OnChanges, OnDestroy {
   @Input({ required: true }) user: User | null = null;
+  readonly labels = APP_LABELS;
 
   exceptionalOperations: ExceptionalOperation[] = [];
   profile: AppUser | null = null;
@@ -32,19 +35,19 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
   private readonly unsubscribes: Unsubscribe[] = [
     onSnapshot(collection(db, "users"), (snapshot) => {
       this.users = snapshot.docs
-        .map((document) => ({ id: document.id, ...document.data() }) as AppUser)
+        .map((document) => this.fromFirestore<AppUser>(document.id, document.data()))
         .filter((item) => Boolean(item.email))
         .sort((first, second) => this.userLabel(first).localeCompare(this.userLabel(second)));
       this.refreshProfile();
     }),
     onSnapshot(collection(db, "regularOnCallPeriods"), (snapshot) => {
-      this.regularPeriods = snapshot.docs.map((document) => ({ id: document.id, ...document.data() }) as RegularOnCallPeriod);
+      this.regularPeriods = snapshot.docs.map((document) => this.fromFirestore<RegularOnCallPeriod>(document.id, document.data()));
     }),
     onSnapshot(collection(db, "regularInterventions"), (snapshot) => {
-      this.regularInterventions = snapshot.docs.map((document) => ({ id: document.id, ...document.data() }) as RegularIntervention);
+      this.regularInterventions = snapshot.docs.map((document) => this.fromFirestore<RegularIntervention>(document.id, document.data()));
     }),
     onSnapshot(collection(db, "exceptionalOperations"), (snapshot) => {
-      this.exceptionalOperations = snapshot.docs.map((document) => ({ id: document.id, ...document.data() }) as ExceptionalOperation);
+      this.exceptionalOperations = snapshot.docs.map((document) => this.fromFirestore<ExceptionalOperation>(document.id, document.data()));
     }),
   ];
 
@@ -91,7 +94,7 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
         items.push({
           id: `regular-period-agent-${period.id}`,
           kind: "regular-period-agent",
-          category: "Astreinte rÃ©guliÃ¨re",
+          category: this.labels.validation.categories.regularOnCall,
           title: period.userName || period.userEmail,
           userLabel: period.userName || period.userEmail,
           startDate: period.startDate,
@@ -105,7 +108,7 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
         items.push({
           id: `regular-period-director-${period.id}`,
           kind: "regular-period-director",
-          category: "Astreinte rÃ©guliÃ¨re - visa directeur",
+          category: this.labels.validation.categories.regularOnCallDirectorVisa,
           title: period.userName || period.userEmail,
           userLabel: period.userName || period.userEmail,
           startDate: period.startDate,
@@ -134,7 +137,7 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
         items.push({
           id: `exceptional-planned-${operation.id}-${participant.userId}`,
           kind: "exceptional-participant-planned",
-          category: "OpÃ©ration exceptionnelle - prÃ©visionnel",
+          category: this.labels.validation.categories.exceptionalPlanned,
           title: operation.title,
           userLabel: participant.displayName || participant.email,
           startDate: operation.startDate,
@@ -153,7 +156,7 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
         items.push({
           id: `exceptional-actual-${operation.id}-${participant.userId}`,
           kind: "exceptional-participant-actual",
-          category: "OpÃ©ration exceptionnelle - rÃ©el",
+          category: this.labels.validation.categories.exceptionalActual,
           title: operation.title,
           userLabel: participant.displayName || participant.email,
           startDate: operation.actualStartDate || operation.startDate,
@@ -200,24 +203,24 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
   get validationSections(): ValidationSection[] {
     const sections: ValidationSection[] = [
       {
-        title: "Visa des intervenants",
-        emptyText: "Aucun visa d'intervenant à afficher pour cet utilisateur.",
+        title: this.labels.validation.sections.stakeholder,
+        emptyText: this.labels.validation.empty.stakeholder,
         items: this.intervenantVisaItems,
       },
     ];
 
     if (this.canViewInitiatorSection) {
       sections.push({
-        title: "Visa des initiateurs",
-        emptyText: "Aucun visa d'initiateur à afficher pour cet utilisateur.",
+        title: this.labels.validation.sections.initiator,
+        emptyText: this.labels.validation.empty.initiator,
         items: this.initiatorVisaItems,
       });
     }
 
     if (this.canViewDirectorSection) {
       sections.push({
-        title: "Visa directeur",
-        emptyText: "Aucun visa directeur à afficher pour cet utilisateur.",
+        title: this.labels.validation.sections.director,
+        emptyText: this.labels.validation.empty.director,
         items: this.directorVisaItems,
       });
     }
@@ -246,14 +249,14 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
       return [
         {
           id: `regular-period-agent-${period.id}`,
-          role: "Intervenant astreinte",
+          role: this.labels.validation.roles.regularOnCallStakeholder,
           userLabel: period.userName || period.userEmail,
           visa: period.agentVisa || createEmptyVisa(),
         },
         {
           id: `regular-period-director-${period.id}`,
-          role: "Directeur astreinte",
-          userLabel: "Directeur",
+          role: this.labels.validation.roles.directorOnCall,
+          userLabel: this.labels.validation.roles.director,
           visa: period.directorVisa || createEmptyVisa(),
         },
         ...interventions.map((intervention) => ({
@@ -270,31 +273,31 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
     return [
       {
         id: `exceptional-operation-initiator-${operation.id}`,
-        role: "Initiateur",
-        userLabel: operation.initiatorName || "Initiateur",
+        role: this.labels.validation.roles.initiator,
+        userLabel: operation.initiatorName || this.labels.validation.roles.initiator,
         visa: operation.visas?.initiatorGlobal || operation.visas?.actualInitiator || createEmptyVisa(),
       },
       {
         id: `exceptional-operation-director-${operation.id}`,
-        role: "Directeur",
-        userLabel: "Directeur",
+        role: this.labels.validation.roles.director,
+        userLabel: this.labels.validation.roles.director,
         visa: operation.visas?.directorGlobal || operation.visas?.actualDirector || createEmptyVisa(),
       },
       ...(operation.plannedUsers || []).map((participant) => ({
         id: `exceptional-planned-${operation.id}-${participant.userId}`,
-        role: "Intervenant prÃ©visionnel",
+        role: this.labels.validation.roles.plannedStakeholder,
         userLabel: participant.displayName || participant.email,
         visa: participant.visa || createEmptyVisa(),
       })),
       ...(operation.actualUsers || []).map((participant) => ({
         id: `exceptional-actual-${operation.id}-${participant.userId}`,
-        role: "Intervenant rÃ©el",
+        role: this.labels.validation.roles.realStakeholder,
         userLabel: participant.displayName || participant.email,
         visa: participant.visa || createEmptyVisa(),
       })),
       ...(operation.interventions || []).map((intervention, index) => ({
         id: `exceptional-intervention-${operation.id}-${index}`,
-        role: "Intervenant intervention",
+        role: this.labels.validation.roles.interventionStakeholder,
         userLabel: intervention.userName || intervention.userEmail,
         visa: intervention.agentVisa || createEmptyVisa(),
       })),
@@ -359,7 +362,7 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
       visa,
       payload: updatedPayload,
     };
-    this.validationMessage = "Visa enregistrÃ©.";
+    this.validationMessage = this.labels.validation.messages.saved;
   }
 
   formatDateTime(value: string): string {
@@ -420,7 +423,7 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
       visa: emptyVisa,
       payload: updatedPayload,
     };
-    this.validationMessage = "Visa supprimÃ©.";
+    this.validationMessage = this.labels.validation.messages.deleted;
   }
 
   canDeleteVisa(item: ValidationItem): boolean {
@@ -453,9 +456,9 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
     return {
       id: `${kind}-${operation.id}`,
       kind,
-      category: isDirector ? "OpÃ©ration exceptionnelle - visa directeur" : "OpÃ©ration exceptionnelle - visa initiateur",
+      category: isDirector ? this.labels.validation.categories.exceptionalDirectorVisa : this.labels.validation.categories.exceptionalInitiatorVisa,
       title: operation.title,
-      userLabel: isDirector ? "Directeur" : operation.initiatorName,
+      userLabel: isDirector ? this.labels.validation.roles.director : operation.initiatorName,
       startDate: operation.startDate,
       endDate: operation.actualEndDate || operation.forecastEndDate || operation.startDate,
       visa,
@@ -627,5 +630,8 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
   private isRegularPayload(payload: ValidationItem["payload"]): payload is RegularOnCallPeriod | RegularIntervention {
     return "teamId" in payload && !("type" in payload);
   }
-}
 
+  private fromFirestore<T extends { id: string }>(id: string, data: Record<string, unknown>): T {
+    return normalizeObjectTextEncoding({ id, ...data }) as T;
+  }
+}

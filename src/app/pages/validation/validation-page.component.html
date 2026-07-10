@@ -1,16 +1,16 @@
-﻿<section class="validation-page" aria-labelledby="validation-title">
+<section class="validation-page" aria-labelledby="validation-title">
   <header class="validation-header">
     <div>
-      <p class="eyebrow">Validation</p>
-      <h2 id="validation-title">Visas Ã  traiter</h2>
+      <p class="eyebrow">{{ labels.validation.eyebrow }}</p>
+      <h2 id="validation-title">{{ labels.validation.title }}</h2>
     </div>
 
     @if (canSelectUser) {
       <label>
-        Utilisateur
-        <select [(ngModel)]="selectedUserId" name="selectedUser">
+        {{ labels.common.users.user }}
+        <select class="user-select" [(ngModel)]="selectedUserId" name="selectedUser">
           @for (item of users; track item.id) {
-            <option [value]="item.id">{{ userLabel(item) }}</option>
+            <option [value]="item.id" [title]="userLabel(item)">{{ userLabel(item) }}</option>
           }
         </select>
       </label>
@@ -25,12 +25,12 @@
         <table class="validation-table">
           <thead>
             <tr>
-              <th>Type</th>
-              <th>Ã‰lÃ©ment</th>
-              <th>Personne</th>
-              <th>PÃ©riode</th>
-              <th>Visa</th>
-              <th>Actions</th>
+              <th>{{ labels.common.table.type }}</th>
+              <th>{{ labels.common.table.item }}</th>
+              <th>{{ labels.common.table.person }}</th>
+              <th>{{ labels.common.table.period }}</th>
+              <th>{{ labels.common.table.visa }}</th>
+              <th>{{ labels.common.table.actions }}</th>
             </tr>
           </thead>
           <tbody>
@@ -42,19 +42,19 @@
                 <td>{{ formatDateTime(item.startDate) }} - {{ formatDateTime(item.endDate) }}</td>
                 <td>
                   @if (item.visa.signed) {
-                    <span class="signed">SignÃ© le {{ formatDateTime(item.visa.signedAt) }}</span>
+                    <span class="signed">{{ labels.common.statuses.signedOn }} {{ formatDateTime(item.visa.signedAt) }}</span>
                   } @else {
-                    <span class="pending">Ã€ signer</span>
+                    <span class="pending">{{ labels.common.statuses.toSign }}</span>
                   }
                 </td>
                 <td>
                   <div class="actions">
-                    <button class="secondary-button compact-button" (click)="openItem(item)" type="button">Consulter</button>
+                    <button class="secondary-button compact-button" (click)="openItem(item)" type="button">{{ labels.common.actions.consult }}</button>
                     @if (!item.visa.signed) {
-                      <button class="primary-button compact-button" (click)="signItem(item)" type="button">Viser</button>
+                      <button class="primary-button compact-button" (click)="signItem(item)" type="button">{{ labels.common.actions.sign }}</button>
                     }
                     @if (canDeleteVisa(item)) {
-                      <button class="danger-button compact-button" (click)="deleteVisa(item)" type="button">Supprimer</button>
+                      <button class="danger-button compact-button" (click)="deleteVisa(item)" type="button">{{ labels.common.actions.delete }}</button>
                     }
                   </div>
                 </td>

@@ -1,0 +1,75 @@
+export const APP_LABELS = {
+  common: {
+    actions: {
+      consult: "Consulter",
+      delete: "Supprimer",
+      deleteMyVisa: "Supprimer mon visa",
+      sign: "Viser",
+      signMyVisa: "Mettre mon visa",
+    },
+    statuses: {
+      noAssociatedVisa: "Aucun autre visa associé.",
+      notSigned: "Non signé",
+      signedBy: "Signé par",
+      signedOn: "Signé le",
+      toSign: "À signer",
+    },
+    table: {
+      actions: "Actions",
+      date: "Date",
+      end: "Fin",
+      item: "Élément",
+      period: "Période",
+      person: "Personne",
+      role: "Rôle",
+      start: "Début",
+      status: "Statut",
+      type: "Type",
+      visa: "Visa",
+    },
+    users: {
+      select: "Sélectionner un utilisateur",
+      user: "Utilisateur",
+    },
+  },
+  validation: {
+    categories: {
+      exceptionalActual: "Opération exceptionnelle - réel",
+      exceptionalDirectorVisa: "Opération exceptionnelle - visa directeur",
+      exceptionalInitiatorVisa: "Opération exceptionnelle - visa initiateur",
+      exceptionalPlanned: "Opération exceptionnelle - prévisionnel",
+      regularOnCall: "Astreinte régulière",
+      regularOnCallDirectorVisa: "Astreinte régulière - visa directeur",
+    },
+    consultation: {
+      title: "Consultation",
+      currentVisa: "Visa actuel",
+      progressTitle: "Avancement des visas",
+    },
+    empty: {
+      director: "Aucun visa directeur à afficher pour cet utilisateur.",
+      initiator: "Aucun visa d'initiateur à afficher pour cet utilisateur.",
+      stakeholder: "Aucun visa d'intervenant à afficher pour cet utilisateur.",
+    },
+    messages: {
+      deleted: "Visa supprimé.",
+      saved: "Visa enregistré.",
+    },
+    roles: {
+      director: "Directeur",
+      directorOnCall: "Directeur astreinte",
+      initiator: "Initiateur",
+      interventionStakeholder: "Intervenant intervention",
+      realStakeholder: "Intervenant réel",
+      regularOnCallStakeholder: "Intervenant astreinte",
+      plannedStakeholder: "Intervenant prévisionnel",
+    },
+    sections: {
+      director: "Visa directeur",
+      initiator: "Visa des initiateurs",
+      stakeholder: "Visa des intervenants",
+    },
+    title: "Visas à traiter",
+    eyebrow: "Validation",
+  },
+} as const;

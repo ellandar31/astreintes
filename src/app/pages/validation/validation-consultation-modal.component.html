@@ -1,29 +1,29 @@
 @if (item) {
-  <app-modal title="Consultation" size="large" (closed)="closed.emit()">
+  <app-modal [title]="labels.validation.consultation.title" size="large" (closed)="closed.emit()">
     <section class="item-details">
       <p class="eyebrow">{{ item.category }}</p>
       <h3>{{ item.title }}</h3>
 
       <dl>
         <div>
-          <dt>Personne</dt>
+          <dt>{{ labels.common.table.person }}</dt>
           <dd>{{ item.userLabel }}</dd>
         </div>
         <div>
-          <dt>Début</dt>
+          <dt>{{ labels.common.table.start }}</dt>
           <dd>{{ formatDateTime(item.startDate) }}</dd>
         </div>
         <div>
-          <dt>Fin</dt>
+          <dt>{{ labels.common.table.end }}</dt>
           <dd>{{ formatDateTime(item.endDate) }}</dd>
         </div>
         <div>
-          <dt>Visa actuel</dt>
+          <dt>{{ labels.validation.consultation.currentVisa }}</dt>
           <dd>
             @if (item.visa.signed) {
               {{ item.visa.signedByName }} - {{ formatDateTime(item.visa.signedAt) }}
             } @else {
-              Non signé
+              {{ labels.common.statuses.notSigned }}
             }
           </dd>
         </div>
@@ -36,16 +36,16 @@
       }
 
       <section class="progress-section" aria-labelledby="visa-progress-title">
-        <h4 id="visa-progress-title">Avancement des visas</h4>
+        <h4 id="visa-progress-title">{{ labels.validation.consultation.progressTitle }}</h4>
 
         <div class="progress-table-shell">
           <table class="progress-table">
             <thead>
               <tr>
-                <th>Rôle</th>
-                <th>Personne</th>
-                <th>Statut</th>
-                <th>Date</th>
+                <th>{{ labels.common.table.role }}</th>
+                <th>{{ labels.common.table.person }}</th>
+                <th>{{ labels.common.table.status }}</th>
+                <th>{{ labels.common.table.date }}</th>
               </tr>
             </thead>
             <tbody>
@@ -55,16 +55,16 @@
                   <td>{{ progress.userLabel }}</td>
                   <td>
                     @if (progress.visa.signed) {
-                      <span class="signed">Signé par {{ progress.visa.signedByName }}</span>
+                      <span class="signed">{{ labels.common.statuses.signedBy }} {{ progress.visa.signedByName }}</span>
                     } @else {
-                      <span class="pending">À signer</span>
+                      <span class="pending">{{ labels.common.statuses.toSign }}</span>
                     }
                   </td>
                   <td>{{ progress.visa.signed ? formatDateTime(progress.visa.signedAt) : "-" }}</td>
                 </tr>
               } @empty {
                 <tr>
-                  <td colspan="4">Aucun autre visa associé.</td>
+                  <td colspan="4">{{ labels.common.statuses.noAssociatedVisa }}</td>
                 </tr>
               }
             </tbody>
@@ -74,10 +74,10 @@
 
       <div class="modal-actions">
         @if (!item.visa.signed) {
-          <button class="primary-button" (click)="signVisa()" type="button">Mettre mon visa</button>
+          <button class="primary-button" (click)="signVisa()" type="button">{{ labels.common.actions.signMyVisa }}</button>
         }
         @if (canDelete) {
-          <button class="danger-button" (click)="deleteVisa()" type="button">Supprimer mon visa</button>
+          <button class="danger-button" (click)="deleteVisa()" type="button">{{ labels.common.actions.deleteMyVisa }}</button>
         }
       </div>
     </section>
