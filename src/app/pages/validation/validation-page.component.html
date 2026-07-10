@@ -78,6 +78,7 @@
   [item]="selectedItem"
   [progressItems]="selectedItemVisaProgress"
   [canDelete]="selectedItem ? canDeleteVisa(selectedItem) : false"
+  [canDeleteItem]="canDeleteVisaForModal"
   (closed)="closeItem()"
   (signed)="signItem($event)"
   (deleted)="deleteVisa($event)"

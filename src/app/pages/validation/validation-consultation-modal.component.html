@@ -44,8 +44,10 @@
               <tr>
                 <th>{{ labels.common.table.role }}</th>
                 <th>{{ labels.common.table.person }}</th>
+                <th>{{ labels.common.table.period }}</th>
                 <th>{{ labels.common.table.status }}</th>
                 <th>{{ labels.common.table.date }}</th>
+                <th>{{ labels.common.table.actions }}</th>
               </tr>
             </thead>
             <tbody>
@@ -53,6 +55,7 @@
                 <tr>
                   <td>{{ progress.role }}</td>
                   <td>{{ progress.userLabel }}</td>
+                  <td>{{ formatDateTime(progress.startDate) }} - {{ formatDateTime(progress.endDate) }}</td>
                   <td>
                     @if (progress.visa.signed) {
                       <span class="signed">{{ labels.common.statuses.signedBy }} {{ progress.visa.signedByName }}</span>
@@ -61,10 +64,26 @@
                     }
                   </td>
                   <td>{{ progress.visa.signed ? formatDateTime(progress.visa.signedAt) : "-" }}</td>
+                  <td>
+                    @if (progress.actionItem) {
+                      <div class="row-actions">
+                        @if (!progress.visa.signed) {
+                          <button class="primary-button compact-button" (click)="signProgressVisa(progress)" type="button">
+                            {{ labels.common.actions.sign }}
+                          </button>
+                        }
+                        @if (canDeleteProgressVisa(progress)) {
+                          <button class="danger-button compact-button" (click)="deleteProgressVisa(progress)" type="button">
+                            {{ labels.common.actions.delete }}
+                          </button>
+                        }
+                      </div>
+                    }
+                  </td>
                 </tr>
               } @empty {
                 <tr>
-                  <td colspan="4">{{ labels.common.statuses.noAssociatedVisa }}</td>
+                  <td colspan="6">{{ labels.common.statuses.noAssociatedVisa }}</td>
                 </tr>
               }
             </tbody>

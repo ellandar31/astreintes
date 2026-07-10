@@ -79,7 +79,7 @@
 
 .progress-table {
   border-collapse: collapse;
-  min-width: 640px;
+  min-width: 900px;
   width: 100%;
 }
 
@@ -95,4 +95,10 @@
   color: #526171;
   font-size: 0.78rem;
   text-transform: uppercase;
+}
+
+.row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
 }

@@ -15,6 +15,7 @@ export class ValidationConsultationModalComponent {
   readonly labels = APP_LABELS;
   @Input({ required: true }) item: ValidationItem | null = null;
   @Input() canDelete = false;
+  @Input() canDeleteItem: (item: ValidationItem) => boolean = () => false;
   @Input() progressItems: VisaProgressItem[] = [];
   @Output() closed = new EventEmitter<void>();
   @Output() deleted = new EventEmitter<ValidationItem>();
@@ -30,6 +31,22 @@ export class ValidationConsultationModalComponent {
     if (this.item) {
       this.signed.emit(this.item);
     }
+  }
+
+  deleteProgressVisa(progress: VisaProgressItem): void {
+    if (progress.actionItem) {
+      this.deleted.emit(progress.actionItem);
+    }
+  }
+
+  signProgressVisa(progress: VisaProgressItem): void {
+    if (progress.actionItem) {
+      this.signed.emit(progress.actionItem);
+    }
+  }
+
+  canDeleteProgressVisa(progress: VisaProgressItem): boolean {
+    return Boolean(progress.actionItem && this.canDeleteItem(progress.actionItem));
   }
 
   formatDateTime(value: string): string {

@@ -31,6 +31,7 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
   selectedUserId = "";
   users: AppUser[] = [];
   validationMessage = "";
+  readonly canDeleteVisaForModal = (item: ValidationItem): boolean => this.canDeleteVisa(item);
 
   private readonly unsubscribes: Unsubscribe[] = [
     onSnapshot(collection(db, "users"), (snapshot) => {
@@ -218,19 +219,58 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
           id: `regular-period-agent-${period.id}`,
           role: this.labels.validation.roles.regularOnCallStakeholder,
           userLabel: period.userName || period.userEmail,
+          startDate: period.startDate,
+          endDate: period.endDate,
           visa: period.agentVisa || createEmptyVisa(),
+          actionItem: {
+            id: `regular-period-agent-${period.id}`,
+            kind: "regular-period-agent",
+            category: this.labels.validation.categories.regularOnCall,
+            title: period.userName || period.userEmail,
+            userLabel: period.userName || period.userEmail,
+            startDate: period.startDate,
+            endDate: period.endDate,
+            visa: period.agentVisa || createEmptyVisa(),
+            payload: period,
+          },
         },
         {
           id: `regular-period-director-${period.id}`,
           role: this.labels.validation.roles.directorOnCall,
           userLabel: this.labels.validation.roles.director,
+          startDate: period.startDate,
+          endDate: period.endDate,
           visa: period.directorVisa || createEmptyVisa(),
+          actionItem: {
+            id: `regular-period-director-${period.id}`,
+            kind: "regular-period-director",
+            category: this.labels.validation.categories.regularOnCallDirectorVisa,
+            title: period.userName || period.userEmail,
+            userLabel: period.userName || period.userEmail,
+            startDate: period.startDate,
+            endDate: period.endDate,
+            visa: period.directorVisa || createEmptyVisa(),
+            payload: period,
+          },
         },
         ...interventions.map((intervention) => ({
           id: `regular-intervention-${intervention.id}`,
           role: "Intervenant intervention",
           userLabel: intervention.userName || intervention.userEmail,
+          startDate: intervention.startDate,
+          endDate: intervention.endDate,
           visa: intervention.agentVisa || createEmptyVisa(),
+          actionItem: {
+            id: `regular-intervention-${intervention.id}`,
+            kind: "regular-intervention-agent" as const,
+            category: "Intervention",
+            title: period.userName || period.userEmail,
+            userLabel: intervention.userName || intervention.userEmail,
+            startDate: intervention.startDate,
+            endDate: intervention.endDate,
+            visa: intervention.agentVisa || createEmptyVisa(),
+            payload: intervention,
+          },
         })),
       ];
     }
@@ -242,31 +282,79 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
         id: `exceptional-operation-initiator-${operation.id}`,
         role: this.labels.validation.roles.initiator,
         userLabel: operation.initiatorName || this.labels.validation.roles.initiator,
+        startDate: operation.startDate,
+        endDate: operation.actualEndDate || operation.forecastEndDate || operation.startDate,
         visa: operation.visas?.initiatorGlobal || operation.visas?.actualInitiator || createEmptyVisa(),
+        actionItem: this.operationGlobalItem(operation, "exceptional-operation-initiator"),
       },
       {
         id: `exceptional-operation-director-${operation.id}`,
         role: this.labels.validation.roles.director,
         userLabel: this.labels.validation.roles.director,
+        startDate: operation.startDate,
+        endDate: operation.actualEndDate || operation.forecastEndDate || operation.startDate,
         visa: operation.visas?.directorGlobal || operation.visas?.actualDirector || createEmptyVisa(),
+        actionItem: this.operationGlobalItem(operation, "exceptional-operation-director"),
       },
       ...(operation.plannedUsers || []).map((participant, index) => ({
         id: `exceptional-planned-${operation.id}-${participant.userId}-${index}`,
         role: this.labels.validation.roles.plannedStakeholder,
         userLabel: participant.displayName || participant.email,
+        startDate: participant.startDate || operation.startDate,
+        endDate: participant.endDate || operation.forecastEndDate || operation.startDate,
         visa: participant.visa || createEmptyVisa(),
+        actionItem: {
+          id: `exceptional-planned-${operation.id}-${participant.userId}-${index}`,
+          kind: "exceptional-participant-planned" as const,
+          category: this.labels.validation.categories.exceptionalPlanned,
+          title: operation.title,
+          userLabel: participant.displayName || participant.email,
+          startDate: participant.startDate || operation.startDate,
+          endDate: participant.endDate || operation.forecastEndDate || operation.startDate,
+          visa: participant.visa || createEmptyVisa(),
+          payload: operation,
+          index,
+        },
       })),
       ...(operation.actualUsers || []).map((participant, index) => ({
         id: `exceptional-actual-${operation.id}-${participant.userId}-${index}`,
         role: this.labels.validation.roles.realStakeholder,
         userLabel: participant.displayName || participant.email,
+        startDate: participant.startDate || operation.actualStartDate || operation.startDate,
+        endDate: participant.endDate || operation.actualEndDate || operation.forecastEndDate || operation.startDate,
         visa: participant.visa || createEmptyVisa(),
+        actionItem: {
+          id: `exceptional-actual-${operation.id}-${participant.userId}-${index}`,
+          kind: "exceptional-participant-actual" as const,
+          category: this.labels.validation.categories.exceptionalActual,
+          title: operation.title,
+          userLabel: participant.displayName || participant.email,
+          startDate: participant.startDate || operation.actualStartDate || operation.startDate,
+          endDate: participant.endDate || operation.actualEndDate || operation.forecastEndDate || operation.startDate,
+          visa: participant.visa || createEmptyVisa(),
+          payload: operation,
+          index,
+        },
       })),
       ...(operation.interventions || []).map((intervention, index) => ({
         id: `exceptional-intervention-${operation.id}-${index}`,
         role: this.labels.validation.roles.interventionStakeholder,
         userLabel: intervention.userName || intervention.userEmail,
+        startDate: intervention.startDate || intervention.date || "",
+        endDate: intervention.endDate || "",
         visa: intervention.agentVisa || createEmptyVisa(),
+        actionItem: {
+          id: `exceptional-intervention-${operation.id}-${index}`,
+          kind: "exceptional-intervention-agent" as const,
+          category: "Intervention",
+          title: operation.title,
+          userLabel: intervention.userName || intervention.userEmail,
+          startDate: intervention.startDate || intervention.date || "",
+          endDate: intervention.endDate || "",
+          visa: intervention.agentVisa || createEmptyVisa(),
+          payload: operation,
+          index,
+        },
       })),
     ];
   }
@@ -324,11 +412,17 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
       updatedPayload = await this.signExceptionalItem(item, visa);
     }
 
-    this.selectedItem = {
-      ...item,
-      visa,
-      payload: updatedPayload,
-    };
+    this.selectedItem =
+      this.selectedItem && this.selectedItem.id !== item.id
+        ? {
+            ...this.selectedItem,
+            payload: updatedPayload,
+          }
+        : {
+            ...item,
+            visa,
+            payload: updatedPayload,
+          };
     this.validationMessage = this.labels.validation.messages.saved;
   }
 
@@ -385,11 +479,17 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
       updatedPayload = await this.signExceptionalItem(item, emptyVisa);
     }
 
-    this.selectedItem = {
-      ...item,
-      visa: emptyVisa,
-      payload: updatedPayload,
-    };
+    this.selectedItem =
+      this.selectedItem && this.selectedItem.id !== item.id
+        ? {
+            ...this.selectedItem,
+            payload: updatedPayload,
+          }
+        : {
+            ...item,
+            visa: emptyVisa,
+            payload: updatedPayload,
+          };
     this.validationMessage = this.labels.validation.messages.deleted;
   }
 

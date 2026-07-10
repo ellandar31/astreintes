@@ -40,7 +40,10 @@ export interface VisaProgressItem {
   id: string;
   role: string;
   userLabel: string;
+  startDate: string;
+  endDate: string;
   visa: SignatureVisa;
+  actionItem?: ValidationItem;
 }
 
 export interface ValidationSection {
