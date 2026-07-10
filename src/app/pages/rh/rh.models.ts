@@ -1,3 +1,5 @@
+import { SignatureVisa } from "../../shared/visa.models";
+
 export type RhSection = "controls" | "exports";
 
 export interface RhUser {
@@ -13,6 +15,9 @@ export interface RhRegularPeriod {
   userEmail: string;
   startDate: string;
   endDate: string;
+  agentVisa?: SignatureVisa;
+  directorVisa?: SignatureVisa;
+  sentToRhAt?: string;
 }
 
 export interface RhPublicHoliday {
@@ -31,6 +36,7 @@ export interface RhExceptionalIntervention {
   wasOnSite?: boolean;
   label?: string;
   comment?: string;
+  agentVisa?: SignatureVisa;
 }
 
 export interface RhExceptionalOperation {
@@ -43,9 +49,18 @@ export interface RhExceptionalOperation {
   forecastEndDate: string;
   actualStartDate: string;
   actualEndDate: string;
-  plannedUsers?: Array<{ userId: string; displayName: string; email: string; startDate?: string; endDate?: string }>;
-  actualUsers?: Array<{ userId: string; displayName: string; email: string; startDate?: string; endDate?: string }>;
+  plannedUsers?: Array<{ userId: string; displayName: string; email: string; startDate?: string; endDate?: string; visa?: SignatureVisa }>;
+  actualUsers?: Array<{ userId: string; displayName: string; email: string; startDate?: string; endDate?: string; visa?: SignatureVisa }>;
   interventions?: RhExceptionalIntervention[];
+  visas?: {
+    initiatorGlobal?: SignatureVisa;
+    directorGlobal?: SignatureVisa;
+    plannedInitiator?: SignatureVisa;
+    plannedDirector?: SignatureVisa;
+    actualInitiator?: SignatureVisa;
+    actualDirector?: SignatureVisa;
+  };
+  sentToRhAt?: string;
 }
 
 export interface RhControlRow {

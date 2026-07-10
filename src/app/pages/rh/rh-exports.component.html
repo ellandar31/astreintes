@@ -47,10 +47,26 @@
                   </button>
                   <button
                     class="secondary-button compact-button"
+                    [disabled]="!templateFor('regular').fileName"
+                    (click)="exportPdfOperation('regular', operation)"
+                    type="button"
+                  >
+                    PDF
+                  </button>
+                  <button
+                    class="secondary-button compact-button"
                     (click)="exportExcelOperation('regular', operation)"
                     type="button"
                   >
                     Excel
+                  </button>
+                  <button
+                    class="secondary-button compact-button"
+                    [disabled]="!!operation.sentToRhAt"
+                    (click)="markSentToRh(operation)"
+                    type="button"
+                  >
+                    {{ operation.sentToRhAt ? "Envoyé RH" : "Envoyer RH" }}
                   </button>
                 </div>
               </td>
@@ -103,10 +119,26 @@
                   </button>
                   <button
                     class="secondary-button compact-button"
+                    [disabled]="!templateFor('exceptionalOnCall').fileName"
+                    (click)="exportPdfOperation('exceptionalOnCall', operation)"
+                    type="button"
+                  >
+                    PDF
+                  </button>
+                  <button
+                    class="secondary-button compact-button"
                     (click)="exportExcelOperation('exceptionalOnCall', operation)"
                     type="button"
                   >
                     Excel
+                  </button>
+                  <button
+                    class="secondary-button compact-button"
+                    [disabled]="!!operation.sentToRhAt"
+                    (click)="markSentToRh(operation)"
+                    type="button"
+                  >
+                    {{ operation.sentToRhAt ? "Envoyé RH" : "Envoyer RH" }}
                   </button>
                 </div>
               </td>
@@ -159,10 +191,26 @@
                   </button>
                   <button
                     class="secondary-button compact-button"
+                    [disabled]="!templateFor('exceptionalWork').fileName"
+                    (click)="exportPdfOperation('exceptionalWork', operation)"
+                    type="button"
+                  >
+                    PDF
+                  </button>
+                  <button
+                    class="secondary-button compact-button"
                     (click)="exportExcelOperation('exceptionalWork', operation)"
                     type="button"
                   >
                     Excel
+                  </button>
+                  <button
+                    class="secondary-button compact-button"
+                    [disabled]="!!operation.sentToRhAt"
+                    (click)="markSentToRh(operation)"
+                    type="button"
+                  >
+                    {{ operation.sentToRhAt ? "Envoyé RH" : "Envoyer RH" }}
                   </button>
                 </div>
               </td>

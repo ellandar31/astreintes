@@ -1,8 +1,9 @@
 import { CommonModule } from "@angular/common";
 import { Component, OnDestroy } from "@angular/core";
 import { FormsModule } from "@angular/forms";
-import { Unsubscribe, collection, doc, onSnapshot } from "firebase/firestore";
+import { Unsubscribe, collection, doc, onSnapshot, serverTimestamp, updateDoc } from "firebase/firestore";
 import { db } from "../../firebase";
+import { SignatureVisa, createEmptyVisa } from "../../shared/visa.models";
 import { RhExceptionalOperation, RhRegularPeriod } from "./rh.models";
 
 type ExportTemplateId = "regular" | "exceptionalOnCall" | "exceptionalWork";
@@ -21,6 +22,7 @@ interface RegularInterventionExport {
   startDate: string;
   endDate: string;
   comment?: string;
+  agentVisa?: SignatureVisa;
 }
 
 interface OnCallCompensationRule {
@@ -44,6 +46,8 @@ interface CalculationSegment {
 }
 
 interface ExportOperation {
+  sourceId: string;
+  sourceCollection: "regularOnCallPeriods" | "exceptionalOperations";
   title: string;
   exportTitle: string;
   initiatorName: string;
@@ -52,15 +56,19 @@ interface ExportOperation {
   forecastEndDate: string;
   actualStartDate: string;
   actualEndDate: string;
-  plannedUsers: Array<{ name: string; startDate: string; endDate: string }>;
-  actualUsers: Array<{ name: string; startDate: string; endDate: string }>;
+  plannedUsers: Array<{ name: string; startDate: string; endDate: string; visa: SignatureVisa }>;
+  actualUsers: Array<{ name: string; startDate: string; endDate: string; visa: SignatureVisa }>;
   interventions: Array<{
     userName: string;
     startDate: string;
     endDate: string;
     wasOnSite: boolean;
     comment: string;
+    visa: SignatureVisa;
   }>;
+  initiatorVisa: SignatureVisa;
+  directorVisa: SignatureVisa;
+  sentToRhAt?: string;
 }
 
 @Component({
@@ -162,6 +170,42 @@ export class RhExportsComponent implements OnDestroy {
     this.exportMessage = `Export Excel généré pour ${operation.title}.`;
   }
 
+  exportPdfOperation(templateId: ExportTemplateId, operation: ExportOperation): void {
+    this.exportMessage = "";
+    const template = this.templateFor(templateId);
+
+    if (!template.fileName) {
+      this.exportMessage = "Aucun modèle Word n'est configuré pour cet export dans les paramètres RH.";
+      return;
+    }
+
+    const printWindow = window.open("", "_blank");
+
+    if (!printWindow) {
+      this.exportMessage = "Impossible d'ouvrir la fenêtre PDF. Vérifiez le blocage des popups.";
+      return;
+    }
+
+    printWindow.document.open();
+    printWindow.document.write(this.buildWordHtml(template, [operation], templateId));
+    printWindow.document.close();
+    printWindow.document.title = `${this.slug(operation.title)}_${this.selectedMonth}`;
+    printWindow.setTimeout(() => {
+      printWindow.focus();
+      printWindow.print();
+    }, 250);
+  }
+
+  async markSentToRh(operation: ExportOperation): Promise<void> {
+    this.exportMessage = "";
+
+    await updateDoc(doc(db, operation.sourceCollection, operation.sourceId), {
+      sentToRhAt: serverTimestamp(),
+    });
+
+    this.exportMessage = `${operation.title} marqué comme envoyé aux RH.`;
+  }
+
   exportRows(templateId: ExportTemplateId): ExportOperation[] {
     return this.operationsForTemplate(templateId);
   }
@@ -185,6 +229,8 @@ export class RhExportsComponent implements OnDestroy {
             .sort((first, second) => first.startDate.localeCompare(second.startDate));
 
           return {
+            sourceId: period.id,
+            sourceCollection: "regularOnCallPeriods",
             title: `Astreinte régulière - ${period.userName || period.userEmail}`,
             exportTitle: "Astreintes Régulières",
             initiatorName: "",
@@ -193,15 +239,19 @@ export class RhExportsComponent implements OnDestroy {
             forecastEndDate: period.endDate,
             actualStartDate: period.startDate,
             actualEndDate: period.endDate,
-            plannedUsers: [{ name: period.userName || period.userEmail, startDate: period.startDate, endDate: period.endDate }],
-            actualUsers: [{ name: period.userName || period.userEmail, startDate: period.startDate, endDate: period.endDate }],
+            plannedUsers: [{ name: period.userName || period.userEmail, startDate: period.startDate, endDate: period.endDate, visa: period.agentVisa || createEmptyVisa() }],
+            actualUsers: [{ name: period.userName || period.userEmail, startDate: period.startDate, endDate: period.endDate, visa: period.agentVisa || createEmptyVisa() }],
             interventions: interventions.map((intervention) => ({
               userName: intervention.userName || intervention.userEmail,
               startDate: intervention.startDate,
               endDate: intervention.endDate,
               wasOnSite: false,
               comment: intervention.comment || "",
+              visa: intervention.agentVisa || createEmptyVisa(),
             })),
+            initiatorVisa: createEmptyVisa(),
+            directorVisa: period.directorVisa || createEmptyVisa(),
+            sentToRhAt: period.sentToRhAt,
           };
         });
     }
@@ -220,6 +270,8 @@ export class RhExportsComponent implements OnDestroy {
         const actualEnd = operation.actualEndDate || forecastEnd;
 
         return {
+          sourceId: operation.id,
+          sourceCollection: "exceptionalOperations",
           title: operation.title || exportTitle,
           exportTitle,
           initiatorName: operation.initiatorName || "",
@@ -232,11 +284,13 @@ export class RhExportsComponent implements OnDestroy {
             name: user.displayName || user.email,
             startDate: user.startDate || forecastStart,
             endDate: user.endDate || forecastEnd,
+            visa: user.visa || createEmptyVisa(),
           })),
           actualUsers: (operation.actualUsers || []).map((user) => ({
             name: user.displayName || user.email,
             startDate: user.startDate || actualStart,
             endDate: user.endDate || actualEnd,
+            visa: user.visa || createEmptyVisa(),
           })),
           interventions: (operation.interventions || []).map((intervention) => ({
             userName: intervention.userName || intervention.userEmail,
@@ -244,7 +298,11 @@ export class RhExportsComponent implements OnDestroy {
             endDate: intervention.endDate || "",
             wasOnSite: Boolean(intervention.wasOnSite),
             comment: intervention.comment || intervention.label || "",
+            visa: intervention.agentVisa || createEmptyVisa(),
           })),
+          initiatorVisa: operation.visas?.initiatorGlobal || operation.visas?.actualInitiator || operation.visas?.plannedInitiator || createEmptyVisa(),
+          directorVisa: operation.visas?.directorGlobal || operation.visas?.actualDirector || operation.visas?.plannedDirector || createEmptyVisa(),
+          sentToRhAt: operation.sentToRhAt,
         };
       });
   }
@@ -270,6 +328,14 @@ export class RhExportsComponent implements OnDestroy {
             .operation:last-child { page-break-after: auto; }
             .muted { color: #526171; }
             .calculation-detail { font-size: 9pt; }
+            .visa-table { border-collapse: collapse; width: 100%; margin: 2px 0 16px; }
+            .visa-table td { border: 0; padding: 0; width: 50%; vertical-align: top; }
+            .visa-table .right { text-align: right; }
+            .visa-label { color: #28398a; font-weight: bold; }
+            .visa-image { display: block; height: 26px; width: 95px; max-height: 26px; max-width: 95px; object-fit: contain; }
+            .global-visa-image { height: 34px; width: 130px; max-height: 34px; max-width: 130px; }
+            .visa-table .right .visa-image { margin-left: auto; }
+            .visa-date { font-size: 8.5pt; color: #526171; margin-top: 2px; }
           </style>
         </head>
         <body>${operations.map((operation) => this.operationHtml(operation, templateId)).join("")}</body>
@@ -341,25 +407,28 @@ export class RhExportsComponent implements OnDestroy {
         </table>
         <h3>Dates prévisionnelles</h3>
         ${this.peopleTable(operation.plannedUsers)}
+        ${this.globalVisasHtml(operation)}
         <h3>Dates réelles</h3>
         ${this.peopleTable(operation.actualUsers)}
+        ${this.globalVisasHtml(operation)}
         <p class="muted">Pensez à demander au Directeur de Garde l'autorisation d'accès aux bâtiments en dehors des heures ouvrables.</p>
         <h3>Interventions au cours de l'astreinte</h3>
         ${this.interventionsTable(operation.interventions)}
+        ${this.globalVisasHtml(operation)}
         <h3>Détail des calculs RH</h3>
         ${this.compensationDetailsHtml(operation, templateId)}
       </section>
     `;
   }
 
-  private peopleTable(rows: Array<{ name: string; startDate: string; endDate: string }>): string {
-    const normalizedRows = rows.length ? rows : [{ name: "", startDate: "", endDate: "" }];
+  private peopleTable(rows: Array<{ name: string; startDate: string; endDate: string; visa: SignatureVisa }>): string {
+    const normalizedRows = rows.length ? rows : [{ name: "", startDate: "", endDate: "", visa: createEmptyVisa() }];
     return `
       <table>
         <thead><tr><th>Nom & Prénom de l'Agent</th><th>Date Début</th><th>Heure Début</th><th>Date Fin</th><th>Heure Fin</th><th>Visa de l'Agent</th></tr></thead>
         <tbody>
           ${normalizedRows
-            .map((row) => `<tr><td>${this.escape(row.name)}</td><td>${this.formatDate(row.startDate)}</td><td>${this.formatTime(row.startDate)}</td><td>${this.formatDate(row.endDate)}</td><td>${this.formatTime(row.endDate)}</td><td></td></tr>`)
+            .map((row) => `<tr><td>${this.escape(row.name)}</td><td>${this.formatDate(row.startDate)}</td><td>${this.formatTime(row.startDate)}</td><td>${this.formatDate(row.endDate)}</td><td>${this.formatTime(row.endDate)}</td><td>${this.visaHtml(row.visa, "line")}</td></tr>`)
             .join("")}
         </tbody>
       </table>
@@ -367,18 +436,51 @@ export class RhExportsComponent implements OnDestroy {
   }
 
   private interventionsTable(rows: ExportOperation["interventions"]): string {
-    const normalizedRows = rows.length ? rows : [{ userName: "", startDate: "", endDate: "", wasOnSite: false, comment: "" }];
+    const normalizedRows = rows.length ? rows : [{ userName: "", startDate: "", endDate: "", wasOnSite: false, comment: "", visa: createEmptyVisa() }];
     return `
       <table>
         <thead><tr><th>Nom & Prénom de l'Agent</th><th>Date Début</th><th>Heure Début</th><th>Date Fin</th><th>Heure Fin</th><th>* Int Site</th><th>Visa de l'Agent</th></tr></thead>
         <tbody>
           ${normalizedRows
-            .map((row) => `<tr><td>${this.escape(row.userName)}${row.comment ? `<br><span class="muted">${this.escape(row.comment)}</span>` : ""}</td><td>${this.formatDate(row.startDate)}</td><td>${this.formatTime(row.startDate)}</td><td>${this.formatDate(row.endDate)}</td><td>${this.formatTime(row.endDate)}</td><td>${row.wasOnSite ? "X" : ""}</td><td></td></tr>`)
+            .map((row) => `<tr><td>${this.escape(row.userName)}${row.comment ? `<br><span class="muted">${this.escape(row.comment)}</span>` : ""}</td><td>${this.formatDate(row.startDate)}</td><td>${this.formatTime(row.startDate)}</td><td>${this.formatDate(row.endDate)}</td><td>${this.formatTime(row.endDate)}</td><td>${row.wasOnSite ? "X" : ""}</td><td>${this.visaHtml(row.visa, "line")}</td></tr>`)
             .join("")}
         </tbody>
       </table>
       <p class="muted">* Cocher la case si intervention avec déplacement.</p>
     `;
+  }
+
+  private globalVisasHtml(operation: ExportOperation): string {
+    return `
+      <table class="visa-table">
+        <tr>
+          <td>
+            <div class="visa-label">Visa initiateur</div>
+            <div>${this.visaHtml(operation.initiatorVisa, "global") || "&nbsp;"}</div>
+          </td>
+          <td class="right">
+            <div class="visa-label">Visa directeur</div>
+            <div>${this.visaHtml(operation.directorVisa, "global") || "&nbsp;"}</div>
+          </td>
+        </tr>
+      </table>
+    `;
+  }
+
+  private visaHtml(visa: SignatureVisa | undefined, variant: "line" | "global"): string {
+    if (!visa?.signed) {
+      return "";
+    }
+
+    const date = visa.signedAt ? `<div class="visa-date">${this.formatDate(visa.signedAt)} ${this.formatTime(visa.signedAt)}</div>` : "";
+
+    if ((visa.signatureMode === "image" || visa.signatureMode === "draw") && visa.signatureValue) {
+      const size = variant === "global" ? { width: 130, height: 34, className: "visa-image global-visa-image" } : { width: 95, height: 26, className: "visa-image" };
+      return `<img class="${size.className}" src="${this.escapeAttribute(visa.signatureValue)}" alt="Signature de ${this.escapeAttribute(visa.signedByName || "l'agent")}" width="${size.width}" height="${size.height}" />${date}`;
+    }
+
+    const name = visa.signedByName || visa.signatureValue || "Signé";
+    return `${this.escape(name)}${date}`;
   }
 
   private compensationDetailsHtml(operation: ExportOperation, templateId: ExportTemplateId): string {
@@ -578,6 +680,10 @@ export class RhExportsComponent implements OnDestroy {
       .replaceAll("<", "&lt;")
       .replaceAll(">", "&gt;")
       .replaceAll('"', "&quot;");
+  }
+
+  private escapeAttribute(value: string): string {
+    return this.escape(value).replaceAll("'", "&#39;");
   }
 
   private slug(value: string): string {
