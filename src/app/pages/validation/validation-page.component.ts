@@ -284,7 +284,7 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
       return;
     }
 
-    const visa = this.buildVisa();
+    const visa = this.buildVisa(item);
     let updatedPayload = item.payload;
 
     if (item.kind === "regular-period-agent" || item.kind === "regular-period-director") {
@@ -395,10 +395,10 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
 
   canDeleteVisa(item: ValidationItem): boolean {
     if (item.kind === "exceptional-operation-agent") {
-      return this.exceptionalItemVisas(item).some((visa) => visa.signed && visa.signedByUid === this.user?.uid);
+      return this.exceptionalItemVisas(item).some((visa) => this.canActOnVisa(item, visa));
     }
 
-    return Boolean(item.visa.signed && item.visa.signedByUid === this.user?.uid);
+    return this.canActOnVisa(item, item.visa);
   }
 
   userLabel(user: AppUser): string {
@@ -626,23 +626,99 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
     return { userId: "", email: "" };
   }
 
-  private buildVisa(): SignatureVisa {
-    const mode = this.profile?.signatureMode || "name";
+  private buildVisa(item: ValidationItem): SignatureVisa {
+    const signer = this.visaSignerForItem(item);
+    const mode = signer.profile?.signatureMode || "name";
     const signatureValue =
       mode === "image"
-        ? this.profile?.signatureImage || this.profile?.signatureName || this.user?.email || ""
+        ? signer.profile?.signatureImage || signer.name
         : mode === "draw"
-          ? this.profile?.signatureDrawing || this.profile?.signatureName || this.user?.email || ""
-          : this.profile?.signatureName || this.user?.displayName || this.user?.email || "";
+          ? signer.profile?.signatureDrawing || signer.name
+          : signer.name;
 
     return {
       signed: true,
       signedAt: new Date().toISOString(),
-      signedByName: this.profile?.signatureName || this.user?.displayName || this.user?.email || "",
-      signedByUid: this.user?.uid || "",
+      signedByName: signer.name,
+      signedByUid: signer.uid,
       signatureMode: mode,
       signatureValue,
     };
+  }
+
+  private visaSignerForItem(item: ValidationItem): { uid: string; name: string; email: string; profile: AppUser | null } {
+    const reference = this.visaSignerReference(item);
+    const profile = this.findUser(reference.userId, reference.email);
+    const fallbackName = reference.name || profile?.signatureName || profile?.displayName || profile?.email || this.user?.displayName || this.user?.email || "";
+    const fallbackEmail = reference.email || profile?.email || this.user?.email || "";
+
+    return {
+      uid: reference.userId || profile?.uid || profile?.id || this.user?.uid || "",
+      name: profile?.signatureName || profile?.displayName || fallbackName,
+      email: fallbackEmail,
+      profile: profile || null,
+    };
+  }
+
+  private visaSignerReference(item: ValidationItem): { userId: string; email: string; name: string } {
+    if (item.kind === "regular-period-agent") {
+      const period = item.payload as RegularOnCallPeriod;
+      return { userId: period.userId || "", email: period.userEmail || "", name: period.userName || period.userEmail || "" };
+    }
+
+    if (item.kind === "regular-intervention-agent") {
+      const intervention = item.payload as RegularIntervention;
+      return { userId: intervention.userId || "", email: intervention.userEmail || "", name: intervention.userName || intervention.userEmail || "" };
+    }
+
+    if (item.kind === "exceptional-operation-agent") {
+      return { userId: item.userId || "", email: item.userEmail || "", name: item.userLabel || item.userEmail || "" };
+    }
+
+    if (item.kind === "exceptional-participant-planned" && typeof item.index === "number") {
+      const operation = item.payload as ExceptionalOperation;
+      const participant = operation.plannedUsers?.[item.index];
+      return {
+        userId: participant?.userId || "",
+        email: participant?.email || "",
+        name: participant?.displayName || participant?.email || "",
+      };
+    }
+
+    if (item.kind === "exceptional-participant-actual" && typeof item.index === "number") {
+      const operation = item.payload as ExceptionalOperation;
+      const participant = operation.actualUsers?.[item.index];
+      return {
+        userId: participant?.userId || "",
+        email: participant?.email || "",
+        name: participant?.displayName || participant?.email || "",
+      };
+    }
+
+    if (item.kind === "exceptional-operation-initiator") {
+      const operation = item.payload as ExceptionalOperation;
+      return { userId: operation.initiatorUid || "", email: "", name: operation.initiatorName || "" };
+    }
+
+    return {
+      userId: this.user?.uid || "",
+      email: this.user?.email || "",
+      name: this.profile?.signatureName || this.user?.displayName || this.user?.email || "",
+    };
+  }
+
+  private canActOnVisa(item: ValidationItem, visa: SignatureVisa): boolean {
+    if (!visa.signed) {
+      return false;
+    }
+
+    const signer = this.visaSignerForItem(item);
+
+    return visa.signedByUid === signer.uid || visa.signedByUid === this.user?.uid;
+  }
+
+  private findUser(userId: string, email: string): AppUser | undefined {
+    return this.users.find((item) => Boolean(userId && (item.id === userId || item.uid === userId)) || Boolean(email && item.email === email));
   }
 
   private matchesUser(userId: string | undefined, emailOrName: string | undefined, selectedId: string, selectedEmail: string): boolean {
