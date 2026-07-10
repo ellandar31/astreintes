@@ -13,11 +13,11 @@ import { RhSection } from "./rh.models";
 })
 export class RhPageComponent {
   readonly sections: Array<{ id: RhSection; label: string }> = [
-    { id: "controls", label: "Contrôles des données" },
     { id: "exports", label: "Exports des données" },
+    { id: "controls", label: "Contrôles des données" },
   ];
 
-  activeSection: RhSection = "controls";
+  activeSection: RhSection = "exports";
 
   setSection(section: RhSection): void {
     this.activeSection = section;
