@@ -18,6 +18,10 @@ service cloud.firestore {
       }
     }
 
+    match /{path=**}/interventions/{interventionId} {
+      allow read, write: if isSignedIn();
+    }
+
     match /settings/{settingDocument} {
       allow read, write: if isSignedIn();
 

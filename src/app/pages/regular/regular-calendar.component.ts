@@ -313,17 +313,25 @@ export class RegularCalendarComponent implements OnDestroy {
     }
 
     try {
+      const existingIntervention = this.editingInterventionId
+        ? this.interventions.find((intervention) => intervention.id === this.editingInterventionId)
+        : undefined;
       const payload = {
         ...form,
         comment: form.comment.trim(),
-        periodId: parentPeriod.id,
         teamId: parentPeriod.teamId,
-        agentVisa: this.interventions.find((intervention) => intervention.id === this.editingInterventionId)?.agentVisa || createEmptyVisa(),
+        agentVisa: existingIntervention?.agentVisa || createEmptyVisa(),
         updatedAt: appStore.data.serverTimestamp(),
       };
 
-      if (this.editingInterventionId) {
+      if (this.editingInterventionId && existingIntervention?.periodId === parentPeriod.id) {
         await appStore.data.updateDocument(appStore.paths.regularIntervention(parentPeriod.id, this.editingInterventionId), payload);
+      } else if (this.editingInterventionId && existingIntervention) {
+        await appStore.data.addDocument(appStore.paths.regularInterventions(parentPeriod.id), {
+          ...payload,
+          createdAt: appStore.data.serverTimestamp(),
+        });
+        await appStore.data.deleteDocument(appStore.paths.regularIntervention(existingIntervention.periodId, existingIntervention.id));
       } else {
         await appStore.data.addDocument(appStore.paths.regularInterventions(parentPeriod.id), {
           ...payload,
