@@ -33,20 +33,20 @@ export class RhExcelExportLibrary {
           <br />
           <table>
             <tr><td class="title" colspan="7">Astreinte</td></tr>
-            <tr><th>Utilisateur</th><th>Début</th><th>Fin</th><th>Type indemnisation</th><th>Détail calcul</th><th>Heures</th><th>Coefficient</th></tr>
+            <tr><th>Utilisateur</th><th>Début-Fin</th><th>Type indemnisation</th><th>Détail calcul</th><th>Heures</th><th>Coefficient</th></tr>
             ${onCallRows
               .map(
-                (row) => `<tr><td>${escapeHtml(row.name)}</td><td>${formatRange(row.startDate, row.startDate)}</td><td>${formatRange(row.endDate, row.endDate)}</td><td>${escapeHtml(row.label)}</td><td>${calculator.segmentDetailsHtml(row.segments)}</td><td>${row.hours}</td><td>${row.coefficient}</td></tr>`,
+                (row) => `<tr><td>${escapeHtml(row.name)}</td><td>${formatRange(row.startDate, row.endDate)}</td><td>${escapeHtml(row.label)}</td><td>${calculator.segmentDetailsHtml(row.segments)}</td><td>${row.hours}</td><td>${row.coefficient}</td></tr>`,
               )
               .join("")}
           </table>
           <br />
           <table>
             <tr><td class="title" colspan="9">Interventions / travaux</td></tr>
-            <tr><th>Utilisateur</th><th>Début</th><th>Fin</th><th>Plage</th><th>Détail calcul</th><th>Heures</th><th>Coefficient</th><th>Repos compensatoire</th><th>Commentaire</th></tr>
+            <tr><th>Utilisateur</th><th>Début-Fin</th><th>Plage</th><th>Détail calcul</th><th>Heures</th><th>Coefficient</th><th>Repos compensatoire</th><th>Commentaire</th></tr>
             ${interventionRows
               .map(
-                (row) => `<tr><td>${escapeHtml(row.userName)}</td><td>${formatRange(row.startDate, row.startDate)}</td><td>${formatRange(row.endDate, row.endDate)}</td><td>${escapeHtml(row.label)}</td><td>${calculator.segmentDetailsHtml(row.segments)}</td><td>${row.hours}</td><td>${row.coefficient}</td><td>${row.restCoefficient}</td><td>${escapeHtml(row.comment)}</td></tr>`,
+                (row) => `<tr><td>${escapeHtml(row.userName)}</td><td>${formatRange(row.startDate, row.endDate)}</td><td>${escapeHtml(row.label)}</td><td>${calculator.segmentDetailsHtml(row.segments)}</td><td>${row.hours}</td><td>${row.coefficient}</td><td>${row.restCoefficient}</td><td>${escapeHtml(row.comment)}</td></tr>`,
               )
               .join("")}
           </table>
