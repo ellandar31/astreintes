@@ -1,10 +1,9 @@
 import { CommonModule } from "@angular/common";
 import { Component, EventEmitter, Input, OnDestroy, Output } from "@angular/core";
 import { FormsModule, NgForm } from "@angular/forms";
-import { Unsubscribe, onSnapshot } from "firebase/firestore";
-import { usersCollection } from "../../firebase-paths";
 import { ModalComponent } from "../../shared/modal.component";
 import { createEmptyVisa } from "../../shared/visa.models";
+import { StoreUnsubscribe, appStore } from "../../store/app-store";
 import {
   ExceptionalIntervention,
   ExceptionalOperation,
@@ -51,9 +50,9 @@ export class OperationModalComponent implements OnDestroy {
   validationError = "";
   users: SelectableUser[] = [];
 
-  private readonly unsubscribe: Unsubscribe = onSnapshot(usersCollection(), (snapshot) => {
-    this.users = snapshot.docs
-      .map((document) => ({ id: document.id, ...document.data() }) as SelectableUser)
+  private readonly unsubscribe: StoreUnsubscribe = appStore.data.observeCollection<SelectableUser>(appStore.paths.users(), (documents) => {
+    this.users = documents
+        .map((document) => ({ ...document.data, id: document.id }) as SelectableUser)
       .filter((user) => Boolean(user.email))
       .sort((first, second) => this.userLabel(first).localeCompare(this.userLabel(second)));
   });

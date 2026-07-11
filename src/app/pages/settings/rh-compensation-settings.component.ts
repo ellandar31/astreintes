@@ -1,8 +1,7 @@
 import { CommonModule } from "@angular/common";
 import { Component, EventEmitter, OnDestroy, Output } from "@angular/core";
 import { FormsModule } from "@angular/forms";
-import { onSnapshot, setDoc, Unsubscribe } from "firebase/firestore";
-import { rhCompensationRulesDoc } from "../../firebase-paths";
+import { StoreUnsubscribe, appStore } from "../../store/app-store";
 
 interface OnCallCompensationRule {
   id: string;
@@ -42,17 +41,17 @@ export class RhCompensationSettingsComponent implements OnDestroy {
     { id: "sunday_holiday_7_21", label: "Dimanche/Jours fériés (7h-21h)", interventionCoefficient: 0, workCoefficient: 0, restCoefficient: 0 },
   ];
 
-  private readonly settingsRef = rhCompensationRulesDoc();
+  private readonly settingsRef = appStore.paths.rhCompensationRules();
 
-  private readonly unsubscribe: Unsubscribe = onSnapshot(this.settingsRef, (snapshot) => {
-    const data = snapshot.data();
-
+  private readonly unsubscribe: StoreUnsubscribe = appStore.data.observeDocument<Record<string, unknown>>(this.settingsRef, (data) => {
     if (!data) {
       return;
     }
 
-    this.onCallRows = this.mergeRows(this.onCallRows, data["onCall"] || []);
-    this.periodRows = this.mergeRows(this.periodRows, data["periods"] || []);
+    const savedOnCallRows = Array.isArray(data["onCall"]) ? (data["onCall"] as Partial<OnCallCompensationRule>[]) : [];
+    const savedPeriodRows = Array.isArray(data["periods"]) ? (data["periods"] as Partial<PeriodCompensationRule>[]) : [];
+    this.onCallRows = this.mergeRows(this.onCallRows, savedOnCallRows);
+    this.periodRows = this.mergeRows(this.periodRows, savedPeriodRows);
   });
 
   ngOnDestroy(): void {
@@ -60,7 +59,7 @@ export class RhCompensationSettingsComponent implements OnDestroy {
   }
 
   async saveCompensationRules(): Promise<void> {
-    await setDoc(this.settingsRef, {
+    await appStore.data.setDocument(this.settingsRef, {
       onCall: this.onCallRows,
       periods: this.periodRows,
       updatedAt: new Date().toISOString(),

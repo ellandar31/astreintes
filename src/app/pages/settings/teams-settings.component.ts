@@ -1,9 +1,7 @@
 import { CommonModule } from "@angular/common";
 import { Component, EventEmitter, OnDestroy, Output } from "@angular/core";
 import { FormsModule, NgForm } from "@angular/forms";
-import { FirebaseError } from "firebase/app";
-import { Unsubscribe, addDoc, deleteDoc, onSnapshot, setDoc } from "firebase/firestore";
-import { teamDoc, teamsCollection, usersCollection } from "../../firebase-paths";
+import { StoreUnsubscribe, appStore } from "../../store/app-store";
 import { ManagedUser, Team } from "./settings.models";
 
 @Component({
@@ -26,13 +24,13 @@ export class TeamsSettingsComponent implements OnDestroy {
     members: [] as string[],
   };
 
-  private readonly unsubscribes: Unsubscribe[] = [
-    onSnapshot(
-      teamsCollection(),
-      (snapshot) => {
-        this.teams = snapshot.docs
+  private readonly unsubscribes: StoreUnsubscribe[] = [
+    appStore.data.observeCollection<Record<string, unknown>>(
+      appStore.paths.teams(),
+      (documents) => {
+        this.teams = documents
           .map((document) => {
-            const data = document.data();
+            const data = document.data;
             return {
               id: document.id,
               name: String(data["name"] || ""),
@@ -43,11 +41,11 @@ export class TeamsSettingsComponent implements OnDestroy {
       },
       (error) => this.emitError(error),
     ),
-    onSnapshot(
-      usersCollection(),
-      (snapshot) => {
-        this.users = snapshot.docs
-          .map((document) => ({ id: document.id, ...document.data() }) as ManagedUser)
+    appStore.data.observeCollection<ManagedUser>(
+      appStore.paths.users(),
+      (documents) => {
+        this.users = documents
+          .map((document) => ({ ...document.data, id: document.id }) as ManagedUser)
           .filter((user) => Boolean(user.email))
           .sort((first, second) => this.userLabel(first).localeCompare(this.userLabel(second)));
       },
@@ -95,9 +93,9 @@ export class TeamsSettingsComponent implements OnDestroy {
 
     try {
       if (this.editingTeamId) {
-        await setDoc(teamDoc(this.editingTeamId), payload);
+        await appStore.data.setDocument(appStore.paths.team(this.editingTeamId), payload);
       } else {
-        await addDoc(teamsCollection(), payload);
+        await appStore.data.addDocument(appStore.paths.teams(), payload);
       }
 
       this.resetTeamForm(form);
@@ -109,7 +107,7 @@ export class TeamsSettingsComponent implements OnDestroy {
 
   async deleteTeam(team: Team): Promise<void> {
     try {
-      await deleteDoc(teamDoc(team.id));
+      await appStore.data.deleteDocument(appStore.paths.team(team.id));
       this.success.emit("Équipe supprimée.");
     } catch (error) {
       this.emitError(error);
@@ -176,7 +174,7 @@ export class TeamsSettingsComponent implements OnDestroy {
 
   private emitError(error: unknown): void {
     this.failure.emit(
-      error instanceof FirebaseError
+      appStore.errors.isFirebaseError(error)
         ? `Erreur Firebase (${error.code}) : ${error.message}`
         : "Erreur pendant l'enregistrement de l'équipe.",
     );

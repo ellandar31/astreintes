@@ -1,18 +1,6 @@
 import { CommonModule } from "@angular/common";
 import { Component } from "@angular/core";
 import { FormsModule, NgForm } from "@angular/forms";
-import {
-  Auth,
-  User,
-  createUserWithEmailAndPassword,
-  onAuthStateChanged,
-  signInWithEmailAndPassword,
-  signInWithPopup,
-  signOut,
-} from "firebase/auth";
-import { getDoc, serverTimestamp, setDoc } from "firebase/firestore";
-import { auth, googleProvider } from "./firebase";
-import { userDoc } from "./firebase-paths";
 import { ExceptionalOperationsComponent } from "./pages/exceptionnel/exceptional-operations.component";
 import { ProfilePageComponent } from "./pages/profile/profile-page.component";
 import { RegularCalendarComponent } from "./pages/regular/regular-calendar.component";
@@ -20,6 +8,7 @@ import { RhPageComponent } from "./pages/rh/rh-page.component";
 import { SettingsPageComponent } from "./pages/settings/settings-page.component";
 import { ValidationPageComponent } from "./pages/validation/validation-page.component";
 import { ModalComponent } from "./shared/modal.component";
+import { StoreAuthUser, appStore } from "./store/app-store";
 
 const tabs = ["Régulier", "Exceptionnel", "Validation", "RH"] as const;
 type TabName = (typeof tabs)[number];
@@ -43,8 +32,6 @@ type ModalView = "profile" | "settings";
   styleUrl: "./app.component.css",
 })
 export class AppComponent {
-  private readonly auth: Auth = auth;
-
   readonly tabs = tabs;
   activeTab: TabName = "Régulier";
   email = "";
@@ -54,14 +41,14 @@ export class AppComponent {
   loadingSession = true;
   modalView: ModalView | null = null;
   password = "";
-  user: User | null = null;
+  user: StoreAuthUser | null = null;
 
   get displayName(): string {
     return this.user?.displayName || this.user?.email || "Utilisateur";
   }
 
   constructor() {
-    onAuthStateChanged(this.auth, (currentUser) => {
+    appStore.auth.onSessionChanged((currentUser) => {
       this.user = currentUser;
       this.loadingSession = false;
 
@@ -97,9 +84,9 @@ export class AppComponent {
 
     try {
       if (this.isCreatingAccount) {
-        await createUserWithEmailAndPassword(this.auth, this.email, this.password);
+        await appStore.auth.createWithEmail(this.email, this.password);
       } else {
-        await signInWithEmailAndPassword(this.auth, this.email, this.password);
+        await appStore.auth.signInWithEmail(this.email, this.password);
       }
     } catch {
       this.error = "Connexion impossible. Vérifiez l'adresse email et le mot de passe.";
@@ -113,7 +100,7 @@ export class AppComponent {
     this.isSubmitting = true;
 
     try {
-      await signInWithPopup(this.auth, googleProvider);
+      await appStore.auth.signInWithGoogle();
     } catch {
       this.error = "Connexion Google impossible pour le moment.";
     } finally {
@@ -122,7 +109,7 @@ export class AppComponent {
   }
 
   async logout(): Promise<void> {
-    await signOut(this.auth);
+    await appStore.auth.signOut();
   }
 
   toggleAccountMode(): void {
@@ -130,22 +117,22 @@ export class AppComponent {
     this.error = "";
   }
 
-  private async registerAuthenticatedUser(currentUser: User): Promise<void> {
-    const userReference = userDoc(currentUser.uid);
-    const snapshot = await getDoc(userReference);
+  private async registerAuthenticatedUser(currentUser: StoreAuthUser): Promise<void> {
+    const userReference = appStore.paths.user(currentUser.uid);
+    const savedUser = await appStore.data.getDocument(userReference);
     const userPayload = {
       uid: currentUser.uid,
       email: currentUser.email || "",
       displayName: currentUser.displayName || "",
-      lastLoginAt: serverTimestamp(),
+      lastLoginAt: appStore.data.serverTimestamp(),
     };
 
-    if (snapshot.exists()) {
-      await setDoc(userReference, userPayload, { merge: true });
+    if (savedUser) {
+      await appStore.data.setDocument(userReference, userPayload, { merge: true });
       return;
     }
 
-    await setDoc(userReference, {
+    await appStore.data.setDocument(userReference, {
       ...userPayload,
       role: 1,
     });

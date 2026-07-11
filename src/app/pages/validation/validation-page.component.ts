@@ -1,13 +1,10 @@
 import { CommonModule } from "@angular/common";
 import { Component, Input, OnChanges, OnDestroy, SimpleChanges } from "@angular/core";
 import { FormsModule } from "@angular/forms";
-import { User } from "firebase/auth";
-import { Unsubscribe, collection, doc, onSnapshot, setDoc, updateDoc } from "firebase/firestore";
-import { db } from "../../firebase";
-import { regularInterventionDoc, regularInterventionsGroup, regularOnCallPeriodDoc, regularOnCallPeriodsCollection, usersCollection } from "../../firebase-paths";
 import { APP_LABELS } from "../../i18n/labels";
 import { normalizeObjectTextEncoding } from "../../i18n/text-encoding";
 import { SignatureVisa, createEmptyVisa } from "../../shared/visa.models";
+import { StoreAuthUser, StoreUnsubscribe, appStore } from "../../store/app-store";
 import { ExceptionalOperation } from "../exceptionnel/exceptional.models";
 import { RegularIntervention, RegularOnCallPeriod } from "../regular/regular.models";
 import { ValidationConsultationModalComponent } from "./validation-consultation-modal.component";
@@ -21,7 +18,7 @@ import { AppUser, ValidationItem, ValidationSection, ValidationSectionId, VisaPr
   styleUrl: "./validation-page.component.css",
 })
 export class ValidationPageComponent implements OnChanges, OnDestroy {
-  @Input({ required: true }) user: User | null = null;
+  @Input({ required: true }) user: StoreAuthUser | null = null;
   readonly labels = APP_LABELS;
 
   exceptionalOperations: ExceptionalOperation[] = [];
@@ -35,26 +32,26 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
   validationMessage = "";
   readonly canDeleteVisaForModal = (item: ValidationItem): boolean => this.canDeleteVisa(item);
 
-  private readonly unsubscribes: Unsubscribe[] = [
-    onSnapshot(usersCollection(), (snapshot) => {
-      this.users = snapshot.docs
-        .map((document) => this.fromFirestore<AppUser>(document.id, document.data()))
+  private readonly unsubscribes: StoreUnsubscribe[] = [
+    appStore.data.observeCollection<AppUser>(appStore.paths.users(), (documents) => {
+      this.users = documents
+        .map((document) => this.fromStore<AppUser>(document.id, document.data))
         .filter((item) => Boolean(item.email))
         .sort((first, second) => this.userLabel(first).localeCompare(this.userLabel(second)));
       this.refreshProfile();
     }),
-    onSnapshot(regularOnCallPeriodsCollection(), (snapshot) => {
-      this.regularPeriods = snapshot.docs.map((document) => this.fromFirestore<RegularOnCallPeriod>(document.id, document.data()));
+    appStore.data.observeCollection<RegularOnCallPeriod>(appStore.paths.regularOnCallPeriods(), (documents) => {
+      this.regularPeriods = documents.map((document) => this.fromStore<RegularOnCallPeriod>(document.id, document.data));
     }),
-    onSnapshot(regularInterventionsGroup(), (snapshot) => {
-      this.regularInterventions = snapshot.docs.map((document) => {
-        const data = document.data();
-        const periodId = document.ref.parent.parent?.id || String(data["periodId"] || "");
-        return this.fromFirestore<RegularIntervention>(document.id, { ...data, periodId });
+    appStore.data.observeCollection<RegularIntervention>(appStore.paths.regularInterventionsGroup(), (documents) => {
+      this.regularInterventions = documents.map((document) => {
+        const data = document.data;
+        const periodId = document.parentId || String(data["periodId"] || "");
+        return this.fromStore<RegularIntervention>(document.id, { ...data, periodId });
       });
     }),
-    onSnapshot(collection(db, "exceptionalOperations"), (snapshot) => {
-      this.exceptionalOperations = snapshot.docs.map((document) => this.fromFirestore<ExceptionalOperation>(document.id, document.data()));
+    appStore.data.observeCollection<ExceptionalOperation>(appStore.paths.exceptionalOperations(), (documents) => {
+      this.exceptionalOperations = documents.map((document) => this.fromStore<ExceptionalOperation>(document.id, document.data));
     }),
   ];
 
@@ -401,7 +398,7 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
         [field]: visa,
       };
 
-      await updateDoc(regularOnCallPeriodDoc((item.payload as RegularOnCallPeriod).id), {
+      await appStore.data.updateDocument(appStore.paths.regularOnCallPeriod((item.payload as RegularOnCallPeriod).id), {
         [field]: visa,
       });
       this.regularPeriods = this.regularPeriods.map((currentPeriod) =>
@@ -419,7 +416,7 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
         agentVisa: visa,
       };
 
-      await updateDoc(regularInterventionDoc(intervention.periodId, intervention.id), {
+      await appStore.data.updateDocument(appStore.paths.regularIntervention(intervention.periodId, intervention.id), {
         agentVisa: visa,
       });
       this.regularInterventions = this.regularInterventions.map((currentIntervention) =>
@@ -468,7 +465,7 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
         [field]: emptyVisa,
       };
 
-      await updateDoc(regularOnCallPeriodDoc((item.payload as RegularOnCallPeriod).id), {
+      await appStore.data.updateDocument(appStore.paths.regularOnCallPeriod((item.payload as RegularOnCallPeriod).id), {
         [field]: emptyVisa,
       });
       this.regularPeriods = this.regularPeriods.map((currentPeriod) =>
@@ -486,7 +483,7 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
         agentVisa: emptyVisa,
       };
 
-      await updateDoc(regularInterventionDoc(intervention.periodId, intervention.id), {
+      await appStore.data.updateDocument(appStore.paths.regularIntervention(intervention.periodId, intervention.id), {
         agentVisa: emptyVisa,
       });
       this.regularInterventions = this.regularInterventions.map((currentIntervention) =>
@@ -658,7 +655,7 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
       this.applyExceptionalInterventionVisa(item, operation, payload, visa);
     }
 
-    await setDoc(doc(db, "exceptionalOperations", operation.id), payload, { merge: true });
+    await appStore.data.setDocument(appStore.paths.exceptionalOperation(operation.id), payload, { merge: true });
     const updatedOperation = {
       ...operation,
       ...payload,
@@ -679,7 +676,7 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
 
     await Promise.all(
       interventions.map((intervention) =>
-        updateDoc(regularInterventionDoc(intervention.periodId, intervention.id), {
+        appStore.data.updateDocument(appStore.paths.regularIntervention(intervention.periodId, intervention.id), {
           agentVisa: visa,
         }),
       ),
@@ -885,7 +882,7 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
       .map((participant) => participant.visa || createEmptyVisa());
   }
 
-  private fromFirestore<T extends { id: string }>(id: string, data: Record<string, unknown>): T {
-    return normalizeObjectTextEncoding({ id, ...data }) as T;
+  private fromStore<T extends { id: string }>(id: string, data: Partial<T> | Record<string, unknown>): T {
+    return normalizeObjectTextEncoding({ ...data, id }) as T;
   }
 }

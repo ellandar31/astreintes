@@ -1,9 +1,7 @@
 import { CommonModule } from "@angular/common";
 import { Component, EventEmitter, OnDestroy, Output } from "@angular/core";
 import { FormsModule } from "@angular/forms";
-import { FirebaseError } from "firebase/app";
-import { Unsubscribe, deleteDoc, onSnapshot, updateDoc } from "firebase/firestore";
-import { userDoc, usersCollection } from "../../firebase-paths";
+import { StoreUnsubscribe, appStore } from "../../store/app-store";
 import { ManagedUser, UserRole } from "./settings.models";
 
 @Component({
@@ -26,11 +24,11 @@ export class UsersSettingsComponent implements OnDestroy {
 
   users: ManagedUser[] = [];
 
-  private readonly unsubscribe: Unsubscribe = onSnapshot(
-    usersCollection(),
-    (snapshot) => {
-      this.users = snapshot.docs
-        .map((document) => ({ id: document.id, ...document.data() }) as ManagedUser)
+  private readonly unsubscribe: StoreUnsubscribe = appStore.data.observeCollection<ManagedUser>(
+    appStore.paths.users(),
+    (documents) => {
+      this.users = documents
+        .map((document) => ({ ...document.data, id: document.id }) as ManagedUser)
         .sort((first, second) => first.email.localeCompare(second.email));
     },
     (error) => this.emitError(error),
@@ -42,7 +40,7 @@ export class UsersSettingsComponent implements OnDestroy {
 
   async updateUserRole(user: ManagedUser, role: UserRole): Promise<void> {
     try {
-      await updateDoc(userDoc(user.id), {
+      await appStore.data.updateDocument(appStore.paths.user(user.id), {
         role: Number(role) as UserRole,
       });
       this.success.emit("Rôle utilisateur mis à jour.");
@@ -53,7 +51,7 @@ export class UsersSettingsComponent implements OnDestroy {
 
   async deleteUser(user: ManagedUser): Promise<void> {
     try {
-      await deleteDoc(userDoc(user.id));
+      await appStore.data.deleteDocument(appStore.paths.user(user.id));
       this.success.emit("Utilisateur retiré de la liste applicative.");
     } catch (error) {
       this.emitError(error);
@@ -70,7 +68,7 @@ export class UsersSettingsComponent implements OnDestroy {
 
   private emitError(error: unknown): void {
     this.failure.emit(
-      error instanceof FirebaseError
+      appStore.errors.isFirebaseError(error)
         ? `Erreur Firebase (${error.code}) : ${error.message}`
         : "Erreur pendant la gestion des utilisateurs.",
     );

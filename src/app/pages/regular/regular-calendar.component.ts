@@ -1,19 +1,8 @@
 import { CommonModule } from "@angular/common";
 import { Component, OnDestroy } from "@angular/core";
 import { FormsModule } from "@angular/forms";
-import { FirebaseError } from "firebase/app";
-import { Unsubscribe, addDoc, deleteDoc, onSnapshot, serverTimestamp, updateDoc } from "firebase/firestore";
-import {
-  publicHolidaysCollection,
-  regularInterventionDoc,
-  regularInterventionsCollection,
-  regularInterventionsGroup,
-  regularOnCallPeriodDoc,
-  regularOnCallPeriodsCollection,
-  teamsCollection,
-  usersCollection,
-} from "../../firebase-paths";
 import { createEmptyVisa } from "../../shared/visa.models";
+import { StoreUnsubscribe, appStore } from "../../store/app-store";
 import {
   RegularIntervention,
   RegularInterventionForm,
@@ -59,11 +48,11 @@ export class RegularCalendarComponent implements OnDestroy {
   teams: RegularTeam[] = [];
   users: RegularUser[] = [];
 
-  private readonly unsubscribes: Unsubscribe[] = [
-    onSnapshot(teamsCollection(), (snapshot) => {
-      this.teams = snapshot.docs
+  private readonly unsubscribes: StoreUnsubscribe[] = [
+    appStore.data.observeCollection<Record<string, unknown>>(appStore.paths.teams(), (documents) => {
+      this.teams = documents
         .map((document) => {
-          const data = document.data();
+          const data = document.data;
           return {
             id: document.id,
             name: String(data["name"] || ""),
@@ -76,32 +65,32 @@ export class RegularCalendarComponent implements OnDestroy {
         this.selectedTeamId = this.teams[0].id;
       }
     }),
-    onSnapshot(usersCollection(), (snapshot) => {
-      this.users = snapshot.docs
-        .map((document) => ({ id: document.id, ...document.data() }) as RegularUser)
+    appStore.data.observeCollection<RegularUser>(appStore.paths.users(), (documents) => {
+      this.users = documents
+        .map((document) => ({ ...document.data, id: document.id }) as RegularUser)
         .filter((user) => Boolean(user.email))
         .sort((first, second) => this.userLabel(first).localeCompare(this.userLabel(second)));
     }),
-    onSnapshot(regularOnCallPeriodsCollection(), (snapshot) => {
-      this.periods = snapshot.docs.map((document) => ({ id: document.id, ...document.data() }) as RegularOnCallPeriod);
+    appStore.data.observeCollection<RegularOnCallPeriod>(appStore.paths.regularOnCallPeriods(), (documents) => {
+      this.periods = documents.map((document) => ({ ...document.data, id: document.id }) as RegularOnCallPeriod);
     }),
-    onSnapshot(
-      regularInterventionsGroup(),
-      (snapshot) => {
-        this.interventions = snapshot.docs.map((document) => {
-          const data = document.data();
-          const periodId = document.ref.parent.parent?.id || String(data["periodId"] || "");
-          return { id: document.id, ...data, periodId } as RegularIntervention;
+    appStore.data.observeCollection<RegularIntervention>(
+      appStore.paths.regularInterventionsGroup(),
+      (documents) => {
+        this.interventions = documents.map((document) => {
+          const data = document.data;
+          const periodId = document.parentId || String(data["periodId"] || "");
+          return { ...data, id: document.id, periodId } as RegularIntervention;
         });
       },
       (error) => {
-        this.interventionError = this.toFirebaseErrorMessage(error, "Impossible de charger les interventions.");
+        this.interventionError = this.toErrorMessage(error, "Impossible de charger les interventions.");
       },
     ),
-    onSnapshot(publicHolidaysCollection(), (snapshot) => {
-      this.publicHolidays = snapshot.docs
+    appStore.data.observeCollection<Record<string, unknown>>(appStore.paths.publicHolidays(), (documents) => {
+      this.publicHolidays = documents
         .map((document) => {
-          const data = document.data();
+          const data = document.data;
           return {
             id: document.id,
             date: String(data["date"] || ""),
@@ -277,25 +266,25 @@ export class RegularCalendarComponent implements OnDestroy {
     }
 
     if (this.editingPeriodId) {
-      await updateDoc(regularOnCallPeriodDoc(this.editingPeriodId), {
+      await appStore.data.updateDocument(appStore.paths.regularOnCallPeriod(this.editingPeriodId), {
         ...form,
         teamId: this.selectedTeamId,
         agentVisa: this.periods.find((period) => period.id === this.editingPeriodId)?.agentVisa || createEmptyVisa(),
         directorVisa: this.periods.find((period) => period.id === this.editingPeriodId)?.directorVisa || createEmptyVisa(),
-        updatedAt: serverTimestamp(),
+        updatedAt: appStore.data.serverTimestamp(),
       });
 
       this.closePeriodModal();
       return;
     }
 
-    await addDoc(regularOnCallPeriodsCollection(), {
+    await appStore.data.addDocument(appStore.paths.regularOnCallPeriods(), {
       ...form,
       teamId: this.selectedTeamId,
       agentVisa: createEmptyVisa(),
       directorVisa: createEmptyVisa(),
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
+      createdAt: appStore.data.serverTimestamp(),
+      updatedAt: appStore.data.serverTimestamp(),
     });
 
     this.closePeriodModal();
@@ -329,21 +318,21 @@ export class RegularCalendarComponent implements OnDestroy {
         periodId: parentPeriod.id,
         teamId: parentPeriod.teamId,
         agentVisa: this.interventions.find((intervention) => intervention.id === this.editingInterventionId)?.agentVisa || createEmptyVisa(),
-        updatedAt: serverTimestamp(),
+        updatedAt: appStore.data.serverTimestamp(),
       };
 
       if (this.editingInterventionId) {
-        await updateDoc(regularInterventionDoc(parentPeriod.id, this.editingInterventionId), payload);
+        await appStore.data.updateDocument(appStore.paths.regularIntervention(parentPeriod.id, this.editingInterventionId), payload);
       } else {
-        await addDoc(regularInterventionsCollection(parentPeriod.id), {
+        await appStore.data.addDocument(appStore.paths.regularInterventions(parentPeriod.id), {
           ...payload,
-          createdAt: serverTimestamp(),
+          createdAt: appStore.data.serverTimestamp(),
         });
       }
 
       this.closeInterventionModal();
     } catch (error) {
-      this.interventionError = this.toFirebaseErrorMessage(error, "Impossible d'enregistrer l'intervention.");
+      this.interventionError = this.toErrorMessage(error, "Impossible d'enregistrer l'intervention.");
     }
   }
 
@@ -359,9 +348,9 @@ export class RegularCalendarComponent implements OnDestroy {
     }
 
     try {
-      await deleteDoc(regularInterventionDoc(intervention.periodId, intervention.id));
+      await appStore.data.deleteDocument(appStore.paths.regularIntervention(intervention.periodId, intervention.id));
     } catch (error) {
-      this.interventionError = this.toFirebaseErrorMessage(error, "Impossible de supprimer l'intervention.");
+      this.interventionError = this.toErrorMessage(error, "Impossible de supprimer l'intervention.");
       this.isInterventionModalOpen = true;
     }
   }
@@ -386,9 +375,9 @@ export class RegularCalendarComponent implements OnDestroy {
     await Promise.all(
       this.interventions
         .filter((intervention) => intervention.periodId === this.editingPeriodId)
-        .map((intervention) => deleteDoc(regularInterventionDoc(intervention.periodId, intervention.id))),
+        .map((intervention) => appStore.data.deleteDocument(appStore.paths.regularIntervention(intervention.periodId, intervention.id))),
     );
-    await deleteDoc(regularOnCallPeriodDoc(this.editingPeriodId));
+    await appStore.data.deleteDocument(appStore.paths.regularOnCallPeriod(this.editingPeriodId));
     this.closePeriodModal();
   }
 
@@ -537,13 +526,13 @@ export class RegularCalendarComponent implements OnDestroy {
     return firstStart < secondEnd && firstEnd > secondStart;
   }
 
-  private toFirebaseErrorMessage(error: unknown, fallback: string): string {
-    if (error instanceof FirebaseError) {
+  private toErrorMessage(error: unknown, fallback: string): string {
+    if (appStore.errors.isFirebaseError(error)) {
       if (error.code === "permission-denied") {
-        return `${fallback} Les règles Firestore ne permettent pas encore cette opération.`;
+        return `${fallback} Les règles ne permettent pas encore cette opération.`;
       }
 
-      return `${fallback} Erreur Firebase (${error.code}) : ${error.message}`;
+      return `${fallback} Erreur de la base (${error.code}) : ${error.message}`;
     }
 
     return fallback;

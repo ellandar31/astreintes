@@ -1,10 +1,8 @@
 import { CommonModule } from "@angular/common";
 import { Component, ElementRef, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild } from "@angular/core";
 import { FormsModule } from "@angular/forms";
-import { User, updateProfile } from "firebase/auth";
-import { Unsubscribe, onSnapshot, setDoc } from "firebase/firestore";
-import { userDoc } from "../../firebase-paths";
 import { SignatureProfile, VisaSignatureMode } from "../../shared/visa.models";
+import { StoreAuthUser, StoreUnsubscribe, appStore } from "../../store/app-store";
 
 @Component({
   selector: "app-profile-page",
@@ -14,7 +12,7 @@ import { SignatureProfile, VisaSignatureMode } from "../../shared/visa.models";
   styleUrl: "./profile-page.component.css",
 })
 export class ProfilePageComponent implements OnChanges, OnDestroy {
-  @Input({ required: true }) user: User | null = null;
+  @Input({ required: true }) user: StoreAuthUser | null = null;
 
   @Output() saved = new EventEmitter<void>();
   
@@ -31,7 +29,7 @@ export class ProfilePageComponent implements OnChanges, OnDestroy {
   isSaving = false;
   message = "";
 
-  private unsubscribe: Unsubscribe | null = null;
+  private unsubscribe: StoreUnsubscribe | null = null;
 
   get displayName(): string {
     return this.profile.displayName || this.user?.displayName || "";
@@ -69,8 +67,7 @@ export class ProfilePageComponent implements OnChanges, OnDestroy {
       return;
     }
 
-    this.unsubscribe = onSnapshot(userDoc(this.user.uid), (snapshot) => {
-      const data = snapshot.data() as SignatureProfile | undefined;
+    this.unsubscribe = appStore.data.observeDocument<SignatureProfile>(appStore.paths.user(this.user.uid), (data) => {
       this.profile = {
         displayName: data?.displayName || this.user?.displayName || "",
         signatureMode: data?.signatureMode || "name",
@@ -98,11 +95,11 @@ export class ProfilePageComponent implements OnChanges, OnDestroy {
       const signatureName = this.profile.signatureName?.trim() || displayName || this.user.displayName || this.user.email || "";
 
       if (displayName && displayName !== this.user.displayName) {
-        await updateProfile(this.user, { displayName });
+        await appStore.auth.updateProfile(this.user, { displayName });
       }
 
-    await setDoc(
-      userDoc(this.user.uid),
+    await appStore.data.setDocument(
+      appStore.paths.user(this.user.uid),
       {
         ...this.profile,
         displayName,

@@ -1,16 +1,8 @@
 import { CommonModule } from "@angular/common";
 import { Component, OnDestroy } from "@angular/core";
 import { FormsModule } from "@angular/forms";
-import { Unsubscribe, collection, deleteField, doc, onSnapshot, serverTimestamp, updateDoc } from "firebase/firestore";
-import { db } from "../../firebase";
-import {
-  publicHolidaysCollection,
-  regularInterventionsGroup,
-  regularOnCallPeriodsCollection,
-  rhCompensationRulesDoc,
-  rhExportTemplatesDoc,
-} from "../../firebase-paths";
 import { SignatureVisa, createEmptyVisa } from "../../shared/visa.models";
+import { StoreDocumentReference, StoreUnsubscribe, appStore } from "../../store/app-store";
 import { RhExceptionalOperation, RhRegularPeriod } from "./rh.models";
 import { RhExcelExportLibrary } from "./export-libraries/rh-excel-export.lib";
 import {
@@ -67,9 +59,8 @@ export class RhExportsComponent implements OnDestroy {
     { id: "sunday_holiday_7_21", label: "Dimanche/Jours fériés (7h-21h)", interventionCoefficient: 0, workCoefficient: 0, restCoefficient: 0 },
   ];
 
-  private readonly unsubscribes: Unsubscribe[] = [
-    onSnapshot(rhExportTemplatesDoc(), (snapshot) => {
-      const data = snapshot.data();
+  private readonly unsubscribes: StoreUnsubscribe[] = [
+    appStore.data.observeDocument<Record<string, unknown>>(appStore.paths.rhExportTemplates(), (data) => {
       const savedTemplates = Array.isArray(data?.["templates"]) ? (data["templates"] as Partial<WordExportTemplate>[]) : [];
 
       this.templates.forEach((template) => {
@@ -77,31 +68,31 @@ export class RhExportsComponent implements OnDestroy {
         template.fileName = savedTemplate?.fileName || "";
       });
     }),
-    onSnapshot(rhCompensationRulesDoc(), (snapshot) => {
-      const data = snapshot.data();
-
+    appStore.data.observeDocument<Record<string, unknown>>(appStore.paths.rhCompensationRules(), (data) => {
       if (!data) {
         return;
       }
 
-      this.onCallCompensationRules = this.mergeRows(this.onCallCompensationRules, data["onCall"] || []);
-      this.periodCompensationRules = this.mergeRows(this.periodCompensationRules, data["periods"] || []);
+      const savedOnCallRows = Array.isArray(data["onCall"]) ? (data["onCall"] as Partial<OnCallCompensationRule>[]) : [];
+      const savedPeriodRows = Array.isArray(data["periods"]) ? (data["periods"] as Partial<PeriodCompensationRule>[]) : [];
+      this.onCallCompensationRules = this.mergeRows(this.onCallCompensationRules, savedOnCallRows);
+      this.periodCompensationRules = this.mergeRows(this.periodCompensationRules, savedPeriodRows);
     }),
-    onSnapshot(regularOnCallPeriodsCollection(), (snapshot) => {
-      this.regularPeriods = snapshot.docs.map((document) => ({ id: document.id, ...document.data() }) as RhRegularPeriod);
+    appStore.data.observeCollection<RhRegularPeriod>(appStore.paths.regularOnCallPeriods(), (documents) => {
+      this.regularPeriods = documents.map((document) => ({ ...document.data, id: document.id }) as RhRegularPeriod);
     }),
-    onSnapshot(regularInterventionsGroup(), (snapshot) => {
-      this.regularInterventions = snapshot.docs.map((document) => {
-        const data = document.data();
-        const periodId = document.ref.parent.parent?.id || String(data["periodId"] || "");
-        return { id: document.id, ...data, periodId } as RegularInterventionExport;
+    appStore.data.observeCollection<RegularInterventionExport>(appStore.paths.regularInterventionsGroup(), (documents) => {
+      this.regularInterventions = documents.map((document) => {
+        const data = document.data;
+        const periodId = document.parentId || String(data["periodId"] || "");
+        return { ...data, id: document.id, periodId } as RegularInterventionExport;
       });
     }),
-    onSnapshot(collection(db, "exceptionalOperations"), (snapshot) => {
-      this.exceptionalOperations = snapshot.docs.map((document) => ({ id: document.id, ...document.data() }) as RhExceptionalOperation);
+    appStore.data.observeCollection<RhExceptionalOperation>(appStore.paths.exceptionalOperations(), (documents) => {
+      this.exceptionalOperations = documents.map((document) => ({ ...document.data, id: document.id }) as RhExceptionalOperation);
     }),
-    onSnapshot(publicHolidaysCollection(), (snapshot) => {
-      this.publicHolidays = snapshot.docs.map((document) => ({ id: document.id, ...document.data() }) as { id: string; date: string; label: string });
+    appStore.data.observeCollection<{ date: string; label: string }>(appStore.paths.publicHolidays(), (documents) => {
+      this.publicHolidays = documents.map((document) => ({ ...document.data, id: document.id }) as { id: string; date: string; label: string });
     }),
   ];
 
@@ -158,8 +149,8 @@ export class RhExportsComponent implements OnDestroy {
   async markSentToRh(operation: ExportOperation): Promise<void> {
     this.exportMessage = "";
 
-    await updateDoc(doc(db, operation.sourceCollection, operation.sourceId), {
-      sentToRhAt: serverTimestamp(),
+    await appStore.data.updateDocument(this.exportOperationDoc(operation), {
+      sentToRhAt: appStore.data.serverTimestamp(),
     });
 
     this.exportMessage = `${operation.title} marqué comme envoyé aux RH.`;
@@ -168,8 +159,8 @@ export class RhExportsComponent implements OnDestroy {
   async unmarkSentToRh(operation: ExportOperation): Promise<void> {
     this.exportMessage = "";
 
-    await updateDoc(doc(db, operation.sourceCollection, operation.sourceId), {
-      sentToRhAt: deleteField(),
+    await appStore.data.updateDocument(this.exportOperationDoc(operation), {
+      sentToRhAt: appStore.data.deleteField(),
     });
 
     this.exportMessage = `Envoi RH supprimé pour ${operation.title}.`;
@@ -289,6 +280,12 @@ export class RhExportsComponent implements OnDestroy {
     const itemStart = new Date(startValue);
     const itemEnd = new Date(endValue || startValue);
     return itemStart < end && itemEnd >= start;
+  }
+
+  private exportOperationDoc(operation: ExportOperation): StoreDocumentReference {
+    return operation.sourceCollection === "exceptionalOperations"
+      ? appStore.paths.exceptionalOperation(operation.sourceId)
+      : appStore.paths.regularOnCallPeriod(operation.sourceId);
   }
 
   private monthRange(monthKey: string): { start: Date; end: Date } {

@@ -1,19 +1,8 @@
 import { CommonModule } from "@angular/common";
 import { Component, Input, OnDestroy } from "@angular/core";
 import { FormsModule } from "@angular/forms";
-import { User } from "firebase/auth";
-import {
-  Unsubscribe,
-  addDoc,
-  collection,
-  deleteDoc,
-  doc,
-  onSnapshot,
-  serverTimestamp,
-  setDoc,
-} from "firebase/firestore";
-import { db } from "../../firebase";
 import { createEmptyVisa } from "../../shared/visa.models";
+import { StoreAuthUser, StoreUnsubscribe, appStore } from "../../store/app-store";
 import {
   ExceptionalIntervention,
   ExceptionalInterventionForm,
@@ -38,7 +27,7 @@ import { OperationModalComponent } from "./operation-modal.component";
   styleUrl: "./exceptional-operations.component.css",
 })
 export class ExceptionalOperationsComponent implements OnDestroy {
-  @Input({ required: true }) user: User | null = null;
+  @Input({ required: true }) user: StoreAuthUser | null = null;
 
   activeFilterField: FilterField = null;
   filters: Record<SortField, string> = {
@@ -67,9 +56,9 @@ export class ExceptionalOperationsComponent implements OnDestroy {
     comment: "",
   };
 
-  private readonly unsubscribe: Unsubscribe = onSnapshot(collection(db, "exceptionalOperations"), (snapshot) => {
-    this.operations = snapshot.docs
-      .map((document) => this.normalizeOperation({ id: document.id, ...document.data() } as ExceptionalOperation))
+  private readonly unsubscribe: StoreUnsubscribe = appStore.data.observeCollection<ExceptionalOperation>(appStore.paths.exceptionalOperations(), (documents) => {
+    this.operations = documents
+      .map((document) => this.normalizeOperation({ ...document.data, id: document.id } as ExceptionalOperation))
       .sort((first, second) => (first.startDate || "").localeCompare(second.startDate || ""));
 
     if (this.selectedOperation) {
@@ -198,15 +187,15 @@ export class ExceptionalOperationsComponent implements OnDestroy {
       actualUsers,
       visas: this.selectedOperation?.visas || this.createEmptyOperationVisas(),
       interventions: this.selectedOperation?.interventions || [],
-      updatedAt: serverTimestamp(),
+      updatedAt: appStore.data.serverTimestamp(),
     };
 
     if (this.selectedOperation) {
-      await setDoc(doc(db, "exceptionalOperations", this.selectedOperation.id), payload, { merge: true });
+      await appStore.data.setDocument(appStore.paths.exceptionalOperation(this.selectedOperation.id), payload, { merge: true });
     } else {
-      await addDoc(collection(db, "exceptionalOperations"), {
+      await appStore.data.addDocument(appStore.paths.exceptionalOperations(), {
         ...payload,
-        createdAt: serverTimestamp(),
+        createdAt: appStore.data.serverTimestamp(),
       });
     }
 
@@ -218,7 +207,7 @@ export class ExceptionalOperationsComponent implements OnDestroy {
       return;
     }
 
-    await deleteDoc(doc(db, "exceptionalOperations", operation.id));
+    await appStore.data.deleteDocument(appStore.paths.exceptionalOperation(operation.id));
   }
 
   async saveIntervention(form: ExceptionalInterventionForm): Promise<void> {
@@ -263,11 +252,11 @@ export class ExceptionalOperationsComponent implements OnDestroy {
       interventions.push(interventionPayload);
     }
 
-    await setDoc(
-      doc(db, "exceptionalOperations", this.selectedOperation.id),
+    await appStore.data.setDocument(
+      appStore.paths.exceptionalOperation(this.selectedOperation.id),
       {
         interventions,
-        updatedAt: serverTimestamp(),
+        updatedAt: appStore.data.serverTimestamp(),
       },
       { merge: true },
     );
@@ -294,11 +283,11 @@ export class ExceptionalOperationsComponent implements OnDestroy {
 
     interventions.splice(index, 1);
 
-    await setDoc(
-      doc(db, "exceptionalOperations", currentOperation.id),
+    await appStore.data.setDocument(
+      appStore.paths.exceptionalOperation(currentOperation.id),
       {
         interventions,
-        updatedAt: serverTimestamp(),
+        updatedAt: appStore.data.serverTimestamp(),
       },
       { merge: true },
     );

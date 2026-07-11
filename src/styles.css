@@ -299,20 +299,6 @@ select:focus {
   color: #ffffff;
 }
 
-.empty-view {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  background: #ffffff;
-  border: 1px solid #dde5eb;
-  border-radius: 8px;
-
-  padding: 24px;
-
-  min-height: 0;
-  height: 100%;
-}
 
 @keyframes spin {
   to {

@@ -1,9 +1,7 @@
 import { CommonModule } from "@angular/common";
 import { Component, OnDestroy } from "@angular/core";
 import { FormsModule } from "@angular/forms";
-import { Unsubscribe, collection, onSnapshot } from "firebase/firestore";
-import { db } from "../../firebase";
-import { publicHolidaysCollection, regularOnCallPeriodsCollection, usersCollection } from "../../firebase-paths";
+import { StoreUnsubscribe, appStore } from "../../store/app-store";
 import {
   RhControlRow,
   RhExceptionalOperation,
@@ -29,21 +27,21 @@ export class RhControlsComponent implements OnDestroy {
   selectedWeek = this.toWeekKey(new Date());
   selectedQuarter = this.toQuarterKey(new Date());
 
-  private readonly unsubscribes: Unsubscribe[] = [
-    onSnapshot(usersCollection(), (snapshot) => {
-      this.users = snapshot.docs
-        .map((document) => ({ id: document.id, ...document.data() }) as RhUser)
+  private readonly unsubscribes: StoreUnsubscribe[] = [
+    appStore.data.observeCollection<RhUser>(appStore.paths.users(), (documents) => {
+      this.users = documents
+        .map((document) => ({ ...document.data, id: document.id }) as RhUser)
         .filter((user) => Boolean(user.email))
         .sort((first, second) => this.userLabel(first).localeCompare(this.userLabel(second)));
     }),
-    onSnapshot(regularOnCallPeriodsCollection(), (snapshot) => {
-      this.regularPeriods = snapshot.docs.map((document) => ({ id: document.id, ...document.data() }) as RhRegularPeriod);
+    appStore.data.observeCollection<RhRegularPeriod>(appStore.paths.regularOnCallPeriods(), (documents) => {
+      this.regularPeriods = documents.map((document) => ({ ...document.data, id: document.id }) as RhRegularPeriod);
     }),
-    onSnapshot(publicHolidaysCollection(), (snapshot) => {
-      this.publicHolidays = snapshot.docs.map((document) => ({ id: document.id, ...document.data() }) as RhPublicHoliday);
+    appStore.data.observeCollection<RhPublicHoliday>(appStore.paths.publicHolidays(), (documents) => {
+      this.publicHolidays = documents.map((document) => ({ ...document.data, id: document.id }) as RhPublicHoliday);
     }),
-    onSnapshot(collection(db, "exceptionalOperations"), (snapshot) => {
-      this.exceptionalOperations = snapshot.docs.map((document) => ({ id: document.id, ...document.data() }) as RhExceptionalOperation);
+    appStore.data.observeCollection<RhExceptionalOperation>(appStore.paths.exceptionalOperations(), (documents) => {
+      this.exceptionalOperations = documents.map((document) => ({ ...document.data, id: document.id }) as RhExceptionalOperation);
     }),
   ];
 
