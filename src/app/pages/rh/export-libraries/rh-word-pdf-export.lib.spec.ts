@@ -63,12 +63,24 @@ const context: RhExportContext = {
 
 const library = new RhWordPdfExportLibrary();
 const wordHtml = library.buildWordHtml(template, [operation], "exceptionalOnCall", context);
-const pdfHtml = library.buildPdfHtml(template, [operation], "exceptionalOnCall", context);
 
 expect(wordHtml.includes("Dates prévisionnelles"), "Le Word doit contenir le tableau des dates prévisionnelles.");
 expect(wordHtml.includes("class=\"visa-image\""), "Les signatures image/pad doivent être rendues en image dans le Word.");
 expect(wordHtml.includes("width=\"95\" height=\"26\""), "Les visas de ligne doivent être retaillés pour préserver la mise en page Word.");
 expect(wordHtml.includes("class=\"visa-image global-visa-image\""), "Les visas globaux doivent utiliser la taille dédiée.");
-expect(pdfHtml === wordHtml, "Le PDF doit utiliser le même HTML de génération que le Word.");
+expect(!wordHtml.includes("Détail des calculs RH"), "Le Word ne doit pas inclure le bloc de détail des calculs RH.");
 
-console.log("rh-word-pdf-export.lib: OK");
+async function main(): Promise<void> {
+  const pdfBlob = await library.buildPdfBlob(template, [operation]);
+
+  expect(pdfBlob instanceof Blob, "Le PDF doit être généré sous forme de Blob.");
+  expect(pdfBlob.type === "application/pdf", "Le Blob PDF doit utiliser le type application/pdf.");
+  expect(pdfBlob.size > 0, "Le PDF généré ne doit pas être vide.");
+
+  console.log("rh-word-pdf-export.lib: OK");
+}
+
+main().catch((error) => {
+  console.error(error);
+  throw error;
+});

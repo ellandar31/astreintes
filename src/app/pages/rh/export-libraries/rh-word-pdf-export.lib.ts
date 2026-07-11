@@ -2,6 +2,9 @@ import { createEmptyVisa, SignatureVisa } from "../../../shared/visa.models";
 import { ExportOperation, ExportTemplateId, RhExportContext, WordExportTemplate } from "./rh-export.models";
 import { escapeAttribute, escapeHtml, formatDate, formatRange, formatTime } from "./rh-export-utils";
 
+type PdfTableCell = string | SignatureVisa | undefined;
+type PdfDocument = InstanceType<typeof import("jspdf").jsPDF>;
+
 export class RhWordPdfExportLibrary {
   buildWordHtml(template: WordExportTemplate, operations: ExportOperation[], templateId: ExportTemplateId, context: RhExportContext): string {
     return `
@@ -38,8 +41,19 @@ export class RhWordPdfExportLibrary {
     `;
   }
 
-  buildPdfHtml(template: WordExportTemplate, operations: ExportOperation[], templateId: ExportTemplateId, context: RhExportContext): string {
-    return this.buildWordHtml(template, operations, templateId, context);
+  async buildPdfBlob(template: WordExportTemplate, operations: ExportOperation[]): Promise<Blob> {
+    const { jsPDF } = await import("jspdf");
+    const doc = new jsPDF({ unit: "pt", format: "a4" });
+
+    operations.forEach((operation, index) => {
+      if (index > 0) {
+        doc.addPage();
+      }
+
+      this.operationPdf(doc, template, operation);
+    });
+
+    return doc.output("blob");
   }
 
   private operationHtml(operation: ExportOperation, templateId: ExportTemplateId, context: RhExportContext): string {
@@ -127,6 +141,215 @@ export class RhWordPdfExportLibrary {
 
     const name = visa.signedByName || visa.signatureValue || "Signé";
     return `${escapeHtml(name)}${date}`;
+  }
+
+  private operationPdf(doc: PdfDocument, template: WordExportTemplate, operation: ExportOperation): void {
+    const margin = 36;
+    const pageWidth = doc.internal.pageSize.getWidth();
+    let y = margin;
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(18);
+    doc.setTextColor(40, 57, 138);
+    doc.text(operation.exportTitle || template.label, pageWidth - margin, y, { align: "right" });
+    y += 28;
+
+    y = this.pdfSectionTitle(doc, "Autorisation", y);
+    y = this.pdfTable(
+      doc,
+      ["Champ", "Valeur"],
+      [
+        ["Objet des Astreintes", operation.title],
+        ["Initiateur de l'opération", operation.initiatorName],
+        ["Responsable de l'opération", operation.operationManagerName],
+        ["Date & horaires prévus", formatRange(operation.forecastStartDate, operation.forecastEndDate)],
+      ],
+      [150, pageWidth - margin * 2 - 150],
+      y,
+    );
+
+    y = this.pdfSectionTitle(doc, "Dates prévisionnelles", y + 6);
+    y = this.pdfPeopleTable(doc, operation.plannedUsers, y);
+    y = this.pdfGlobalVisas(doc, operation, y + 4);
+
+    y = this.pdfSectionTitle(doc, "Dates réelles", y + 6);
+    y = this.pdfPeopleTable(doc, operation.actualUsers, y);
+    y = this.pdfGlobalVisas(doc, operation, y + 4);
+
+    y = this.pdfParagraph(
+      doc,
+      "Pensez à demander au Directeur de Garde l'autorisation d'accès aux bâtiments en dehors des heures ouvrables.",
+      y + 4,
+    );
+
+    y = this.pdfSectionTitle(doc, "Interventions au cours de l'astreinte", y + 6);
+    y = this.pdfInterventionsTable(doc, operation.interventions, y);
+    this.pdfGlobalVisas(doc, operation, y + 4);
+  }
+
+  private pdfPeopleTable(doc: PdfDocument, rows: Array<{ name: string; startDate: string; endDate: string; visa: SignatureVisa }>, y: number): number {
+    const normalizedRows = rows.length ? rows : [{ name: "", startDate: "", endDate: "", visa: createEmptyVisa() }];
+
+    return this.pdfTable(
+      doc,
+      ["Nom & Prénom de l'Agent", "Date Début", "Heure Début", "Date Fin", "Heure Fin", "Visa de l'Agent"],
+      normalizedRows.map((row) => [row.name, formatDate(row.startDate), formatTime(row.startDate), formatDate(row.endDate), formatTime(row.endDate), row.visa]),
+      [128, 68, 58, 68, 58, 143],
+      y,
+    );
+  }
+
+  private pdfInterventionsTable(doc: PdfDocument, rows: ExportOperation["interventions"], y: number): number {
+    const normalizedRows = rows.length ? rows : [{ userName: "", startDate: "", endDate: "", wasOnSite: false, comment: "", visa: createEmptyVisa() }];
+
+    return this.pdfTable(
+      doc,
+      ["Nom & Prénom de l'Agent", "Date Début", "Heure Début", "Date Fin", "Heure Fin", "Site", "Visa de l'Agent"],
+      normalizedRows.map((row) => [
+        row.comment ? `${row.userName}\n${row.comment}` : row.userName,
+        formatDate(row.startDate),
+        formatTime(row.startDate),
+        formatDate(row.endDate),
+        formatTime(row.endDate),
+        row.wasOnSite ? "X" : "",
+        row.visa,
+      ]),
+      [117, 66, 55, 66, 55, 35, 129],
+      y,
+    );
+  }
+
+  private pdfGlobalVisas(doc: PdfDocument, operation: ExportOperation, y: number): number {
+    y = this.ensurePdfSpace(doc, y, 64);
+    const margin = 36;
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const blockWidth = (pageWidth - margin * 2) / 2;
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9);
+    doc.setTextColor(40, 57, 138);
+    doc.text("Visa initiateur", margin, y + 10);
+    doc.text("Visa directeur", pageWidth - margin, y + 10, { align: "right" });
+
+    this.pdfVisa(doc, operation.initiatorVisa, margin, y + 18, blockWidth - 10, "global");
+    this.pdfVisa(doc, operation.directorVisa, margin + blockWidth + 10, y + 18, blockWidth - 10, "global", "right");
+    return y + 58;
+  }
+
+  private pdfTable(doc: PdfDocument, headers: string[], rows: PdfTableCell[][], widths: number[], y: number): number {
+    const margin = 36;
+    const rowPadding = 5;
+    const headerHeight = 28;
+
+    y = this.ensurePdfSpace(doc, y, headerHeight + 22);
+    doc.setFontSize(8);
+    doc.setLineWidth(0.6);
+
+    let x = margin;
+    headers.forEach((header, index) => {
+      doc.setFillColor(206, 236, 240);
+      doc.rect(x, y, widths[index], headerHeight, "FD");
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(40, 57, 138);
+      doc.text(doc.splitTextToSize(header, widths[index] - rowPadding * 2), x + rowPadding, y + 11);
+      x += widths[index];
+    });
+    y += headerHeight;
+
+    rows.forEach((row) => {
+      const height = Math.max(
+        30,
+        ...row.map((cell, index) => {
+          if (this.isVisa(cell)) return 42;
+          return doc.splitTextToSize(String(cell || ""), widths[index] - rowPadding * 2).length * 10 + rowPadding * 2;
+        }),
+      );
+
+      y = this.ensurePdfSpace(doc, y, height);
+      x = margin;
+      row.forEach((cell, index) => {
+        doc.setFillColor(255, 255, 255);
+        doc.rect(x, y, widths[index], height, "S");
+
+        if (this.isVisa(cell)) {
+          this.pdfVisa(doc, cell, x + rowPadding, y + rowPadding, widths[index] - rowPadding * 2, "line");
+        } else {
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(8);
+          doc.setTextColor(17, 24, 39);
+          doc.text(doc.splitTextToSize(String(cell || ""), widths[index] - rowPadding * 2), x + rowPadding, y + 12);
+        }
+
+        x += widths[index];
+      });
+      y += height;
+    });
+
+    return y + 8;
+  }
+
+  private pdfVisa(doc: PdfDocument, visa: SignatureVisa | undefined, x: number, y: number, width: number, variant: "line" | "global", align: "left" | "right" = "left"): void {
+    if (!visa?.signed) {
+      return;
+    }
+
+    const imageWidth = variant === "global" ? 110 : 82;
+    const imageHeight = variant === "global" ? 28 : 22;
+    const imageX = align === "right" ? x + width - imageWidth : x;
+
+    if ((visa.signatureMode === "image" || visa.signatureMode === "draw") && visa.signatureValue) {
+      try {
+        doc.addImage(visa.signatureValue, "PNG", imageX, y, imageWidth, imageHeight);
+      } catch {
+        this.pdfText(doc, visa.signedByName || "Signé", x, y + 10, width, align);
+      }
+    } else {
+      this.pdfText(doc, visa.signedByName || visa.signatureValue || "Signé", x, y + 10, width, align);
+    }
+
+    if (visa.signedAt) {
+      this.pdfText(doc, `${formatDate(visa.signedAt)} ${formatTime(visa.signedAt)}`, x, y + imageHeight + 9, width, align, 7);
+    }
+  }
+
+  private pdfSectionTitle(doc: PdfDocument, title: string, y: number): number {
+    y = this.ensurePdfSpace(doc, y, 26);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.setTextColor(40, 57, 138);
+    doc.text(title, 36, y);
+    return y + 12;
+  }
+
+  private pdfParagraph(doc: PdfDocument, text: string, y: number): number {
+    y = this.ensurePdfSpace(doc, y, 34);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.setTextColor(82, 97, 113);
+    const lines = doc.splitTextToSize(text, doc.internal.pageSize.getWidth() - 72);
+    doc.text(lines, 36, y + 10);
+    return y + lines.length * 10 + 8;
+  }
+
+  private pdfText(doc: PdfDocument, text: string, x: number, y: number, width: number, align: "left" | "right" = "left", size = 8): void {
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(size);
+    doc.setTextColor(17, 24, 39);
+    doc.text(doc.splitTextToSize(text, width), align === "right" ? x + width : x, y, { align });
+  }
+
+  private ensurePdfSpace(doc: PdfDocument, y: number, requiredHeight: number): number {
+    const bottom = doc.internal.pageSize.getHeight() - 36;
+    if (y + requiredHeight <= bottom) {
+      return y;
+    }
+
+    doc.addPage();
+    return 36;
+  }
+
+  private isVisa(cell: PdfTableCell): cell is SignatureVisa {
+    return Boolean(cell && typeof cell === "object" && "signed" in cell);
   }
 
 }

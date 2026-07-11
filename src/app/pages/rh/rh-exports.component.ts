@@ -130,7 +130,7 @@ export class RhExportsComponent implements OnDestroy {
     this.exportMessage = `Export Excel généré pour ${operation.title}.`;
   }
 
-  exportPdfOperation(templateId: ExportTemplateId, operation: ExportOperation): void {
+  async exportPdfOperation(templateId: ExportTemplateId, operation: ExportOperation): Promise<void> {
     this.exportMessage = "";
     const template = this.templateFor(templateId);
 
@@ -139,21 +139,11 @@ export class RhExportsComponent implements OnDestroy {
       return;
     }
 
-    const printWindow = window.open("", "_blank");
-
-    if (!printWindow) {
-      this.exportMessage = "Impossible d'ouvrir la fenêtre PDF. Vérifiez le blocage des popups.";
-      return;
-    }
-
-    printWindow.document.open();
-    printWindow.document.write(this.wordPdfExportLibrary.buildPdfHtml(template, [operation], templateId, this.exportContext()));
-    printWindow.document.close();
-    printWindow.document.title = `${this.slug(operation.title)}_${this.selectedMonth}`;
-    printWindow.setTimeout(() => {
-      printWindow.focus();
-      printWindow.print();
-    }, 250);
+    this.downloadBlob(
+      `${this.slug(operation.title)}_${this.selectedMonth}.pdf`,
+      await this.wordPdfExportLibrary.buildPdfBlob(template, [operation]),
+    );
+    this.exportMessage = `Export PDF généré pour ${operation.title}.`;
   }
 
   async markSentToRh(operation: ExportOperation): Promise<void> {
@@ -307,6 +297,10 @@ export class RhExportsComponent implements OnDestroy {
 
   private downloadFile(fileName: string, type: string, content: string): void {
     const blob = new Blob(["\ufeff", content], { type });
+    this.downloadBlob(fileName, blob);
+  }
+
+  private downloadBlob(fileName: string, blob: Blob): void {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
