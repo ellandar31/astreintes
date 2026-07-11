@@ -20,6 +20,7 @@
   max-height: calc(100vh - 36px);
   overflow: hidden;
   padding: 0;
+  position: static;
   width: min(100%, 520px);
 }
 
