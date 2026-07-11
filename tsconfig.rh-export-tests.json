@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./out-tsc/rh-export-tests",
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "types": []
+  },
+  "include": [
+    "src/app/shared/visa.models.ts",
+    "src/app/pages/rh/export-libraries/**/*.ts"
+  ]
+}

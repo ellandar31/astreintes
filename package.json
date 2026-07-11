@@ -6,7 +6,14 @@
     "dev": "ng serve",
     "start": "ng serve",
     "build": "ng build",
-    "watch": "ng build --watch --configuration development"
+    "watch": "ng build --watch --configuration development",
+    "test": "npm run test:all",
+    "test:all": "npm run test:rh-exports",
+    "test:rh-calculations": "tsc -p tsconfig.rh-export-tests.json && node out-tsc/rh-export-tests/pages/rh/export-libraries/rh-export-calculations.spec.js",
+    "test:rh-interventions": "tsc -p tsconfig.rh-export-tests.json && node out-tsc/rh-export-tests/pages/rh/export-libraries/rh-intervention-calculations.spec.js",
+    "test:rh-excel": "tsc -p tsconfig.rh-export-tests.json && node out-tsc/rh-export-tests/pages/rh/export-libraries/rh-excel-export.lib.spec.js",
+    "test:rh-word-pdf": "tsc -p tsconfig.rh-export-tests.json && node out-tsc/rh-export-tests/pages/rh/export-libraries/rh-word-pdf-export.lib.spec.js",
+    "test:rh-exports": "npm run test:rh-calculations && npm run test:rh-interventions && npm run test:rh-excel && npm run test:rh-word-pdf"
   },
   "dependencies": {
     "@angular/animations": "19.2.25",
