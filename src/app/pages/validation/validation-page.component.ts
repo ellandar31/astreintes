@@ -746,13 +746,23 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
   private buildVisa(item: ValidationItem): SignatureVisa {
     const signer = this.visaSignerForItem(item);
     const mode = signer.profile?.signatureMode || "name";
-    const signatureValue =
-      mode === "image"
-        ? signer.profile?.signatureImage || signer.name
-        : mode === "draw"
-          ? signer.profile?.signatureDrawing || signer.name
-          : signer.name;
 
+    let signatureValue: string;
+
+    switch (mode) {
+      case "image":
+        signatureValue = signer.profile?.signatureImage || signer.name;
+        break;
+
+      case "draw":
+        signatureValue = signer.profile?.signatureDrawing || signer.name;
+        break;
+
+      default:
+        signatureValue = signer.name;
+        break;
+    }
+   
     return {
       signed: true,
       signedAt: new Date().toISOString(),
