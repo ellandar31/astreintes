@@ -159,8 +159,8 @@ export class HolidaysSettingsComponent implements OnDestroy {
   private emitError(error: unknown): void {
     let message = "Erreur pendant la gestion des jours fériés.";
 
-    if (appStore.errors.isFirebaseError(error)) {
-      message = `Erreur Firebase (${error.code}) : ${error.message}`;
+    if (appStore.errors.isError(error)) {
+      message = `Erreur Base de Données (${error.code}) : ${error.message}`;
     } else if (error instanceof Error) {
       message = error.message;
     }

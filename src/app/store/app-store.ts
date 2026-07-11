@@ -161,7 +161,7 @@ export const appStore = {
   },
 
   errors: {
-    isFirebaseError(error: unknown): error is FirebaseError {
+    isError(error: unknown): error is FirebaseError {
       return error instanceof FirebaseError;
     },
   },

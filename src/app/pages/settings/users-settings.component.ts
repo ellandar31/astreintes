@@ -68,8 +68,8 @@ export class UsersSettingsComponent implements OnDestroy {
 
   private emitError(error: unknown): void {
     this.failure.emit(
-      appStore.errors.isFirebaseError(error)
-        ? `Erreur Firebase (${error.code}) : ${error.message}`
+      appStore.errors.isError(error)
+        ? `Erreur Base de données (${error.code}) : ${error.message}`
         : "Erreur pendant la gestion des utilisateurs.",
     );
   }

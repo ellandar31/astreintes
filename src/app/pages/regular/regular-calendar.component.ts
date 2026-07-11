@@ -527,7 +527,7 @@ export class RegularCalendarComponent implements OnDestroy {
   }
 
   private toErrorMessage(error: unknown, fallback: string): string {
-    if (appStore.errors.isFirebaseError(error)) {
+    if (appStore.errors.isError(error)) {
       if (error.code === "permission-denied") {
         return `${fallback} Les règles ne permettent pas encore cette opération.`;
       }

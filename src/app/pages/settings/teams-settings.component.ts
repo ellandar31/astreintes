@@ -174,8 +174,8 @@ export class TeamsSettingsComponent implements OnDestroy {
 
   private emitError(error: unknown): void {
     this.failure.emit(
-      appStore.errors.isFirebaseError(error)
-        ? `Erreur Firebase (${error.code}) : ${error.message}`
+      appStore.errors.isError(error)
+        ? `Erreur Base de Données (${error.code}) : ${error.message}`
         : "Erreur pendant l'enregistrement de l'équipe.",
     );
   }
