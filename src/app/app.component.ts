@@ -19,7 +19,6 @@ import { RegularCalendarComponent } from "./pages/regular/regular-calendar.compo
 import { RhPageComponent } from "./pages/rh/rh-page.component";
 import { SettingsPageComponent } from "./pages/settings/settings-page.component";
 import { ValidationPageComponent } from "./pages/validation/validation-page.component";
-import { EmptyViewComponent } from "./shared/empty-view.component";
 import { ModalComponent } from "./shared/modal.component";
 
 const tabs = ["Régulier", "Exceptionnel", "Validation", "RH"] as const;
@@ -31,7 +30,6 @@ type ModalView = "profile" | "settings";
   standalone: true,
   imports: [
     CommonModule,
-    EmptyViewComponent,
     ExceptionalOperationsComponent,
     FormsModule,
     ModalComponent,
