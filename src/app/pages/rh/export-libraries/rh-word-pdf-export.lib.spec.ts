@@ -17,6 +17,14 @@ const signedVisa = {
 };
 
 const unsignedVisa = { signed: false, signedAt: "", signedByName: "", signedByUid: "" };
+const invalidDrawVisa = {
+  signed: true,
+  signedAt: "2026-07-11T19:25:00",
+  signedByName: "Visa Texte",
+  signedByUid: "uid-text",
+  signatureMode: "draw" as const,
+  signatureValue: "Visa Texte",
+};
 
 const operation: ExportOperation = {
   sourceId: "exceptional-1",
@@ -63,12 +71,28 @@ const context: RhExportContext = {
 
 const library = new RhWordPdfExportLibrary();
 const wordHtml = library.buildWordHtml(template, [operation], "exceptionalOnCall", context);
+const wordHtmlWithInvalidImageVisa = library.buildWordHtml(
+  template,
+  [
+    {
+      ...operation,
+      initiatorVisa: invalidDrawVisa,
+      directorVisa: invalidDrawVisa,
+      plannedUsers: [{ name: "Agent Texte", startDate: "2026-07-04T07:00:00", endDate: "2026-07-05T10:00:00", visa: invalidDrawVisa }],
+    },
+  ],
+  "exceptionalOnCall",
+  context,
+);
 
 expect(wordHtml.includes("Dates prévisionnelles"), "Le Word doit contenir le tableau des dates prévisionnelles.");
 expect(wordHtml.includes("class=\"visa-image\""), "Les signatures image/pad doivent être rendues en image dans le Word.");
 expect(wordHtml.includes("width=\"95\" height=\"26\""), "Les visas de ligne doivent être retaillés pour préserver la mise en page Word.");
 expect(wordHtml.includes("class=\"visa-image global-visa-image\""), "Les visas globaux doivent utiliser la taille dédiée.");
 expect(!wordHtml.includes("Détail des calculs RH"), "Le Word ne doit pas inclure le bloc de détail des calculs RH.");
+
+expect(wordHtmlWithInvalidImageVisa.includes("Visa Texte"), "Un visa image invalide doit etre rendu en texte dans le Word.");
+expect(!wordHtmlWithInvalidImageVisa.includes("src=\"Visa Texte\""), "Un visa image invalide ne doit pas generer une image cassee dans le Word.");
 
 async function main(): Promise<void> {
   const pdfBlob = await library.buildPdfBlob(template, [operation]);

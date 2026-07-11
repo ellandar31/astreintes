@@ -132,7 +132,7 @@ export class RhWordPdfExportLibrary {
 
     const date = visa.signedAt ? `<div class="visa-date">${formatDate(visa.signedAt)} ${formatTime(visa.signedAt)}</div>` : "";
 
-    if ((visa.signatureMode === "image" || visa.signatureMode === "draw") && visa.signatureValue) {
+    if (this.isImageVisa(visa)) {
       const size = variant === "global" ? { width: 130, height: 34, className: "visa-image global-visa-image" } : { width: 95, height: 26, className: "visa-image" };
       return `<img class="${size.className}" src="${escapeAttribute(visa.signatureValue)}" alt="Signature de ${escapeAttribute(visa.signedByName || "l'agent")}" width="${size.width}" height="${size.height}" />${date}`;
     }
@@ -301,7 +301,7 @@ export class RhWordPdfExportLibrary {
     const imageHeight = variant === "global" ? 28 : 22;
     const imageX = align === "right" ? x + width - imageWidth : x;
 
-    if ((visa.signatureMode === "image" || visa.signatureMode === "draw") && visa.signatureValue) {
+    if (this.isImageVisa(visa)) {
       try {
         doc.addImage(visa.signatureValue, "PNG", imageX, y, imageWidth, imageHeight);
       } catch {
@@ -354,6 +354,14 @@ export class RhWordPdfExportLibrary {
 
   private isVisa(cell: PdfTableCell): cell is SignatureVisa {
     return Boolean(cell && typeof cell === "object" && "signed" in cell);
+  }
+
+  private isImageVisa(visa: SignatureVisa): visa is SignatureVisa & { signatureValue: string } {
+    return (
+      (visa.signatureMode === "image" || visa.signatureMode === "draw") &&
+      typeof visa.signatureValue === "string" &&
+      /^data:image\/(?:png|jpeg|jpg|gif|webp);base64,/i.test(visa.signatureValue)
+    );
   }
 
 }

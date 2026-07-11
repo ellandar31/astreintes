@@ -745,22 +745,27 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
 
   private buildVisa(item: ValidationItem): SignatureVisa {
     const signer = this.visaSignerForItem(item);
-    const mode = signer.profile?.signatureMode || "name";
+    let mode = signer.profile?.signatureMode || "name";
 
     let signatureValue: string;
 
     switch (mode) {
       case "image":
-        signatureValue = signer.profile?.signatureImage || signer.name;
+        signatureValue = signer.profile?.signatureImage || "";
         break;
 
       case "draw":
-        signatureValue = signer.profile?.signatureDrawing || signer.name;
+        signatureValue = signer.profile?.signatureDrawing || "";
         break;
 
       default:
         signatureValue = signer.name;
         break;
+    }
+
+    if ((mode === "image" || mode === "draw") && !this.isImageSignatureValue(signatureValue)) {
+      mode = "name";
+      signatureValue = signer.name;
     }
    
     return {
@@ -771,6 +776,10 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
       signatureMode: mode,
       signatureValue,
     };
+  }
+
+  private isImageSignatureValue(value: string): boolean {
+    return /^data:image\/(?:png|jpeg|jpg|gif|webp);base64,/i.test(value);
   }
 
   private visaSignerForItem(item: ValidationItem): { uid: string; name: string; email: string; profile: AppUser | null } {
