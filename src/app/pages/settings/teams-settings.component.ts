@@ -1,6 +1,7 @@
 import { CommonModule } from "@angular/common";
 import { Component, EventEmitter, OnDestroy, Output } from "@angular/core";
 import { FormsModule, NgForm } from "@angular/forms";
+import { asSafeString } from "../../shared/value-normalizers";
 import { StoreUnsubscribe, appStore } from "../../store/app-store";
 import { ManagedUser, Team } from "./settings.models";
 
@@ -33,7 +34,7 @@ export class TeamsSettingsComponent implements OnDestroy {
             const data = document.data;
             return {
               id: document.id,
-              name: String(data["name"] || ""),
+              name: asSafeString(data["name"]),
               members: this.normalizeMembers(data["members"]),
             };
           })
@@ -154,16 +155,18 @@ export class TeamsSettingsComponent implements OnDestroy {
         }
 
         if (member && typeof member === "object") {
-          if ("id" in member) {
-            return String(member.id);
+          const memberRecord = member as Record<string, unknown>;
+
+          if ("id" in memberRecord) {
+            return asSafeString(memberRecord["id"]);
           }
 
-          if ("uid" in member) {
-            return String(member.uid);
+          if ("uid" in memberRecord) {
+            return asSafeString(memberRecord["uid"]);
           }
 
-          if ("email" in member) {
-            return String(member.email);
+          if ("email" in memberRecord) {
+            return asSafeString(memberRecord["email"]);
           }
         }
 

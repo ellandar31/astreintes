@@ -3,6 +3,7 @@ import { Component, Input, OnChanges, OnDestroy, SimpleChanges } from "@angular/
 import { FormsModule } from "@angular/forms";
 import { APP_LABELS } from "../../i18n/labels";
 import { normalizeObjectTextEncoding } from "../../i18n/text-encoding";
+import { asSafeString } from "../../shared/value-normalizers";
 import { SignatureVisa, createEmptyVisa } from "../../shared/visa.models";
 import { StoreAuthUser, StoreUnsubscribe, appStore } from "../../store/app-store";
 import { ExceptionalOperation } from "../exceptionnel/exceptional.models";
@@ -46,7 +47,7 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
     appStore.data.observeCollection<RegularIntervention>(appStore.paths.regularInterventionsGroup(), (documents) => {
       this.regularInterventions = documents.map((document) => {
         const data = document.data;
-        const periodId = document.parentId || String(data["periodId"] || "");
+        const periodId = document.parentId || asSafeString(data["periodId"]);
         return this.fromStore<RegularIntervention>(document.id, { ...data, periodId });
       });
     }),

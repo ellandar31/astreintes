@@ -265,7 +265,7 @@ export class RhWordPdfExportLibrary {
         30,
         ...row.map((cell, index) => {
           if (this.isVisa(cell)) return 42;
-          return doc.splitTextToSize(String(cell || ""), widths[index] - rowPadding * 2).length * 10 + rowPadding * 2;
+          return doc.splitTextToSize(cell || "", widths[index] - rowPadding * 2).length * 10 + rowPadding * 2;
         }),
       );
 
@@ -281,7 +281,7 @@ export class RhWordPdfExportLibrary {
           doc.setFont("helvetica", "normal");
           doc.setFontSize(8);
           doc.setTextColor(17, 24, 39);
-          doc.text(doc.splitTextToSize(String(cell || ""), widths[index] - rowPadding * 2), x + rowPadding, y + 12);
+          doc.text(doc.splitTextToSize(cell || "", widths[index] - rowPadding * 2), x + rowPadding, y + 12);
         }
 
         x += widths[index];

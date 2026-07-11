@@ -1,6 +1,7 @@
 import { CommonModule } from "@angular/common";
 import { Component, OnDestroy } from "@angular/core";
 import { FormsModule } from "@angular/forms";
+import { asSafeString } from "../../shared/value-normalizers";
 import { SignatureVisa, createEmptyVisa } from "../../shared/visa.models";
 import { StoreDocumentReference, StoreUnsubscribe, appStore } from "../../store/app-store";
 import { RhExceptionalOperation, RhRegularPeriod } from "./rh.models";
@@ -84,7 +85,7 @@ export class RhExportsComponent implements OnDestroy {
     appStore.data.observeCollection<RegularInterventionExport>(appStore.paths.regularInterventionsGroup(), (documents) => {
       this.regularInterventions = documents.map((document) => {
         const data = document.data;
-        const periodId = document.parentId || String(data["periodId"] || "");
+        const periodId = document.parentId || asSafeString(data["periodId"]);
         return { ...data, id: document.id, periodId } as RegularInterventionExport;
       });
     }),

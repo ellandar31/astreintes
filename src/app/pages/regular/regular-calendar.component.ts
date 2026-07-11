@@ -1,6 +1,7 @@
 import { CommonModule } from "@angular/common";
 import { Component, OnDestroy } from "@angular/core";
 import { FormsModule } from "@angular/forms";
+import { asSafeString } from "../../shared/value-normalizers";
 import { createEmptyVisa } from "../../shared/visa.models";
 import { StoreUnsubscribe, appStore } from "../../store/app-store";
 import {
@@ -55,7 +56,7 @@ export class RegularCalendarComponent implements OnDestroy {
           const data = document.data;
           return {
             id: document.id,
-            name: String(data["name"] || ""),
+            name: asSafeString(data["name"]),
             members: Array.isArray(data["members"]) ? data["members"].map(String) : [],
           };
         })
@@ -79,7 +80,7 @@ export class RegularCalendarComponent implements OnDestroy {
       (documents) => {
         this.interventions = documents.map((document) => {
           const data = document.data;
-          const periodId = document.parentId || String(data["periodId"] || "");
+          const periodId = document.parentId || asSafeString(data["periodId"]);
           return { ...data, id: document.id, periodId } as RegularIntervention;
         });
       },
@@ -93,8 +94,8 @@ export class RegularCalendarComponent implements OnDestroy {
           const data = document.data;
           return {
             id: document.id,
-            date: String(data["date"] || ""),
-            label: String(data["label"] || "Jour ferie"),
+            date: asSafeString(data["date"]),
+            label: asSafeString(data["label"], "Jour ferie"),
           };
         })
         .filter((holiday) => Boolean(holiday.date));

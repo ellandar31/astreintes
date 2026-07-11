@@ -11,7 +11,7 @@ export function formatRange(startValue: string, endValue: string): string {
 }
 
 export function escapeHtml(value: string): string {
-  return String(value || "")
+  return (value || "")
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
