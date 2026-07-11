@@ -182,7 +182,9 @@ Accueil
 |    ├── Équipes
 |    ├── Jours fériés
 |    └── Signatures
-Profil 
+│
+└── Profil
+ 
 
 ```
 
