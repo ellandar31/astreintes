@@ -386,7 +386,7 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
     }
 
     const visa = this.buildVisa(item);
-    let updatedPayload = item.payload;
+    let updatedPayload: ValidationItem["payload"];
 
     if (item.kind === "regular-period-agent" || item.kind === "regular-period-director") {
       const field = item.kind === "regular-period-agent" ? "agentVisa" : "directorVisa";
@@ -453,7 +453,7 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
     }
 
     const emptyVisa = createEmptyVisa();
-    let updatedPayload = item.payload;
+    let updatedPayload: ValidationItem["payload"];
 
     if (item.kind === "regular-period-agent" || item.kind === "regular-period-director") {
       const field = item.kind === "regular-period-agent" ? "agentVisa" : "directorVisa";
@@ -563,11 +563,11 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
     const startDates = participants
       .map((participant) => participant.startDate || operation.actualStartDate || operation.startDate)
       .filter(Boolean)
-      .sort();
+      .sort((first, second) => first.localeCompare(second));
     const endDates = participants
       .map((participant) => participant.endDate || operation.actualEndDate || operation.forecastEndDate || operation.startDate)
       .filter(Boolean)
-      .sort();
+      .sort((first, second) => first.localeCompare(second));
     const visas = participants.map((participant) => participant.visa || createEmptyVisa());
     const isSigned = visas.length > 0 && visas.every((visa) => visa.signed);
     const firstParticipant = participants[0];
@@ -736,7 +736,8 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
 
     if (item.kind === "exceptional-intervention-agent" && typeof item.index === "number") {
       const intervention = operation.interventions?.[item.index];
-      return { userId: intervention?.userId || "", email: intervention?.userEmail || "" };
+      const email = intervention?.userEmail || "";
+      return { userId: intervention?.userId || "", email };
     }
 
     return { userId: "", email: "" };

@@ -400,8 +400,7 @@ export class RegularCalendarComponent implements OnDestroy {
     let hash = 0;
   
     for (const c of period.id) {
-      hash = ((hash << 5) - hash) + c.charCodeAt(0);
-      hash |= 0;
+      hash = Math.trunc(((hash << 5) - hash) + (c.codePointAt(0) || 0));
     }
   
     return Math.abs(hash);
@@ -455,7 +454,7 @@ export class RegularCalendarComponent implements OnDestroy {
     if (this.interventionPeriodId) {
       const period = this.periods.find((item) => item.id === this.interventionPeriodId);
 
-      if (period && period.userId === form.userId && period.startDate <= form.startDate && period.endDate >= form.endDate) {
+      if (period?.userId === form.userId && period.startDate <= form.startDate && period.endDate >= form.endDate) {
         return period;
       }
 
@@ -476,14 +475,14 @@ export class RegularCalendarComponent implements OnDestroy {
       return "La date de fin de l'astreinte doit être postérieure à la date de début.";
     }
 
-    const overlappingPeriod = this.periods.find(
+    const hasOverlappingPeriod = this.periods.some(
       (period) =>
         period.id !== this.editingPeriodId &&
         period.userId === form.userId &&
         this.dateRangesOverlap(form.startDate, form.endDate, period.startDate, period.endDate),
     );
 
-    if (!overlappingPeriod) {
+    if (!hasOverlappingPeriod) {
       return "";
     }
 

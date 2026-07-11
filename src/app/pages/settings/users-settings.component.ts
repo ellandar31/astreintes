@@ -14,7 +14,7 @@ import { ManagedUser, UserRole } from "./settings.models";
   styleUrls: ["./settings-common.scss"],
 })
 export class UsersSettingsComponent implements OnDestroy {
-  @Output() error = new EventEmitter<string>();
+  @Output() failure = new EventEmitter<string>();
   @Output() success = new EventEmitter<string>();
 
   readonly roles: Array<{ value: UserRole; label: string; description: string }> = [
@@ -69,7 +69,7 @@ export class UsersSettingsComponent implements OnDestroy {
   }
 
   private emitError(error: unknown): void {
-    this.error.emit(
+    this.failure.emit(
       error instanceof FirebaseError
         ? `Erreur Firebase (${error.code}) : ${error.message}`
         : "Erreur pendant la gestion des utilisateurs.",

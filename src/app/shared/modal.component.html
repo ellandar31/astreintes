@@ -1,12 +1,13 @@
-<div class="modal-backdrop" (click)="closed.emit()">
-  <section
+<div class="modal-backdrop" (click)="closed.emit()" (keydown.escape)="closed.emit()">
+  <dialog
+    open
     class="modal-window"
     [class.modal-window-large]="size === 'large'"
     [class.modal-window-small]="size === 'small'"
-    role="dialog"
     aria-modal="true"
     aria-labelledby="modal-title"
     (click)="$event.stopPropagation()"
+    (keydown.escape)="closed.emit()"
   >
     <header class="modal-header">
       <h2 id="modal-title">{{ title }}</h2>
@@ -16,5 +17,5 @@
     <div class="modal-content">
       <ng-content></ng-content>
     </div>
-  </section>
+  </dialog>
 </div>

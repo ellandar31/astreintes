@@ -71,7 +71,10 @@ export class RhExportCalculationLibrary {
     }
 
     return segments
-      .map((segment) => `${segment.detail ? `${segment.detail} - ` : ""}${formatRange(segment.startDate, segment.endDate)} = ${segment.hours} h`)
+      .map((segment) => {
+        const detail = segment.detail ? `${segment.detail} - ` : "";
+        return `${detail}${formatRange(segment.startDate, segment.endDate)} = ${segment.hours} h`;
+      })
       .join("\n");
   }
 

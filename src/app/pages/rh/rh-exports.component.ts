@@ -292,7 +292,10 @@ export class RhExportsComponent implements OnDestroy {
   }
 
   private mergeRows<T extends { id: string }>(defaults: T[], savedRows: Partial<T>[]): T[] {
-    return defaults.map((defaultRow) => ({ ...defaultRow, ...(savedRows.find((row) => row.id === defaultRow.id) || {}) }));
+    return defaults.map((defaultRow) => {
+      const savedRow = savedRows.find((row) => row.id === defaultRow.id);
+      return savedRow ? { ...defaultRow, ...savedRow } : defaultRow;
+    });
   }
 
   private downloadFile(fileName: string, type: string, content: string): void {
@@ -316,7 +319,8 @@ export class RhExportsComponent implements OnDestroy {
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "")
       .replace(/[^a-zA-Z0-9]+/g, "_")
-      .replace(/^_+|_+$/g, "")
+      .replace(/^_+/, "")
+      .replace(/_+$/, "")
       .toLowerCase();
   }
 }

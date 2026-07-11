@@ -26,7 +26,7 @@ interface PeriodCompensationRule {
   styleUrls: ["./settings-common.scss", "./rh-compensation-settings.component.scss"],
 })
 export class RhCompensationSettingsComponent implements OnDestroy {
-  @Output() error = new EventEmitter<string>();
+  @Output() failure = new EventEmitter<string>();
   @Output() success = new EventEmitter<string>();
 
   onCallRows: OnCallCompensationRule[] = [
@@ -70,9 +70,9 @@ export class RhCompensationSettingsComponent implements OnDestroy {
   }
 
   private mergeRows<T extends { id: string }>(defaults: T[], savedRows: Partial<T>[]): T[] {
-    return defaults.map((defaultRow) => ({
-      ...defaultRow,
-      ...(savedRows.find((row) => row.id === defaultRow.id) || {}),
-    }));
+    return defaults.map((defaultRow) => {
+      const savedRow = savedRows.find((row) => row.id === defaultRow.id);
+      return savedRow ? { ...defaultRow, ...savedRow } : defaultRow;
+    });
   }
 }

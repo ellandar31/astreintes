@@ -26,7 +26,8 @@
               <button class="header-icon" (click)="toggleFilter('type')" title="Filtrer" type="button">⌕</button>
             </div>
             @if (activeFilterField === "type") {
-              <input class="header-filter" [(ngModel)]="filters.type" name="typeFilter" placeholder="Type" />
+              <label class="sr-only" for="typeFilter">Filtrer par type</label>
+              <input id="typeFilter" class="header-filter" [(ngModel)]="filters.type" name="typeFilter" placeholder="Type" />
             }
           </th>
           <th>
@@ -38,7 +39,8 @@
               <button class="header-icon" (click)="toggleFilter('initiatorName')" title="Filtrer" type="button">⌕</button>
             </div>
             @if (activeFilterField === "initiatorName") {
-              <input class="header-filter" [(ngModel)]="filters.initiatorName" name="initiatorFilter" placeholder="Initiateur" />
+              <label class="sr-only" for="initiatorFilter">Filtrer par initiateur</label>
+              <input id="initiatorFilter" class="header-filter" [(ngModel)]="filters.initiatorName" name="initiatorFilter" placeholder="Initiateur" />
             }
           </th>
           <th>
@@ -48,7 +50,8 @@
               <button class="header-icon" (click)="toggleFilter('title')" title="Filtrer" type="button">⌕</button>
             </div>
             @if (activeFilterField === "title") {
-              <input class="header-filter" [(ngModel)]="filters.title" name="titleFilter" placeholder="Titre" />
+              <label class="sr-only" for="titleFilter">Filtrer par titre</label>
+              <input id="titleFilter" class="header-filter" [(ngModel)]="filters.title" name="titleFilter" placeholder="Titre" />
             }
           </th>
           <th>
@@ -60,7 +63,8 @@
               <button class="header-icon" (click)="toggleFilter('startDate')" title="Filtrer" type="button">⌕</button>
             </div>
             @if (activeFilterField === "startDate") {
-              <input class="header-filter" [(ngModel)]="filters.startDate" name="startDateFilter" placeholder="AAAA-MM-JJ" />
+              <label class="sr-only" for="startDateFilter">Filtrer par date de début</label>
+              <input id="startDateFilter" class="header-filter" [(ngModel)]="filters.startDate" name="startDateFilter" placeholder="AAAA-MM-JJ" />
             }
           </th>
           <th>Actions</th>

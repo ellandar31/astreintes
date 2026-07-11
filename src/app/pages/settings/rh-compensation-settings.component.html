@@ -23,7 +23,8 @@
               <tr>
                 <td><strong>{{ row.label }}</strong></td>
                 <td>
-                  <input type="number" min="0" step="0.01" name="onCall-{{ row.id }}" [(ngModel)]="row.coefficient" />
+                  <label class="sr-only" [for]="'onCall-' + row.id">Coefficient astreinte {{ row.label }}</label>
+                  <input [id]="'onCall-' + row.id" type="number" min="0" step="0.01" name="onCall-{{ row.id }}" [(ngModel)]="row.coefficient" />
                 </td>
               </tr>
             }
@@ -50,13 +51,16 @@
               <tr>
                 <td><strong>{{ row.label }}</strong></td>
                 <td>
-                  <input type="number" min="0" step="0.01" name="intervention-{{ row.id }}" [(ngModel)]="row.interventionCoefficient" />
+                  <label class="sr-only" [for]="'intervention-' + row.id">Coefficient interventions {{ row.label }}</label>
+                  <input [id]="'intervention-' + row.id" type="number" min="0" step="0.01" name="intervention-{{ row.id }}" [(ngModel)]="row.interventionCoefficient" />
                 </td>
                 <td>
-                  <input type="number" min="0" step="0.01" name="work-{{ row.id }}" [(ngModel)]="row.workCoefficient" />
+                  <label class="sr-only" [for]="'work-' + row.id">Coefficient travaux {{ row.label }}</label>
+                  <input [id]="'work-' + row.id" type="number" min="0" step="0.01" name="work-{{ row.id }}" [(ngModel)]="row.workCoefficient" />
                 </td>
                 <td>
-                  <input type="number" min="0" step="0.01" name="rest-{{ row.id }}" [(ngModel)]="row.restCoefficient" />
+                  <label class="sr-only" [for]="'rest-' + row.id">Coefficient repos {{ row.label }}</label>
+                  <input [id]="'rest-' + row.id" type="number" min="0" step="0.01" name="rest-{{ row.id }}" [(ngModel)]="row.restCoefficient" />
                 </td>
               </tr>
             }

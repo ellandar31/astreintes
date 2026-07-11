@@ -135,7 +135,7 @@ export class ProfilePageComponent implements OnChanges, OnDestroy {
 
     const reader = new FileReader();
     reader.onload = () => {
-      this.profile.signatureImage = String(reader.result || "");
+      this.profile.signatureImage = typeof reader.result === "string" ? reader.result : "";
       this.profile.signatureMode = "image";
     };
     reader.readAsDataURL(file);

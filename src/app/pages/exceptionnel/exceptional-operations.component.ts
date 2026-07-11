@@ -399,14 +399,14 @@ export class ExceptionalOperationsComponent implements OnDestroy {
       return "La date de fin doit être postérieure à la date de début.";
     }
 
-    const matchingActualPeriod = (operation.actualUsers || []).find(
+    const hasMatchingActualPeriod = (operation.actualUsers || []).some(
       (participant) =>
         this.matchesUser(participant.userId, participant.email, form.userId, form.userEmail) &&
         participant.startDate <= form.startDate &&
         participant.endDate >= form.endDate,
     );
 
-    if (matchingActualPeriod) {
+    if (hasMatchingActualPeriod) {
       return "";
     }
 
@@ -452,8 +452,8 @@ export class ExceptionalOperationsComponent implements OnDestroy {
   }
 
   private participantRange(participants: OperationParticipant[]): { startDate: string; endDate: string } {
-    const startDates = participants.map((participant) => participant.startDate).filter(Boolean).sort();
-    const endDates = participants.map((participant) => participant.endDate).filter(Boolean).sort();
+    const startDates = participants.map((participant) => participant.startDate).filter(Boolean).sort((first, second) => first.localeCompare(second));
+    const endDates = participants.map((participant) => participant.endDate).filter(Boolean).sort((first, second) => first.localeCompare(second));
 
     return {
       startDate: startDates[0] || "",

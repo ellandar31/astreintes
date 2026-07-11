@@ -9,7 +9,6 @@ import {
   ExceptionalIntervention,
   ExceptionalOperation,
   ExceptionalOperationForm,
-  OperationParticipant,
   SelectableUser,
   SignatureVisa,
 } from "./exceptional.models";

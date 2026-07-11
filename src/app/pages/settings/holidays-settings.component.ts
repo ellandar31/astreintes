@@ -16,7 +16,7 @@ type HolidaySourceResponse = Record<string, string>;
   styleUrls: ["./settings-common.scss"],
 })
 export class HolidaysSettingsComponent implements OnDestroy {
-  @Output() error = new EventEmitter<string>();
+  @Output() failure = new EventEmitter<string>();
   @Output() success = new EventEmitter<string>();
 
   readonly zones = [
@@ -159,12 +159,14 @@ export class HolidaysSettingsComponent implements OnDestroy {
   }
 
   private emitError(error: unknown): void {
-    this.error.emit(
-      error instanceof FirebaseError
-        ? `Erreur Firebase (${error.code}) : ${error.message}`
-        : error instanceof Error
-          ? error.message
-          : "Erreur pendant la gestion des jours fériés.",
-    );
+    let message = "Erreur pendant la gestion des jours fériés.";
+
+    if (error instanceof FirebaseError) {
+      message = `Erreur Firebase (${error.code}) : ${error.message}`;
+    } else if (error instanceof Error) {
+      message = error.message;
+    }
+
+    this.failure.emit(message);
   }
 }

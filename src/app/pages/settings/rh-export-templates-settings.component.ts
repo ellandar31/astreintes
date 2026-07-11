@@ -18,7 +18,7 @@ interface RhExportTemplateSetting {
   styleUrls: ["./settings-common.scss", "./rh-export-templates-settings.component.scss"],
 })
 export class RhExportTemplatesSettingsComponent implements OnDestroy {
-  @Output() error = new EventEmitter<string>();
+  @Output() failure = new EventEmitter<string>();
   @Output() success = new EventEmitter<string>();
 
   templates: RhExportTemplateSetting[] = [
@@ -32,10 +32,10 @@ export class RhExportTemplatesSettingsComponent implements OnDestroy {
     const data = snapshot.data();
     const savedTemplates = Array.isArray(data?.["templates"]) ? (data["templates"] as Partial<RhExportTemplateSetting>[]) : [];
 
-    this.templates = this.templates.map((template) => ({
-      ...template,
-      ...(savedTemplates.find((item) => item.id === template.id) || {}),
-    }));
+    this.templates = this.templates.map((template) => {
+      const savedTemplate = savedTemplates.find((item) => item.id === template.id);
+      return savedTemplate ? { ...template, ...savedTemplate } : template;
+    });
   });
 
   ngOnDestroy(): void {
@@ -56,7 +56,7 @@ export class RhExportTemplatesSettingsComponent implements OnDestroy {
       });
       this.success.emit("Modèles Word RH enregistrés.");
     } catch {
-      this.error.emit("Erreur pendant l'enregistrement des modèles Word RH.");
+      this.failure.emit("Erreur pendant l'enregistrement des modèles Word RH.");
     }
   }
 }

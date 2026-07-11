@@ -14,7 +14,7 @@ import { ManagedUser, Team } from "./settings.models";
   styleUrls: ["./settings-common.scss"],
 })
 export class TeamsSettingsComponent implements OnDestroy {
-  @Output() error = new EventEmitter<string>();
+  @Output() failure = new EventEmitter<string>();
   @Output() success = new EventEmitter<string>();
 
   editingTeamId: string | null = null;
@@ -175,7 +175,7 @@ export class TeamsSettingsComponent implements OnDestroy {
   }
 
   private emitError(error: unknown): void {
-    this.error.emit(
+    this.failure.emit(
       error instanceof FirebaseError
         ? `Erreur Firebase (${error.code}) : ${error.message}`
         : "Erreur pendant l'enregistrement de l'équipe.",

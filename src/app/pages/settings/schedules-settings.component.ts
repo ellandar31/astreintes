@@ -14,7 +14,7 @@ import { ScheduleDay, ScheduleRule, } from "./settings.models";
   styleUrls: ["./settings-common.scss", "./schedules-settings.component.scss"],
 })
 export class SchedulesSettingsComponent implements OnDestroy {
-  @Output() error = new EventEmitter<string>();
+  @Output() failure = new EventEmitter<string>();
   @Output() success = new EventEmitter<string>();
 
   readonly days: ScheduleDay[] = [
@@ -131,7 +131,7 @@ export class SchedulesSettingsComponent implements OnDestroy {
   }
 
   private emitError(error: unknown): void {
-    this.error.emit(
+    this.failure.emit(
       error instanceof FirebaseError
         ? `Erreur Firebase (${error.code}) : ${error.message}`
         : "Erreur pendant l'enregistrement de l'horaire.",

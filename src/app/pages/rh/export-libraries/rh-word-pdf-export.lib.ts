@@ -101,9 +101,7 @@ export class RhWordPdfExportLibrary {
       <table>
         <thead><tr><th>Nom & Prénom de l'Agent</th><th>Date Début</th><th>Heure Début</th><th>Date Fin</th><th>Heure Fin</th><th>* Int Site</th><th>Visa de l'Agent</th></tr></thead>
         <tbody>
-          ${normalizedRows
-            .map((row) => `<tr><td>${escapeHtml(row.userName)}${row.comment ? `<br><span class="muted">${escapeHtml(row.comment)}</span>` : ""}</td><td>${formatDate(row.startDate)}</td><td>${formatTime(row.startDate)}</td><td>${formatDate(row.endDate)}</td><td>${formatTime(row.endDate)}</td><td>${row.wasOnSite ? "X" : ""}</td><td>${this.visaHtml(row.visa, "line")}</td></tr>`)
-            .join("")}
+          ${normalizedRows.map((row) => this.interventionRowHtml(row)).join("")}
         </tbody>
       </table>
       <p class="muted">* Cocher la case si intervention avec déplacement.</p>
@@ -141,6 +139,12 @@ export class RhWordPdfExportLibrary {
 
     const name = visa.signedByName || visa.signatureValue || "Signé";
     return `${escapeHtml(name)}${date}`;
+  }
+
+  private interventionRowHtml(row: ExportOperation["interventions"][number]): string {
+    const comment = row.comment ? `<br><span class="muted">${escapeHtml(row.comment)}</span>` : "";
+
+    return `<tr><td>${escapeHtml(row.userName)}${comment}</td><td>${formatDate(row.startDate)}</td><td>${formatTime(row.startDate)}</td><td>${formatDate(row.endDate)}</td><td>${formatTime(row.endDate)}</td><td>${row.wasOnSite ? "X" : ""}</td><td>${this.visaHtml(row.visa, "line")}</td></tr>`;
   }
 
   private operationPdf(doc: PdfDocument, template: WordExportTemplate, operation: ExportOperation): void {

@@ -27,19 +27,19 @@
     }
 
     @if (activeSection === "users") {
-      <app-users-settings (error)="showError($event)" (success)="showSuccess($event)"></app-users-settings>
+      <app-users-settings (failure)="showError($event)" (success)="showSuccess($event)"></app-users-settings>
     } @else if (activeSection === "schedules") {
-      <app-schedules-settings (error)="showError($event)" (success)="showSuccess($event)"></app-schedules-settings>
+      <app-schedules-settings (failure)="showError($event)" (success)="showSuccess($event)"></app-schedules-settings>
     } @else if (activeSection === "teams") {
-      <app-teams-settings (error)="showError($event)" (success)="showSuccess($event)"></app-teams-settings>
+      <app-teams-settings (failure)="showError($event)" (success)="showSuccess($event)"></app-teams-settings>
     } @else if (activeSection === "holidays") {
-      <app-holidays-settings (error)="showError($event)" (success)="showSuccess($event)"></app-holidays-settings>
+      <app-holidays-settings (failure)="showError($event)" (success)="showSuccess($event)"></app-holidays-settings>
     } @else if (activeSection === "rhControls") {
-      <app-rh-controls-settings (error)="showError($event)" (success)="showSuccess($event)"></app-rh-controls-settings>
+      <app-rh-controls-settings (failure)="showError($event)" (success)="showSuccess($event)"></app-rh-controls-settings>
     } @else if (activeSection === "rhCompensation") {
-      <app-rh-compensation-settings (error)="showError($event)" (success)="showSuccess($event)"></app-rh-compensation-settings>
+      <app-rh-compensation-settings (failure)="showError($event)" (success)="showSuccess($event)"></app-rh-compensation-settings>
     } @else if (activeSection === "rhExports") {
-      <app-rh-export-templates-settings (error)="showError($event)" (success)="showSuccess($event)"></app-rh-export-templates-settings>
+      <app-rh-export-templates-settings (failure)="showError($event)" (success)="showSuccess($event)"></app-rh-export-templates-settings>
     }
   </div>
 </section>

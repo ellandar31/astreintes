@@ -21,7 +21,9 @@
               <td><strong>{{ day }}</strong></td>
 
               <td>
+                <label class="sr-only" [for]="'hoStart-' + day">Début HO {{ day }}</label>
                 <input
+                  [id]="'hoStart-' + day"
                   type="time"
                   name="hoStart-{{ day }}"
                   [(ngModel)]="scheduleByDay[day].hoStart"
@@ -30,7 +32,9 @@
               </td>
 
               <td>
+                <label class="sr-only" [for]="'hoEnd-' + day">Fin HO {{ day }}</label>
                 <input
+                  [id]="'hoEnd-' + day"
                   type="time"
                   name="hoEnd-{{ day }}"
                   [(ngModel)]="scheduleByDay[day].hoEnd"

@@ -227,7 +227,7 @@ export class RhControlsComponent implements OnDestroy {
   }
 
   private uniqueSorted(values: string[]): string[] {
-    return Array.from(new Set(values.filter(Boolean))).sort();
+    return Array.from(new Set(values.filter(Boolean))).sort((first, second) => first.localeCompare(second));
   }
 
   private roundHours(value: number): number {
