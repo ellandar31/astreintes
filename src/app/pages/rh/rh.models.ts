@@ -6,6 +6,7 @@ export interface RhUser {
   id: string;
   displayName: string;
   email: string;
+  role?: number;
 }
 
 export interface RhRegularPeriod {

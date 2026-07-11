@@ -1,0 +1,48 @@
+<app-modal [title]="item.title" size="large" (closed)="closed.emit()">
+  <section class="detail-modal">
+    <header class="detail-header">
+      <div>
+        <p class="control-type">{{ item.type }}</p>
+        <p class="control-period">{{ item.period }}</p>
+      </div>
+      <p class="sent-date">Envoye aux RH le <strong>{{ item.sentToRhLabel }}</strong></p>
+    </header>
+
+    <div class="rh-table-shell">
+      <table class="rh-table detail-table">
+        <thead>
+          <tr>
+            <th>Nature</th>
+            <th>Plage</th>
+            <th>Regle appliquee</th>
+            <th>Heures</th>
+            <th>Coefficient</th>
+            <th>Total controle</th>
+            <th>Repos</th>
+            <th>Detail du calcul</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (line of item.lines; track line.id) {
+            <tr>
+              <td>{{ line.nature }}</td>
+              <td>{{ line.period }}</td>
+              <td>{{ line.label }}</td>
+              <td>{{ formatNumber(line.hours) }} h</td>
+              <td>{{ formatNumber(line.coefficient) }}</td>
+              <td>{{ formatLineTotal(line) }}</td>
+              <td>
+                @if (line.restCoefficient !== undefined) {
+                  {{ formatNumber(line.restCoefficient) }}
+                } @else {
+                  -
+                }
+              </td>
+              <td><pre>{{ line.details }}</pre></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+</app-modal>

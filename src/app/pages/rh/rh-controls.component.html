@@ -1,72 +1,93 @@
 <section class="rh-panel" aria-labelledby="rh-controls-title">
   <header class="rh-panel-header">
     <div>
-      <p class="eyebrow">Contrôles RH</p>
-      <h2 id="rh-controls-title">Synthèse des temps et jours particuliers</h2>
-    </div>
-
-    <div class="rh-filters" aria-label="Filtres RH">
-      <label>
-        Mois
-        <select [(ngModel)]="selectedMonth" name="rhMonth">
-          @for (month of monthOptions; track month) {
-            <option [ngValue]="month">{{ formatMonth(month) }}</option>
-          }
-        </select>
-      </label>
-
-      <label>
-        Semaine
-        <select [(ngModel)]="selectedWeek" name="rhWeek">
-          @for (week of weekOptions; track week) {
-            <option [ngValue]="week">{{ week }}</option>
-          }
-        </select>
-      </label>
-
-      <label>
-        Trimestre
-        <select [(ngModel)]="selectedQuarter" name="rhQuarter">
-          @for (quarter of quarterOptions; track quarter) {
-            <option [ngValue]="quarter">{{ formatQuarter(quarter) }}</option>
-          }
-        </select>
-      </label>
+      <p class="eyebrow">Controles RH</p>
+      <h2 id="rh-controls-title">Detail des coefficients envoyes aux RH</h2>
     </div>
   </header>
 
-  <div class="rh-table-shell">
-    <table class="rh-table">
-      <thead>
-        <tr>
-          <th>Utilisateur</th>
-          <th>Astreinte 15 j</th>
-          <th>Astreinte mois</th>
-          <th>Samedis</th>
-          <th>Dimanches</th>
-          <th>Jours fériés</th>
-          <th>Travaux semaine</th>
-          <th>Travaux trimestre</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (row of rows; track row.userId) {
-          <tr>
-            <td>{{ row.userLabel }}</td>
-            <td>{{ row.onCallHoursLast15Days }} h</td>
-            <td>{{ row.onCallHoursMonth }} h</td>
-            <td>{{ row.saturdayCount }}</td>
-            <td>{{ row.sundayCount }}</td>
-            <td>{{ row.holidayCount }}</td>
-            <td>{{ row.exceptionalWorkHoursWeek }} h</td>
-            <td>{{ row.exceptionalWorkHoursQuarter }} h</td>
-          </tr>
-        } @empty {
-          <tr>
-            <td colspan="8">Aucune donnée utilisateur.</td>
-          </tr>
+  <div class="user-sections">
+    @for (userSection of userSections; track userSection.user.id) {
+      <article class="user-section">
+        <button
+          class="section-header user-section-header"
+          [attr.aria-expanded]="isUserExpanded(userSection.user.id)"
+          (click)="toggleUserSection(userSection.user.id)"
+          type="button"
+        >
+          <span class="user-label">{{ userLabel(userSection.user) }}</span>
+          <span class="section-meta">
+            <span class="chevron" [class.expanded]="isUserExpanded(userSection.user.id)" aria-hidden="true"></span>
+            <span>{{ userSection.itemCount }} element(s) affiche(s)</span>
+          </span>
+        </button>
+
+        @if (isUserExpanded(userSection.user.id)) {
+          <div class="month-sections">
+            @for (monthSection of userSection.monthSections; track monthSection.monthKey) {
+              <article class="month-section">
+                <button
+                  class="section-header month-section-header"
+                  [attr.aria-expanded]="isMonthExpanded(userSection.user.id, monthSection.monthKey)"
+                  (click)="toggleMonthSection(userSection.user.id, monthSection.monthKey)"
+                  type="button"
+                >
+                  <span class="month-label">{{ monthSection.monthLabel }}</span>
+                  <span class="section-meta">
+                    <span class="chevron" [class.expanded]="isMonthExpanded(userSection.user.id, monthSection.monthKey)" aria-hidden="true"></span>
+                    <span>{{ monthSection.items.length }} element(s)</span>
+                  </span>
+                </button>
+
+                @if (isMonthExpanded(userSection.user.id, monthSection.monthKey)) {
+                  <div class="rh-table-shell">
+                    <table class="rh-table summary-table">
+                      <thead>
+                        <tr>
+                          <th>Type</th>
+                          <th>Element</th>
+                          <th>Periode</th>
+                          <th>Envoi RH</th>
+                          <th>Lignes</th>
+                          <th>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @for (item of monthSection.items; track item.id) {
+                          <tr>
+                            <td>{{ item.type }}</td>
+                            <td>{{ item.title }}</td>
+                            <td>{{ item.period }}</td>
+                            <td class="sent-date">Le <strong>{{ item.sentToRhLabel }}</strong></td>
+                            <td>{{ item.lines.length }}</td>
+                            <td>
+                              <button class="secondary-button compact-button" (click)="openDetail(item)" type="button">
+                                Consulter
+                              </button>
+                            </td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                }
+              </article>
+            } @empty {
+              <div class="empty-state">
+                Aucun element envoye aux RH pour cet utilisateur.
+              </div>
+            }
+          </div>
         }
-      </tbody>
-    </table>
+      </article>
+    } @empty {
+      <div class="empty-state">
+        Aucun element envoye aux RH.
+      </div>
+    }
   </div>
 </section>
+
+@if (selectedDetailItem) {
+  <app-rh-control-detail-modal [item]="selectedDetailItem" (closed)="closeDetail()"></app-rh-control-detail-modal>
+}

@@ -1,5 +1,6 @@
 import { CommonModule } from "@angular/common";
-import { Component } from "@angular/core";
+import { Component, Input } from "@angular/core";
+import { StoreAuthUser } from "../../store/app-store";
 import { RhControlsComponent } from "./rh-controls.component";
 import { RhExportsComponent } from "./rh-exports.component";
 import { RhSection } from "./rh.models";
@@ -12,6 +13,8 @@ import { RhSection } from "./rh.models";
   styleUrl: "./rh-page.component.css",
 })
 export class RhPageComponent {
+  @Input({ required: true }) user: StoreAuthUser | null = null;
+
   readonly sections: Array<{ id: RhSection; label: string }> = [
     { id: "exports", label: "Exports des données" },
     { id: "controls", label: "Contrôles des données" },

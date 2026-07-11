@@ -46,7 +46,7 @@
     } @else if (activeTab === "Validation") {
       <app-validation-page [user]="user"></app-validation-page>
     } @else if (activeTab === "RH") {
-      <app-rh-page></app-rh-page>
+      <app-rh-page [user]="user"></app-rh-page>
     }
 
     @if (modalView === "profile") {

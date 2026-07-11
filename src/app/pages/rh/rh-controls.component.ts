@@ -1,31 +1,82 @@
 import { CommonModule } from "@angular/common";
-import { Component, OnDestroy } from "@angular/core";
-import { FormsModule } from "@angular/forms";
-import { StoreUnsubscribe, appStore } from "../../store/app-store";
+import { Component, Input, OnChanges, OnDestroy, SimpleChanges } from "@angular/core";
+import { asSafeString } from "../../shared/value-normalizers";
+import { SignatureVisa, createEmptyVisa } from "../../shared/visa.models";
+import { StoreAuthUser, StoreUnsubscribe, appStore } from "../../store/app-store";
 import {
-  RhControlRow,
+  ExportOperation,
+  InterventionCompensationRow,
+  OnCallCompensationRule,
+  OnCallCompensationRow,
+  PeriodCompensationRule,
+  RhExportContext,
+} from "./export-libraries/rh-export.models";
+import { RhExportCalculationLibrary } from "./export-libraries/rh-export-calculations";
+import { formatRange } from "./export-libraries/rh-export-utils";
+import { RhControlDetailModalComponent } from "./rh-control-detail-modal.component";
+import { RhControlDetailItem, RhControlDetailLine } from "./rh-control-detail.models";
+import {
   RhExceptionalOperation,
   RhPublicHoliday,
   RhRegularPeriod,
   RhUser,
 } from "./rh.models";
 
+interface RhRegularIntervention {
+  id: string;
+  periodId: string;
+  teamId: string;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  startDate: string;
+  endDate: string;
+  comment?: string;
+  agentVisa?: SignatureVisa;
+}
+
+interface RhUserControlSection {
+  user: RhUser;
+  itemCount: number;
+  monthSections: RhMonthControlSection[];
+}
+
+interface RhMonthControlSection {
+  monthKey: string;
+  monthLabel: string;
+  items: RhControlDetailItem[];
+}
+
 @Component({
   selector: "app-rh-controls",
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, RhControlDetailModalComponent],
   templateUrl: "./rh-controls.component.html",
   styleUrl: "./rh-controls.component.css",
 })
-export class RhControlsComponent implements OnDestroy {
+export class RhControlsComponent implements OnChanges, OnDestroy {
+  @Input({ required: true }) currentUser: StoreAuthUser | null = null;
+
   users: RhUser[] = [];
   regularPeriods: RhRegularPeriod[] = [];
+  regularInterventions: RhRegularIntervention[] = [];
   publicHolidays: RhPublicHoliday[] = [];
   exceptionalOperations: RhExceptionalOperation[] = [];
+  selectedDetailItem: RhControlDetailItem | null = null;
+  expandedMonthSectionKey: string | null = null;
+  expandedUserId: string | null = null;
 
-  selectedMonth = this.toMonthKey(new Date());
-  selectedWeek = this.toWeekKey(new Date());
-  selectedQuarter = this.toQuarterKey(new Date());
+  onCallCompensationRules: OnCallCompensationRule[] = [
+    { id: "week", label: "Semaine", coefficient: 0 },
+    { id: "weekendHoliday", label: "Samedi / Dimanche / Jour ferie", coefficient: 0 },
+  ];
+  periodCompensationRules: PeriodCompensationRule[] = [
+    { id: "week_18_21", label: "Semaine 18h-21h", interventionCoefficient: 0, workCoefficient: 0, restCoefficient: 0 },
+    { id: "night_21_7", label: "Nuit (21h-7h)", interventionCoefficient: 0, workCoefficient: 0, restCoefficient: 0 },
+    { id: "week_7_8", label: "Semaine 7h-8h", interventionCoefficient: 0, workCoefficient: 0, restCoefficient: 0 },
+    { id: "saturday_7_21", label: "Samedi (7h-21h)", interventionCoefficient: 0, workCoefficient: 0, restCoefficient: 0 },
+    { id: "sunday_holiday_7_21", label: "Dimanche/Jours feries (7h-21h)", interventionCoefficient: 0, workCoefficient: 0, restCoefficient: 0 },
+  ];
 
   private readonly unsubscribes: StoreUnsubscribe[] = [
     appStore.data.observeCollection<RhUser>(appStore.paths.users(), (documents) => {
@@ -33,15 +84,37 @@ export class RhControlsComponent implements OnDestroy {
         .map((document) => ({ ...document.data, id: document.id }) as RhUser)
         .filter((user) => Boolean(user.email))
         .sort((first, second) => this.userLabel(first).localeCompare(this.userLabel(second)));
+
+      this.ensureDefaultExpandedState();
     }),
     appStore.data.observeCollection<RhRegularPeriod>(appStore.paths.regularOnCallPeriods(), (documents) => {
       this.regularPeriods = documents.map((document) => ({ ...document.data, id: document.id }) as RhRegularPeriod);
+      this.ensureDefaultExpandedState();
+    }),
+    appStore.data.observeCollection<RhRegularIntervention>(appStore.paths.regularInterventionsGroup(), (documents) => {
+      this.regularInterventions = documents.map((document) => {
+        const data = document.data;
+        const periodId = document.parentId || asSafeString(data["periodId"]);
+        return { ...data, id: document.id, periodId } as RhRegularIntervention;
+      });
+      this.ensureDefaultExpandedState();
     }),
     appStore.data.observeCollection<RhPublicHoliday>(appStore.paths.publicHolidays(), (documents) => {
       this.publicHolidays = documents.map((document) => ({ ...document.data, id: document.id }) as RhPublicHoliday);
     }),
     appStore.data.observeCollection<RhExceptionalOperation>(appStore.paths.exceptionalOperations(), (documents) => {
       this.exceptionalOperations = documents.map((document) => ({ ...document.data, id: document.id }) as RhExceptionalOperation);
+      this.ensureDefaultExpandedState();
+    }),
+    appStore.data.observeDocument<Record<string, unknown>>(appStore.paths.rhCompensationRules(), (data) => {
+      if (!data) {
+        return;
+      }
+
+      const savedOnCallRows = Array.isArray(data["onCall"]) ? (data["onCall"] as Partial<OnCallCompensationRule>[]) : [];
+      const savedPeriodRows = Array.isArray(data["periods"]) ? (data["periods"] as Partial<PeriodCompensationRule>[]) : [];
+      this.onCallCompensationRules = this.mergeRows(this.onCallCompensationRules, savedOnCallRows);
+      this.periodCompensationRules = this.mergeRows(this.periodCompensationRules, savedPeriodRows);
     }),
   ];
 
@@ -49,54 +122,88 @@ export class RhControlsComponent implements OnDestroy {
     this.unsubscribes.forEach((unsubscribe) => unsubscribe());
   }
 
-  get monthOptions(): string[] {
-    return this.uniqueSorted([
-      this.selectedMonth,
-      ...this.regularPeriods.flatMap((period) => [this.toMonthKey(new Date(period.startDate)), this.toMonthKey(new Date(period.endDate))]),
-    ]).reverse();
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes["currentUser"]) {
+      this.ensureDefaultExpandedState();
+    }
   }
 
-  get weekOptions(): string[] {
-    const weeks = this.exceptionalOperations
-      .filter((operation) => operation.type === "travaux")
-      .flatMap((operation) => operation.interventions || [])
-      .map((intervention) => this.toWeekKey(new Date(intervention.startDate)));
-
-    return this.uniqueSorted([this.selectedWeek, ...weeks]).reverse();
+  get currentProfile(): RhUser | undefined {
+    return this.users.find((user) => this.isCurrentUser(user));
   }
 
-  get quarterOptions(): string[] {
-    const quarters = this.exceptionalOperations
-      .filter((operation) => operation.type === "travaux")
-      .flatMap((operation) => operation.interventions || [])
-      .map((intervention) => this.toQuarterKey(new Date(intervention.startDate)));
+  get visibleUsers(): RhUser[] {
+    const profile = this.currentProfile;
 
-    return this.uniqueSorted([this.selectedQuarter, ...quarters]).reverse();
+    if (!profile) {
+      return this.users.filter((user) => this.isCurrentUser(user));
+    }
+
+    if (profile.role === 1) {
+      return [profile];
+    }
+
+    return this.users;
   }
 
-  get rows(): RhControlRow[] {
-    const monthRange = this.monthRange(this.selectedMonth);
-    const weekRange = this.weekRange(this.selectedWeek);
-    const quarterRange = this.quarterRange(this.selectedQuarter);
-    const last15DaysEnd = new Date();
-    const last15DaysStart = new Date(last15DaysEnd);
-    last15DaysStart.setDate(last15DaysEnd.getDate() - 15);
+  get userSections(): RhUserControlSection[] {
+    return this.visibleUsers
+      .map((user) => {
+        const monthSections = this.monthSectionsForUser(user);
 
-    return this.users.map((user) => {
-      const userPeriods = this.regularPeriods.filter((period) => period.userId === user.id);
+        return {
+          user,
+          itemCount: monthSections.reduce((total, section) => total + section.items.length, 0),
+          monthSections,
+        };
+      })
+      .filter((section) => section.itemCount > 0 || this.isCurrentUser(section.user));
+  }
 
-      return {
-        userId: user.id,
-        userLabel: this.userLabel(user),
-        onCallHoursLast15Days: this.roundHours(this.sumPeriodHours(userPeriods, last15DaysStart, last15DaysEnd)),
-        onCallHoursMonth: this.roundHours(this.sumPeriodHours(userPeriods, monthRange.start, monthRange.end)),
-        saturdayCount: this.countCoveredDays(userPeriods, monthRange.start, monthRange.end, (date) => date.getDay() === 6),
-        sundayCount: this.countCoveredDays(userPeriods, monthRange.start, monthRange.end, (date) => date.getDay() === 0),
-        holidayCount: this.countCoveredDays(userPeriods, monthRange.start, monthRange.end, (date) => this.isPublicHoliday(date)),
-        exceptionalWorkHoursWeek: this.roundHours(this.sumExceptionalWorkHours(user.id, weekRange.start, weekRange.end)),
-        exceptionalWorkHoursQuarter: this.roundHours(this.sumExceptionalWorkHours(user.id, quarterRange.start, quarterRange.end)),
-      };
-    });
+  get sentMonthOptions(): string[] {
+    const allItems = this.visibleUsers.flatMap((user) => this.allItemsForUser(user));
+    return Array.from(new Set(allItems.map((item) => this.sentToRhMonthKey(item.sentToRhAt)).filter(Boolean)))
+      .sort((first, second) => second.localeCompare(first));
+  }
+
+  toggleMonthSection(userId: string, monthKey: string): void {
+    const sectionKey = this.monthSectionKey(userId, monthKey);
+    this.expandedMonthSectionKey = this.expandedMonthSectionKey === sectionKey ? null : sectionKey;
+  }
+
+  isMonthExpanded(userId: string, monthKey: string): boolean {
+    return this.expandedMonthSectionKey === this.monthSectionKey(userId, monthKey);
+  }
+
+  toggleUserSection(userId: string): void {
+    if (this.expandedUserId === userId) {
+      this.expandedUserId = null;
+      this.expandedMonthSectionKey = null;
+      return;
+    }
+
+    this.expandedUserId = userId;
+    this.expandFirstMonthForUser(userId);
+  }
+
+  isUserExpanded(userId: string): boolean {
+    return this.expandedUserId === userId;
+  }
+
+  itemsForUserAndMonth(user: RhUser, monthKey: string): RhControlDetailItem[] {
+    return this.allItemsForUser(user).filter((item) => this.sentToRhMonthKey(item.sentToRhAt) === monthKey);
+  }
+
+  openDetail(item: RhControlDetailItem): void {
+    this.selectedDetailItem = item;
+  }
+
+  closeDetail(): void {
+    this.selectedDetailItem = null;
+  }
+
+  userLabel(user: RhUser): string {
+    return user.displayName ? `${user.displayName} (${user.email})` : user.email;
   }
 
   formatMonth(monthKey: string): string {
@@ -104,132 +211,276 @@ export class RhControlsComponent implements OnDestroy {
     return new Intl.DateTimeFormat("fr-FR", { month: "long", year: "numeric" }).format(new Date(year, month - 1, 1));
   }
 
-  formatQuarter(quarterKey: string): string {
-    const [year, quarter] = quarterKey.split("-Q");
-    return `${year} - T${quarter}`;
+  private allItemsForUser(user: RhUser): RhControlDetailItem[] {
+    return [
+      ...this.regularControlItems(user),
+      ...this.exceptionalControlItems(user),
+    ].sort((first, second) => this.sentToRhTime(second.sentToRhAt) - this.sentToRhTime(first.sentToRhAt));
   }
 
-  private userLabel(user: RhUser): string {
-    return user.displayName ? `${user.displayName} (${user.email})` : user.email;
+  private monthSectionsForUser(user: RhUser): RhMonthControlSection[] {
+    return this.sentMonthOptions
+      .map((monthKey) => ({
+        monthKey,
+        monthLabel: this.formatMonth(monthKey),
+        items: this.itemsForUserAndMonth(user, monthKey),
+      }))
+      .filter((section) => section.items.length > 0);
   }
 
-  private sumPeriodHours(periods: RhRegularPeriod[], rangeStart: Date, rangeEnd: Date): number {
-    return periods.reduce((total, period) => {
-      return total + this.overlapHours(new Date(period.startDate), new Date(period.endDate), rangeStart, rangeEnd);
-    }, 0);
+  private regularControlItems(user: RhUser): RhControlDetailItem[] {
+    return this.regularPeriods
+      .filter((period) => Boolean(period.sentToRhAt))
+      .filter((period) => this.matchesUser(period.userId, period.userEmail, user))
+      .map((period) => {
+        const operation = this.regularExportOperation(period);
+        const calculator = new RhExportCalculationLibrary(this.exportContext());
+        const lines = [
+          ...calculator.onCallCompensationRows(operation).map((row, index) => this.onCallLine(row, calculator, `regular-oncall-${index}`)),
+          ...calculator.interventionCompensationRows(operation, false).map((row, index) => this.interventionLine(row, calculator, `regular-intervention-${index}`, "Intervention")),
+        ];
+
+        return {
+          id: `regular-${period.id}`,
+          type: "Astreinte reguliere",
+          title: operation.title,
+          sentToRhAt: period.sentToRhAt,
+          sentToRhLabel: this.formatDateTime(period.sentToRhAt),
+          period: formatRange(period.startDate, period.endDate),
+          lines,
+        };
+      })
+      .filter((item) => item.lines.length > 0);
   }
 
-  private sumExceptionalWorkHours(userId: string, rangeStart: Date, rangeEnd: Date): number {
+  private exceptionalControlItems(user: RhUser): RhControlDetailItem[] {
     return this.exceptionalOperations
-      .filter((operation) => operation.type === "travaux")
-      .flatMap((operation) => operation.interventions || [])
-      .filter((intervention) => intervention.userId === userId)
-      .reduce((total, intervention) => {
-        return total + this.overlapHours(new Date(intervention.startDate), new Date(intervention.endDate), rangeStart, rangeEnd);
-      }, 0);
+      .filter((operation) => Boolean(operation.sentToRhAt))
+      .map((operation) => this.exceptionalExportOperationForUser(operation, user))
+      .filter((operation): operation is ExportOperation => Boolean(operation))
+      .map((operation) => {
+        const calculator = new RhExportCalculationLibrary(this.exportContext());
+        const isWork = operation.exportTitle === "Travaux Exceptionnels";
+        const lines = [
+          ...calculator.onCallCompensationRows(operation).map((row, index) => this.onCallLine(row, calculator, `exceptional-oncall-${index}`)),
+          ...calculator.interventionCompensationRows(operation, isWork).map((row, index) =>
+            this.interventionLine(row, calculator, `exceptional-intervention-${index}`, isWork ? "Travaux" : "Intervention"),
+          ),
+        ];
+
+        return {
+          id: `exceptional-${operation.sourceId}`,
+          type: operation.exportTitle,
+          title: operation.title,
+          sentToRhAt: operation.sentToRhAt,
+          sentToRhLabel: this.formatDateTime(operation.sentToRhAt),
+          period: formatRange(operation.actualStartDate, operation.actualEndDate),
+          lines,
+        };
+      })
+      .filter((item) => item.lines.length > 0);
   }
 
-  private countCoveredDays(
-    periods: RhRegularPeriod[],
-    rangeStart: Date,
-    rangeEnd: Date,
-    predicate: (date: Date) => boolean,
-  ): number {
-    const coveredDays = new Set<string>();
-    const cursor = new Date(rangeStart);
+  private regularExportOperation(period: RhRegularPeriod): ExportOperation {
+    const interventions = this.regularInterventions
+      .filter((intervention) => intervention.periodId === period.id)
+      .filter((intervention) => this.matchesRegularPeriodUser(intervention, period))
+      .sort((first, second) => first.startDate.localeCompare(second.startDate));
+    const userName = period.userName || period.userEmail;
 
-    while (cursor < rangeEnd) {
-      const dayStart = new Date(cursor);
-      const dayEnd = new Date(cursor);
-      dayEnd.setDate(dayEnd.getDate() + 1);
-
-      if (
-        predicate(dayStart) &&
-        periods.some((period) => this.overlapHours(new Date(period.startDate), new Date(period.endDate), dayStart, dayEnd) > 0)
-      ) {
-        coveredDays.add(this.toDateKey(dayStart));
-      }
-
-      cursor.setDate(cursor.getDate() + 1);
-    }
-
-    return coveredDays.size;
-  }
-
-  private overlapHours(start: Date, end: Date, rangeStart: Date, rangeEnd: Date): number {
-    const overlapStart = Math.max(start.getTime(), rangeStart.getTime());
-    const overlapEnd = Math.min(end.getTime(), rangeEnd.getTime());
-
-    if (overlapEnd <= overlapStart) {
-      return 0;
-    }
-
-    return (overlapEnd - overlapStart) / 36e5;
-  }
-
-  private monthRange(monthKey: string): { start: Date; end: Date } {
-    const [year, month] = monthKey.split("-").map(Number);
     return {
-      start: new Date(year, month - 1, 1),
-      end: new Date(year, month, 1),
+      sourceId: period.id,
+      sourceCollection: "regularOnCallPeriods",
+      title: `Astreinte reguliere - ${userName}`,
+      exportTitle: "Astreintes Regulieres",
+      initiatorName: "",
+      operationManagerName: "",
+      forecastStartDate: period.startDate,
+      forecastEndDate: period.endDate,
+      actualStartDate: period.startDate,
+      actualEndDate: period.endDate,
+      plannedUsers: [{ name: userName, startDate: period.startDate, endDate: period.endDate, visa: period.agentVisa || createEmptyVisa() }],
+      actualUsers: [{ name: userName, startDate: period.startDate, endDate: period.endDate, visa: period.agentVisa || createEmptyVisa() }],
+      interventions: interventions.map((intervention) => ({
+        userName: intervention.userName || intervention.userEmail,
+        startDate: intervention.startDate,
+        endDate: intervention.endDate,
+        wasOnSite: false,
+        comment: intervention.comment || "",
+        visa: intervention.agentVisa || createEmptyVisa(),
+      })),
+      initiatorVisa: createEmptyVisa(),
+      directorVisa: period.directorVisa || createEmptyVisa(),
+      sentToRhAt: period.sentToRhAt as string | undefined,
     };
   }
 
-  private weekRange(weekKey: string): { start: Date; end: Date } {
-    const [yearPart, weekPart] = weekKey.split("-W");
-    const year = Number(yearPart);
-    const week = Number(weekPart);
-    const simple = new Date(year, 0, 1 + (week - 1) * 7);
-    const day = simple.getDay() || 7;
-    const start = new Date(simple);
-    start.setDate(simple.getDate() - day + 1);
-    start.setHours(0, 0, 0, 0);
-    const end = new Date(start);
-    end.setDate(start.getDate() + 7);
-    return { start, end };
-  }
+  private exceptionalExportOperationForUser(operation: RhExceptionalOperation, user: RhUser): ExportOperation | null {
+    const operationType = operation.type === "travaux" ? "Travaux Exceptionnels" : "Astreintes Exceptionnelles";
+    const forecastStart = operation.startDate || "";
+    const forecastEnd = operation.forecastEndDate || operation.startDate || "";
+    const actualStart = operation.actualStartDate || forecastStart;
+    const actualEnd = operation.actualEndDate || forecastEnd;
+    const actualUsers = (operation.actualUsers || [])
+      .filter((participant) => this.matchesUser(participant.userId, participant.email, user))
+      .map((participant) => ({
+        name: participant.displayName || participant.email,
+        startDate: participant.startDate || actualStart,
+        endDate: participant.endDate || actualEnd,
+        visa: participant.visa || createEmptyVisa(),
+      }));
+    const interventions = (operation.interventions || [])
+      .filter((intervention) => this.matchesUser(intervention.userId, intervention.userEmail, user))
+      .map((intervention) => ({
+        userName: intervention.userName || intervention.userEmail,
+        startDate: intervention.startDate || intervention.date || "",
+        endDate: intervention.endDate || "",
+        wasOnSite: Boolean(intervention.wasOnSite),
+        comment: intervention.comment || intervention.label || "",
+        visa: intervention.agentVisa || createEmptyVisa(),
+      }));
 
-  private quarterRange(quarterKey: string): { start: Date; end: Date } {
-    const [yearPart, quarterPart] = quarterKey.split("-Q");
-    const year = Number(yearPart);
-    const quarter = Number(quarterPart);
-    const startMonth = (quarter - 1) * 3;
+    if (!actualUsers.length && !interventions.length) {
+      return null;
+    }
+
     return {
-      start: new Date(year, startMonth, 1),
-      end: new Date(year, startMonth + 3, 1),
+      sourceId: operation.id,
+      sourceCollection: "exceptionalOperations",
+      title: operation.title || operationType,
+      exportTitle: operationType,
+      initiatorName: operation.initiatorName || "",
+      operationManagerName: operation.operationManagerName || "",
+      forecastStartDate: forecastStart,
+      forecastEndDate: forecastEnd,
+      actualStartDate: actualStart,
+      actualEndDate: actualEnd,
+      plannedUsers: [],
+      actualUsers,
+      interventions,
+      initiatorVisa: operation.visas?.initiatorGlobal || operation.visas?.actualInitiator || operation.visas?.plannedInitiator || createEmptyVisa(),
+      directorVisa: operation.visas?.directorGlobal || operation.visas?.actualDirector || operation.visas?.plannedDirector || createEmptyVisa(),
+      sentToRhAt: operation.sentToRhAt as string | undefined,
     };
   }
 
-  private isPublicHoliday(date: Date): boolean {
-    return this.publicHolidays.some((holiday) => holiday.date === this.toDateKey(date));
+  private onCallLine(row: OnCallCompensationRow, calculator: RhExportCalculationLibrary, id: string): RhControlDetailLine {
+    return {
+      id,
+      nature: "Astreinte",
+      label: row.label,
+      period: formatRange(row.startDate, row.endDate),
+      hours: row.hours,
+      coefficient: row.coefficient,
+      details: calculator.segmentDetails(row.segments),
+    };
   }
 
-  private toDateKey(date: Date): string {
-    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+  private interventionLine(row: InterventionCompensationRow, calculator: RhExportCalculationLibrary, id: string, nature: string): RhControlDetailLine {
+    return {
+      id,
+      nature,
+      label: row.label,
+      period: formatRange(row.startDate, row.endDate),
+      hours: row.hours,
+      coefficient: row.coefficient,
+      restCoefficient: row.restCoefficient,
+      details: calculator.segmentDetails(row.segments),
+    };
   }
 
-  private toMonthKey(date: Date): string {
+  private exportContext(): RhExportContext {
+    return {
+      publicHolidays: this.publicHolidays,
+      onCallCompensationRules: this.onCallCompensationRules,
+      periodCompensationRules: this.periodCompensationRules,
+    };
+  }
+
+  private matchesRegularPeriodUser(intervention: RhRegularIntervention, period: RhRegularPeriod): boolean {
+    return intervention.userId === period.userId || Boolean(intervention.userEmail && intervention.userEmail === period.userEmail);
+  }
+
+  private matchesUser(userId: string | undefined, email: string | undefined, user: RhUser): boolean {
+    return userId === user.id || Boolean(email && email === user.email);
+  }
+
+  private isCurrentUser(user: RhUser): boolean {
+    return user.id === this.currentUser?.uid || Boolean(this.currentUser?.email && user.email === this.currentUser.email);
+  }
+
+  private ensureDefaultExpandedState(): void {
+    if (this.expandedUserId) {
+      return;
+    }
+
+    const defaultUser = this.visibleUsers.find((user) => this.isCurrentUser(user)) || this.visibleUsers[0];
+
+    if (defaultUser) {
+      this.expandedUserId = defaultUser.id;
+      this.expandFirstMonthForUser(defaultUser.id);
+    }
+  }
+
+  private expandFirstMonthForUser(userId: string): void {
+    const user = this.visibleUsers.find((item) => item.id === userId);
+    const firstMonth = user ? this.monthSectionsForUser(user)[0]?.monthKey : "";
+    this.expandedMonthSectionKey = firstMonth ? this.monthSectionKey(userId, firstMonth) : null;
+  }
+
+  private monthSectionKey(userId: string, monthKey: string): string {
+    return `${userId}::${monthKey}`;
+  }
+
+  private mergeRows<T extends { id: string }>(defaults: T[], savedRows: Partial<T>[]): T[] {
+    return defaults.map((defaultRow) => {
+      const savedRow = savedRows.find((row) => row.id === defaultRow.id);
+      return savedRow ? { ...defaultRow, ...savedRow } : defaultRow;
+    });
+  }
+
+  private formatDateTime(value: unknown): string {
+    const date = this.toDate(value);
+    return date ? new Intl.DateTimeFormat("fr-FR", { dateStyle: "short", timeStyle: "short" }).format(date) : "-";
+  }
+
+  private sentToRhTime(value: unknown): number {
+    return this.toDate(value)?.getTime() || 0;
+  }
+
+  private sentToRhMonthKey(value: unknown): string {
+    const date = this.toDate(value);
+
+    if (!date) {
+      return "";
+    }
+
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
   }
 
-  private toWeekKey(date: Date): string {
-    const workingDate = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-    const day = workingDate.getUTCDay() || 7;
-    workingDate.setUTCDate(workingDate.getUTCDate() + 4 - day);
-    const yearStart = new Date(Date.UTC(workingDate.getUTCFullYear(), 0, 1));
-    const week = Math.ceil(((workingDate.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
-    return `${workingDate.getUTCFullYear()}-W${String(week).padStart(2, "0")}`;
-  }
+  private toDate(value: unknown): Date | null {
+    if (!value) {
+      return null;
+    }
 
-  private toQuarterKey(date: Date): string {
-    return `${date.getFullYear()}-Q${Math.floor(date.getMonth() / 3) + 1}`;
-  }
+    if (value instanceof Date) {
+      return value;
+    }
 
-  private uniqueSorted(values: string[]): string[] {
-    return Array.from(new Set(values.filter(Boolean))).sort((first, second) => first.localeCompare(second));
-  }
+    if (typeof value === "string" || typeof value === "number") {
+      const date = new Date(value);
+      return Number.isNaN(date.getTime()) ? null : date;
+    }
 
-  private roundHours(value: number): number {
-    return Math.round(value * 100) / 100;
+    if (typeof value === "object" && "toDate" in value && typeof value.toDate === "function") {
+      return value.toDate();
+    }
+
+    if (typeof value === "object" && "seconds" in value && typeof value.seconds === "number") {
+      const nanoseconds = "nanoseconds" in value && typeof value.nanoseconds === "number" ? value.nanoseconds : 0;
+      return new Date(value.seconds * 1000 + Math.floor(nanoseconds / 1000000));
+    }
+
+    return null;
   }
 }
