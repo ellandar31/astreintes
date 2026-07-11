@@ -17,58 +17,78 @@
     }
   </header>
 
-  @for (section of validationSections; track section.title) {
-    <section class="validation-section" [attr.aria-label]="section.title">
-      <h3>{{ section.title }}</h3>
+  <div class="validation-layout">
+    <aside class="validation-submenu" aria-label="Menus de validation">
 
-      <div class="validation-table-shell">
-        <table class="validation-table">
-          <thead>
-            <tr>
-              <th>{{ labels.common.table.type }}</th>
-              <th>{{ labels.common.table.item }}</th>
-              <th>{{ labels.common.table.person }}</th>
-              <th>{{ labels.common.table.period }}</th>
-              <th>{{ labels.common.table.visa }}</th>
-              <th>{{ labels.common.table.actions }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (item of section.items; track item.id) {
-              <tr>
-                <td>{{ item.category }}</td>
-                <td>{{ item.title }}</td>
-                <td>{{ item.userLabel }}</td>
-                <td>{{ formatDateTime(item.startDate) }} - {{ formatDateTime(item.endDate) }}</td>
-                <td>
-                  @if (item.visa.signed) {
-                    <span class="signed">{{ labels.common.statuses.signedOn }}</span>
-                  } @else {
-                    <span class="pending">{{ labels.common.statuses.toSign }}</span>
-                  }
-                </td>
-                <td>
-                  <div class="actions">
-                    <button class="secondary-button compact-button" (click)="openItem(item)" type="button">{{ labels.common.actions.consult }}</button>
-                    @if (!item.visa.signed) {
-                      <button class="primary-button compact-button" (click)="signItem(item)" type="button">{{ labels.common.actions.sign }}</button>
-                    }
-                    @if (canDeleteVisa(item)) {
-                      <button class="danger-button compact-button" (click)="deleteVisa(item)" type="button">{{ labels.common.actions.delete }}</button>
-                    }
-                  </div>
-                </td>
-              </tr>
-            } @empty {
-              <tr>
-                <td colspan="6">{{ section.emptyText }}</td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-    </section>
-  }
+      @for (section of validationSections; track section.id) {
+        <button
+          class="validation-submenu-button"
+          [class.active]="activeValidationSection.id === section.id"
+          [attr.aria-current]="activeValidationSection.id === section.id ? 'page' : null"
+          type="button"
+          (click)="selectSection(section.id)"
+        >
+          <span>{{ section.title }}</span>
+          <strong>{{ section.items.length }}</strong>
+        </button>
+      }
+    </aside>
+
+    <div class="validation-content">
+      @if (activeValidationSection; as section) {
+        <section class="validation-section" [attr.aria-label]="section.title">
+          <h3>{{ section.title }}</h3>
+
+          <div class="validation-table-shell">
+            <table class="validation-table">
+              <thead>
+                <tr>
+                  <th>{{ labels.common.table.type }}</th>
+                  <th>{{ labels.common.table.item }}</th>
+                  <th>{{ labels.common.table.person }}</th>
+                  <th>{{ labels.common.table.period }}</th>
+                  <th>{{ labels.common.table.visa }}</th>
+                  <th>{{ labels.common.table.actions }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (item of section.items; track item.id) {
+                  <tr>
+                    <td>{{ item.category }}</td>
+                    <td>{{ item.title }}</td>
+                    <td>{{ item.userLabel }}</td>
+                    <td>{{ formatDateTime(item.startDate) }} - {{ formatDateTime(item.endDate) }}</td>
+                    <td>
+                      @if (item.visa.signed) {
+                        <span class="signed">{{ labels.common.statuses.signedOn }}</span>
+                      } @else {
+                        <span class="pending">{{ labels.common.statuses.toSign }}</span>
+                      }
+                    </td>
+                    <td>
+                      <div class="actions">
+                        <button class="secondary-button compact-button" (click)="openItem(item)" type="button">{{ labels.common.actions.consult }}</button>
+                        @if (!item.visa.signed) {
+                          <button class="primary-button compact-button" (click)="signItem(item)" type="button">{{ labels.common.actions.sign }}</button>
+                        }
+                        @if (canDeleteVisa(item)) {
+                          <button class="danger-button compact-button" (click)="deleteVisa(item)" type="button">{{ labels.common.actions.delete }}</button>
+                        }
+                      </div>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="6">{{ section.emptyText }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </section>
+      }
+    </div>
+  </div>
 
   @if (validationMessage) {
     <p class="success-message">{{ validationMessage }}</p>

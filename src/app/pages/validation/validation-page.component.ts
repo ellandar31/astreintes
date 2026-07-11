@@ -10,7 +10,7 @@ import { SignatureVisa, createEmptyVisa } from "../../shared/visa.models";
 import { ExceptionalOperation } from "../exceptionnel/exceptional.models";
 import { RegularIntervention, RegularOnCallPeriod } from "../regular/regular.models";
 import { ValidationConsultationModalComponent } from "./validation-consultation-modal.component";
-import { AppUser, ValidationItem, ValidationSection, VisaProgressItem } from "./validation.models";
+import { AppUser, ValidationItem, ValidationSection, ValidationSectionId, VisaProgressItem } from "./validation.models";
 
 @Component({
   selector: "app-validation-page",
@@ -28,6 +28,7 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
   regularInterventions: RegularIntervention[] = [];
   regularPeriods: RegularOnCallPeriod[] = [];
   selectedItem: ValidationItem | null = null;
+  activeSectionId: ValidationSectionId = "stakeholder";
   selectedUserId = "";
   users: AppUser[] = [];
   validationMessage = "";
@@ -172,6 +173,7 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
   get validationSections(): ValidationSection[] {
     const sections: ValidationSection[] = [
       {
+        id: "stakeholder",
         title: this.labels.validation.sections.stakeholder,
         emptyText: this.labels.validation.empty.stakeholder,
         items: this.intervenantVisaItems,
@@ -180,6 +182,7 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
 
     if (this.canViewInitiatorSection) {
       sections.push({
+        id: "initiator",
         title: this.labels.validation.sections.initiator,
         emptyText: this.labels.validation.empty.initiator,
         items: this.initiatorVisaItems,
@@ -188,6 +191,7 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
 
     if (this.canViewDirectorSection) {
       sections.push({
+        id: "director",
         title: this.labels.validation.sections.director,
         emptyText: this.labels.validation.empty.director,
         items: this.directorVisaItems,
@@ -195,6 +199,14 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
     }
 
     return sections;
+  }
+
+  get activeValidationSection(): ValidationSection {
+    return this.validationSections.find((section) => section.id === this.activeSectionId) || this.validationSections[0];
+  }
+
+  selectSection(sectionId: ValidationSectionId): void {
+    this.activeSectionId = sectionId;
   }
 
   get selectedItemVisaProgress(): VisaProgressItem[] {

@@ -47,7 +47,10 @@ export interface VisaProgressItem {
   actionItem?: ValidationItem;
 }
 
+export type ValidationSectionId = "stakeholder" | "initiator" | "director";
+
 export interface ValidationSection {
+  id: ValidationSectionId;
   title: string;
   emptyText: string;
   items: ValidationItem[];

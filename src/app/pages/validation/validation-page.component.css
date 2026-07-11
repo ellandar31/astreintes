@@ -6,8 +6,7 @@
   align-content: start;
   display: grid;
   gap: 16px;
-  margin: 0 auto;
-  max-width: 1180px;
+  width: 100%;
   padding: 10px 0 24px;
 }
 
@@ -39,8 +38,79 @@
   padding: 8px 10px;
 }
 
-.validation-table-shell {
+.validation-layout {
+  align-items: start;
+  display: grid;
+  gap: 16px;
+  grid-template-columns: 260px minmax(0, 1fr);
+  width: 100%;
+}
+
+.validation-submenu {
   background: #ffffff;
+  border: 1px solid #dde5eb;
+  border-radius: 8px;
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+}
+
+.validation-submenu-heading {
+  border-bottom: 1px solid #dde5eb;
+  margin-bottom: 6px;
+  padding: 2px 4px 10px;
+}
+
+.validation-submenu-heading h3 {
+  color: #1f2937;
+  margin: 0;
+}
+
+.validation-submenu-button {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  color: #526171;
+  cursor: pointer;
+  display: flex;
+  font-weight: 900;
+  gap: 10px;
+  justify-content: space-between;
+  min-height: 38px;
+  padding: 0 12px;
+  text-align: left;
+}
+
+.validation-submenu-button.active {
+  background: #174f5b;
+  color: #ffffff;
+}
+
+.validation-submenu-button strong {
+  background: #edf3f5;
+  border-radius: 999px;
+  color: #526171;
+  font-size: 0.78rem;
+  min-width: 24px;
+  padding: 2px 7px;
+  text-align: center;
+}
+
+.validation-submenu-button.active strong {
+  background: #ffffff;
+  color: #174f5b;
+}
+
+.validation-content {
+  background: #ffffff;
+  border: 1px solid #dde5eb;
+  border-radius: 8px;
+  min-width: 0;
+  padding: 16px;
+}
+
+.validation-table-shell {
   border: 1px solid #dde5eb;
   border-radius: 8px;
   overflow: auto;
@@ -58,7 +128,7 @@
 
 .validation-table {
   border-collapse: collapse;
-  min-width: 940px;
+  min-width: 780px;
   width: 100%;
 }
 
@@ -96,4 +166,10 @@
 .pending {
   color: #8a5a16;
   font-weight: 800;
+}
+
+@media (max-width: 760px) {
+  .validation-layout {
+    grid-template-columns: 1fr;
+  }
 }
