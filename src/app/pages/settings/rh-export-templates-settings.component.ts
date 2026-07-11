@@ -1,8 +1,8 @@
 import { CommonModule } from "@angular/common";
 import { Component, EventEmitter, OnDestroy, Output } from "@angular/core";
 import { FormsModule } from "@angular/forms";
-import { doc, onSnapshot, setDoc, Unsubscribe } from "firebase/firestore";
-import { db } from "../../firebase";
+import { onSnapshot, setDoc, Unsubscribe } from "firebase/firestore";
+import { rhExportTemplatesDoc } from "../../firebase-paths";
 
 interface RhExportTemplateSetting {
   id: "regular" | "exceptionalOnCall" | "exceptionalWork";
@@ -27,7 +27,7 @@ export class RhExportTemplatesSettingsComponent implements OnDestroy {
     { id: "exceptionalWork", label: "Travaux exceptionnels", fileName: "" },
   ];
 
-  private readonly settingsRef = doc(db, "rhSettings", "exportTemplates");
+  private readonly settingsRef = rhExportTemplatesDoc();
   private readonly unsubscribe: Unsubscribe = onSnapshot(this.settingsRef, (snapshot) => {
     const data = snapshot.data();
     const savedTemplates = Array.isArray(data?.["templates"]) ? (data["templates"] as Partial<RhExportTemplateSetting>[]) : [];

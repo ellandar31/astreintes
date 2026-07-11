@@ -2,8 +2,8 @@ import { CommonModule } from "@angular/common";
 import { Component, EventEmitter, OnDestroy, Output } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { FirebaseError } from "firebase/app";
-import { Unsubscribe, collection, deleteDoc, doc, onSnapshot, updateDoc } from "firebase/firestore";
-import { db } from "../../firebase";
+import { Unsubscribe, deleteDoc, onSnapshot, updateDoc } from "firebase/firestore";
+import { userDoc, usersCollection } from "../../firebase-paths";
 import { ManagedUser, UserRole } from "./settings.models";
 
 @Component({
@@ -27,7 +27,7 @@ export class UsersSettingsComponent implements OnDestroy {
   users: ManagedUser[] = [];
 
   private readonly unsubscribe: Unsubscribe = onSnapshot(
-    collection(db, "users"),
+    usersCollection(),
     (snapshot) => {
       this.users = snapshot.docs
         .map((document) => ({ id: document.id, ...document.data() }) as ManagedUser)
@@ -42,7 +42,7 @@ export class UsersSettingsComponent implements OnDestroy {
 
   async updateUserRole(user: ManagedUser, role: UserRole): Promise<void> {
     try {
-      await updateDoc(doc(db, "users", user.id), {
+      await updateDoc(userDoc(user.id), {
         role: Number(role) as UserRole,
       });
       this.success.emit("Rôle utilisateur mis à jour.");
@@ -53,7 +53,7 @@ export class UsersSettingsComponent implements OnDestroy {
 
   async deleteUser(user: ManagedUser): Promise<void> {
     try {
-      await deleteDoc(doc(db, "users", user.id));
+      await deleteDoc(userDoc(user.id));
       this.success.emit("Utilisateur retiré de la liste applicative.");
     } catch (error) {
       this.emitError(error);

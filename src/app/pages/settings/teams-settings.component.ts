@@ -2,8 +2,8 @@ import { CommonModule } from "@angular/common";
 import { Component, EventEmitter, OnDestroy, Output } from "@angular/core";
 import { FormsModule, NgForm } from "@angular/forms";
 import { FirebaseError } from "firebase/app";
-import { Unsubscribe, addDoc, collection, deleteDoc, doc, onSnapshot, setDoc } from "firebase/firestore";
-import { db } from "../../firebase";
+import { Unsubscribe, addDoc, deleteDoc, onSnapshot, setDoc } from "firebase/firestore";
+import { teamDoc, teamsCollection, usersCollection } from "../../firebase-paths";
 import { ManagedUser, Team } from "./settings.models";
 
 @Component({
@@ -28,7 +28,7 @@ export class TeamsSettingsComponent implements OnDestroy {
 
   private readonly unsubscribes: Unsubscribe[] = [
     onSnapshot(
-      collection(db, "teams"),
+      teamsCollection(),
       (snapshot) => {
         this.teams = snapshot.docs
           .map((document) => {
@@ -44,7 +44,7 @@ export class TeamsSettingsComponent implements OnDestroy {
       (error) => this.emitError(error),
     ),
     onSnapshot(
-      collection(db, "users"),
+      usersCollection(),
       (snapshot) => {
         this.users = snapshot.docs
           .map((document) => ({ id: document.id, ...document.data() }) as ManagedUser)
@@ -95,9 +95,9 @@ export class TeamsSettingsComponent implements OnDestroy {
 
     try {
       if (this.editingTeamId) {
-        await setDoc(doc(db, "teams", this.editingTeamId), payload);
+        await setDoc(teamDoc(this.editingTeamId), payload);
       } else {
-        await addDoc(collection(db, "teams"), payload);
+        await addDoc(teamsCollection(), payload);
       }
 
       this.resetTeamForm(form);
@@ -109,7 +109,7 @@ export class TeamsSettingsComponent implements OnDestroy {
 
   async deleteTeam(team: Team): Promise<void> {
     try {
-      await deleteDoc(doc(db, "teams", team.id));
+      await deleteDoc(teamDoc(team.id));
       this.success.emit("Équipe supprimée.");
     } catch (error) {
       this.emitError(error);

@@ -3,6 +3,13 @@ import { Component, OnDestroy } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { Unsubscribe, collection, deleteField, doc, onSnapshot, serverTimestamp, updateDoc } from "firebase/firestore";
 import { db } from "../../firebase";
+import {
+  publicHolidaysCollection,
+  regularInterventionsGroup,
+  regularOnCallPeriodsCollection,
+  rhCompensationRulesDoc,
+  rhExportTemplatesDoc,
+} from "../../firebase-paths";
 import { SignatureVisa, createEmptyVisa } from "../../shared/visa.models";
 import { RhExceptionalOperation, RhRegularPeriod } from "./rh.models";
 import { RhExcelExportLibrary } from "./export-libraries/rh-excel-export.lib";
@@ -61,7 +68,7 @@ export class RhExportsComponent implements OnDestroy {
   ];
 
   private readonly unsubscribes: Unsubscribe[] = [
-    onSnapshot(doc(db, "rhSettings", "exportTemplates"), (snapshot) => {
+    onSnapshot(rhExportTemplatesDoc(), (snapshot) => {
       const data = snapshot.data();
       const savedTemplates = Array.isArray(data?.["templates"]) ? (data["templates"] as Partial<WordExportTemplate>[]) : [];
 
@@ -70,7 +77,7 @@ export class RhExportsComponent implements OnDestroy {
         template.fileName = savedTemplate?.fileName || "";
       });
     }),
-    onSnapshot(doc(db, "rhSettings", "compensationRules"), (snapshot) => {
+    onSnapshot(rhCompensationRulesDoc(), (snapshot) => {
       const data = snapshot.data();
 
       if (!data) {
@@ -80,18 +87,20 @@ export class RhExportsComponent implements OnDestroy {
       this.onCallCompensationRules = this.mergeRows(this.onCallCompensationRules, data["onCall"] || []);
       this.periodCompensationRules = this.mergeRows(this.periodCompensationRules, data["periods"] || []);
     }),
-    onSnapshot(collection(db, "regularOnCallPeriods"), (snapshot) => {
+    onSnapshot(regularOnCallPeriodsCollection(), (snapshot) => {
       this.regularPeriods = snapshot.docs.map((document) => ({ id: document.id, ...document.data() }) as RhRegularPeriod);
     }),
-    onSnapshot(collection(db, "regularInterventions"), (snapshot) => {
-      this.regularInterventions = snapshot.docs.map(
-        (document) => ({ id: document.id, ...document.data() }) as RegularInterventionExport,
-      );
+    onSnapshot(regularInterventionsGroup(), (snapshot) => {
+      this.regularInterventions = snapshot.docs.map((document) => {
+        const data = document.data();
+        const periodId = document.ref.parent.parent?.id || String(data["periodId"] || "");
+        return { id: document.id, ...data, periodId } as RegularInterventionExport;
+      });
     }),
     onSnapshot(collection(db, "exceptionalOperations"), (snapshot) => {
       this.exceptionalOperations = snapshot.docs.map((document) => ({ id: document.id, ...document.data() }) as RhExceptionalOperation);
     }),
-    onSnapshot(collection(db, "publicHolidays"), (snapshot) => {
+    onSnapshot(publicHolidaysCollection(), (snapshot) => {
       this.publicHolidays = snapshot.docs.map((document) => ({ id: document.id, ...document.data() }) as { id: string; date: string; label: string });
     }),
   ];

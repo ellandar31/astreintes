@@ -1,8 +1,8 @@
 import { CommonModule } from "@angular/common";
 import { Component, EventEmitter, OnDestroy, Output } from "@angular/core";
 import { FormsModule } from "@angular/forms";
-import { doc, onSnapshot, setDoc, Unsubscribe } from "firebase/firestore";
-import { db } from "../../firebase";
+import { onSnapshot, setDoc, Unsubscribe } from "firebase/firestore";
+import { rhCompensationRulesDoc } from "../../firebase-paths";
 
 interface OnCallCompensationRule {
   id: string;
@@ -42,7 +42,7 @@ export class RhCompensationSettingsComponent implements OnDestroy {
     { id: "sunday_holiday_7_21", label: "Dimanche/Jours fériés (7h-21h)", interventionCoefficient: 0, workCoefficient: 0, restCoefficient: 0 },
   ];
 
-  private readonly settingsRef = doc(db, "rhSettings", "compensationRules");
+  private readonly settingsRef = rhCompensationRulesDoc();
 
   private readonly unsubscribe: Unsubscribe = onSnapshot(this.settingsRef, (snapshot) => {
     const data = snapshot.data();

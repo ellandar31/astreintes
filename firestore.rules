@@ -6,32 +6,24 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    match /teams/{teamId} {
-      allow read, write: if isSignedIn();
-    }
-
-    match /scheduleRules/{ruleId} {
-      allow read, write: if isSignedIn();
-    }
-
-    match /publicHolidays/{holidayId} {
-      allow read, write: if isSignedIn();
-    }
-
     match /exceptionalOperations/{operationId} {
       allow read, write: if isSignedIn();
     }
 
     match /regularOnCallPeriods/{periodId} {
       allow read, write: if isSignedIn();
+
+      match /interventions/{interventionId} {
+        allow read, write: if isSignedIn();
+      }
     }
 
-    match /regularInterventions/{interventionId} {
+    match /settings/{settingDocument} {
       allow read, write: if isSignedIn();
-    }
 
-    match /users/{userId} {
-      allow read, write: if isSignedIn();
+      match /items/{itemId} {
+        allow read, write: if isSignedIn();
+      }
     }
   }
 }

@@ -2,8 +2,17 @@ import { CommonModule } from "@angular/common";
 import { Component, OnDestroy } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { FirebaseError } from "firebase/app";
-import { Unsubscribe, addDoc, collection, deleteDoc, doc, onSnapshot, serverTimestamp, updateDoc } from "firebase/firestore";
-import { db } from "../../firebase";
+import { Unsubscribe, addDoc, deleteDoc, onSnapshot, serverTimestamp, updateDoc } from "firebase/firestore";
+import {
+  publicHolidaysCollection,
+  regularInterventionDoc,
+  regularInterventionsCollection,
+  regularInterventionsGroup,
+  regularOnCallPeriodDoc,
+  regularOnCallPeriodsCollection,
+  teamsCollection,
+  usersCollection,
+} from "../../firebase-paths";
 import { createEmptyVisa } from "../../shared/visa.models";
 import {
   RegularIntervention,
@@ -51,7 +60,7 @@ export class RegularCalendarComponent implements OnDestroy {
   users: RegularUser[] = [];
 
   private readonly unsubscribes: Unsubscribe[] = [
-    onSnapshot(collection(db, "teams"), (snapshot) => {
+    onSnapshot(teamsCollection(), (snapshot) => {
       this.teams = snapshot.docs
         .map((document) => {
           const data = document.data();
@@ -67,25 +76,29 @@ export class RegularCalendarComponent implements OnDestroy {
         this.selectedTeamId = this.teams[0].id;
       }
     }),
-    onSnapshot(collection(db, "users"), (snapshot) => {
+    onSnapshot(usersCollection(), (snapshot) => {
       this.users = snapshot.docs
         .map((document) => ({ id: document.id, ...document.data() }) as RegularUser)
         .filter((user) => Boolean(user.email))
         .sort((first, second) => this.userLabel(first).localeCompare(this.userLabel(second)));
     }),
-    onSnapshot(collection(db, "regularOnCallPeriods"), (snapshot) => {
+    onSnapshot(regularOnCallPeriodsCollection(), (snapshot) => {
       this.periods = snapshot.docs.map((document) => ({ id: document.id, ...document.data() }) as RegularOnCallPeriod);
     }),
     onSnapshot(
-      collection(db, "regularInterventions"),
+      regularInterventionsGroup(),
       (snapshot) => {
-        this.interventions = snapshot.docs.map((document) => ({ id: document.id, ...document.data() }) as RegularIntervention);
+        this.interventions = snapshot.docs.map((document) => {
+          const data = document.data();
+          const periodId = document.ref.parent.parent?.id || String(data["periodId"] || "");
+          return { id: document.id, ...data, periodId } as RegularIntervention;
+        });
       },
       (error) => {
         this.interventionError = this.toFirebaseErrorMessage(error, "Impossible de charger les interventions.");
       },
     ),
-    onSnapshot(collection(db, "publicHolidays"), (snapshot) => {
+    onSnapshot(publicHolidaysCollection(), (snapshot) => {
       this.publicHolidays = snapshot.docs
         .map((document) => {
           const data = document.data();
@@ -264,7 +277,7 @@ export class RegularCalendarComponent implements OnDestroy {
     }
 
     if (this.editingPeriodId) {
-      await updateDoc(doc(db, "regularOnCallPeriods", this.editingPeriodId), {
+      await updateDoc(regularOnCallPeriodDoc(this.editingPeriodId), {
         ...form,
         teamId: this.selectedTeamId,
         agentVisa: this.periods.find((period) => period.id === this.editingPeriodId)?.agentVisa || createEmptyVisa(),
@@ -276,7 +289,7 @@ export class RegularCalendarComponent implements OnDestroy {
       return;
     }
 
-    await addDoc(collection(db, "regularOnCallPeriods"), {
+    await addDoc(regularOnCallPeriodsCollection(), {
       ...form,
       teamId: this.selectedTeamId,
       agentVisa: createEmptyVisa(),
@@ -320,9 +333,9 @@ export class RegularCalendarComponent implements OnDestroy {
       };
 
       if (this.editingInterventionId) {
-        await updateDoc(doc(db, "regularInterventions", this.editingInterventionId), payload);
+        await updateDoc(regularInterventionDoc(parentPeriod.id, this.editingInterventionId), payload);
       } else {
-        await addDoc(collection(db, "regularInterventions"), {
+        await addDoc(regularInterventionsCollection(parentPeriod.id), {
           ...payload,
           createdAt: serverTimestamp(),
         });
@@ -346,7 +359,7 @@ export class RegularCalendarComponent implements OnDestroy {
     }
 
     try {
-      await deleteDoc(doc(db, "regularInterventions", intervention.id));
+      await deleteDoc(regularInterventionDoc(intervention.periodId, intervention.id));
     } catch (error) {
       this.interventionError = this.toFirebaseErrorMessage(error, "Impossible de supprimer l'intervention.");
       this.isInterventionModalOpen = true;
@@ -370,7 +383,12 @@ export class RegularCalendarComponent implements OnDestroy {
       return;
     }
 
-    await deleteDoc(doc(db, "regularOnCallPeriods", this.editingPeriodId));
+    await Promise.all(
+      this.interventions
+        .filter((intervention) => intervention.periodId === this.editingPeriodId)
+        .map((intervention) => deleteDoc(regularInterventionDoc(intervention.periodId, intervention.id))),
+    );
+    await deleteDoc(regularOnCallPeriodDoc(this.editingPeriodId));
     this.closePeriodModal();
   }
 

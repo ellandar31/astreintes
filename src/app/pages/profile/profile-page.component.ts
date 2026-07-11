@@ -2,8 +2,8 @@ import { CommonModule } from "@angular/common";
 import { Component, ElementRef, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { User, updateProfile } from "firebase/auth";
-import { Unsubscribe, doc, onSnapshot, setDoc } from "firebase/firestore";
-import { db } from "../../firebase";
+import { Unsubscribe, onSnapshot, setDoc } from "firebase/firestore";
+import { userDoc } from "../../firebase-paths";
 import { SignatureProfile, VisaSignatureMode } from "../../shared/visa.models";
 
 @Component({
@@ -69,7 +69,7 @@ export class ProfilePageComponent implements OnChanges, OnDestroy {
       return;
     }
 
-    this.unsubscribe = onSnapshot(doc(db, "users", this.user.uid), (snapshot) => {
+    this.unsubscribe = onSnapshot(userDoc(this.user.uid), (snapshot) => {
       const data = snapshot.data() as SignatureProfile | undefined;
       this.profile = {
         displayName: data?.displayName || this.user?.displayName || "",
@@ -102,7 +102,7 @@ export class ProfilePageComponent implements OnChanges, OnDestroy {
       }
 
     await setDoc(
-      doc(db, "users", this.user.uid),
+      userDoc(this.user.uid),
       {
         ...this.profile,
         displayName,

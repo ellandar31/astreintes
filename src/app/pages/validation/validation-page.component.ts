@@ -4,6 +4,7 @@ import { FormsModule } from "@angular/forms";
 import { User } from "firebase/auth";
 import { Unsubscribe, collection, doc, onSnapshot, setDoc, updateDoc } from "firebase/firestore";
 import { db } from "../../firebase";
+import { regularInterventionDoc, regularInterventionsGroup, regularOnCallPeriodDoc, regularOnCallPeriodsCollection, usersCollection } from "../../firebase-paths";
 import { APP_LABELS } from "../../i18n/labels";
 import { normalizeObjectTextEncoding } from "../../i18n/text-encoding";
 import { SignatureVisa, createEmptyVisa } from "../../shared/visa.models";
@@ -35,18 +36,22 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
   readonly canDeleteVisaForModal = (item: ValidationItem): boolean => this.canDeleteVisa(item);
 
   private readonly unsubscribes: Unsubscribe[] = [
-    onSnapshot(collection(db, "users"), (snapshot) => {
+    onSnapshot(usersCollection(), (snapshot) => {
       this.users = snapshot.docs
         .map((document) => this.fromFirestore<AppUser>(document.id, document.data()))
         .filter((item) => Boolean(item.email))
         .sort((first, second) => this.userLabel(first).localeCompare(this.userLabel(second)));
       this.refreshProfile();
     }),
-    onSnapshot(collection(db, "regularOnCallPeriods"), (snapshot) => {
+    onSnapshot(regularOnCallPeriodsCollection(), (snapshot) => {
       this.regularPeriods = snapshot.docs.map((document) => this.fromFirestore<RegularOnCallPeriod>(document.id, document.data()));
     }),
-    onSnapshot(collection(db, "regularInterventions"), (snapshot) => {
-      this.regularInterventions = snapshot.docs.map((document) => this.fromFirestore<RegularIntervention>(document.id, document.data()));
+    onSnapshot(regularInterventionsGroup(), (snapshot) => {
+      this.regularInterventions = snapshot.docs.map((document) => {
+        const data = document.data();
+        const periodId = document.ref.parent.parent?.id || String(data["periodId"] || "");
+        return this.fromFirestore<RegularIntervention>(document.id, { ...data, periodId });
+      });
     }),
     onSnapshot(collection(db, "exceptionalOperations"), (snapshot) => {
       this.exceptionalOperations = snapshot.docs.map((document) => this.fromFirestore<ExceptionalOperation>(document.id, document.data()));
@@ -396,7 +401,7 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
         [field]: visa,
       };
 
-      await updateDoc(doc(db, "regularOnCallPeriods", (item.payload as RegularOnCallPeriod).id), {
+      await updateDoc(regularOnCallPeriodDoc((item.payload as RegularOnCallPeriod).id), {
         [field]: visa,
       });
       this.regularPeriods = this.regularPeriods.map((currentPeriod) =>
@@ -414,7 +419,7 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
         agentVisa: visa,
       };
 
-      await updateDoc(doc(db, "regularInterventions", (item.payload as RegularIntervention).id), {
+      await updateDoc(regularInterventionDoc(intervention.periodId, intervention.id), {
         agentVisa: visa,
       });
       this.regularInterventions = this.regularInterventions.map((currentIntervention) =>
@@ -463,7 +468,7 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
         [field]: emptyVisa,
       };
 
-      await updateDoc(doc(db, "regularOnCallPeriods", (item.payload as RegularOnCallPeriod).id), {
+      await updateDoc(regularOnCallPeriodDoc((item.payload as RegularOnCallPeriod).id), {
         [field]: emptyVisa,
       });
       this.regularPeriods = this.regularPeriods.map((currentPeriod) =>
@@ -481,7 +486,7 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
         agentVisa: emptyVisa,
       };
 
-      await updateDoc(doc(db, "regularInterventions", (item.payload as RegularIntervention).id), {
+      await updateDoc(regularInterventionDoc(intervention.periodId, intervention.id), {
         agentVisa: emptyVisa,
       });
       this.regularInterventions = this.regularInterventions.map((currentIntervention) =>
@@ -674,7 +679,7 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
 
     await Promise.all(
       interventions.map((intervention) =>
-        updateDoc(doc(db, "regularInterventions", intervention.id), {
+        updateDoc(regularInterventionDoc(intervention.periodId, intervention.id), {
           agentVisa: visa,
         }),
       ),

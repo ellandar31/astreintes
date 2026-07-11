@@ -3,6 +3,7 @@ import { Component, OnDestroy } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { Unsubscribe, collection, onSnapshot } from "firebase/firestore";
 import { db } from "../../firebase";
+import { publicHolidaysCollection, regularOnCallPeriodsCollection, usersCollection } from "../../firebase-paths";
 import {
   RhControlRow,
   RhExceptionalOperation,
@@ -29,16 +30,16 @@ export class RhControlsComponent implements OnDestroy {
   selectedQuarter = this.toQuarterKey(new Date());
 
   private readonly unsubscribes: Unsubscribe[] = [
-    onSnapshot(collection(db, "users"), (snapshot) => {
+    onSnapshot(usersCollection(), (snapshot) => {
       this.users = snapshot.docs
         .map((document) => ({ id: document.id, ...document.data() }) as RhUser)
         .filter((user) => Boolean(user.email))
         .sort((first, second) => this.userLabel(first).localeCompare(this.userLabel(second)));
     }),
-    onSnapshot(collection(db, "regularOnCallPeriods"), (snapshot) => {
+    onSnapshot(regularOnCallPeriodsCollection(), (snapshot) => {
       this.regularPeriods = snapshot.docs.map((document) => ({ id: document.id, ...document.data() }) as RhRegularPeriod);
     }),
-    onSnapshot(collection(db, "publicHolidays"), (snapshot) => {
+    onSnapshot(publicHolidaysCollection(), (snapshot) => {
       this.publicHolidays = snapshot.docs.map((document) => ({ id: document.id, ...document.data() }) as RhPublicHoliday);
     }),
     onSnapshot(collection(db, "exceptionalOperations"), (snapshot) => {

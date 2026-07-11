@@ -10,8 +10,9 @@ import {
   signInWithPopup,
   signOut,
 } from "firebase/auth";
-import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
-import { auth, db, googleProvider } from "./firebase";
+import { getDoc, serverTimestamp, setDoc } from "firebase/firestore";
+import { auth, googleProvider } from "./firebase";
+import { userDoc } from "./firebase-paths";
 import { ExceptionalOperationsComponent } from "./pages/exceptionnel/exceptional-operations.component";
 import { ProfilePageComponent } from "./pages/profile/profile-page.component";
 import { RegularCalendarComponent } from "./pages/regular/regular-calendar.component";
@@ -132,7 +133,7 @@ export class AppComponent {
   }
 
   private async registerAuthenticatedUser(currentUser: User): Promise<void> {
-    const userReference = doc(db, "users", currentUser.uid);
+    const userReference = userDoc(currentUser.uid);
     const snapshot = await getDoc(userReference);
     const userPayload = {
       uid: currentUser.uid,

@@ -2,8 +2,8 @@ import { CommonModule } from "@angular/common";
 import { Component, EventEmitter, OnDestroy, Output } from "@angular/core";
 import { FormsModule, NgForm } from "@angular/forms";
 import { FirebaseError } from "firebase/app";
-import { Unsubscribe, collection, deleteDoc, doc, onSnapshot, setDoc } from "firebase/firestore";
-import { db } from "../../firebase";
+import { Unsubscribe, deleteDoc, onSnapshot, setDoc } from "firebase/firestore";
+import { publicHolidayDoc, publicHolidaysCollection } from "../../firebase-paths";
 import { PublicHoliday } from "./settings.models";
 
 type HolidaySourceResponse = Record<string, string>;
@@ -49,7 +49,7 @@ export class HolidaysSettingsComponent implements OnDestroy {
   };
 
   private readonly unsubscribe: Unsubscribe = onSnapshot(
-    collection(db, "publicHolidays"),
+    publicHolidaysCollection(),
     (snapshot) => {
       this.holidays = snapshot.docs
         .map((document) => ({ id: document.id, ...document.data() }) as PublicHoliday)
@@ -95,7 +95,7 @@ export class HolidaysSettingsComponent implements OnDestroy {
     try {
       await Promise.all(
         this.importedHolidays.map((holiday) =>
-          setDoc(doc(db, "publicHolidays", holiday.id), {
+          setDoc(publicHolidayDoc(holiday.id), {
             date: holiday.date,
             label: holiday.label,
             zone: holiday.zone,
@@ -118,7 +118,7 @@ export class HolidaysSettingsComponent implements OnDestroy {
     const holiday = this.toHoliday(this.manualForm.zone, this.manualForm.date, this.manualForm.label, "manual");
 
     try {
-      await setDoc(doc(db, "publicHolidays", holiday.id), {
+      await setDoc(publicHolidayDoc(holiday.id), {
         date: holiday.date,
         label: holiday.label,
         zone: holiday.zone,
@@ -137,7 +137,7 @@ export class HolidaysSettingsComponent implements OnDestroy {
 
   async deleteHoliday(holiday: PublicHoliday): Promise<void> {
     try {
-      await deleteDoc(doc(db, "publicHolidays", holiday.id));
+      await deleteDoc(publicHolidayDoc(holiday.id));
       this.success.emit("Jour férié supprimé.");
     } catch (error) {
       this.emitError(error);
