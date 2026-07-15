@@ -312,10 +312,10 @@ export class ExceptionalOperationsComponent implements OnDestroy {
 
   sortIndicator(field: SortField): string {
     if (this.sortField !== field) {
-      return "â‡…";
+      return "⇅";
     }
 
-    return this.sortDirection === "asc" ? "â†‘" : "â†“";
+    return this.sortDirection === "asc" ? "↑" : "↓";
   }
 
   toggleFilter(field: SortField): void {
