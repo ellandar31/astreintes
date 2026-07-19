@@ -9,5 +9,6 @@
   "include": [
     "src/app/shared/visa.models.ts",
     "src/app/pages/rh/export-libraries/**/*.ts"
-  ]
+  ],
+  "exclude": ["src/app/pages/rh/export-libraries/**/*.jest-spec.ts"]
 }
