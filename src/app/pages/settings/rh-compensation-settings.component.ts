@@ -2,6 +2,10 @@ import { CommonModule } from "@angular/common";
 import { Component, EventEmitter, OnDestroy, Output, effect, inject } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { Store } from "@ngrx/store";
+import { ButtonModule } from "primeng/button";
+import { CardModule } from "primeng/card";
+import { InputNumberModule } from "primeng/inputnumber";
+import { TableModule } from "primeng/table";
 import { APP_LABELS } from "../../i18n/labels";
 import { SettingsActions } from "../../state/settings/settings.actions";
 import { selectSettingsMessage, selectSettingsRhCompensation } from "../../state/settings/settings.selectors";
@@ -10,7 +14,7 @@ import { OnCallCompensationRule, PeriodCompensationRule } from "./settings.model
 @Component({
   selector: "app-rh-compensation-settings",
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [ButtonModule, CardModule, CommonModule, FormsModule, InputNumberModule, TableModule],
   templateUrl: "./rh-compensation-settings.component.html",
   styleUrls: ["./settings-common.scss", "./rh-compensation-settings.component.scss"],
 })

@@ -1,7 +1,8 @@
 <section class="rh-layout" [attr.aria-label]="labels.app.tabs.rh">
-  <aside class="rh-menu" [attr.aria-label]="labels.app.tabs.rh">
+  <p-card styleClass="rh-menu" [attr.aria-label]="labels.app.tabs.rh">
     @for (section of sections; track section.id) {
       <button
+        pButton
         class="rh-menu-button"
         [class.active]="activeSection === section.id"
         (click)="setSection(section.id)"
@@ -10,7 +11,7 @@
         {{ section.label }}
       </button>
     }
-  </aside>
+  </p-card>
 
   <div class="rh-content">
     @if (activeSection === "controls") {

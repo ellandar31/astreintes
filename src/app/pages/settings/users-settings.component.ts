@@ -2,6 +2,10 @@ import { CommonModule } from "@angular/common";
 import { Component, EventEmitter, OnDestroy, Output, effect, inject } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { Store } from "@ngrx/store";
+import { ButtonModule } from "primeng/button";
+import { SelectModule } from "primeng/select";
+import { TableModule } from "primeng/table";
+import { TagModule } from "primeng/tag";
 import { APP_LABELS } from "../../i18n/labels";
 import { SettingsActions } from "../../state/settings/settings.actions";
 import { selectSettingsMessage, selectSettingsUsers } from "../../state/settings/settings.selectors";
@@ -10,7 +14,7 @@ import { ManagedUser, UserRole } from "./settings.models";
 @Component({
   selector: "app-users-settings",
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [ButtonModule, CommonModule, FormsModule, SelectModule, TableModule, TagModule],
   templateUrl: "./users-settings.component.html",
   styleUrls: ["./settings-common.scss"],
 })

@@ -10,12 +10,25 @@
 }
 
 .settings-form {
+  display: block;
+}
+
+:host ::ng-deep .settings-form {
   background: #f7fafb;
   border: 1px solid #dde5eb;
   border-radius: 8px;
+  box-shadow: none;
+}
+
+:host ::ng-deep .settings-form .p-card-body {
+  padding: 14px;
+}
+
+:host ::ng-deep .settings-form .p-card-content,
+.settings-form form {
   display: grid;
   gap: 14px;
-  padding: 14px;
+  padding: 0;
 }
 
 .form-grid,
@@ -41,6 +54,43 @@
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+}
+
+.settings-table {
+  border: 1px solid #dde5eb;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+:host ::ng-deep .settings-table .p-datatable-table {
+  font-size: 0.92rem;
+}
+
+:host ::ng-deep .settings-table .p-datatable-thead > tr > th {
+  background: #f7fafb;
+  color: #526171;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+}
+
+:host ::ng-deep .settings-table .p-datatable-tbody > tr > td,
+:host ::ng-deep .settings-table .p-datatable-thead > tr > th {
+  border-color: #dde5eb;
+  padding: 10px 12px;
+}
+
+:host ::ng-deep .compact-table .p-datatable-tbody > tr > td,
+:host ::ng-deep .compact-table .p-datatable-thead > tr > th {
+  padding: 8px 10px;
+}
+
+:host ::ng-deep .role-select,
+:host ::ng-deep .user-select,
+:host ::ng-deep p-select,
+:host ::ng-deep p-inputnumber,
+:host ::ng-deep .p-inputnumber,
+:host ::ng-deep .p-inputtext {
+  width: 100%;
 }
 
 .settings-list {
@@ -94,6 +144,21 @@
   padding: 0 10px;
 }
 
+.tag-content {
+  align-items: center;
+  display: inline-flex;
+  gap: 8px;
+}
+
+.tag-content button {
+  background: transparent;
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  padding: 0;
+}
+
 .tag button {
   background: transparent;
   border: 0;
@@ -104,11 +169,11 @@
 
 .role-help {
   color: #607080;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
   align-items: flex-start;
   font-size: 0.86rem;
-  gap: 8px;
+  gap: 8px 10px;
 }
 
 .role-help p {
@@ -120,7 +185,8 @@
   .inline-form,
   .inline-form-compact,
   .settings-item,
-  .settings-item-users {
+  .settings-item-users,
+  .role-help {
     display: grid;
     grid-template-columns: 1fr;
   }

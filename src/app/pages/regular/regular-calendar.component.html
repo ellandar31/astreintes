@@ -8,26 +8,51 @@
     <div class="regular-actions">
       <label>
         {{ labels.regular.fields.team }}
-        <select [(ngModel)]="selectedTeamId" name="regularTeam">
-          @for (team of teams; track team.id) {
-            <option [ngValue]="team.id">{{ team.name }}</option>
-          }
-        </select>
+        <p-select
+          [options]="teams"
+          [(ngModel)]="selectedTeamId"
+          name="regularTeam"
+          optionLabel="name"
+          optionValue="id"
+          appendTo="body"
+          styleClass="team-select"
+        ></p-select>
       </label>
 
-      <button class="primary-button" [disabled]="!selectedTeamId" (click)="openPeriodModal()" type="button">
-        {{ labels.regular.actions.addOnCallPeriod }}
-      </button>
-      <button class="secondary-button" (click)="openInterventionModal()" type="button">
-        {{ labels.regular.actions.addIntervention }}
-      </button>
+      <p-button
+        icon="pi pi-calendar-plus"
+        [disabled]="!selectedTeamId"
+        [label]="labels.regular.actions.addOnCallPeriod"
+        (onClick)="openPeriodModal()"
+      ></p-button>
+      <p-button
+        icon="pi pi-clock"
+        severity="secondary"
+        [outlined]="true"
+        [label]="labels.regular.actions.addIntervention"
+        (onClick)="openInterventionModal()"
+      ></p-button>
     </div>
   </header>
 
   <div class="month-navigation" [attr.aria-label]="labels.regular.sections.monthNavigation">
-    <button class="month-button" (click)="previousMonth()" [title]="labels.regular.actions.previousMonth" type="button">‹</button>
+    <p-button
+      icon="pi pi-chevron-left"
+      [rounded]="true"
+      severity="secondary"
+      [outlined]="true"
+      (onClick)="previousMonth()"
+      [title]="labels.regular.actions.previousMonth"
+    ></p-button>
     <h3>{{ monthLabel }}</h3>
-    <button class="month-button" (click)="nextMonth()" [title]="labels.regular.actions.nextMonth" type="button">›</button>
+    <p-button
+      icon="pi pi-chevron-right"
+      [rounded]="true"
+      severity="secondary"
+      [outlined]="true"
+      (onClick)="nextMonth()"
+      [title]="labels.regular.actions.nextMonth"
+    ></p-button>
   </div>
 
   <div class="calendar-shell">

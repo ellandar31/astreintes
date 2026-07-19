@@ -16,20 +16,56 @@
 }
 
 .auth-panel {
+  max-width: 430px;
+  width: 100%;
+}
+
+:host ::ng-deep .auth-panel {
   background: rgba(255, 255, 255, 0.94);
   border: 1px solid rgba(255, 255, 255, 0.5);
   border-radius: 8px;
   box-shadow: 0 24px 70px rgba(11, 31, 42, 0.24);
+}
+
+:host ::ng-deep .auth-panel .p-card-header {
+  padding: 32px 32px 0;
+}
+
+:host ::ng-deep .auth-panel .p-card-body {
+  padding: 22px 32px 32px;
+}
+
+:host ::ng-deep .auth-panel .p-card-content {
   display: grid;
-  gap: 22px;
-  max-width: 430px;
-  padding: 32px;
-  width: 100%;
+  gap: 18px;
+  padding: 0;
+}
+
+.auth-header {
+  display: grid;
+  gap: 2px;
 }
 
 .auth-form {
   display: grid;
   gap: 16px;
+}
+
+.field {
+  display: grid;
+  gap: 8px;
+}
+
+:host ::ng-deep .auth-password,
+:host ::ng-deep .auth-password-input,
+:host ::ng-deep .auth-submit,
+:host ::ng-deep .auth-secondary-actions .p-button {
+  width: 100%;
+}
+
+.auth-secondary-actions {
+  display: grid;
+  gap: 10px;
 }
 
 .loader {
@@ -113,6 +149,10 @@
   font-size: 20px;
 }
 
+:host ::ng-deep .top-actions .p-button {
+  min-height: 36px;
+}
+
 .tabs {
   background: #ffffff;
   border: 1px solid #dde5eb;
@@ -143,7 +183,15 @@
 
 @media (max-width: 760px) {
   .auth-panel {
-    padding: 24px;
+    max-width: 100%;
+  }
+
+  :host ::ng-deep .auth-panel .p-card-header {
+    padding: 24px 24px 0;
+  }
+
+  :host ::ng-deep .auth-panel .p-card-body {
+    padding: 18px 24px 24px;
   }
 
   .app-shell {

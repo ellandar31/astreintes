@@ -34,41 +34,28 @@
   font-weight: 800;
 }
 
-.rh-table-shell {
+:host ::ng-deep .rh-table {
   border: 1px solid #dde5eb;
   border-radius: 8px;
   overflow: auto;
 }
 
-.rh-table {
-  border-collapse: collapse;
-  width: 100%;
-}
-
-.detail-table {
-  min-width: 1180px;
-}
-
-.rh-table th,
-.rh-table td {
+:host ::ng-deep .rh-table .p-datatable-tbody > tr > td,
+:host ::ng-deep .rh-table .p-datatable-thead > tr > th {
   border-bottom: 1px solid #dde5eb;
   padding: 10px 12px;
   text-align: left;
   vertical-align: top;
 }
 
-.rh-table th {
+:host ::ng-deep .rh-table .p-datatable-thead > tr > th {
   background: #f7fafb;
   color: #526171;
   font-size: 0.78rem;
   text-transform: uppercase;
 }
 
-.rh-table tbody tr:last-child td {
-  border-bottom: 0;
-}
-
-.rh-table pre {
+:host ::ng-deep .rh-table pre {
   color: #526171;
   font-family: inherit;
   font-size: 0.82rem;

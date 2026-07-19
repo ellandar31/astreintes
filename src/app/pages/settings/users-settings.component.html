@@ -9,45 +9,59 @@
 
   <div class="role-help">
     @for (role of roles; track role.value) {
-      <p><strong>{{ role.value }} - {{ role.label }}</strong> : {{ role.description }}</p>
+      <p-tag severity="secondary" [value]="role.value + ' - ' + role.label"></p-tag>
+      <p>{{ role.description }}</p>
     }
   </div>
 
-  <div class="settings-list">
-    @for (user of users(); track user.id) {
-      <article class="settings-item settings-item-users">
-        <div>
-          <h4>{{ user.displayName || user.email }}</h4>
-          <p>{{ user.email }}</p>
-        </div>
-
-        <label>
-          {{ labels.common.fields.role }}
-          <select
+  <p-table [value]="users()" styleClass="settings-table" [tableStyle]="{ 'min-width': '48rem' }">
+    <ng-template pTemplate="header">
+      <tr>
+        <th>{{ labels.common.fields.name }}</th>
+        <th>{{ labels.common.fields.email }}</th>
+        <th>{{ labels.common.fields.role }}</th>
+        <th>{{ labels.common.fields.actions }}</th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-user>
+      <tr>
+        <td><strong>{{ user.displayName || user.email }}</strong></td>
+        <td>{{ user.email }}</td>
+        <td>
+          <p-select
+            [options]="roles"
             [ngModel]="user.role"
-            (ngModelChange)="updateUserRole(user, roleValue($event))"
-            name="role-{{ user.id }}"
+            (onChange)="updateUserRole(user, roleValue($event.value))"
+            optionLabel="label"
+            optionValue="value"
+            appendTo="body"
+            styleClass="role-select"
           >
-            @for (role of roles; track role.value) {
-              <option [ngValue]="role.value">{{ role.value }} - {{ role.label }}</option>
-            }
-          </select>
-        </label>
-
-        <div class="item-actions">
-          <button
-            class="icon-button danger"
-            (click)="deleteUser(user)"
-            type="button"
+            <ng-template pTemplate="selectedItem" let-role>
+              {{ role?.value }} - {{ role?.label }}
+            </ng-template>
+            <ng-template pTemplate="item" let-role>
+              {{ role.value }} - {{ role.label }}
+            </ng-template>
+          </p-select>
+        </td>
+        <td>
+          <p-button
+            icon="pi pi-trash"
+            severity="danger"
+            [rounded]="true"
+            [text]="true"
+            (onClick)="deleteUser(user)"
             [title]="labels.settings.users.deleteTitle"
             [attr.aria-label]="labels.settings.users.deleteTitle"
-          >
-            X
-          </button>
-        </div>
-      </article>
-    } @empty {
-      <p class="muted">{{ labels.settings.empty.noUser }}</p>
-    }
-  </div>
+          ></p-button>
+        </td>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="4">{{ labels.settings.empty.noUser }}</td>
+      </tr>
+    </ng-template>
+  </p-table>
 </section>

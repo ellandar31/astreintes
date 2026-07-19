@@ -1,5 +1,6 @@
 import { CommonModule } from "@angular/common";
 import { Component, EventEmitter, Input, Output } from "@angular/core";
+import { TableModule } from "primeng/table";
 import { APP_LABELS } from "../../i18n/labels";
 import { ModalComponent } from "../../shared/modal.component";
 import { RhControlDetailItem, RhControlDetailLine } from "./rh-control-detail.models";
@@ -7,7 +8,7 @@ import { RhControlDetailItem, RhControlDetailLine } from "./rh-control-detail.mo
 @Component({
   selector: "app-rh-control-detail-modal",
   standalone: true,
-  imports: [CommonModule, ModalComponent],
+  imports: [CommonModule, ModalComponent, TableModule],
   templateUrl: "./rh-control-detail-modal.component.html",
   styleUrl: "./rh-control-detail-modal.component.css",
 })

@@ -38,65 +38,85 @@
       <section class="progress-section" aria-labelledby="visa-progress-title">
         <h4 id="visa-progress-title">{{ labels.validation.consultation.progressTitle }}</h4>
 
-        <div class="progress-table-shell">
-          <table class="progress-table">
-            <thead>
-              <tr>
-                <th>{{ labels.common.table.role }}</th>
-                <th>{{ labels.common.table.person }}</th>
-                <th>{{ labels.common.table.period }}</th>
-                <th>{{ labels.common.table.status }}</th>
-                <th>{{ labels.common.table.date }}</th>
-                <th>{{ labels.common.table.actions }}</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (progress of progressItems; track progress.id) {
-                <tr>
-                  <td>{{ progress.role }}</td>
-                  <td>{{ progress.userLabel }}</td>
-                  <td>{{ formatDateTime(progress.startDate) }} - {{ formatDateTime(progress.endDate) }}</td>
-                  <td>
-                    @if (progress.visa.signed) {
-                      <span class="signed">{{ labels.common.statuses.signedBy }} {{ progress.visa.signedByName }}</span>
-                    } @else {
-                      <span class="pending">{{ labels.common.statuses.toSign }}</span>
+        <p-table [value]="progressItems" styleClass="progress-table" [tableStyle]="{ 'min-width': '900px' }">
+          <ng-template pTemplate="header">
+            <tr>
+              <th>{{ labels.common.table.role }}</th>
+              <th>{{ labels.common.table.person }}</th>
+              <th>{{ labels.common.table.period }}</th>
+              <th>{{ labels.common.table.status }}</th>
+              <th>{{ labels.common.table.date }}</th>
+              <th>{{ labels.common.table.actions }}</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-progress>
+            <tr>
+              <td>{{ progress.role }}</td>
+              <td>{{ progress.userLabel }}</td>
+              <td>{{ formatDateTime(progress.startDate) }} - {{ formatDateTime(progress.endDate) }}</td>
+              <td>
+                @if (progress.visa.signed) {
+                  <p-tag severity="success" [value]="labels.common.statuses.signedBy + ' ' + progress.visa.signedByName"></p-tag>
+                } @else {
+                  <p-tag severity="warn" [value]="labels.common.statuses.toSign"></p-tag>
+                }
+              </td>
+              <td>{{ progress.visa.signed ? formatDateTime(progress.visa.signedAt) : "-" }}</td>
+              <td>
+                @if (progress.actionItem) {
+                  <div class="row-actions">
+                    @if (!progress.visa.signed) {
+                      <button
+                        pButton
+                        type="button"
+                        class="p-button-sm"
+                        (click)="signProgressVisa(progress)"
+                      >
+                        <span class="pi pi-pen-to-square" aria-hidden="true"></span>
+                        <span>{{ labels.common.actions.sign }}</span>
+                      </button>
                     }
-                  </td>
-                  <td>{{ progress.visa.signed ? formatDateTime(progress.visa.signedAt) : "-" }}</td>
-                  <td>
-                    @if (progress.actionItem) {
-                      <div class="row-actions">
-                        @if (!progress.visa.signed) {
-                          <button class="primary-button compact-button" (click)="signProgressVisa(progress)" type="button">
-                            {{ labels.common.actions.sign }}
-                          </button>
-                        }
-                        @if (canDeleteProgressVisa(progress)) {
-                          <button class="danger-button compact-button" (click)="deleteProgressVisa(progress)" type="button">
-                            {{ labels.common.actions.delete }}
-                          </button>
-                        }
-                      </div>
+                    @if (canDeleteProgressVisa(progress)) {
+                      <button
+                        pButton
+                        type="button"
+                        class="p-button-sm p-button-outlined p-button-danger"
+                        (click)="deleteProgressVisa(progress)"
+                      >
+                        <span class="pi pi-trash" aria-hidden="true"></span>
+                        <span>{{ labels.common.actions.delete }}</span>
+                      </button>
                     }
-                  </td>
-                </tr>
-              } @empty {
-                <tr>
-                  <td colspan="6">{{ labels.common.statuses.noAssociatedVisa }}</td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
+                  </div>
+                }
+              </td>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="emptymessage">
+            <tr>
+              <td colspan="6">{{ labels.common.statuses.noAssociatedVisa }}</td>
+            </tr>
+          </ng-template>
+        </p-table>
       </section>
 
       <div class="modal-actions">
         @if (!item.visa.signed) {
-          <button class="primary-button" (click)="signVisa()" type="button">{{ labels.common.actions.signMyVisa }}</button>
+          <button pButton type="button" (click)="signVisa()">
+            <span class="pi pi-pen-to-square" aria-hidden="true"></span>
+            <span>{{ labels.common.actions.signMyVisa }}</span>
+          </button>
         }
         @if (canDelete) {
-          <button class="danger-button" (click)="deleteVisa()" type="button">{{ labels.common.actions.deleteMyVisa }}</button>
+          <button
+            pButton
+            type="button"
+            class="p-button-outlined p-button-danger"
+            (click)="deleteVisa()"
+          >
+            <span class="pi pi-trash" aria-hidden="true"></span>
+            <span>{{ labels.common.actions.deleteMyVisa }}</span>
+          </button>
         }
       </div>
     </section>

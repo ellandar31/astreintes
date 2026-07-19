@@ -2,6 +2,8 @@ import { CommonModule } from "@angular/common";
 import { Component, EventEmitter, OnDestroy, Output, effect, inject } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { Store } from "@ngrx/store";
+import { ButtonModule } from "primeng/button";
+import { CardModule } from "primeng/card";
 import { APP_LABELS } from "../../i18n/labels";
 import { SettingsActions } from "../../state/settings/settings.actions";
 import { selectSettingsMessage, selectSettingsRhTemplates } from "../../state/settings/settings.selectors";
@@ -10,7 +12,7 @@ import { RhExportTemplateSetting } from "./settings.models";
 @Component({
   selector: "app-rh-export-templates-settings",
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [ButtonModule, CardModule, CommonModule, FormsModule],
   templateUrl: "./rh-export-templates-settings.component.html",
   styleUrls: ["./settings-common.scss", "./rh-export-templates-settings.component.scss"],
 })

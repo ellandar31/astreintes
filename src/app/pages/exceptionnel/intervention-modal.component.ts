@@ -1,5 +1,10 @@
 import { Component, EventEmitter, Input, Output } from "@angular/core";
 import { FormsModule, NgForm } from "@angular/forms";
+import { ButtonModule } from "primeng/button";
+import { CheckboxModule } from "primeng/checkbox";
+import { InputTextModule } from "primeng/inputtext";
+import { MessageModule } from "primeng/message";
+import { SelectModule } from "primeng/select";
 import { APP_LABELS } from "../../i18n/labels";
 import { ModalComponent } from "../../shared/modal.component";
 import { ExceptionalInterventionForm, ExceptionalOperation, SelectableUser } from "./exceptional.models";
@@ -7,7 +12,7 @@ import { ExceptionalInterventionForm, ExceptionalOperation, SelectableUser } fro
 @Component({
   selector: "app-intervention-modal",
   standalone: true,
-  imports: [FormsModule, ModalComponent],
+  imports: [ButtonModule, CheckboxModule, FormsModule, InputTextModule, MessageModule, ModalComponent, SelectModule],
   templateUrl: "./intervention-modal.component.html",
   styleUrl: "./intervention-modal.component.css",
 })

@@ -2,41 +2,48 @@
   <form class="operation-form" #interventionNgForm="ngForm" (ngSubmit)="save(interventionNgForm)">
     <label>
       {{ labels.common.fields.user }}
-      <select
-        class="user-select"
+      <p-select
+        [options]="users"
         name="interventionUser"
         [ngModel]="form.userId"
         (ngModelChange)="selectUser($event)"
+        optionLabel="email"
+        optionValue="id"
+        [placeholder]="labels.common.users.select"
+        appendTo="body"
+        styleClass="user-select"
         required
       >
-        <option value="">{{ labels.common.users.select }}</option>
-        @for (user of users; track user.id) {
-          <option [ngValue]="user.id" [title]="userLabel(user)">{{ userLabel(user) }}</option>
-        }
-      </select>
+        <ng-template pTemplate="selectedItem" let-user>
+          {{ user ? userLabel(user) : labels.common.users.select }}
+        </ng-template>
+        <ng-template pTemplate="item" let-user>
+          {{ userLabel(user) }}
+        </ng-template>
+      </p-select>
     </label>
 
     <label>
       {{ labels.regular.fields.dateStart }}
-      <input name="interventionStartDate" [(ngModel)]="form.startDate" required type="datetime-local" />
+      <input pInputText name="interventionStartDate" [(ngModel)]="form.startDate" required type="datetime-local" />
     </label>
 
     <label>
       {{ labels.regular.fields.dateEnd }}
-      <input name="interventionEndDate" [(ngModel)]="form.endDate" required type="datetime-local" />
+      <input pInputText name="interventionEndDate" [(ngModel)]="form.endDate" required type="datetime-local" />
     </label>
 
     <label class="checkbox-label">
-      <input name="wasOnSite" [(ngModel)]="form.wasOnSite" type="checkbox" />
+      <p-checkbox name="wasOnSite" [(ngModel)]="form.wasOnSite" [binary]="true"></p-checkbox>
       <span>{{ labels.exceptional.fields.userOnSite }}</span>
     </label>
 
     @if (error) {
-      <p class="error-message">{{ error }}</p>
+      <p-message severity="error" [text]="error"></p-message>
     }
 
     <div class="form-actions">
-      <button class="primary-button" [disabled]="interventionNgForm.invalid" type="submit">{{ labels.common.actions.add }}</button>
+      <p-button icon="pi pi-save" [disabled]="interventionNgForm.invalid" type="submit" [label]="labels.common.actions.add"></p-button>
     </div>
   </form>
 </app-modal>

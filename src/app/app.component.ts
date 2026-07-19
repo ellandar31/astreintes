@@ -2,6 +2,13 @@ import { CommonModule } from "@angular/common";
 import { Component, inject } from "@angular/core";
 import { FormsModule, NgForm } from "@angular/forms";
 import { Store } from "@ngrx/store";
+import { ButtonModule } from "primeng/button";
+import { CardModule } from "primeng/card";
+import { InputTextModule } from "primeng/inputtext";
+import { MessageModule } from "primeng/message";
+import { PasswordModule } from "primeng/password";
+import { ProgressSpinnerModule } from "primeng/progressspinner";
+import { TooltipModule } from "primeng/tooltip";
 import { APP_LABELS } from "./i18n/labels";
 import { ExceptionalOperationsComponent } from "./pages/exceptionnel/exceptional-operations.component";
 import { ProfilePageComponent } from "./pages/profile/profile-page.component";
@@ -33,13 +40,20 @@ type ModalView = "profile" | "settings";
   standalone: true,
   imports: [
     CommonModule,
+    ButtonModule,
+    CardModule,
     ExceptionalOperationsComponent,
     FormsModule,
+    InputTextModule,
+    MessageModule,
     ModalComponent,
+    PasswordModule,
     ProfilePageComponent,
+    ProgressSpinnerModule,
     RegularCalendarComponent,
     RhPageComponent,
     SettingsPageComponent,
+    TooltipModule,
     ValidationPageComponent,
   ],
   templateUrl: "./app.component.html",

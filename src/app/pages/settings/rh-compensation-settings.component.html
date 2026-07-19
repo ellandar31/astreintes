@@ -7,72 +7,100 @@
   </div>
 
   <form class="compensation-form" (ngSubmit)="saveCompensationRules()">
-    <section class="compensation-block">
-      <h4>{{ labels.settings.rhCompensation.onCall }}</h4>
+    <p-card styleClass="compensation-block">
+      <ng-template pTemplate="header">
+        <h4>{{ labels.settings.rhCompensation.onCall }}</h4>
+      </ng-template>
 
-      <div class="editable-table-wrapper">
-        <table class="editable-table">
-          <thead>
-            <tr>
-              <th>{{ labels.settings.rhCompensation.type }}</th>
-              <th>{{ labels.settings.rhCompensation.coefficientOnCall }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (row of onCallRows; track row.id) {
-              <tr>
-                <td><strong>{{ row.label }}</strong></td>
-                <td>
-                  <label class="sr-only" [for]="'onCall-' + row.id">{{ labels.settings.rhCompensation.coefficientOnCall }} {{ row.label }}</label>
-                  <input [id]="'onCall-' + row.id" type="number" min="0" step="0.01" name="onCall-{{ row.id }}" [(ngModel)]="row.coefficient" />
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-    </section>
+      <p-table [value]="onCallRows" styleClass="settings-table editable-table" [tableStyle]="{ 'min-width': '30rem' }">
+        <ng-template pTemplate="header">
+          <tr>
+            <th>{{ labels.settings.rhCompensation.type }}</th>
+            <th>{{ labels.settings.rhCompensation.coefficientOnCall }}</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-row>
+          <tr>
+            <td><strong>{{ row.label }}</strong></td>
+            <td>
+              <label class="sr-only" [for]="'onCall-' + row.id">{{ labels.settings.rhCompensation.coefficientOnCall }} {{ row.label }}</label>
+              <p-inputNumber
+                [inputId]="'onCall-' + row.id"
+                [min]="0"
+                [minFractionDigits]="0"
+                [maxFractionDigits]="2"
+                [step]="0.01"
+                name="onCall-{{ row.id }}"
+                [(ngModel)]="row.coefficient"
+              ></p-inputNumber>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </p-card>
 
-    <section class="compensation-block">
-      <h4>{{ labels.settings.rhCompensation.interventionWorkRest }}</h4>
+    <p-card styleClass="compensation-block">
+      <ng-template pTemplate="header">
+        <h4>{{ labels.settings.rhCompensation.interventionWorkRest }}</h4>
+      </ng-template>
 
-      <div class="editable-table-wrapper">
-        <table class="editable-table">
-          <thead>
-            <tr>
-              <th>{{ labels.settings.rhCompensation.range }}</th>
-              <th>{{ labels.settings.rhCompensation.coefficientIntervention }}</th>
-              <th>{{ labels.settings.rhCompensation.coefficientWork }}</th>
-              <th>{{ labels.settings.rhCompensation.coefficientRest }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (row of periodRows; track row.id) {
-              <tr>
-                <td><strong>{{ row.label }}</strong></td>
-                <td>
-                  <label class="sr-only" [for]="'intervention-' + row.id">{{ labels.settings.rhCompensation.coefficientIntervention }} {{ row.label }}</label>
-                  <input [id]="'intervention-' + row.id" type="number" min="0" step="0.01" name="intervention-{{ row.id }}" [(ngModel)]="row.interventionCoefficient" />
-                </td>
-                <td>
-                  <label class="sr-only" [for]="'work-' + row.id">{{ labels.settings.rhCompensation.coefficientWork }} {{ row.label }}</label>
-                  <input [id]="'work-' + row.id" type="number" min="0" step="0.01" name="work-{{ row.id }}" [(ngModel)]="row.workCoefficient" />
-                </td>
-                <td>
-                  <label class="sr-only" [for]="'rest-' + row.id">{{ labels.settings.rhCompensation.coefficientRest }} {{ row.label }}</label>
-                  <input [id]="'rest-' + row.id" type="number" min="0" step="0.01" name="rest-{{ row.id }}" [(ngModel)]="row.restCoefficient" />
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
+      <p-table [value]="periodRows" styleClass="settings-table editable-table" [tableStyle]="{ 'min-width': '56rem' }">
+        <ng-template pTemplate="header">
+          <tr>
+            <th>{{ labels.settings.rhCompensation.range }}</th>
+            <th>{{ labels.settings.rhCompensation.coefficientIntervention }}</th>
+            <th>{{ labels.settings.rhCompensation.coefficientWork }}</th>
+            <th>{{ labels.settings.rhCompensation.coefficientRest }}</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-row>
+          <tr>
+            <td><strong>{{ row.label }}</strong></td>
+            <td>
+              <label class="sr-only" [for]="'intervention-' + row.id">{{ labels.settings.rhCompensation.coefficientIntervention }} {{ row.label }}</label>
+              <p-inputNumber
+                [inputId]="'intervention-' + row.id"
+                [min]="0"
+                [minFractionDigits]="0"
+                [maxFractionDigits]="2"
+                [step]="0.01"
+                name="intervention-{{ row.id }}"
+                [(ngModel)]="row.interventionCoefficient"
+              ></p-inputNumber>
+            </td>
+            <td>
+              <label class="sr-only" [for]="'work-' + row.id">{{ labels.settings.rhCompensation.coefficientWork }} {{ row.label }}</label>
+              <p-inputNumber
+                [inputId]="'work-' + row.id"
+                [min]="0"
+                [minFractionDigits]="0"
+                [maxFractionDigits]="2"
+                [step]="0.01"
+                name="work-{{ row.id }}"
+                [(ngModel)]="row.workCoefficient"
+              ></p-inputNumber>
+            </td>
+            <td>
+              <label class="sr-only" [for]="'rest-' + row.id">{{ labels.settings.rhCompensation.coefficientRest }} {{ row.label }}</label>
+              <p-inputNumber
+                [inputId]="'rest-' + row.id"
+                [min]="0"
+                [minFractionDigits]="0"
+                [maxFractionDigits]="2"
+                [step]="0.01"
+                name="rest-{{ row.id }}"
+                [(ngModel)]="row.restCoefficient"
+              ></p-inputNumber>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
 
       <p class="muted">{{ labels.settings.rhCompensation.autoRound }}</p>
-    </section>
+    </p-card>
 
     <div class="form-actions">
-      <button class="primary-button" type="submit">{{ labels.settings.rhCompensation.save }}</button>
+      <p-button icon="pi pi-save" type="submit" [label]="labels.settings.rhCompensation.save"></p-button>
     </div>
   </form>
 </section>

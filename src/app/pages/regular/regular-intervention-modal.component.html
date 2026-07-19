@@ -2,22 +2,35 @@
   <form class="intervention-form" #interventionNgForm="ngForm" (ngSubmit)="save(interventionNgForm)">
     <label>
       {{ labels.common.fields.user }}
-      <select class="user-select" name="regularInterventionUser" [ngModel]="form.userId" (ngModelChange)="selectUser($event)" required>
-        <option value="">{{ labels.common.users.select }}</option>
-        @for (user of users; track user.id) {
-          <option [ngValue]="user.id" [title]="userLabel(user)">{{ userLabel(user) }}</option>
-        }
-      </select>
+      <p-select
+        [options]="users"
+        name="regularInterventionUser"
+        [ngModel]="form.userId"
+        (ngModelChange)="selectUser($event)"
+        optionLabel="email"
+        optionValue="id"
+        [placeholder]="labels.common.users.select"
+        appendTo="body"
+        styleClass="user-select"
+        required
+      >
+        <ng-template pTemplate="selectedItem" let-user>
+          {{ user ? userLabel(user) : labels.common.users.select }}
+        </ng-template>
+        <ng-template pTemplate="item" let-user>
+          {{ userLabel(user) }}
+        </ng-template>
+      </p-select>
     </label>
 
     <label>
       {{ labels.regular.fields.dateStart }}
-      <input name="regularInterventionStartDate" [(ngModel)]="form.startDate" required type="datetime-local" />
+      <input pInputText name="regularInterventionStartDate" [(ngModel)]="form.startDate" required type="datetime-local" />
     </label>
 
     <label>
       {{ labels.regular.fields.dateEnd }}
-      <input name="regularInterventionEndDate" [(ngModel)]="form.endDate" required type="datetime-local" />
+      <input pInputText name="regularInterventionEndDate" [(ngModel)]="form.endDate" required type="datetime-local" />
     </label>
 
     <label>
@@ -26,11 +39,11 @@
     </label>
 
     @if (error) {
-      <p class="error-message">{{ error }}</p>
+      <p-message severity="error" [text]="error"></p-message>
     }
 
     <div class="form-actions">
-      <button class="primary-button" [disabled]="interventionNgForm.invalid" type="submit">{{ labels.common.actions.save }}</button>
+      <p-button icon="pi pi-save" [disabled]="interventionNgForm.invalid" type="submit" [label]="labels.common.actions.save"></p-button>
     </div>
   </form>
 </app-modal>

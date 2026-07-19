@@ -1,4 +1,4 @@
-<section class="rh-panel" aria-labelledby="rh-controls-title">
+<p-card styleClass="rh-panel" [attr.aria-labelledby]="'rh-controls-title'">
   <header class="rh-panel-header">
     <div>
       <p class="eyebrow">{{ labels.rh.controls.eyebrow }}</p>
@@ -8,8 +8,9 @@
 
   <div class="user-sections">
     @for (userSection of userSections; track userSection.user.id) {
-      <article class="user-section">
+      <p-card styleClass="user-section">
         <button
+          pButton
           class="section-header user-section-header"
           [attr.aria-expanded]="isUserExpanded(userSection.user.id)"
           (click)="toggleUserSection(userSection.user.id)"
@@ -25,8 +26,9 @@
         @if (isUserExpanded(userSection.user.id)) {
           <div class="month-sections">
             @for (monthSection of userSection.monthSections; track monthSection.monthKey) {
-              <article class="month-section">
+              <p-card styleClass="month-section">
                 <button
+                  pButton
                   class="section-header month-section-header"
                   [attr.aria-expanded]="isMonthExpanded(userSection.user.id, monthSection.monthKey)"
                   (click)="toggleMonthSection(userSection.user.id, monthSection.monthKey)"
@@ -40,38 +42,40 @@
                 </button>
 
                 @if (isMonthExpanded(userSection.user.id, monthSection.monthKey)) {
-                  <div class="rh-table-shell">
-                    <table class="rh-table summary-table">
-                      <thead>
-                        <tr>
-                          <th>{{ labels.common.table.type }}</th>
-                          <th>{{ labels.common.table.item }}</th>
-                          <th>{{ labels.common.table.period }}</th>
-                          <th>{{ labels.common.messages.rhSentAt }}</th>
-                          <th>{{ labels.common.fields.lines }}</th>
-                          <th>{{ labels.common.table.actions }}</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        @for (item of monthSection.items; track item.id) {
-                          <tr>
-                            <td>{{ item.type }}</td>
-                            <td>{{ item.title }}</td>
-                            <td>{{ item.period }}</td>
-                            <td class="sent-date">{{ labels.rh.controls.sentPrefix }} <strong>{{ item.sentToRhLabel }}</strong></td>
-                            <td>{{ item.lines.length }}</td>
-                            <td>
-                              <button class="secondary-button compact-button" (click)="openDetail(item)" type="button">
-                                {{ labels.common.actions.consult }}
-                              </button>
-                            </td>
-                          </tr>
-                        }
-                      </tbody>
-                    </table>
-                  </div>
+                  <p-table [value]="monthSection.items" styleClass="rh-table summary-table" [tableStyle]="{ 'min-width': '980px' }">
+                    <ng-template pTemplate="header">
+                      <tr>
+                        <th>{{ labels.common.table.type }}</th>
+                        <th>{{ labels.common.table.item }}</th>
+                        <th>{{ labels.common.table.period }}</th>
+                        <th>{{ labels.common.messages.rhSentAt }}</th>
+                        <th>{{ labels.common.fields.lines }}</th>
+                        <th>{{ labels.common.table.actions }}</th>
+                      </tr>
+                    </ng-template>
+                    <ng-template pTemplate="body" let-item>
+                      <tr>
+                        <td>{{ item.type }}</td>
+                        <td>{{ item.title }}</td>
+                        <td>{{ item.period }}</td>
+                        <td class="sent-date">{{ labels.rh.controls.sentPrefix }} <strong>{{ item.sentToRhLabel }}</strong></td>
+                        <td>{{ item.lines.length }}</td>
+                        <td>
+                          <button
+                            pButton
+                            type="button"
+                            class="p-button-sm p-button-outlined p-button-secondary"
+                            (click)="openDetail(item)"
+                          >
+                            <span class="pi pi-eye" aria-hidden="true"></span>
+                            <span>{{ labels.common.actions.consult }}</span>
+                          </button>
+                        </td>
+                      </tr>
+                    </ng-template>
+                  </p-table>
                 }
-              </article>
+              </p-card>
             } @empty {
               <div class="empty-state">
                 {{ labels.rh.controls.emptyForUser }}
@@ -79,14 +83,14 @@
             }
           </div>
         }
-      </article>
+      </p-card>
     } @empty {
       <div class="empty-state">
         {{ labels.rh.controls.emptyGlobal }}
       </div>
     }
   </div>
-</section>
+</p-card>
 
 @if (selectedDetailItem) {
   <app-rh-control-detail-modal [item]="selectedDetailItem" (closed)="closeDetail()"></app-rh-control-detail-modal>

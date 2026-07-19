@@ -1,5 +1,7 @@
 import { CommonModule } from "@angular/common";
 import { Component, Input } from "@angular/core";
+import { ButtonModule } from "primeng/button";
+import { CardModule } from "primeng/card";
 import { APP_LABELS } from "../../i18n/labels";
 import { StoreAuthUser } from "../../store/app-store";
 import { RhControlsComponent } from "./rh-controls.component";
@@ -9,7 +11,7 @@ import { RhSection } from "./rh.models";
 @Component({
   selector: "app-rh-page",
   standalone: true,
-  imports: [CommonModule, RhControlsComponent, RhExportsComponent],
+  imports: [ButtonModule, CardModule, CommonModule, RhControlsComponent, RhExportsComponent],
   templateUrl: "./rh-page.component.html",
   styleUrl: "./rh-page.component.css",
 })

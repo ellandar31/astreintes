@@ -11,11 +11,24 @@
 }
 
 .template-item {
+  display: block;
+}
+
+:host ::ng-deep .template-item {
   border: 1px solid #dde5eb;
   border-radius: 8px;
+  box-shadow: none;
+  height: 100%;
+}
+
+:host ::ng-deep .template-item .p-card-body {
+  padding: 14px;
+}
+
+:host ::ng-deep .template-item .p-card-content {
   display: grid;
   gap: 12px;
-  padding: 14px;
+  padding: 0;
 }
 
 .template-item h4,
@@ -39,6 +52,7 @@
   justify-content: center;
   min-height: 38px;
   padding: 0 12px;
+  gap: 8px;
 }
 
 .file-button input {

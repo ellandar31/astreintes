@@ -1,5 +1,10 @@
 import { Component, EventEmitter, Input, Output } from "@angular/core";
 import { FormsModule, NgForm } from "@angular/forms";
+import { ButtonModule } from "primeng/button";
+import { InputTextModule } from "primeng/inputtext";
+import { MessageModule } from "primeng/message";
+import { SelectModule } from "primeng/select";
+import { TableModule } from "primeng/table";
 import { APP_LABELS } from "../../i18n/labels";
 import { ModalComponent } from "../../shared/modal.component";
 import { RegularIntervention, RegularOnCallPeriodForm, RegularUser } from "./regular.models";
@@ -7,7 +12,7 @@ import { RegularIntervention, RegularOnCallPeriodForm, RegularUser } from "./reg
 @Component({
   selector: "app-regular-period-modal",
   standalone: true,
-  imports: [FormsModule, ModalComponent],
+  imports: [ButtonModule, FormsModule, InputTextModule, MessageModule, ModalComponent, SelectModule, TableModule],
   templateUrl: "./regular-period-modal.component.html",
   styleUrl: "./regular-period-modal.component.css",
 })

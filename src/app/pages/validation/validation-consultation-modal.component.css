@@ -71,26 +71,20 @@
   margin: 0;
 }
 
-.progress-table-shell {
+:host ::ng-deep .progress-table {
   border: 1px solid #dde5eb;
   border-radius: 8px;
   overflow: auto;
 }
 
-.progress-table {
-  border-collapse: collapse;
-  min-width: 900px;
-  width: 100%;
-}
-
-.progress-table th,
-.progress-table td {
+:host ::ng-deep .progress-table .p-datatable-tbody > tr > td,
+:host ::ng-deep .progress-table .p-datatable-thead > tr > th {
   border-bottom: 1px solid #dde5eb;
   padding: 9px 10px;
   text-align: left;
 }
 
-.progress-table th {
+:host ::ng-deep .progress-table .p-datatable-thead > tr > th {
   background: #f7fafb;
   color: #526171;
   font-size: 0.78rem;

@@ -2,6 +2,13 @@ import { CommonModule } from "@angular/common";
 import { Component, EventEmitter, OnDestroy, Output, effect, inject } from "@angular/core";
 import { FormsModule, NgForm } from "@angular/forms";
 import { Store } from "@ngrx/store";
+import { ButtonModule } from "primeng/button";
+import { CardModule } from "primeng/card";
+import { InputNumberModule } from "primeng/inputnumber";
+import { InputTextModule } from "primeng/inputtext";
+import { SelectModule } from "primeng/select";
+import { TableModule } from "primeng/table";
+import { TagModule } from "primeng/tag";
 import { APP_LABELS } from "../../i18n/labels";
 import { SettingsActions } from "../../state/settings/settings.actions";
 import {
@@ -15,7 +22,7 @@ import { PublicHoliday } from "./settings.models";
 @Component({
   selector: "app-holidays-settings",
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [ButtonModule, CardModule, CommonModule, FormsModule, InputNumberModule, InputTextModule, SelectModule, TableModule, TagModule],
   templateUrl: "./holidays-settings.component.html",
   styleUrls: ["./settings-common.scss"],
 })

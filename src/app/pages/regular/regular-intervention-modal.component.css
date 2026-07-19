@@ -3,6 +3,27 @@
   gap: 14px;
 }
 
+:host ::ng-deep .user-select,
+:host ::ng-deep .p-inputtext {
+  width: 100%;
+}
+
+.intervention-form textarea {
+  border: 1px solid #cbd6df;
+  border-radius: 6px;
+  font: inherit;
+  min-height: 96px;
+  padding: 10px 12px;
+  resize: vertical;
+  width: 100%;
+}
+
+.intervention-form textarea:focus {
+  border-color: #21736d;
+  box-shadow: 0 0 0 3px rgba(33, 115, 109, 0.15);
+  outline: none;
+}
+
 .form-actions {
   display: flex;
   flex-wrap: wrap;

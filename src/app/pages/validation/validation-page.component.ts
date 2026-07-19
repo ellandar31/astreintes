@@ -1,6 +1,12 @@
 import { CommonModule } from "@angular/common";
 import { Component, Input, OnChanges, OnDestroy, SimpleChanges, effect, inject } from "@angular/core";
 import { FormsModule } from "@angular/forms";
+import { ButtonModule } from "primeng/button";
+import { CardModule } from "primeng/card";
+import { MessageModule } from "primeng/message";
+import { SelectModule } from "primeng/select";
+import { TableModule } from "primeng/table";
+import { TagModule } from "primeng/tag";
 import { Store } from "@ngrx/store";
 import { APP_LABELS } from "../../i18n/labels";
 import { SignatureVisa, createEmptyVisa } from "../../shared/visa.models";
@@ -35,7 +41,7 @@ import { AppUser, ValidationItem, ValidationSection, ValidationSectionId, VisaPr
 @Component({
   selector: "app-validation-page",
   standalone: true,
-  imports: [CommonModule, FormsModule, ValidationConsultationModalComponent],
+  imports: [ButtonModule, CardModule, CommonModule, FormsModule, MessageModule, SelectModule, TableModule, TagModule, ValidationConsultationModalComponent],
   templateUrl: "./validation-page.component.html",
   styleUrl: "./validation-page.component.css",
 })

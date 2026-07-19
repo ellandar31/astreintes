@@ -1,5 +1,8 @@
 import { CommonModule } from "@angular/common";
 import { ChangeDetectionStrategy, Component, Input, OnChanges, OnDestroy, SimpleChanges, effect, inject } from "@angular/core";
+import { ButtonModule } from "primeng/button";
+import { CardModule } from "primeng/card";
+import { TableModule } from "primeng/table";
 import { Store } from "@ngrx/store";
 import { APP_LABELS } from "../../i18n/labels";
 import { SignatureVisa, createEmptyVisa } from "../../shared/visa.models";
@@ -71,7 +74,7 @@ interface RhMonthControlSection {
 @Component({
   selector: "app-rh-controls",
   standalone: true,
-  imports: [CommonModule, RhControlDetailModalComponent],
+  imports: [ButtonModule, CardModule, CommonModule, RhControlDetailModalComponent, TableModule],
   templateUrl: "./rh-controls.component.html",
   styleUrl: "./rh-controls.component.css",
   changeDetection: ChangeDetectionStrategy.OnPush,

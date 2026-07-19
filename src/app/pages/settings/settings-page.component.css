@@ -7,17 +7,31 @@
 }
 
 .settings-menu {
-  background: #ffffff;
+  width: 100%;
+}
+
+:host ::ng-deep .settings-menu {
   border: 1px solid #dde5eb;
   border-radius: 8px;
+  box-shadow: none;
+}
+
+:host ::ng-deep .settings-menu .p-card-header {
+  padding: 12px 12px 0;
+}
+
+:host ::ng-deep .settings-menu .p-card-body {
+  padding: 10px 12px 12px;
+}
+
+:host ::ng-deep .settings-menu .p-card-content {
   display: grid;
   gap: 6px;
-  padding: 12px;
+  padding: 0;
 }
 
 .settings-menu-heading {
   border-bottom: 1px solid #dde5eb;
-  margin-bottom: 6px;
   padding: 2px 4px 10px;
 }
 
@@ -26,28 +40,29 @@
   margin: 0;
 }
 
-.settings-menu-button {
-  background: transparent;
-  border: 0;
-  border-radius: 6px;
-  color: #526171;
-  font-weight: 900;
-  min-height: 38px;
-  padding: 0 12px;
-  text-align: left;
-}
-
-.settings-menu-button.active {
-  background: #174f5b;
-  color: #ffffff;
+:host ::ng-deep .settings-menu-button {
+  justify-content: flex-start;
+  width: 100%;
 }
 
 .settings-content {
-  background: #ffffff;
+  min-width: 0;
+}
+
+:host ::ng-deep .settings-content {
   border: 1px solid #dde5eb;
   border-radius: 8px;
-  min-width: 0;
+  box-shadow: none;
+}
+
+:host ::ng-deep .settings-content .p-card-body {
   padding: 16px;
+}
+
+:host ::ng-deep .settings-content .p-card-content {
+  display: grid;
+  gap: 14px;
+  padding: 0;
 }
 
 @media (max-width: 760px) {

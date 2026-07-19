@@ -2,13 +2,22 @@
   display: block;
 }
 
-.rh-panel {
-  background: #ffffff;
+:host ::ng-deep .rh-panel {
   border: 1px solid #dde5eb;
   border-radius: 8px;
+  box-shadow: none;
+}
+
+:host ::ng-deep .rh-panel .p-card-body {
   display: grid;
   gap: 16px;
   padding: 16px;
+}
+
+:host ::ng-deep .rh-panel .p-card-content {
+  display: grid;
+  gap: 16px;
+  padding: 0;
 }
 
 .rh-panel-header {
@@ -26,15 +35,28 @@
 }
 
 .period-control {
+  display: grid;
+  gap: 6px;
+  font-weight: 800;
   min-width: 180px;
 }
 
-.export-section {
+:host ::ng-deep .export-section {
   border: 1px solid #dde5eb;
   border-radius: 8px;
+  box-shadow: none;
+}
+
+:host ::ng-deep .export-section .p-card-body {
   display: grid;
   gap: 12px;
   padding: 14px;
+}
+
+:host ::ng-deep .export-section .p-card-content {
+  display: grid;
+  gap: 12px;
+  padding: 0;
 }
 
 .export-section p {
@@ -48,39 +70,24 @@
   justify-content: space-between;
 }
 
-.export-table-shell {
+:host ::ng-deep .export-table {
   border: 1px solid #dde5eb;
   border-radius: 8px;
   overflow: auto;
 }
 
-.export-table {
-  border-collapse: collapse;
-  min-width: 760px;
-  width: 100%;
-}
-
-.export-table th,
-.export-table td {
+:host ::ng-deep .export-table .p-datatable-tbody > tr > td,
+:host ::ng-deep .export-table .p-datatable-thead > tr > th {
   border-bottom: 1px solid #dde5eb;
   padding: 9px 10px;
   text-align: left;
 }
 
-.export-table th {
+:host ::ng-deep .export-table .p-datatable-thead > tr > th {
   background: #f7fafb;
   color: #526171;
   font-size: 0.78rem;
   text-transform: uppercase;
-}
-
-.export-table tr:last-child td {
-  border-bottom: 0;
-}
-
-.compact-button {
-  min-height: 32px;
-  padding: 6px 10px;
 }
 
 .action-buttons {

@@ -8,92 +8,125 @@
     @if (canSelectUser) {
       <label>
         {{ labels.common.users.user }}
-        <select class="user-select" [(ngModel)]="selectedUserId" name="selectedUser">
-          @for (item of users; track item.id) {
-            <option [value]="item.id" [title]="userLabel(item)">{{ userLabel(item) }}</option>
-          }
-        </select>
+        <p-select
+          [options]="users"
+          [(ngModel)]="selectedUserId"
+          name="selectedUser"
+          optionLabel="email"
+          optionValue="id"
+          appendTo="body"
+          styleClass="user-select"
+        >
+          <ng-template pTemplate="selectedItem" let-item>
+            {{ item ? userLabel(item) : labels.common.users.select }}
+          </ng-template>
+          <ng-template pTemplate="item" let-item>
+            {{ userLabel(item) }}
+          </ng-template>
+        </p-select>
       </label>
     }
   </header>
 
   <div class="validation-layout">
-      <aside class="validation-submenu" [attr.aria-label]="labels.validation.sections.menu">
-
+    <p-card styleClass="validation-submenu" [attr.aria-label]="labels.validation.sections.menu">
       @for (section of validationSections; track section.id) {
         <button
+          pButton
+          type="button"
           class="validation-submenu-button"
           [class.active]="activeValidationSection.id === section.id"
-          [attr.aria-current]="activeValidationSection.id === section.id ? 'page' : null"
-          type="button"
           (click)="selectSection(section.id)"
+          [attr.aria-current]="activeValidationSection.id === section.id ? 'page' : null"
         >
           <span>{{ section.title }}</span>
           <strong>{{ section.items.length }}</strong>
         </button>
       }
-    </aside>
+    </p-card>
 
-    <div class="validation-content">
+    <p-card styleClass="validation-content">
       @if (activeValidationSection; as section) {
         <section class="validation-section" [attr.aria-label]="section.title">
           <h3>{{ section.title }}</h3>
 
-          <div class="validation-table-shell">
-            <table class="validation-table">
-              <thead>
-                <tr>
-                  <th>{{ labels.common.table.type }}</th>
-                  <th>{{ labels.common.table.item }}</th>
-                  <th>{{ labels.common.table.person }}</th>
-                  <th>{{ labels.common.table.period }}</th>
-                  <th>{{ labels.common.table.visa }}</th>
-                  <th>{{ labels.common.table.actions }}</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (item of section.items; track item.id) {
-                  <tr>
-                    <td>{{ item.category }}</td>
-                    <td>{{ item.title }}</td>
-                    <td>{{ item.userLabel }}</td>
-                    <td>{{ formatDateTime(item.startDate) }} - {{ formatDateTime(item.endDate) }}</td>
-                    <td>
-                      @if (item.visa.signed) {
-                        <span class="signed">{{ labels.common.statuses.signedOn }}</span>
-                      } @else {
-                        <span class="pending">{{ labels.common.statuses.toSign }}</span>
-                      }
-                    </td>
-                    <td>
-                      <div class="actions">
-                        <button class="secondary-button compact-button" (click)="openItem(item)" type="button">{{ labels.common.actions.consult }}</button>
-                        @if (!item.visa.signed) {
-                          <button class="primary-button compact-button" (click)="signItem(item)" type="button">{{ labels.common.actions.sign }}</button>
-                        }
-                        @if (canDeleteVisa(item)) {
-                          <button class="danger-button compact-button" (click)="deleteVisa(item)" type="button">{{ labels.common.actions.delete }}</button>
-                        }
-                      </div>
-                    </td>
-                  </tr>
-                } @empty {
-                  <tr>
-                    <td colspan="6">{{ section.emptyText }}</td>
-                  </tr>
-                }
-              </tbody>
-            </table>
-          </div>
+          <p-table [value]="section.items" styleClass="validation-table" [tableStyle]="{ 'min-width': '780px' }">
+            <ng-template pTemplate="header">
+              <tr>
+                <th>{{ labels.common.table.type }}</th>
+                <th>{{ labels.common.table.item }}</th>
+                <th>{{ labels.common.table.person }}</th>
+                <th>{{ labels.common.table.period }}</th>
+                <th>{{ labels.common.table.visa }}</th>
+                <th>{{ labels.common.table.actions }}</th>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-item>
+              <tr>
+                <td>{{ item.category }}</td>
+                <td><strong>{{ item.title }}</strong></td>
+                <td>{{ item.userLabel }}</td>
+                <td>{{ formatDateTime(item.startDate) }} - {{ formatDateTime(item.endDate) }}</td>
+                <td>
+                  @if (item.visa.signed) {
+                    <p-tag severity="success" [value]="labels.common.statuses.signedOn"></p-tag>
+                  } @else {
+                    <p-tag severity="warn" [value]="labels.common.statuses.toSign"></p-tag>
+                  }
+                </td>
+                <td>
+                  <div class="actions">
+                    <button
+                      pButton
+                      type="button"
+                      class="p-button-sm p-button-outlined p-button-secondary"
+                      (click)="openItem(item)"
+                    >
+                      <span class="pi pi-eye" aria-hidden="true"></span>
+                      <span>{{ labels.common.actions.consult }}</span>
+                    </button>
+                    @if (!item.visa.signed) {
+                      <button
+                        pButton
+                        type="button"
+                        class="p-button-sm"
+                        (click)="signItem(item)"
+                      >
+                        <span class="pi pi-pen-to-square" aria-hidden="true"></span>
+                        <span>{{ labels.common.actions.sign }}</span>
+                      </button>
+                    }
+                    @if (canDeleteVisa(item)) {
+                      <button
+                        pButton
+                        type="button"
+                        class="p-button-sm p-button-outlined p-button-danger"
+                        (click)="deleteVisa(item)"
+                      >
+                        <span class="pi pi-trash" aria-hidden="true"></span>
+                        <span>{{ labels.common.actions.delete }}</span>
+                      </button>
+                    }
+                  </div>
+                </td>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="emptymessage">
+              <tr>
+                <td colspan="6">{{ section.emptyText }}</td>
+              </tr>
+            </ng-template>
+          </p-table>
         </section>
       }
-    </div>
+    </p-card>
   </div>
 
   @if (validationMessage) {
-    <p class="success-message">{{ validationMessage }}</p>
+    <p-message severity="success" [text]="validationMessage"></p-message>
   }
 </section>
+
 <app-validation-consultation-modal
   [item]="selectedItem"
   [progressItems]="selectedItemVisaProgress"

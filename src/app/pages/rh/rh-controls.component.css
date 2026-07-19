@@ -3,13 +3,22 @@
   min-width: 0;
 }
 
-.rh-panel {
-  background: #ffffff;
+:host ::ng-deep .rh-panel {
   border: 1px solid #dde5eb;
   border-radius: 8px;
+  box-shadow: none;
+}
+
+:host ::ng-deep .rh-panel .p-card-body {
   display: grid;
   gap: 16px;
   padding: 16px;
+}
+
+:host ::ng-deep .rh-panel .p-card-content {
+  display: grid;
+  gap: 16px;
+  padding: 0;
 }
 
 .rh-panel-header {
@@ -37,11 +46,30 @@
   gap: 10px;
 }
 
+:host ::ng-deep .month-section,
+:host ::ng-deep .user-section {
+  border: 1px solid #dde5eb;
+  border-radius: 8px;
+  box-shadow: none;
+}
+
+:host ::ng-deep .month-section .p-card-body,
+:host ::ng-deep .user-section .p-card-body {
+  padding: 10px;
+}
+
+:host ::ng-deep .month-section .p-card-content,
+:host ::ng-deep .user-section .p-card-content {
+  display: grid;
+  gap: 10px;
+  padding: 0;
+}
+
 .month-sections {
   padding-left: 12px;
 }
 
-.section-header {
+:host ::ng-deep .section-header {
   align-items: center;
   background: #f7fafb;
   border: 1px solid #dde5eb;
@@ -55,7 +83,7 @@
   width: 100%;
 }
 
-.month-section-header {
+:host ::ng-deep .month-section-header {
   background: #eef7f7;
 }
 
@@ -86,38 +114,25 @@
   transform: rotate(225deg);
 }
 
-.rh-table-shell {
+:host ::ng-deep .rh-table {
   border: 1px solid #dde5eb;
   border-radius: 8px;
   overflow: auto;
 }
 
-.rh-table {
-  border-collapse: collapse;
-  width: 100%;
-}
-
-.summary-table {
-  min-width: 980px;
-}
-
-.rh-table th,
-.rh-table td {
+:host ::ng-deep .rh-table .p-datatable-tbody > tr > td,
+:host ::ng-deep .rh-table .p-datatable-thead > tr > th {
   border-bottom: 1px solid #dde5eb;
   padding: 10px 12px;
   text-align: left;
   vertical-align: top;
 }
 
-.rh-table th {
+:host ::ng-deep .rh-table .p-datatable-thead > tr > th {
   background: #f7fafb;
   color: #526171;
   font-size: 0.78rem;
   text-transform: uppercase;
-}
-
-.rh-table tbody tr:last-child td {
-  border-bottom: 0;
 }
 
 .sent-date {

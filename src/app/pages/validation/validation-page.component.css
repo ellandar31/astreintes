@@ -31,11 +31,8 @@
   min-width: 260px;
 }
 
-.validation-header select {
-  border: 1px solid #cbd6df;
-  border-radius: 6px;
-  min-height: 38px;
-  padding: 8px 10px;
+:host ::ng-deep .user-select {
+  width: 100%;
 }
 
 .validation-layout {
@@ -47,43 +44,45 @@
 }
 
 .validation-submenu {
-  background: #ffffff;
+  width: 100%;
+}
+
+:host ::ng-deep .validation-submenu {
   border: 1px solid #dde5eb;
   border-radius: 8px;
-  display: grid;
-  gap: 6px;
+  box-shadow: none;
+}
+
+:host ::ng-deep .validation-submenu .p-card-body {
   padding: 12px;
 }
 
-.validation-submenu-heading {
-  border-bottom: 1px solid #dde5eb;
-  margin-bottom: 6px;
-  padding: 2px 4px 10px;
+:host ::ng-deep .validation-submenu .p-card-content {
+  display: grid;
+  gap: 6px;
+  padding: 0;
 }
 
-.validation-submenu-heading h3 {
-  color: #1f2937;
-  margin: 0;
-}
-
-.validation-submenu-button {
+:host ::ng-deep .validation-submenu-button {
   align-items: center;
-  background: transparent;
-  border: 0;
-  border-radius: 6px;
+  background: #ffffff;
+  border-color: transparent;
   color: #526171;
-  cursor: pointer;
   display: flex;
-  font-weight: 900;
   gap: 10px;
   justify-content: space-between;
-  min-height: 38px;
-  padding: 0 12px;
-  text-align: left;
+  width: 100%;
 }
 
-.validation-submenu-button.active {
+:host ::ng-deep .validation-submenu-button:not(.active):enabled:hover {
+  background: #f7fafb;
+  border-color: #dde5eb;
+  color: #263442;
+}
+
+:host ::ng-deep .validation-submenu-button.active {
   background: #174f5b;
+  border-color: #174f5b;
   color: #ffffff;
 }
 
@@ -97,20 +96,30 @@
   text-align: center;
 }
 
-.validation-submenu-button.active strong {
+:host ::ng-deep .validation-submenu-button.active strong {
   background: #ffffff;
   color: #174f5b;
 }
 
 .validation-content {
-  background: #ffffff;
+  min-width: 0;
+}
+
+:host ::ng-deep .validation-content {
   border: 1px solid #dde5eb;
   border-radius: 8px;
-  min-width: 0;
+  box-shadow: none;
+}
+
+:host ::ng-deep .validation-content .p-card-body {
   padding: 16px;
 }
 
-.validation-table-shell {
+:host ::ng-deep .validation-content .p-card-content {
+  padding: 0;
+}
+
+:host ::ng-deep .validation-table {
   border: 1px solid #dde5eb;
   border-radius: 8px;
   overflow: auto;
@@ -126,21 +135,15 @@
   margin: 0;
 }
 
-.validation-table {
-  border-collapse: collapse;
-  min-width: 780px;
-  width: 100%;
-}
-
-.validation-table th,
-.validation-table td {
+:host ::ng-deep .validation-table .p-datatable-tbody > tr > td,
+:host ::ng-deep .validation-table .p-datatable-thead > tr > th {
   border-bottom: 1px solid #dde5eb;
   padding: 10px;
   text-align: left;
   vertical-align: top;
 }
 
-.validation-table th {
+:host ::ng-deep .validation-table .p-datatable-thead > tr > th {
   background: #f7fafb;
   color: #526171;
   font-size: 0.78rem;

@@ -2,6 +2,12 @@ import { CommonModule } from "@angular/common";
 import { Component, EventEmitter, OnDestroy, Output, effect, inject } from "@angular/core";
 import { FormsModule, NgForm } from "@angular/forms";
 import { Store } from "@ngrx/store";
+import { ButtonModule } from "primeng/button";
+import { CardModule } from "primeng/card";
+import { InputTextModule } from "primeng/inputtext";
+import { SelectModule } from "primeng/select";
+import { TableModule } from "primeng/table";
+import { TagModule } from "primeng/tag";
 import { APP_LABELS } from "../../i18n/labels";
 import { SettingsActions } from "../../state/settings/settings.actions";
 import { selectSettingsMessage, selectSettingsTeams, selectSettingsUsers } from "../../state/settings/settings.selectors";
@@ -10,7 +16,7 @@ import { ManagedUser, Team } from "./settings.models";
 @Component({
   selector: "app-teams-settings",
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [ButtonModule, CardModule, CommonModule, FormsModule, InputTextModule, SelectModule, TableModule, TagModule],
   templateUrl: "./teams-settings.component.html",
   styleUrls: ["./settings-common.scss"],
 })

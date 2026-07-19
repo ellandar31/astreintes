@@ -5,15 +5,23 @@
   </div>
 
   <div class="profile-layout">
-    <section class="profile-panel" aria-labelledby="profile-global-title">
-      <div>
-        <p class="panel-kicker">{{ labels.profile.sections.globalOptions }}</p>
-        <h3 id="profile-global-title">{{ labels.profile.sections.information }}</h3>
-      </div>
+    <p-card styleClass="profile-panel" [attr.aria-labelledby]="'profile-global-title'">
+      <ng-template pTemplate="header">
+        <div class="profile-panel-header">
+          <p class="panel-kicker">{{ labels.profile.sections.globalOptions }}</p>
+          <h3 id="profile-global-title">{{ labels.profile.sections.information }}</h3>
+        </div>
+      </ng-template>
 
-      <label>
-        {{ labels.common.fields.name }}
-        <input [(ngModel)]="profile.displayName" name="displayName" type="text" [placeholder]="labels.profile.fields.displayNamePlaceholder" />
+      <label class="profile-control">
+        <span>{{ labels.common.fields.name }}</span>
+        <input
+          pInputText
+          [(ngModel)]="profile.displayName"
+          name="displayName"
+          type="text"
+          [placeholder]="labels.profile.fields.displayNamePlaceholder"
+        />
       </label>
 
       <div class="profile-field">
@@ -21,33 +29,33 @@
         <strong>{{ email }}</strong>
       </div>
 
-      <label>
-        {{ labels.profile.fields.signatureName }}
-        <input [(ngModel)]="profile.signatureName" name="signatureName" type="text" />
+      <label class="profile-control">
+        <span>{{ labels.profile.fields.signatureName }}</span>
+        <input pInputText [(ngModel)]="profile.signatureName" name="signatureName" type="text" />
       </label>
-    </section>
+    </p-card>
 
-    <section class="profile-panel signature-panel" aria-labelledby="profile-signature-title">
-      <div>
-        <p class="panel-kicker">{{ labels.profile.sections.signature }}</p>
-        <h3 id="profile-signature-title">{{ labels.profile.sections.visa }}</h3>
-      </div>
+    <p-card styleClass="profile-panel signature-panel" [attr.aria-labelledby]="'profile-signature-title'">
+      <ng-template pTemplate="header">
+        <div class="profile-panel-header">
+          <p class="panel-kicker">{{ labels.profile.sections.signature }}</p>
+          <h3 id="profile-signature-title">{{ labels.profile.sections.visa }}</h3>
+        </div>
+      </ng-template>
 
-      <div class="signature-modes" [attr.aria-label]="labels.profile.fields.signatureMode">
-        <button [class.active]="profile.signatureMode === 'name'" (click)="updateSignatureMode('name')" type="button">
-          {{ labels.profile.modes.name }}
-        </button>
-        <button [class.active]="profile.signatureMode === 'image'" (click)="updateSignatureMode('image')" type="button">
-          {{ labels.profile.modes.image }}
-        </button>
-        <button [class.active]="profile.signatureMode === 'draw'" (click)="updateSignatureMode('draw')" type="button">
-          {{ labels.profile.modes.draw }}
-        </button>
-      </div>
+      <p-selectButton
+        [options]="signatureModeOptions"
+        [(ngModel)]="profile.signatureMode"
+        optionLabel="label"
+        optionValue="value"
+        [allowEmpty]="false"
+        [ariaLabel]="labels.profile.fields.signatureMode"
+        styleClass="signature-modes"
+      ></p-selectButton>
 
-      <label>
-        {{ labels.profile.fields.signatureImage }}
-        <input accept="image/*" (change)="loadSignatureImage($event)" type="file" />
+      <label class="profile-control">
+        <span>{{ labels.profile.fields.signatureImage }}</span>
+        <input class="file-input" accept="image/*" (change)="loadSignatureImage($event)" type="file" />
       </label>
 
       <div class="signature-pad-shell">
@@ -63,7 +71,13 @@
           (touchmove)="draw($event)"
           (touchend)="stopDrawing()"
         ></canvas>
-        <button class="secondary-button compact-button" (click)="clearDrawing()" type="button">{{ labels.profile.actions.clearPad }}</button>
+        <p-button
+          [label]="labels.profile.actions.clearPad"
+          severity="secondary"
+          [outlined]="true"
+          size="small"
+          (onClick)="clearDrawing()"
+        ></p-button>
       </div>
 
       <div class="signature-preview">
@@ -74,15 +88,18 @@
           <strong>{{ profile.signatureName || displayedName || email }}</strong>
         }
       </div>
-    </section>
+    </p-card>
 
     <div class="profile-actions">
-      <button class="primary-button" [disabled]="isSaving()" (click)="saveProfile()" type="button">
-        {{ isSaving() ? labels.profile.actions.saving : labels.profile.actions.saveProfile }}
-      </button>
+      <p-button
+        [disabled]="isSaving()"
+        [label]="isSaving() ? labels.profile.actions.saving : labels.profile.actions.saveProfile"
+        [loading]="isSaving()"
+        (onClick)="saveProfile()"
+      ></p-button>
 
       @if (message()) {
-        <p class="success-message">{{ message() }}</p>
+        <p-message severity="success" [text]="message() || ''"></p-message>
       }
     </div>
   </div>

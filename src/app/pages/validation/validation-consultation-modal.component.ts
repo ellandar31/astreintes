@@ -1,5 +1,8 @@
 import { CommonModule } from "@angular/common";
 import { Component, EventEmitter, Input, Output } from "@angular/core";
+import { ButtonModule } from "primeng/button";
+import { TableModule } from "primeng/table";
+import { TagModule } from "primeng/tag";
 import { APP_LABELS } from "../../i18n/labels";
 import { ModalComponent } from "../../shared/modal.component";
 import { ValidationItem, VisaProgressItem } from "./validation.models";
@@ -7,7 +10,7 @@ import { ValidationItem, VisaProgressItem } from "./validation.models";
 @Component({
   selector: "app-validation-consultation-modal",
   standalone: true,
-  imports: [CommonModule, ModalComponent],
+  imports: [ButtonModule, CommonModule, ModalComponent, TableModule, TagModule],
   templateUrl: "./validation-consultation-modal.component.html",
   styleUrl: "./validation-consultation-modal.component.css",
 })

@@ -8,41 +8,37 @@
       <p class="sent-date">{{ labels.common.messages.rhSentAt }} <strong>{{ item.sentToRhLabel }}</strong></p>
     </header>
 
-    <div class="rh-table-shell">
-      <table class="rh-table detail-table">
-        <thead>
-          <tr>
-            <th>{{ labels.rh.detail.nature }}</th>
-            <th>{{ labels.rh.detail.range }}</th>
-            <th>{{ labels.rh.detail.appliedRule }}</th>
-            <th>{{ labels.rh.detail.hours }}</th>
-            <th>{{ labels.rh.detail.coefficient }}</th>
-            <th>{{ labels.rh.detail.controlTotal }}</th>
-            <th>{{ labels.rh.detail.rest }}</th>
-            <th>{{ labels.rh.detail.calculationDetail }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (line of item.lines; track line.id) {
-            <tr>
-              <td>{{ line.nature }}</td>
-              <td>{{ line.period }}</td>
-              <td>{{ line.label }}</td>
-              <td>{{ formatNumber(line.hours) }} h</td>
-              <td>{{ formatNumber(line.coefficient) }}</td>
-              <td>{{ formatLineTotal(line) }}</td>
-              <td>
-                @if (line.restCoefficient !== undefined) {
-                  {{ formatNumber(line.restCoefficient) }}
-                } @else {
-                  {{ labels.common.empty.dash }}
-                }
-              </td>
-              <td><pre>{{ line.details }}</pre></td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
+    <p-table [value]="item.lines" styleClass="rh-table detail-table" [tableStyle]="{ 'min-width': '1180px' }">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>{{ labels.rh.detail.nature }}</th>
+          <th>{{ labels.rh.detail.range }}</th>
+          <th>{{ labels.rh.detail.appliedRule }}</th>
+          <th>{{ labels.rh.detail.hours }}</th>
+          <th>{{ labels.rh.detail.coefficient }}</th>
+          <th>{{ labels.rh.detail.controlTotal }}</th>
+          <th>{{ labels.rh.detail.rest }}</th>
+          <th>{{ labels.rh.detail.calculationDetail }}</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-line>
+        <tr>
+          <td>{{ line.nature }}</td>
+          <td>{{ line.period }}</td>
+          <td>{{ line.label }}</td>
+          <td>{{ formatNumber(line.hours) }} h</td>
+          <td>{{ formatNumber(line.coefficient) }}</td>
+          <td>{{ formatLineTotal(line) }}</td>
+          <td>
+            @if (line.restCoefficient !== undefined) {
+              {{ formatNumber(line.restCoefficient) }}
+            } @else {
+              {{ labels.common.empty.dash }}
+            }
+          </td>
+          <td><pre>{{ line.details }}</pre></td>
+        </tr>
+      </ng-template>
+    </p-table>
   </section>
 </app-modal>

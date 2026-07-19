@@ -2,6 +2,11 @@ import { CommonModule } from "@angular/common";
 import { Component, ElementRef, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild, effect, inject } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { Store } from "@ngrx/store";
+import { ButtonModule } from "primeng/button";
+import { CardModule } from "primeng/card";
+import { InputTextModule } from "primeng/inputtext";
+import { MessageModule } from "primeng/message";
+import { SelectButtonModule } from "primeng/selectbutton";
 import { APP_LABELS } from "../../i18n/labels";
 import { SignatureProfile, VisaSignatureMode } from "../../shared/visa.models";
 import { StoreAuthUser } from "../../store/app-store";
@@ -16,7 +21,7 @@ import {
 @Component({
   selector: "app-profile-page",
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [ButtonModule, CardModule, CommonModule, FormsModule, InputTextModule, MessageModule, SelectButtonModule],
   templateUrl: "./profile-page.component.html",
   styleUrl: "./profile-page.component.css",
 })
@@ -28,6 +33,11 @@ export class ProfilePageComponent implements OnChanges, OnDestroy {
   @ViewChild("signaturePad") signaturePad?: ElementRef<HTMLCanvasElement>;
 
   readonly labels = APP_LABELS;
+  readonly signatureModeOptions: { label: string; value: VisaSignatureMode }[] = [
+    { label: APP_LABELS.profile.modes.name, value: "name" },
+    { label: APP_LABELS.profile.modes.image, value: "image" },
+    { label: APP_LABELS.profile.modes.draw, value: "draw" },
+  ];
   profile: SignatureProfile = this.emptyProfile();
   isDrawing = false;
 

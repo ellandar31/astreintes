@@ -10,11 +10,27 @@
 }
 
 .compensation-block {
+  display: block;
+}
+
+:host ::ng-deep .compensation-block {
   border: 1px solid #dde5eb;
   border-radius: 8px;
+  box-shadow: none;
+}
+
+:host ::ng-deep .compensation-block .p-card-header {
+  padding: 14px 14px 0;
+}
+
+:host ::ng-deep .compensation-block .p-card-body {
+  padding: 12px 14px 14px;
+}
+
+:host ::ng-deep .compensation-block .p-card-content {
   display: grid;
   gap: 12px;
-  padding: 14px;
+  padding: 0;
 }
 
 .compensation-block h4 {

@@ -3,14 +3,16 @@
   gap: 14px;
 }
 
+:host ::ng-deep .user-select,
+:host ::ng-deep .p-inputtext {
+  width: 100%;
+}
+
 .checkbox-label {
   align-items: center;
   display: flex;
   flex-direction: row;
-}
-
-.checkbox-label input {
-  min-height: auto;
+  gap: 10px;
 }
 
 .form-actions {

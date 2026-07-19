@@ -1,29 +1,30 @@
 <section class="settings-layout" [attr.aria-label]="labels.settings.menu.title">
-  <aside class="settings-menu" [attr.aria-label]="labels.settings.menu.title">
-    <div class="settings-menu-heading">
-      <p class="eyebrow">{{ labels.settings.menu.modules }}</p>
-      <h3>{{ labels.settings.menu.title }}</h3>
-    </div>
+  <p-card styleClass="settings-menu" [attr.aria-label]="labels.settings.menu.title">
+    <ng-template pTemplate="header">
+      <div class="settings-menu-heading">
+        <p class="eyebrow">{{ labels.settings.menu.modules }}</p>
+        <h3>{{ labels.settings.menu.title }}</h3>
+      </div>
+    </ng-template>
 
     @for (section of sections; track section.id) {
-      <button
-        class="settings-menu-button"
-        [class.active]="activeSection === section.id"
-        (click)="setSection(section.id)"
-        type="button"
-      >
-        {{ section.label }}
-      </button>
+      <p-button
+        [label]="section.label"
+        [severity]="activeSection === section.id ? 'primary' : 'secondary'"
+        [text]="activeSection !== section.id"
+        styleClass="settings-menu-button"
+        (onClick)="setSection(section.id)"
+      ></p-button>
     }
-  </aside>
+  </p-card>
 
-  <div class="settings-content">
+  <p-card styleClass="settings-content">
     @if (settingsError) {
-      <p class="error-message">{{ settingsError }}</p>
+      <p-message severity="error" [text]="settingsError"></p-message>
     }
 
     @if (settingsSuccess) {
-      <p class="success-message">{{ settingsSuccess }}</p>
+      <p-message severity="success" [text]="settingsSuccess"></p-message>
     }
 
     @if (activeSection === "users") {
@@ -37,5 +38,5 @@
     } @else if (activeSection === "rhExports") {
       <app-rh-export-templates-settings (failure)="showError($event)" (success)="showSuccess($event)"></app-rh-export-templates-settings>
     }
-  </div>
+  </p-card>
 </section>

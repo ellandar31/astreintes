@@ -1,5 +1,8 @@
 import { CommonModule } from "@angular/common";
 import { Component } from "@angular/core";
+import { ButtonModule } from "primeng/button";
+import { CardModule } from "primeng/card";
+import { MessageModule } from "primeng/message";
 import { APP_LABELS } from "../../i18n/labels";
 import { HolidaysSettingsComponent } from "./holidays-settings.component";
 import { RhCompensationSettingsComponent } from "./rh-compensation-settings.component";
@@ -12,8 +15,11 @@ import { UsersSettingsComponent } from "./users-settings.component";
   selector: "app-settings-page",
   standalone: true,
   imports: [
+    ButtonModule,
+    CardModule,
     CommonModule,
     HolidaysSettingsComponent,
+    MessageModule,
     RhCompensationSettingsComponent,
     RhExportTemplatesSettingsComponent,
     TeamsSettingsComponent,

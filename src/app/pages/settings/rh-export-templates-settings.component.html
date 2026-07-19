@@ -8,21 +8,22 @@
 
   <div class="template-grid">
     @for (template of templates; track template.id) {
-      <article class="template-item">
+      <p-card styleClass="template-item">
         <div>
           <h4>{{ template.label }}</h4>
           <p>{{ template.fileName || labels.common.messages.noFileReferenced }}</p>
         </div>
 
         <label class="file-button">
+          <i class="pi pi-file-word" aria-hidden="true"></i>
           {{ labels.settings.rhTemplates.chooseWord }}
           <input accept=".doc,.docx" (change)="setTemplateFile(template, $event)" type="file" />
         </label>
-      </article>
+      </p-card>
     }
   </div>
 
   <div class="form-actions">
-    <button class="primary-button" (click)="saveTemplates()" type="button">{{ labels.settings.rhTemplates.save }}</button>
+    <p-button icon="pi pi-save" (onClick)="saveTemplates()" [label]="labels.settings.rhTemplates.save"></p-button>
   </div>
 </section>

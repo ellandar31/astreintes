@@ -1,6 +1,11 @@
 import { CommonModule } from "@angular/common";
 import { Component, EventEmitter, Input, Output } from "@angular/core";
 import { FormsModule, NgForm } from "@angular/forms";
+import { ButtonModule } from "primeng/button";
+import { InputTextModule } from "primeng/inputtext";
+import { MessageModule } from "primeng/message";
+import { SelectModule } from "primeng/select";
+import { TableModule } from "primeng/table";
 import { APP_LABELS } from "../../i18n/labels";
 import { ModalComponent } from "../../shared/modal.component";
 import { createEmptyVisa } from "../../shared/visa.models";
@@ -22,7 +27,7 @@ import {
 @Component({
   selector: "app-operation-modal",
   standalone: true,
-  imports: [CommonModule, FormsModule, ModalComponent],
+  imports: [ButtonModule, CommonModule, FormsModule, InputTextModule, MessageModule, ModalComponent, SelectModule, TableModule],
   templateUrl: "./operation-modal.component.html",
   styleUrl: "./operation-modal.component.css",
 })

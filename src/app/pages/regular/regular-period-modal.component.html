@@ -3,18 +3,33 @@
     <div class="period-summary-grid">
       <label>
         {{ labels.common.fields.user }}
-        <select class="user-select" name="regularUser" [disabled]="isLocked" [ngModel]="form.userId" (ngModelChange)="selectUser($event)" required>
-          <option value="">{{ labels.common.users.select }}</option>
-          @for (user of users; track user.id) {
-            <option [ngValue]="user.id" [title]="userLabel(user)">{{ userLabel(user) }}</option>
-          }
-        </select>
+        <p-select
+          [options]="users"
+          name="regularUser"
+          [disabled]="isLocked"
+          [ngModel]="form.userId"
+          (ngModelChange)="selectUser($event)"
+          optionLabel="email"
+          optionValue="id"
+          [placeholder]="labels.common.users.select"
+          appendTo="body"
+          styleClass="user-select"
+          required
+        >
+          <ng-template pTemplate="selectedItem" let-user>
+            {{ user ? userLabel(user) : labels.common.users.select }}
+          </ng-template>
+          <ng-template pTemplate="item" let-user>
+            {{ userLabel(user) }}
+          </ng-template>
+        </p-select>
       </label>
 
       <label>
         {{ labels.regular.fields.dateStart }}
         @if (isEditing) {
           <input
+            pInputText
             name="regularStartDate"
             [ngModel]="startDateValue"
             (ngModelChange)="updateStartDate($event)"
@@ -24,6 +39,7 @@
           />
         } @else {
           <input
+            pInputText
             name="regularStartDate"
             [ngModel]="startDateValue"
             (ngModelChange)="updateStartDate($event)"
@@ -38,6 +54,7 @@
         {{ labels.regular.fields.dateEnd }}
         @if (isEditing) {
           <input
+            pInputText
             name="regularEndDate"
             [ngModel]="endDateValue"
             (ngModelChange)="updateEndDate($event)"
@@ -47,6 +64,7 @@
           />
         } @else {
           <input
+            pInputText
             name="regularEndDate"
             [ngModel]="endDateValue"
             (ngModelChange)="updateEndDate($event)"
@@ -66,57 +84,80 @@
             <h3 id="regular-period-interventions-title">{{ labels.regular.sections.attachedInterventions }}</h3>
           </div>
           @if (!isLocked) {
-            <button class="secondary-button compact-button" (click)="addIntervention()" type="button">
-              {{ labels.regular.actions.addIntervention }}
-            </button>
+            <p-button
+              icon="pi pi-plus"
+              severity="secondary"
+              [outlined]="true"
+              size="small"
+              [label]="labels.regular.actions.addIntervention"
+              (onClick)="addIntervention()"
+            ></p-button>
           }
         </div>
 
-        @if (interventions.length) {
-          <div class="interventions-table">
-            <div class="interventions-row interventions-header">
-              <span>{{ labels.common.fields.user }}</span>
-              <span>{{ labels.common.table.start }}</span>
-              <span>{{ labels.common.table.end }}</span>
-              <span>{{ labels.common.fields.comment }}</span>
+        <p-table [value]="interventions" styleClass="interventions-table" [tableStyle]="{ 'min-width': isLocked ? '44rem' : '54rem' }">
+          <ng-template pTemplate="header">
+            <tr>
+              <th>{{ labels.common.fields.user }}</th>
+              <th>{{ labels.common.table.start }}</th>
+              <th>{{ labels.common.table.end }}</th>
+              <th>{{ labels.common.fields.comment }}</th>
               @if (!isLocked) {
-                <span>{{ labels.common.table.actions }}</span>
+                <th>{{ labels.common.table.actions }}</th>
               }
-            </div>
-
-            @for (intervention of interventions; track intervention.id) {
-              <div class="interventions-row">
-                <span>{{ intervention.userName || intervention.userEmail }}</span>
-                <span>{{ formatDateTime(intervention.startDate) }}</span>
-                <span>{{ formatDateTime(intervention.endDate) }}</span>
-                <span class="comment-cell">{{ intervention.comment || labels.common.empty.dash }}</span>
-                <span class="action-cell">
-                  @if (!isLocked) {
-                    <button class="secondary-button compact-button" (click)="editIntervention(intervention)" type="button">
-                      ✎
-                    </button>
-                    <button class="danger-button compact-button" (click)="deleteIntervention(intervention)" type="button">
-                      X
-                    </button>
-                  }
-                </span>
-              </div>
-            }
-          </div>
-        } @else {
-          <p class="empty-interventions">{{ labels.regular.empty.noAssociatedIntervention }}</p>
-        }
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-intervention>
+            <tr>
+              <td>{{ intervention.userName || intervention.userEmail }}</td>
+              <td>{{ formatDateTime(intervention.startDate) }}</td>
+              <td>{{ formatDateTime(intervention.endDate) }}</td>
+              <td class="comment-cell">{{ intervention.comment || labels.common.empty.dash }}</td>
+              @if (!isLocked) {
+                <td>
+                  <div class="action-cell">
+                    <p-button
+                      icon="pi pi-pencil"
+                      severity="secondary"
+                      [rounded]="true"
+                      [text]="true"
+                      (onClick)="editIntervention(intervention)"
+                    ></p-button>
+                    <p-button
+                      icon="pi pi-trash"
+                      severity="danger"
+                      [rounded]="true"
+                      [text]="true"
+                      (onClick)="deleteIntervention(intervention)"
+                    ></p-button>
+                  </div>
+                </td>
+              }
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="emptymessage">
+            <tr>
+              <td [attr.colspan]="isLocked ? 4 : 5">{{ labels.regular.empty.noAssociatedIntervention }}</td>
+            </tr>
+          </ng-template>
+        </p-table>
       </section>
     }
+
     @if (!isLocked) {
       <div class="form-actions">
-        <button class="primary-button" [disabled]="periodNgForm.invalid" type="submit">{{ labels.common.actions.save }}</button>
+        <p-button icon="pi pi-save" [disabled]="periodNgForm.invalid" type="submit" [label]="labels.common.actions.save"></p-button>
         @if (isEditing) {
-          <button class="danger-button" (click)="deletePeriod()" type="button">{{ labels.common.actions.delete }}</button>
+          <p-button icon="pi pi-trash" severity="danger" [outlined]="true" (onClick)="deletePeriod()" [label]="labels.common.actions.delete"></p-button>
         }
       </div>
     } @else {
-      <p class="sent-rh-message">{{ labels.common.messages.rhSentAt }} <strong>{{ formatDateTime(sentToRhAt) }}</strong></p>
+      <div class="rh-sent-message" role="alert">
+        <i class="pi pi-lock" aria-hidden="true"></i>
+        <span>
+          {{ labels.common.messages.rhSentAt }} <strong>{{ formatDateTime(sentToRhAt) }}</strong>
+        </span>
+      </div>
     }
   </form>
 </app-modal>

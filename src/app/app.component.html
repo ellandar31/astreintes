@@ -1,6 +1,6 @@
 @if (loadingSession()) {
   <main class="center-screen">
-    <div class="loader" [attr.aria-label]="labels.app.loading"></div>
+    <p-progress-spinner [ariaLabel]="labels.app.loading" strokeWidth="4"></p-progress-spinner>
   </main>
 } @else if (user()) {
   <main class="app-shell">
@@ -11,17 +11,30 @@
       </div>
 
       <div class="top-actions" [attr.aria-label]="labels.app.userActions">
-        <button class="icon-button" [title]="labels.common.modal.profile + ' - ' + displayName()" (click)="showProfile()" type="button">
-          <span class="button-icon" aria-hidden="true">{{ labels.common.icons.profile }}</span>
-          <span>{{ labels.common.modal.profile }}</span>
-        </button>
-        <button class="icon-button" [title]="labels.common.modal.settings" (click)="showSettings()" type="button">
-          <span class="button-icon" aria-hidden="true">{{ labels.common.icons.settings }}</span>
-          <span>{{ labels.common.modal.settings }}</span>
-        </button>
-        <button class="icon-button danger" (click)="logout()" [title]="labels.app.auth.logout" type="button">
-          {{ labels.common.icons.close }}
-        </button>
+        <p-button
+          icon="pi pi-user"
+          [label]="labels.common.modal.profile"
+          severity="secondary"
+          [outlined]="true"
+          [pTooltip]="labels.common.modal.profile + ' - ' + displayName()"
+          (onClick)="showProfile()"
+        ></p-button>
+        <p-button
+          icon="pi pi-cog"
+          [label]="labels.common.modal.settings"
+          severity="secondary"
+          [outlined]="true"
+          [pTooltip]="labels.common.modal.settings"
+          (onClick)="showSettings()"
+        ></p-button>
+        <p-button
+          icon="pi pi-sign-out"
+          severity="danger"
+          [rounded]="true"
+          [outlined]="true"
+          [pTooltip]="labels.app.auth.logout"
+          (onClick)="logout()"
+        ></p-button>
       </div>
     </header>
 
@@ -61,17 +74,20 @@
   </main>
 } @else {
   <main class="auth-layout">
-    <section class="auth-panel" aria-labelledby="auth-title">
-      <div>
-        <p class="eyebrow">{{ labels.app.eyebrow }}</p>
-        <h1 id="auth-title">{{ labels.app.auth.title }}</h1>
-        <p class="muted">{{ labels.app.auth.subtitle }}</p>
-      </div>
+    <p-card styleClass="auth-panel" [attr.aria-labelledby]="'auth-title'">
+      <ng-template pTemplate="header">
+        <div class="auth-header">
+          <p class="eyebrow">{{ labels.app.eyebrow }}</p>
+          <h1 id="auth-title">{{ labels.app.auth.title }}</h1>
+          <p class="muted">{{ labels.app.auth.subtitle }}</p>
+        </div>
+      </ng-template>
 
       <form class="auth-form" #authForm="ngForm" (ngSubmit)="loginWithEmail(authForm)">
-        <label>
-          {{ labels.app.auth.email }}
+        <label class="field">
+          <span>{{ labels.app.auth.email }}</span>
           <input
+            pInputText
             autocomplete="email"
             inputmode="email"
             name="email"
@@ -82,35 +98,51 @@
           />
         </label>
 
-        <label>
-          {{ labels.app.auth.password }}
-          <input
+        <label class="field">
+          <span>{{ labels.app.auth.password }}</span>
+          <p-password
             [autocomplete]="isCreatingAccount ? 'new-password' : 'current-password'"
+            [feedback]="isCreatingAccount"
+            [toggleMask]="true"
             minlength="6"
             name="password"
             [(ngModel)]="password"
             [placeholder]="labels.app.auth.passwordPlaceholder"
             required
-            type="password"
-          />
+            styleClass="auth-password"
+            inputStyleClass="auth-password-input"
+          ></p-password>
         </label>
 
         @if (error()) {
-          <p class="error-message">{{ error() }}</p>
+          <p-message severity="error" [text]="error() || ''"></p-message>
         }
 
-        <button class="primary-button" [disabled]="isSubmitting()" type="submit">
-          {{ isCreatingAccount ? labels.app.auth.createAccount : labels.app.auth.login }}
-        </button>
+        <p-button
+          [disabled]="isSubmitting()"
+          [label]="isCreatingAccount ? labels.app.auth.createAccount : labels.app.auth.login"
+          [loading]="isSubmitting()"
+          type="submit"
+          styleClass="auth-submit"
+        ></p-button>
       </form>
 
-      <button class="google-button" [disabled]="isSubmitting()" (click)="loginWithGoogle()" type="button">
-        {{ labels.app.auth.google }}
-      </button>
+      <div class="auth-secondary-actions">
+        <p-button
+          icon="pi pi-google"
+          [disabled]="isSubmitting()"
+          [label]="labels.app.auth.google"
+          severity="secondary"
+          [outlined]="true"
+          (onClick)="loginWithGoogle()"
+        ></p-button>
 
-      <button class="text-button" (click)="toggleAccountMode()" type="button">
-        {{ isCreatingAccount ? labels.app.auth.existingAccount : labels.app.auth.createEmailAccount }}
-      </button>
-    </section>
+        <p-button
+          [label]="isCreatingAccount ? labels.app.auth.existingAccount : labels.app.auth.createEmailAccount"
+          [link]="true"
+          (onClick)="toggleAccountMode()"
+        ></p-button>
+      </div>
+    </p-card>
   </main>
 }

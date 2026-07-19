@@ -1,6 +1,10 @@
 import { CommonModule } from "@angular/common";
 import { Component, Input, OnDestroy, effect, inject } from "@angular/core";
 import { FormsModule } from "@angular/forms";
+import { ButtonModule } from "primeng/button";
+import { InputTextModule } from "primeng/inputtext";
+import { TableModule } from "primeng/table";
+import { TagModule } from "primeng/tag";
 import { Store } from "@ngrx/store";
 import { APP_LABELS } from "../../i18n/labels";
 import { createEmptyVisa } from "../../shared/visa.models";
@@ -39,7 +43,7 @@ import { OperationModalComponent } from "./operation-modal.component";
 @Component({
   selector: "app-exceptional-operations",
   standalone: true,
-  imports: [CommonModule, FormsModule, InterventionModalComponent, OperationModalComponent],
+  imports: [ButtonModule, CommonModule, FormsModule, InputTextModule, InterventionModalComponent, OperationModalComponent, TableModule, TagModule],
   templateUrl: "./exceptional-operations.component.html",
   styleUrl: "./exceptional-operations.component.css",
 })

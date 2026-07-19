@@ -6,146 +6,132 @@
     </div>
 
     <div class="create-actions">
-      <button class="primary-button" (click)="openCreateModal('astreinte')" type="button">
-        {{ labels.exceptional.actions.addExceptionalOnCall }}
-      </button>
-      <button class="secondary-button" (click)="openCreateModal('travaux')" type="button">
-        {{ labels.exceptional.actions.addExceptionalWork }}
-      </button>
+      <p-button
+        icon="pi pi-calendar-plus"
+        [label]="labels.exceptional.actions.addExceptionalOnCall"
+        (onClick)="openCreateModal('astreinte')"
+      ></p-button>
+      <p-button
+        icon="pi pi-briefcase"
+        severity="secondary"
+        [outlined]="true"
+        [label]="labels.exceptional.actions.addExceptionalWork"
+        (onClick)="openCreateModal('travaux')"
+      ></p-button>
     </div>
   </header>
 
-  <div class="table-shell">
-    <table>
-      <thead>
-        <tr>
-          <th>
-            <div class="header-cell">
-              <span>{{ labels.common.table.type }}</span>
-              <button class="header-icon" (click)="setSort('type')" [title]="labels.common.actions.sort" type="button">{{ sortIndicator("type") }}</button>
-              <button class="header-icon" (click)="toggleFilter('type')" [title]="labels.common.actions.filter" type="button">⌕</button>
-            </div>
-            @if (activeFilterField === "type") {
-              <label class="sr-only" for="typeFilter">{{ labels.exceptional.fields.typeFilter }}</label>
-              <input id="typeFilter" class="header-filter" [(ngModel)]="filters.type" name="typeFilter" [placeholder]="labels.common.table.type" />
-            }
-          </th>
-          <th>
-            <div class="header-cell">
-              <span>{{ labels.common.fields.initiator }}</span>
-              <button class="header-icon" (click)="setSort('initiatorName')" [title]="labels.common.actions.sort" type="button">
-                {{ sortIndicator("initiatorName") }}
-              </button>
-              <button class="header-icon" (click)="toggleFilter('initiatorName')" [title]="labels.common.actions.filter" type="button">⌕</button>
-            </div>
-            @if (activeFilterField === "initiatorName") {
-              <label class="sr-only" for="initiatorFilter">{{ labels.exceptional.fields.initiatorFilter }}</label>
-              <input id="initiatorFilter" class="header-filter" [(ngModel)]="filters.initiatorName" name="initiatorFilter" [placeholder]="labels.common.fields.initiator" />
-            }
-          </th>
-          <th>
-            <div class="header-cell">
-              <span>{{ labels.common.fields.title }}</span>
-              <button class="header-icon" (click)="setSort('title')" [title]="labels.common.actions.sort" type="button">{{ sortIndicator("title") }}</button>
-              <button class="header-icon" (click)="toggleFilter('title')" [title]="labels.common.actions.filter" type="button">⌕</button>
-            </div>
-            @if (activeFilterField === "title") {
-              <label class="sr-only" for="titleFilter">{{ labels.exceptional.fields.titleFilter }}</label>
-              <input id="titleFilter" class="header-filter" [(ngModel)]="filters.title" name="titleFilter" [placeholder]="labels.common.fields.title" />
-            }
-          </th>
-          <th>
-            <div class="header-cell">
-              <span>{{ labels.exceptional.fields.dateStart }}</span>
-              <button class="header-icon" (click)="setSort('startDate')" [title]="labels.common.actions.sort" type="button">
-                {{ sortIndicator("startDate") }}
-              </button>
-              <button class="header-icon" (click)="toggleFilter('startDate')" [title]="labels.common.actions.filter" type="button">⌕</button>
-            </div>
-            @if (activeFilterField === "startDate") {
-              <label class="sr-only" for="startDateFilter">{{ labels.exceptional.fields.startDateFilter }}</label>
-              <input id="startDateFilter" class="header-filter" [(ngModel)]="filters.startDate" name="startDateFilter" [placeholder]="labels.exceptional.fields.datePlaceholder" />
-            }
-          </th>
-          <th>{{ labels.common.table.actions }}</th>
-        </tr>
-      </thead>
+  <p-table [value]="filteredOperations" styleClass="exceptional-table" [tableStyle]="{ 'min-width': '960px' }">
+    <ng-template pTemplate="header">
+      <tr>
+        <th>
+          <div class="header-cell">
+            <span>{{ labels.common.table.type }}</span>
+            <p-button icon="pi pi-sort-alt" [rounded]="true" [text]="true" size="small" (onClick)="setSort('type')" [title]="labels.common.actions.sort"></p-button>
+            <p-button icon="pi pi-filter" [rounded]="true" [text]="true" size="small" (onClick)="toggleFilter('type')" [title]="labels.common.actions.filter"></p-button>
+          </div>
+          @if (activeFilterField === "type") {
+            <label class="sr-only" for="typeFilter">{{ labels.exceptional.fields.typeFilter }}</label>
+            <input pInputText id="typeFilter" class="header-filter" [(ngModel)]="filters.type" name="typeFilter" [placeholder]="labels.common.table.type" />
+          }
+        </th>
+        <th>
+          <div class="header-cell">
+            <span>{{ labels.common.fields.initiator }}</span>
+            <p-button icon="pi pi-sort-alt" [rounded]="true" [text]="true" size="small" (onClick)="setSort('initiatorName')" [title]="labels.common.actions.sort"></p-button>
+            <p-button icon="pi pi-filter" [rounded]="true" [text]="true" size="small" (onClick)="toggleFilter('initiatorName')" [title]="labels.common.actions.filter"></p-button>
+          </div>
+          @if (activeFilterField === "initiatorName") {
+            <label class="sr-only" for="initiatorFilter">{{ labels.exceptional.fields.initiatorFilter }}</label>
+            <input pInputText id="initiatorFilter" class="header-filter" [(ngModel)]="filters.initiatorName" name="initiatorFilter" [placeholder]="labels.common.fields.initiator" />
+          }
+        </th>
+        <th>
+          <div class="header-cell">
+            <span>{{ labels.common.fields.title }}</span>
+            <p-button icon="pi pi-sort-alt" [rounded]="true" [text]="true" size="small" (onClick)="setSort('title')" [title]="labels.common.actions.sort"></p-button>
+            <p-button icon="pi pi-filter" [rounded]="true" [text]="true" size="small" (onClick)="toggleFilter('title')" [title]="labels.common.actions.filter"></p-button>
+          </div>
+          @if (activeFilterField === "title") {
+            <label class="sr-only" for="titleFilter">{{ labels.exceptional.fields.titleFilter }}</label>
+            <input pInputText id="titleFilter" class="header-filter" [(ngModel)]="filters.title" name="titleFilter" [placeholder]="labels.common.fields.title" />
+          }
+        </th>
+        <th>
+          <div class="header-cell">
+            <span>{{ labels.exceptional.fields.dateStart }}</span>
+            <p-button icon="pi pi-sort-alt" [rounded]="true" [text]="true" size="small" (onClick)="setSort('startDate')" [title]="labels.common.actions.sort"></p-button>
+            <p-button icon="pi pi-filter" [rounded]="true" [text]="true" size="small" (onClick)="toggleFilter('startDate')" [title]="labels.common.actions.filter"></p-button>
+          </div>
+          @if (activeFilterField === "startDate") {
+            <label class="sr-only" for="startDateFilter">{{ labels.exceptional.fields.startDateFilter }}</label>
+            <input pInputText id="startDateFilter" class="header-filter" [(ngModel)]="filters.startDate" name="startDateFilter" [placeholder]="labels.exceptional.fields.datePlaceholder" />
+          }
+        </th>
+        <th>{{ labels.common.table.actions }}</th>
+      </tr>
+    </ng-template>
 
-      <tbody>
-        @for (operation of filteredOperations; track operation.id) {
-          <tr>
-            <td>{{ operationTypeLabel(operation.type) }}</td>
-            <td>{{ operation.initiatorName }}</td>
-            <td>{{ operation.title }}</td>
-            <td>{{ formatDate(operation.startDate) }}</td>
-            <td>
-              <div class="table-actions">
-                @if (isSentToRh(operation)) {
-                  <button
-                    class="action-button"
-                    (click)="openEditModal(operation)"
-                    [title]="labels.common.actions.consult"
-                    [attr.aria-label]="labels.common.actions.consult"
-                    type="button"
-                  >
-                    <svg
-                      aria-hidden="true"
-                      viewBox="0 0 24 24"
-                      width="20"
-                      height="20"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    >
-                      <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12"></path>
-                      <circle cx="12" cy="12" r="3"></circle>
-                    </svg>
-                  </button>
-                } @else {
-                  <button
-                    class="action-button"
-                    (click)="openEditModal(operation)"
-                    [disabled]="isSentToRh(operation)"
-                    [title]="labels.common.actions.edit"
-                    [attr.aria-label]="labels.common.actions.edit"
-                    type="button"
-                  >
-                    ✎
-                  </button>
-                  <button
-                    class="action-button danger"
-                    [disabled]="isSentToRh(operation)"
-                    (click)="deleteOperation(operation)"
-                    [title]="labels.common.actions.delete"
-                    [attr.aria-label]="labels.common.actions.delete"
-                    type="button"
-                  >
-                    X
-                  </button>
-                  <button
-                    class="action-button"
-                    [disabled]="isSentToRh(operation)"
-                    (click)="openInterventionModal(operation)"
-                    [title]="labels.exceptional.actions.addIntervention"
-                    [attr.aria-label]="labels.exceptional.actions.addIntervention"
-                    type="button"
-                  >
-                    +
-                  </button>
-                }
-              </div>
-            </td>
-          </tr>
-        } @empty {
-          <tr>
-            <td colspan="5" class="empty-row">{{ labels.exceptional.empty.noOperation }}</td>
-          </tr>
-        }
-      </tbody>
-    </table>
-  </div>
+    <ng-template pTemplate="body" let-operation>
+      <tr>
+        <td>
+          <p-tag severity="secondary" [value]="operationTypeLabel(operation.type)"></p-tag>
+        </td>
+        <td>{{ operation.initiatorName }}</td>
+        <td><strong>{{ operation.title }}</strong></td>
+        <td>{{ formatDate(operation.startDate) }}</td>
+        <td>
+          <div class="table-actions">
+            @if (isSentToRh(operation)) {
+              <p-button
+                icon="pi pi-eye"
+                severity="secondary"
+                [rounded]="true"
+                [text]="true"
+                (onClick)="openEditModal(operation)"
+                [title]="labels.common.actions.consult"
+                [attr.aria-label]="labels.common.actions.consult"
+              ></p-button>
+            } @else {
+              <p-button
+                icon="pi pi-pencil"
+                severity="secondary"
+                [rounded]="true"
+                [text]="true"
+                (onClick)="openEditModal(operation)"
+                [title]="labels.common.actions.edit"
+                [attr.aria-label]="labels.common.actions.edit"
+              ></p-button>
+              <p-button
+                icon="pi pi-trash"
+                severity="danger"
+                [rounded]="true"
+                [text]="true"
+                (onClick)="deleteOperation(operation)"
+                [title]="labels.common.actions.delete"
+                [attr.aria-label]="labels.common.actions.delete"
+              ></p-button>
+              <p-button
+                icon="pi pi-plus"
+                severity="secondary"
+                [rounded]="true"
+                [text]="true"
+                (onClick)="openInterventionModal(operation)"
+                [title]="labels.exceptional.actions.addIntervention"
+                [attr.aria-label]="labels.exceptional.actions.addIntervention"
+              ></p-button>
+            }
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="5" class="empty-row">{{ labels.exceptional.empty.noOperation }}</td>
+      </tr>
+    </ng-template>
+  </p-table>
 </section>
 
 @if (modalMode === "create-astreinte" || modalMode === "create-travaux" || modalMode === "edit") {

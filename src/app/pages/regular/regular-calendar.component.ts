@@ -1,6 +1,8 @@
 import { CommonModule } from "@angular/common";
 import { Component, OnDestroy, effect, inject } from "@angular/core";
 import { FormsModule } from "@angular/forms";
+import { ButtonModule } from "primeng/button";
+import { SelectModule } from "primeng/select";
 import { createEmptyVisa } from "../../shared/visa.models";
 import { Store } from "@ngrx/store";
 import { APP_LABELS } from "../../i18n/labels";
@@ -43,7 +45,7 @@ interface CalendarDay {
 @Component({
   selector: "app-regular-calendar",
   standalone: true,
-  imports: [CommonModule, FormsModule, RegularInterventionModalComponent, RegularPeriodModalComponent],
+  imports: [ButtonModule, CommonModule, FormsModule, RegularInterventionModalComponent, RegularPeriodModalComponent, SelectModule],
   templateUrl: "./regular-calendar.component.html",
   styleUrl: "./regular-calendar.component.css",
 })

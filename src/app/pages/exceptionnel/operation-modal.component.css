@@ -13,10 +13,13 @@
 }
 
 .summary-panel input,
-.summary-panel select,
-.timeline-panel input,
-.timeline-panel select {
+.timeline-panel input {
   min-height: 46px;
+}
+
+:host ::ng-deep .user-select,
+:host ::ng-deep .p-inputtext {
+  width: 100%;
 }
 
 .timeline-grid {
@@ -78,7 +81,7 @@
   grid-template-columns: minmax(0, 1fr) auto;
 }
 
-.inline-form .secondary-button {
+:host ::ng-deep .inline-form .p-button {
   min-width: 88px;
 }
 
@@ -124,7 +127,7 @@
   border-radius: 8px;
   display: grid;
   gap: 10px;
-  grid-template-columns: minmax(120px, 0.8fr) repeat(2, minmax(172px, 1fr)) 34px;
+  grid-template-columns: minmax(120px, 0.7fr) repeat(2, minmax(175px, 1fr)) 34px;
   min-width: 520px;
   padding: 10px;
 }
@@ -149,21 +152,8 @@
   font-size: 0.78rem;
 }
 
-.remove-button {
-  align-items: center;
-  background: #fff1f2;
-  border: 0;
-  border-radius: 6px;
-  color: #a51d2d;
-  display: inline-flex;
-  font-weight: 900;
-  height: 34px;
-  justify-content: center;
-  width: 34px;
-}
-
 .participant-row input[type="datetime-local"] {
-  min-width: 0;
+  min-width: 180px;
   width: 100%;
 }
 
@@ -175,31 +165,21 @@
   justify-content: space-between;
 }
 
-.interventions-table-shell {
+:host ::ng-deep .interventions-table {
   border: 1px solid #dde5eb;
   border-radius: 8px;
   overflow: auto;
 }
 
-table {
-  border-collapse: collapse;
-  min-width: 720px;
-  width: 100%;
-}
-
-.consultation-mode table {
-  min-width: 620px;
-}
-
-th,
-td {
+:host ::ng-deep .interventions-table .p-datatable-tbody > tr > td,
+:host ::ng-deep .interventions-table .p-datatable-thead > tr > th {
   border-bottom: 1px solid #dde5eb;
   padding: 9px 10px;
   text-align: left;
   vertical-align: middle;
 }
 
-th {
+:host ::ng-deep .interventions-table .p-datatable-thead > tr > th {
   background: #f7fafb;
   color: #526171;
   font-size: 0.8rem;
@@ -209,24 +189,6 @@ th {
 .table-actions {
   display: flex;
   gap: 8px;
-}
-
-.action-button {
-  align-items: center;
-  background: #eef4f5;
-  border: 0;
-  border-radius: 6px;
-  color: #1f3f47;
-  display: inline-flex;
-  font-weight: 900;
-  height: 30px;
-  justify-content: center;
-  width: 30px;
-}
-
-.action-button.danger {
-  background: #fff1f2;
-  color: #a51d2d;
 }
 
 .empty-row {
@@ -250,11 +212,14 @@ th {
 }
 
 .sent-rh-message {
+  align-items: center;
   background: #fff1f2;
   border: 1px solid #fecdd3;
   border-radius: 6px;
   color: #a51d2d;
+  display: flex;
   flex: 1 1 100%;
+  gap: 8px;
   font-weight: 900;
   margin: 0;
   padding: 10px 12px;

@@ -1,4 +1,4 @@
-<section class="rh-panel" aria-labelledby="rh-exports-title">
+<p-card styleClass="rh-panel" [attr.aria-labelledby]="'rh-exports-title'">
   <header class="rh-panel-header">
     <div>
       <p class="eyebrow">{{ labels.rh.exports.eyebrow }}</p>
@@ -7,225 +7,189 @@
 
     <label class="period-control">
       {{ labels.common.fields.period }}
-      <input [(ngModel)]="selectedMonth" name="exportMonth" type="month" />
+      <input pInputText [(ngModel)]="selectedMonth" name="exportMonth" type="month" />
     </label>
   </header>
 
-  <section class="export-section" aria-labelledby="regular-export-title">
+  <p-card styleClass="export-section" [attr.aria-labelledby]="'regular-export-title'">
     <div class="export-section-heading">
       <div>
         <h3 id="regular-export-title">{{ labels.rh.exports.sections.regular }}</h3>
       </div>
     </div>
 
-    <div class="export-table-shell">
-      <table class="export-table">
-        <thead>
-          <tr>
-            <th>{{ labels.rh.controls.types.onCall }}</th>
-            <th>{{ labels.common.table.period }}</th>
-            <th>{{ labels.common.fields.interventions }}</th>
-            <th>{{ labels.common.fields.action }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (operation of exportRows("regular"); track operation.title + operation.forecastStartDate) {
-            <tr>
-              <td>{{ operation.title }}</td>
-              <td>{{ formatRange(operation.forecastStartDate, operation.forecastEndDate) }}</td>
-              <td>{{ operation.interventions.length }}</td>
-              <td>
-                <div class="action-buttons">
-                  <button
-                    class="primary-button compact-button"
-                    [disabled]="!templateFor('regular').fileName"
-                    (click)="exportOperation('regular', operation)"
-                    type="button"
-                  >
-                    {{ labels.common.actions.exportWord }}
-                  </button>
-                  <button
-                    class="secondary-button compact-button"
-                    [disabled]="!templateFor('regular').fileName"
-                    (click)="exportPdfOperation('regular', operation)"
-                    type="button"
-                  >
-                    {{ labels.common.actions.exportPdf }}
-                  </button>
-                  <button
-                    class="secondary-button compact-button"
-                    (click)="exportExcelOperation('regular', operation)"
-                    type="button"
-                  >
-                    {{ labels.common.actions.exportExcel }}
-                  </button>
-                  @if (operation.sentToRhAt) {
-                    <button class="danger-button compact-button" (click)="unmarkSentToRh(operation)" type="button">
-                      {{ labels.common.actions.cancelRhSend }}
-                    </button>
-                  } @else {
-                    <button class="secondary-button compact-button" (click)="markSentToRh(operation)" type="button">
-                      {{ labels.common.actions.rhSend }}
-                    </button>
-                  }
-                </div>
-              </td>
-            </tr>
-          } @empty {
-            <tr>
-              <td colspan="4">{{ labels.rh.exports.empty.regular }}</td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
-  </section>
+    <p-table [value]="exportRows('regular')" styleClass="export-table" [tableStyle]="{ 'min-width': '760px' }">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>{{ labels.rh.controls.types.onCall }}</th>
+          <th>{{ labels.common.table.period }}</th>
+          <th>{{ labels.common.fields.interventions }}</th>
+          <th>{{ labels.common.fields.action }}</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-operation>
+        <tr>
+          <td>{{ operation.title }}</td>
+          <td>{{ formatRange(operation.forecastStartDate, operation.forecastEndDate) }}</td>
+          <td>{{ operation.interventions.length }}</td>
+          <td>
+            <div class="action-buttons">
+              <button pButton class="p-button-sm" [disabled]="!templateFor('regular').fileName" (click)="exportOperation('regular', operation)" type="button">
+                <span class="pi pi-file-word" aria-hidden="true"></span>
+                <span>{{ labels.common.actions.exportWord }}</span>
+              </button>
+              <button pButton class="p-button-sm p-button-outlined p-button-secondary" [disabled]="!templateFor('regular').fileName" (click)="exportPdfOperation('regular', operation)" type="button">
+                <span class="pi pi-file-pdf" aria-hidden="true"></span>
+                <span>{{ labels.common.actions.exportPdf }}</span>
+              </button>
+              <button pButton class="p-button-sm p-button-outlined p-button-secondary" (click)="exportExcelOperation('regular', operation)" type="button">
+                <span class="pi pi-file-excel" aria-hidden="true"></span>
+                <span>{{ labels.common.actions.exportExcel }}</span>
+              </button>
+              @if (operation.sentToRhAt) {
+                <button pButton class="p-button-sm p-button-outlined p-button-danger" (click)="unmarkSentToRh(operation)" type="button">
+                  <span class="pi pi-undo" aria-hidden="true"></span>
+                  <span>{{ labels.common.actions.cancelRhSend }}</span>
+                </button>
+              } @else {
+                <button pButton class="p-button-sm p-button-outlined p-button-secondary" (click)="markSentToRh(operation)" type="button">
+                  <span class="pi pi-send" aria-hidden="true"></span>
+                  <span>{{ labels.common.actions.rhSend }}</span>
+                </button>
+              }
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="4">{{ labels.rh.exports.empty.regular }}</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </p-card>
 
-  <section class="export-section" aria-labelledby="exceptional-on-call-export-title">
+  <p-card styleClass="export-section" [attr.aria-labelledby]="'exceptional-on-call-export-title'">
     <div class="export-section-heading">
       <div>
         <h3 id="exceptional-on-call-export-title">{{ labels.rh.exports.sections.exceptionalOnCall }}</h3>
       </div>
     </div>
 
-    <div class="export-table-shell">
-      <table class="export-table">
-        <thead>
-          <tr>
-            <th>{{ labels.rh.controls.types.onCall }}</th>
-            <th>{{ labels.common.fields.initiator }}</th>
-            <th>{{ labels.common.table.period }}</th>
-            <th>{{ labels.common.fields.interventions }}</th>
-            <th>{{ labels.common.fields.action }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (operation of exportRows("exceptionalOnCall"); track operation.title + operation.forecastStartDate) {
-            <tr>
-              <td>{{ operation.title }}</td>
-              <td>{{ operation.initiatorName || labels.common.empty.dash }}</td>
-              <td>{{ formatRange(operation.forecastStartDate, operation.forecastEndDate) }}</td>
-              <td>{{ operation.interventions.length }}</td>
-              <td>
-                <div class="action-buttons">
-                  <button
-                    class="primary-button compact-button"
-                    [disabled]="!templateFor('exceptionalOnCall').fileName"
-                    (click)="exportOperation('exceptionalOnCall', operation)"
-                    type="button"
-                  >
-                    {{ labels.common.actions.exportWord }}
-                  </button>
-                  <button
-                    class="secondary-button compact-button"
-                    [disabled]="!templateFor('exceptionalOnCall').fileName"
-                    (click)="exportPdfOperation('exceptionalOnCall', operation)"
-                    type="button"
-                  >
-                    {{ labels.common.actions.exportPdf }}
-                  </button>
-                  <button
-                    class="secondary-button compact-button"
-                    (click)="exportExcelOperation('exceptionalOnCall', operation)"
-                    type="button"
-                  >
-                    {{ labels.common.actions.exportExcel }}
-                  </button>
-                  @if (operation.sentToRhAt) {
-                    <button class="danger-button compact-button" (click)="unmarkSentToRh(operation)" type="button">
-                      {{ labels.common.actions.cancelRhSend }}
-                    </button>
-                  } @else {
-                    <button class="secondary-button compact-button" (click)="markSentToRh(operation)" type="button">
-                      {{ labels.common.actions.rhSend }}
-                    </button>
-                  }
-                </div>
-              </td>
-            </tr>
-          } @empty {
-            <tr>
-              <td colspan="5">{{ labels.rh.exports.empty.exceptionalOnCall }}</td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
-  </section>
+    <p-table [value]="exportRows('exceptionalOnCall')" styleClass="export-table" [tableStyle]="{ 'min-width': '860px' }">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>{{ labels.rh.controls.types.onCall }}</th>
+          <th>{{ labels.common.fields.initiator }}</th>
+          <th>{{ labels.common.table.period }}</th>
+          <th>{{ labels.common.fields.interventions }}</th>
+          <th>{{ labels.common.fields.action }}</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-operation>
+        <tr>
+          <td>{{ operation.title }}</td>
+          <td>{{ operation.initiatorName || labels.common.empty.dash }}</td>
+          <td>{{ formatRange(operation.forecastStartDate, operation.forecastEndDate) }}</td>
+          <td>{{ operation.interventions.length }}</td>
+          <td>
+            <div class="action-buttons">
+              <button pButton class="p-button-sm" [disabled]="!templateFor('exceptionalOnCall').fileName" (click)="exportOperation('exceptionalOnCall', operation)" type="button">
+                <span class="pi pi-file-word" aria-hidden="true"></span>
+                <span>{{ labels.common.actions.exportWord }}</span>
+              </button>
+              <button pButton class="p-button-sm p-button-outlined p-button-secondary" [disabled]="!templateFor('exceptionalOnCall').fileName" (click)="exportPdfOperation('exceptionalOnCall', operation)" type="button">
+                <span class="pi pi-file-pdf" aria-hidden="true"></span>
+                <span>{{ labels.common.actions.exportPdf }}</span>
+              </button>
+              <button pButton class="p-button-sm p-button-outlined p-button-secondary" (click)="exportExcelOperation('exceptionalOnCall', operation)" type="button">
+                <span class="pi pi-file-excel" aria-hidden="true"></span>
+                <span>{{ labels.common.actions.exportExcel }}</span>
+              </button>
+              @if (operation.sentToRhAt) {
+                <button pButton class="p-button-sm p-button-outlined p-button-danger" (click)="unmarkSentToRh(operation)" type="button">
+                  <span class="pi pi-undo" aria-hidden="true"></span>
+                  <span>{{ labels.common.actions.cancelRhSend }}</span>
+                </button>
+              } @else {
+                <button pButton class="p-button-sm p-button-outlined p-button-secondary" (click)="markSentToRh(operation)" type="button">
+                  <span class="pi pi-send" aria-hidden="true"></span>
+                  <span>{{ labels.common.actions.rhSend }}</span>
+                </button>
+              }
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="5">{{ labels.rh.exports.empty.exceptionalOnCall }}</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </p-card>
 
-  <section class="export-section" aria-labelledby="exceptional-work-export-title">
+  <p-card styleClass="export-section" [attr.aria-labelledby]="'exceptional-work-export-title'">
     <div class="export-section-heading">
       <div>
         <h3 id="exceptional-work-export-title">{{ labels.rh.exports.sections.exceptionalWork }}</h3>
       </div>
     </div>
 
-    <div class="export-table-shell">
-      <table class="export-table">
-        <thead>
-          <tr>
-            <th>{{ labels.common.fields.intervention }}</th>
-            <th>{{ labels.common.fields.initiator }}</th>
-            <th>{{ labels.common.table.period }}</th>
-            <th>{{ labels.common.fields.interventions }}</th>
-            <th>{{ labels.common.fields.action }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (operation of exportRows("exceptionalWork"); track operation.title + operation.forecastStartDate) {
-            <tr>
-              <td>{{ operation.title }}</td>
-              <td>{{ operation.initiatorName || labels.common.empty.dash }}</td>
-              <td>{{ formatRange(operation.forecastStartDate, operation.forecastEndDate) }}</td>
-              <td>{{ operation.interventions.length }}</td>
-              <td>
-                <div class="action-buttons">
-                  <button
-                    class="primary-button compact-button"
-                    [disabled]="!templateFor('exceptionalWork').fileName"
-                    (click)="exportOperation('exceptionalWork', operation)"
-                    type="button"
-                  >
-                    {{ labels.common.actions.exportWord }}
-                  </button>
-                  <button
-                    class="secondary-button compact-button"
-                    [disabled]="!templateFor('exceptionalWork').fileName"
-                    (click)="exportPdfOperation('exceptionalWork', operation)"
-                    type="button"
-                  >
-                    {{ labels.common.actions.exportPdf }}
-                  </button>
-                  <button
-                    class="secondary-button compact-button"
-                    (click)="exportExcelOperation('exceptionalWork', operation)"
-                    type="button"
-                  >
-                    {{ labels.common.actions.exportExcel }}
-                  </button>
-                  @if (operation.sentToRhAt) {
-                    <button class="danger-button compact-button" (click)="unmarkSentToRh(operation)" type="button">
-                      {{ labels.common.actions.cancelRhSend }}
-                    </button>
-                  } @else {
-                    <button class="secondary-button compact-button" (click)="markSentToRh(operation)" type="button">
-                      {{ labels.common.actions.rhSend }}
-                    </button>
-                  }
-                </div>
-              </td>
-            </tr>
-          } @empty {
-            <tr>
-              <td colspan="5">{{ labels.rh.exports.empty.exceptionalWork }}</td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
-  </section>
+    <p-table [value]="exportRows('exceptionalWork')" styleClass="export-table" [tableStyle]="{ 'min-width': '860px' }">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>{{ labels.common.fields.intervention }}</th>
+          <th>{{ labels.common.fields.initiator }}</th>
+          <th>{{ labels.common.table.period }}</th>
+          <th>{{ labels.common.fields.interventions }}</th>
+          <th>{{ labels.common.fields.action }}</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-operation>
+        <tr>
+          <td>{{ operation.title }}</td>
+          <td>{{ operation.initiatorName || labels.common.empty.dash }}</td>
+          <td>{{ formatRange(operation.forecastStartDate, operation.forecastEndDate) }}</td>
+          <td>{{ operation.interventions.length }}</td>
+          <td>
+            <div class="action-buttons">
+              <button pButton class="p-button-sm" [disabled]="!templateFor('exceptionalWork').fileName" (click)="exportOperation('exceptionalWork', operation)" type="button">
+                <span class="pi pi-file-word" aria-hidden="true"></span>
+                <span>{{ labels.common.actions.exportWord }}</span>
+              </button>
+              <button pButton class="p-button-sm p-button-outlined p-button-secondary" [disabled]="!templateFor('exceptionalWork').fileName" (click)="exportPdfOperation('exceptionalWork', operation)" type="button">
+                <span class="pi pi-file-pdf" aria-hidden="true"></span>
+                <span>{{ labels.common.actions.exportPdf }}</span>
+              </button>
+              <button pButton class="p-button-sm p-button-outlined p-button-secondary" (click)="exportExcelOperation('exceptionalWork', operation)" type="button">
+                <span class="pi pi-file-excel" aria-hidden="true"></span>
+                <span>{{ labels.common.actions.exportExcel }}</span>
+              </button>
+              @if (operation.sentToRhAt) {
+                <button pButton class="p-button-sm p-button-outlined p-button-danger" (click)="unmarkSentToRh(operation)" type="button">
+                  <span class="pi pi-undo" aria-hidden="true"></span>
+                  <span>{{ labels.common.actions.cancelRhSend }}</span>
+                </button>
+              } @else {
+                <button pButton class="p-button-sm p-button-outlined p-button-secondary" (click)="markSentToRh(operation)" type="button">
+                  <span class="pi pi-send" aria-hidden="true"></span>
+                  <span>{{ labels.common.actions.rhSend }}</span>
+                </button>
+              }
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="5">{{ labels.rh.exports.empty.exceptionalWork }}</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </p-card>
 
   @if (exportMessage) {
-    <p class="success-message">{{ exportMessage }}</p>
+    <p-message severity="success" [text]="exportMessage"></p-message>
   }
-</section>
+</p-card>

@@ -3,29 +3,36 @@
     <section class="summary-panel" [attr.aria-label]="labels.exceptional.sections.generalInformation">
       <label>
         {{ labels.common.fields.initiator }}
-        <select
-          class="user-select"
+        <p-select
+          [options]="users"
           name="initiatorUid"
           [ngModel]="form.initiatorUid"
           (ngModelChange)="selectInitiator($event)"
+          optionLabel="email"
+          optionValue="id"
+          [placeholder]="labels.common.users.select"
+          appendTo="body"
+          styleClass="user-select"
           [disabled]="isLocked"
           required
         >
-          <option value="">{{ labels.common.users.select }}</option>
-          @for (user of users; track user.id) {
-            <option [ngValue]="user.id" [title]="userLabel(user)">{{ userLabel(user) }}</option>
-          }
-        </select>
+          <ng-template pTemplate="selectedItem" let-user>
+            {{ user ? userLabel(user) : labels.common.users.select }}
+          </ng-template>
+          <ng-template pTemplate="item" let-user>
+            {{ userLabel(user) }}
+          </ng-template>
+        </p-select>
       </label>
 
       <label>
         {{ labels.exceptional.fields.operationManager }}
-        <input name="operationManagerName" [(ngModel)]="form.operationManagerName" [disabled]="isLocked" required />
+        <input pInputText name="operationManagerName" [(ngModel)]="form.operationManagerName" [disabled]="isLocked" required />
       </label>
 
       <label>
         {{ labels.exceptional.fields.operationTitle }}
-        <input name="title" [(ngModel)]="form.title" [disabled]="isLocked" required />
+        <input pInputText name="title" [(ngModel)]="form.title" [disabled]="isLocked" required />
       </label>
     </section>
 
@@ -40,22 +47,34 @@
             <div class="inline-form">
               <label>
                 {{ labels.common.fields.user }}
-                <select class="user-select" name="plannedUser" [(ngModel)]="selectedPlannedUserId" [disabled]="!availableUsers().length">
-                  <option value="">{{ labels.common.users.select }}</option>
-                  @for (user of availableUsers(); track user.id) {
-                    <option [ngValue]="user.id" [title]="userLabel(user)">{{ userLabel(user) }}</option>
-                  }
-                </select>
+                <p-select
+                  [options]="availableUsers()"
+                  name="plannedUser"
+                  [(ngModel)]="selectedPlannedUserId"
+                  optionLabel="email"
+                  optionValue="id"
+                  [placeholder]="labels.common.users.select"
+                  appendTo="body"
+                  styleClass="user-select"
+                  [disabled]="!availableUsers().length"
+                >
+                  <ng-template pTemplate="selectedItem" let-user>
+                    {{ user ? userLabel(user) : labels.common.users.select }}
+                  </ng-template>
+                  <ng-template pTemplate="item" let-user>
+                    {{ userLabel(user) }}
+                  </ng-template>
+                </p-select>
               </label>
 
-              <button
-                class="secondary-button"
+              <p-button
+                icon="pi pi-plus"
+                severity="secondary"
+                [outlined]="true"
                 [disabled]="!selectedPlannedUserId"
-                (click)="addParticipant('plannedUsers', selectedPlannedUserId)"
-                type="button"
-              >
-                {{ labels.common.actions.add }}
-              </button>
+                (onClick)="addParticipant('plannedUsers', selectedPlannedUserId)"
+                [label]="labels.common.actions.add"
+              ></p-button>
             </div>
           }
 
@@ -68,16 +87,23 @@
 
                 <label>
                   {{ labels.common.table.start }}
-                  <input [name]="'plannedStartDate' + participantIndex" [(ngModel)]="participant.startDate" [disabled]="isLocked" required type="datetime-local" />
+                  <input pInputText [name]="'plannedStartDate' + participantIndex" [(ngModel)]="participant.startDate" [disabled]="isLocked" required type="datetime-local" />
                 </label>
 
                 <label>
                   {{ labels.common.table.end }}
-                  <input [name]="'plannedEndDate' + participantIndex" [(ngModel)]="participant.endDate" [disabled]="isLocked" required type="datetime-local" />
+                  <input pInputText [name]="'plannedEndDate' + participantIndex" [(ngModel)]="participant.endDate" [disabled]="isLocked" required type="datetime-local" />
                 </label>
 
                 @if (!isLocked) {
-                  <button class="remove-button" (click)="removeParticipant('plannedUsers', participantIndex)" [title]="labels.common.actions.remove" type="button">{{ labels.common.icons.remove }}</button>
+                  <p-button
+                    icon="pi pi-times"
+                    severity="danger"
+                    [rounded]="true"
+                    [text]="true"
+                    (onClick)="removeParticipant('plannedUsers', participantIndex)"
+                    [title]="labels.common.actions.remove"
+                  ></p-button>
                 }
               </div>
             } @empty {
@@ -94,14 +120,14 @@
           <div class="users-box-heading">
             <h3>{{ labels.exceptional.fields.actualUsers }}</h3>
             @if (!isLocked) {
-              <button
-                class="secondary-button compact-button"
+              <p-button
+                severity="secondary"
+                [outlined]="true"
+                size="small"
                 [disabled]="form.actualUsers.length > 0 || !form.plannedUsers.length"
-                (click)="initializeActualFromPlanned()"
-                type="button"
-              >
-                {{ labels.exceptional.actions.initializeActualFromPlanned }}
-              </button>
+                (onClick)="initializeActualFromPlanned()"
+                [label]="labels.exceptional.actions.initializeActualFromPlanned"
+              ></p-button>
             }
           </div>
 
@@ -109,22 +135,34 @@
             <div class="inline-form">
               <label>
                 {{ labels.common.fields.user }}
-                <select class="user-select" name="actualUser" [(ngModel)]="selectedActualUserId" [disabled]="!availableUsers().length">
-                  <option value="">{{ labels.common.users.select }}</option>
-                  @for (user of availableUsers(); track user.id) {
-                    <option [ngValue]="user.id" [title]="userLabel(user)">{{ userLabel(user) }}</option>
-                  }
-                </select>
+                <p-select
+                  [options]="availableUsers()"
+                  name="actualUser"
+                  [(ngModel)]="selectedActualUserId"
+                  optionLabel="email"
+                  optionValue="id"
+                  [placeholder]="labels.common.users.select"
+                  appendTo="body"
+                  styleClass="user-select"
+                  [disabled]="!availableUsers().length"
+                >
+                  <ng-template pTemplate="selectedItem" let-user>
+                    {{ user ? userLabel(user) : labels.common.users.select }}
+                  </ng-template>
+                  <ng-template pTemplate="item" let-user>
+                    {{ userLabel(user) }}
+                  </ng-template>
+                </p-select>
               </label>
 
-              <button
-                class="secondary-button"
+              <p-button
+                icon="pi pi-plus"
+                severity="secondary"
+                [outlined]="true"
                 [disabled]="!selectedActualUserId"
-                (click)="addParticipant('actualUsers', selectedActualUserId)"
-                type="button"
-              >
-                {{ labels.common.actions.add }}
-              </button>
+                (onClick)="addParticipant('actualUsers', selectedActualUserId)"
+                [label]="labels.common.actions.add"
+              ></p-button>
             </div>
           }
 
@@ -137,16 +175,23 @@
 
                 <label>
                   {{ labels.common.table.start }}
-                  <input [name]="'actualStartDate' + participantIndex" [(ngModel)]="participant.startDate" [disabled]="isLocked" required type="datetime-local" />
+                  <input pInputText [name]="'actualStartDate' + participantIndex" [(ngModel)]="participant.startDate" [disabled]="isLocked" required type="datetime-local" />
                 </label>
 
                 <label>
                   {{ labels.common.table.end }}
-                  <input [name]="'actualEndDate' + participantIndex" [(ngModel)]="participant.endDate" [disabled]="isLocked" required type="datetime-local" />
+                  <input pInputText [name]="'actualEndDate' + participantIndex" [(ngModel)]="participant.endDate" [disabled]="isLocked" required type="datetime-local" />
                 </label>
 
                 @if (!isLocked) {
-                  <button class="remove-button" (click)="removeParticipant('actualUsers', participantIndex)" [title]="labels.common.actions.remove" type="button">{{ labels.common.icons.remove }}</button>
+                  <p-button
+                    icon="pi pi-times"
+                    severity="danger"
+                    [rounded]="true"
+                    [text]="true"
+                    (onClick)="removeParticipant('actualUsers', participantIndex)"
+                    [title]="labels.common.actions.remove"
+                  ></p-button>
                 }
               </div>
             } @empty {
@@ -166,78 +211,82 @@
           </div>
 
           @if (!isLocked) {
-            <button class="secondary-button" (click)="addIntervention.emit(operation)" type="button">
-              {{ labels.exceptional.actions.addIntervention }}
-            </button>
+            <p-button
+              icon="pi pi-plus"
+              severity="secondary"
+              [outlined]="true"
+              [label]="labels.exceptional.actions.addIntervention"
+              (onClick)="addIntervention.emit(operation)"
+            ></p-button>
           }
         </div>
 
-        <div class="interventions-table-shell">
-          <table>
-            <thead>
-              <tr>
-                <th>{{ labels.common.fields.user }}</th>
-                <th>{{ labels.common.table.start }}</th>
-                <th>{{ labels.common.table.end }}</th>
-                <th>{{ labels.exceptional.fields.userOnSite }}</th>
-                <th>{{ labels.exceptional.fields.visaAgent }}</th>
-                @if (!isLocked) {
-                  <th>{{ labels.common.table.actions }}</th>
-                }
-              </tr>
-            </thead>
-            <tbody>
-              @for (intervention of operation.interventions || []; track intervention.startDate + intervention.userId; let index = $index) {
-                <tr>
-                  <td>{{ intervention.userName || intervention.userEmail }}</td>
-                  <td>{{ formatDate(intervention.startDate || intervention.date) }}</td>
-                  <td>{{ formatDate(intervention.endDate) }}</td>
-                  <td>{{ intervention.wasOnSite ? labels.common.statuses.yes : labels.common.statuses.no }}</td>
-                  <td>{{ intervention.agentVisa.signed ? labels.common.statuses.signedOn : labels.common.statuses.toSign }}</td>
-                  @if (!isLocked) {
-                    <td>
-                      <div class="table-actions">
-                        <button
-                          class="action-button"
-                          (click)="$event.stopPropagation(); editIntervention.emit({ operation, intervention, index })"
-                          [title]="labels.common.actions.edit"
-                          [attr.aria-label]="labels.common.actions.edit"
-                          type="button"
-                        >
-                          ✎
-                        </button>
-                        <button
-                          class="action-button danger"
-                          (click)="$event.stopPropagation(); deleteIntervention.emit({ operation, index })"
-                          [title]="labels.common.actions.delete"
-                          [attr.aria-label]="labels.common.actions.delete"
-                          type="button"
-                        >
-                          X
-                        </button>
-                      </div>
-                    </td>
-                  }
-                </tr>
-              } @empty {
-                <tr>
-                  <td colspan="6" class="empty-row">{{ labels.exceptional.empty.noIntervention }}</td>
-                </tr>
+        <p-table [value]="operation.interventions || []" styleClass="interventions-table" [tableStyle]="{ 'min-width': isLocked ? '620px' : '720px' }">
+          <ng-template pTemplate="header">
+            <tr>
+              <th>{{ labels.common.fields.user }}</th>
+              <th>{{ labels.common.table.start }}</th>
+              <th>{{ labels.common.table.end }}</th>
+              <th>{{ labels.exceptional.fields.userOnSite }}</th>
+              <th>{{ labels.exceptional.fields.visaAgent }}</th>
+              @if (!isLocked) {
+                <th>{{ labels.common.table.actions }}</th>
               }
-            </tbody>
-          </table>
-        </div>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-intervention let-index="rowIndex">
+            <tr>
+              <td>{{ intervention.userName || intervention.userEmail }}</td>
+              <td>{{ formatDate(intervention.startDate || intervention.date) }}</td>
+              <td>{{ formatDate(intervention.endDate) }}</td>
+              <td>{{ intervention.wasOnSite ? labels.common.statuses.yes : labels.common.statuses.no }}</td>
+              <td>{{ intervention.agentVisa.signed ? labels.common.statuses.signedOn : labels.common.statuses.toSign }}</td>
+              @if (!isLocked) {
+                <td>
+                  <div class="table-actions">
+                    <p-button
+                      icon="pi pi-pencil"
+                      severity="secondary"
+                      [rounded]="true"
+                      [text]="true"
+                      (onClick)="editIntervention.emit({ operation, intervention, index })"
+                      [title]="labels.common.actions.edit"
+                      [attr.aria-label]="labels.common.actions.edit"
+                    ></p-button>
+                    <p-button
+                      icon="pi pi-trash"
+                      severity="danger"
+                      [rounded]="true"
+                      [text]="true"
+                      (onClick)="deleteIntervention.emit({ operation, index })"
+                      [title]="labels.common.actions.delete"
+                      [attr.aria-label]="labels.common.actions.delete"
+                    ></p-button>
+                  </div>
+                </td>
+              }
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="emptymessage">
+            <tr>
+              <td [attr.colspan]="isLocked ? 5 : 6" class="empty-row">{{ labels.exceptional.empty.noIntervention }}</td>
+            </tr>
+          </ng-template>
+        </p-table>
       </section>
     }
 
     <div class="form-actions">
       @if (validationError) {
-        <p class="form-error">{{ validationError }}</p>
+        <p-message severity="error" [text]="validationError"></p-message>
       }
       @if (isLocked) {
-        <p class="sent-rh-message">{{ labels.common.messages.rhSentAt }} <strong>{{ formatDateTime(operation?.sentToRhAt) }}</strong></p>
+        <div class="sent-rh-message" role="alert">
+          <i class="pi pi-lock" aria-hidden="true"></i>
+          <span>{{ labels.common.messages.rhSentAt }} <strong>{{ formatDateTime(operation?.sentToRhAt) }}</strong></span>
+        </div>
       } @else {
-        <button class="primary-button" [disabled]="operationNgForm.invalid" type="submit">{{ labels.common.actions.save }}</button>
+        <p-button icon="pi pi-save" [disabled]="operationNgForm.invalid" type="submit" [label]="labels.common.actions.save"></p-button>
       }
     </div>
   </form>

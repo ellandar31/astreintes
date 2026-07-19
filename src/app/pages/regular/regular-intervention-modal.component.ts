@@ -1,5 +1,9 @@
 import { Component, EventEmitter, Input, Output } from "@angular/core";
 import { FormsModule, NgForm } from "@angular/forms";
+import { ButtonModule } from "primeng/button";
+import { InputTextModule } from "primeng/inputtext";
+import { MessageModule } from "primeng/message";
+import { SelectModule } from "primeng/select";
 import { APP_LABELS } from "../../i18n/labels";
 import { ModalComponent } from "../../shared/modal.component";
 import { RegularInterventionForm, RegularUser } from "./regular.models";
@@ -7,7 +11,7 @@ import { RegularInterventionForm, RegularUser } from "./regular.models";
 @Component({
   selector: "app-regular-intervention-modal",
   standalone: true,
-  imports: [FormsModule, ModalComponent],
+  imports: [ButtonModule, FormsModule, InputTextModule, MessageModule, ModalComponent, SelectModule],
   templateUrl: "./regular-intervention-modal.component.html",
   styleUrl: "./regular-intervention-modal.component.css",
 })

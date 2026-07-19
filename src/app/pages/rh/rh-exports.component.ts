@@ -1,6 +1,11 @@
 import { CommonModule } from "@angular/common";
 import { Component, OnDestroy, effect, inject } from "@angular/core";
 import { FormsModule } from "@angular/forms";
+import { ButtonModule } from "primeng/button";
+import { CardModule } from "primeng/card";
+import { InputTextModule } from "primeng/inputtext";
+import { MessageModule } from "primeng/message";
+import { TableModule } from "primeng/table";
 import { Store } from "@ngrx/store";
 import { APP_LABELS } from "../../i18n/labels";
 import { SignatureVisa, createEmptyVisa } from "../../shared/visa.models";
@@ -41,7 +46,7 @@ interface RegularInterventionExport {
 @Component({
   selector: "app-rh-exports",
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [ButtonModule, CardModule, CommonModule, FormsModule, InputTextModule, MessageModule, TableModule],
   templateUrl: "./rh-exports.component.html",
   styleUrl: "./rh-exports.component.css",
 })

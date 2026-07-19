@@ -9,6 +9,11 @@
   grid-template-columns: minmax(220px, 0.8fr) minmax(220px, 1fr) minmax(220px, 1fr);
 }
 
+:host ::ng-deep .user-select,
+:host ::ng-deep .p-inputtext {
+  width: 100%;
+}
+
 .form-actions {
   display: flex;
   flex-wrap: wrap;
@@ -16,14 +21,22 @@
   justify-content: space-between;
 }
 
-.sent-rh-message {
+.sent-rh-message,
+.rh-sent-message {
+  align-items: center;
   background: #fff1f2;
   border: 1px solid #fecdd3;
   border-radius: 6px;
   color: #a51d2d;
+  display: flex;
+  gap: 8px;
   font-weight: 900;
   margin: 0;
   padding: 10px 12px;
+}
+
+.rh-sent-message strong {
+  font-weight: 950;
 }
 
 .interventions-section {
@@ -50,38 +63,23 @@
   justify-content: space-between;
 }
 
-.interventions-table {
+:host ::ng-deep .interventions-table {
   border: 1px solid #dde5eb;
   border-radius: 8px;
   overflow: auto;
 }
 
-.interventions-row {
-  align-items: center;
-  display: grid;
-  gap: 8px;
-  grid-template-columns: minmax(130px, 1.2fr) minmax(120px, 1fr) minmax(120px, 1fr) minmax(120px, 1fr) minmax(150px, auto);
-  padding: 8px 10px;
-}
-
-.consultation-mode .interventions-row {
-  grid-template-columns: minmax(130px, 1.2fr) minmax(120px, 1fr) minmax(120px, 1fr) minmax(120px, 1fr);
-}
-
-.consultation-mode .action-cell {
-  display: none;
-}
-
-.interventions-row + .interventions-row {
-  border-top: 1px solid #dde5eb;
-}
-
-.interventions-header {
+:host ::ng-deep .interventions-table .p-datatable-thead > tr > th {
   background: #f7fafb;
   color: #526171;
   font-size: 0.78rem;
-  font-weight: 900;
   text-transform: uppercase;
+}
+
+:host ::ng-deep .interventions-table .p-datatable-tbody > tr > td,
+:host ::ng-deep .interventions-table .p-datatable-thead > tr > th {
+  border-color: #dde5eb;
+  padding: 9px 10px;
 }
 
 .comment-cell {
