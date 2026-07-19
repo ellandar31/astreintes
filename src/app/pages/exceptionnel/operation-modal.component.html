@@ -1,9 +1,10 @@
 <app-modal [title]="title" size="large" (closed)="closed.emit()">
   <form class="operation-form" #operationNgForm="ngForm" (ngSubmit)="save(operationNgForm)">
     <section class="summary-panel" [attr.aria-label]="labels.exceptional.sections.generalInformation">
-      <label>
+      <label for="operation-initiator">
         {{ labels.common.fields.initiator }}
         <p-select
+          inputId="operation-initiator"
           [options]="users"
           name="initiatorUid"
           [ngModel]="form.initiatorUid"
@@ -25,14 +26,14 @@
         </p-select>
       </label>
 
-      <label>
+      <label for="operation-manager-name">
         {{ labels.exceptional.fields.operationManager }}
-        <input pInputText name="operationManagerName" [(ngModel)]="form.operationManagerName" [disabled]="isLocked" required />
+        <input id="operation-manager-name" pInputText name="operationManagerName" [(ngModel)]="form.operationManagerName" [disabled]="isLocked" required />
       </label>
 
-      <label>
+      <label for="operation-title">
         {{ labels.exceptional.fields.operationTitle }}
-        <input pInputText name="title" [(ngModel)]="form.title" [disabled]="isLocked" required />
+        <input id="operation-title" pInputText name="title" [(ngModel)]="form.title" [disabled]="isLocked" required />
       </label>
     </section>
 
@@ -45,9 +46,10 @@
 
           @if (!isLocked) {
             <div class="inline-form">
-              <label>
+              <label for="operation-planned-user">
                 {{ labels.common.fields.user }}
                 <p-select
+                  inputId="operation-planned-user"
                   [options]="availableUsers()"
                   name="plannedUser"
                   [(ngModel)]="selectedPlannedUserId"
@@ -85,14 +87,30 @@
                   <strong>{{ participant.displayName }}</strong>
                 </div>
 
-                <label>
+                <label [attr.for]="'planned-start-date-' + participantIndex">
                   {{ labels.common.table.start }}
-                  <input pInputText [name]="'plannedStartDate' + participantIndex" [(ngModel)]="participant.startDate" [disabled]="isLocked" required type="datetime-local" />
+                  <input
+                    [id]="'planned-start-date-' + participantIndex"
+                    pInputText
+                    [name]="'plannedStartDate' + participantIndex"
+                    [(ngModel)]="participant.startDate"
+                    [disabled]="isLocked"
+                    required
+                    type="datetime-local"
+                  />
                 </label>
 
-                <label>
+                <label [attr.for]="'planned-end-date-' + participantIndex">
                   {{ labels.common.table.end }}
-                  <input pInputText [name]="'plannedEndDate' + participantIndex" [(ngModel)]="participant.endDate" [disabled]="isLocked" required type="datetime-local" />
+                  <input
+                    [id]="'planned-end-date-' + participantIndex"
+                    pInputText
+                    [name]="'plannedEndDate' + participantIndex"
+                    [(ngModel)]="participant.endDate"
+                    [disabled]="isLocked"
+                    required
+                    type="datetime-local"
+                  />
                 </label>
 
                 @if (!isLocked) {
@@ -133,9 +151,10 @@
 
           @if (!isLocked) {
             <div class="inline-form">
-              <label>
+              <label for="operation-actual-user">
                 {{ labels.common.fields.user }}
                 <p-select
+                  inputId="operation-actual-user"
                   [options]="availableUsers()"
                   name="actualUser"
                   [(ngModel)]="selectedActualUserId"
@@ -173,14 +192,30 @@
                   <strong>{{ participant.displayName }}</strong>
                 </div>
 
-                <label>
+                <label [attr.for]="'actual-start-date-' + participantIndex">
                   {{ labels.common.table.start }}
-                  <input pInputText [name]="'actualStartDate' + participantIndex" [(ngModel)]="participant.startDate" [disabled]="isLocked" required type="datetime-local" />
+                  <input
+                    [id]="'actual-start-date-' + participantIndex"
+                    pInputText
+                    [name]="'actualStartDate' + participantIndex"
+                    [(ngModel)]="participant.startDate"
+                    [disabled]="isLocked"
+                    required
+                    type="datetime-local"
+                  />
                 </label>
 
-                <label>
+                <label [attr.for]="'actual-end-date-' + participantIndex">
                   {{ labels.common.table.end }}
-                  <input pInputText [name]="'actualEndDate' + participantIndex" [(ngModel)]="participant.endDate" [disabled]="isLocked" required type="datetime-local" />
+                  <input
+                    [id]="'actual-end-date-' + participantIndex"
+                    pInputText
+                    [name]="'actualEndDate' + participantIndex"
+                    [(ngModel)]="participant.endDate"
+                    [disabled]="isLocked"
+                    required
+                    type="datetime-local"
+                  />
                 </label>
 
                 @if (!isLocked) {
@@ -224,13 +259,13 @@
         <p-table [value]="operation.interventions || []" styleClass="interventions-table" [tableStyle]="{ 'min-width': isLocked ? '38.75rem' : '45rem' }">
           <ng-template pTemplate="header">
             <tr>
-              <th>{{ labels.common.fields.user }}</th>
-              <th>{{ labels.common.table.start }}</th>
-              <th>{{ labels.common.table.end }}</th>
-              <th>{{ labels.exceptional.fields.userOnSite }}</th>
-              <th>{{ labels.exceptional.fields.visaAgent }}</th>
+              <th scope="col">{{ labels.common.fields.user }}</th>
+              <th scope="col">{{ labels.common.table.start }}</th>
+              <th scope="col">{{ labels.common.table.end }}</th>
+              <th scope="col">{{ labels.exceptional.fields.userOnSite }}</th>
+              <th scope="col">{{ labels.exceptional.fields.visaAgent }}</th>
               @if (!isLocked) {
-                <th>{{ labels.common.table.actions }}</th>
+                <th scope="col">{{ labels.common.table.actions }}</th>
               }
             </tr>
           </ng-template>

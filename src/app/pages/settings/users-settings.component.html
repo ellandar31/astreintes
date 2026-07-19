@@ -17,10 +17,10 @@
   <p-table [value]="users()" styleClass="settings-table" [tableStyle]="{ 'min-width': '48rem' }">
     <ng-template pTemplate="header">
       <tr>
-        <th>{{ labels.common.fields.name }}</th>
-        <th>{{ labels.common.fields.email }}</th>
-        <th>{{ labels.common.fields.role }}</th>
-        <th>{{ labels.common.fields.actions }}</th>
+        <th scope="col">{{ labels.common.fields.name }}</th>
+        <th scope="col">{{ labels.common.fields.email }}</th>
+        <th scope="col">{{ labels.common.fields.role }}</th>
+        <th scope="col">{{ labels.common.fields.actions }}</th>
       </tr>
     </ng-template>
     <ng-template pTemplate="body" let-user>

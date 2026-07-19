@@ -8,9 +8,10 @@
   <p-card styleClass="settings-form">
     <form #importNgForm="ngForm" (ngSubmit)="loadOfficialHolidays()">
       <div class="form-grid">
-        <label>
+        <label for="holiday-zone">
           {{ labels.common.fields.zone }}
           <p-select
+            inputId="holiday-zone"
             [options]="zones"
             name="holidayZone"
             [(ngModel)]="importForm.zone"
@@ -21,9 +22,9 @@
           ></p-select>
         </label>
 
-        <label>
+        <label for="holiday-year">
           {{ labels.settings.holidays.year }}
-          <p-inputNumber name="holidayYear" [(ngModel)]="importForm.year" [min]="2003" [max]="2035" [useGrouping]="false" required></p-inputNumber>
+          <p-inputNumber inputId="holiday-year" name="holidayYear" [(ngModel)]="importForm.year" [min]="2003" [max]="2035" [useGrouping]="false" required></p-inputNumber>
         </label>
       </div>
 
@@ -51,10 +52,10 @@
     <p-table [value]="importedHolidays()" styleClass="settings-table compact-table" [tableStyle]="{ 'min-width': '36rem' }">
       <ng-template pTemplate="header">
         <tr>
-          <th>{{ labels.common.fields.title }}</th>
-          <th>{{ labels.common.fields.date }}</th>
-          <th>{{ labels.common.fields.zone }}</th>
-          <th>Source</th>
+          <th scope="col">{{ labels.common.fields.title }}</th>
+          <th scope="col">{{ labels.common.fields.date }}</th>
+          <th scope="col">{{ labels.common.fields.zone }}</th>
+          <th scope="col">Source</th>
         </tr>
       </ng-template>
       <ng-template pTemplate="body" let-holiday>
@@ -75,9 +76,10 @@
       </div>
 
       <div class="form-grid">
-        <label>
+        <label for="manual-holiday-zone">
           {{ labels.common.fields.zone }}
           <p-select
+            inputId="manual-holiday-zone"
             [options]="zones"
             name="manualHolidayZone"
             [(ngModel)]="manualForm.zone"
@@ -88,14 +90,14 @@
           ></p-select>
         </label>
 
-        <label>
+        <label for="manual-holiday-date">
           {{ labels.common.fields.date }}
-          <input pInputText name="manualHolidayDate" [(ngModel)]="manualForm.date" required type="date" />
+          <input id="manual-holiday-date" pInputText name="manualHolidayDate" [(ngModel)]="manualForm.date" required type="date" />
         </label>
 
-        <label>
+        <label for="manual-holiday-label">
           {{ labels.common.fields.title }}
-          <input pInputText name="manualHolidayLabel" [(ngModel)]="manualForm.label" required [placeholder]="labels.settings.holidays.manualPlaceholder" />
+          <input id="manual-holiday-label" pInputText name="manualHolidayLabel" [(ngModel)]="manualForm.label" required [placeholder]="labels.settings.holidays.manualPlaceholder" />
         </label>
       </div>
 
@@ -108,11 +110,11 @@
   <p-table [value]="holidays()" styleClass="settings-table" [tableStyle]="{ 'min-width': '42rem' }">
     <ng-template pTemplate="header">
       <tr>
-        <th>{{ labels.common.fields.title }}</th>
-        <th>{{ labels.common.fields.date }}</th>
-        <th>{{ labels.common.fields.zone }}</th>
-        <th>Source</th>
-        <th>{{ labels.common.fields.actions }}</th>
+        <th scope="col">{{ labels.common.fields.title }}</th>
+        <th scope="col">{{ labels.common.fields.date }}</th>
+        <th scope="col">{{ labels.common.fields.zone }}</th>
+        <th scope="col">Source</th>
+        <th scope="col">{{ labels.common.fields.actions }}</th>
       </tr>
     </ng-template>
     <ng-template pTemplate="body" let-holiday>

@@ -45,12 +45,12 @@
                   <p-table [value]="monthSection.items" styleClass="rh-table summary-table" [tableStyle]="{ 'min-width': '61.25rem' }">
                     <ng-template pTemplate="header">
                       <tr>
-                        <th>{{ labels.common.table.type }}</th>
-                        <th>{{ labels.common.table.item }}</th>
-                        <th>{{ labels.common.table.period }}</th>
-                        <th>{{ labels.common.messages.rhSentAt }}</th>
-                        <th>{{ labels.common.fields.lines }}</th>
-                        <th>{{ labels.common.table.actions }}</th>
+                        <th scope="col">{{ labels.common.table.type }}</th>
+                        <th scope="col">{{ labels.common.table.item }}</th>
+                        <th scope="col">{{ labels.common.table.period }}</th>
+                        <th scope="col">{{ labels.common.messages.rhSentAt }}</th>
+                        <th scope="col">{{ labels.common.fields.lines }}</th>
+                        <th scope="col">{{ labels.common.table.actions }}</th>
                       </tr>
                     </ng-template>
                     <ng-template pTemplate="body" let-item>

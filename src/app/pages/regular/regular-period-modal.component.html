@@ -1,9 +1,10 @@
 <app-modal [title]="modalTitle" size="large" (closed)="closed.emit()">
   <form class="period-form" [class.consultation-mode]="isLocked" #periodNgForm="ngForm" (ngSubmit)="save(periodNgForm)">
     <div class="period-summary-grid">
-      <label>
+      <label for="regular-period-user">
         {{ labels.common.fields.user }}
         <p-select
+          inputId="regular-period-user"
           [options]="users"
           name="regularUser"
           [disabled]="isLocked"
@@ -25,11 +26,12 @@
         </p-select>
       </label>
 
-      <label>
+      <label for="regular-period-start-date">
         {{ labels.regular.fields.dateStart }}
         @if (isEditing) {
           <input
             pInputText
+            id="regular-period-start-date"
             name="regularStartDate"
             [ngModel]="startDateValue"
             (ngModelChange)="updateStartDate($event)"
@@ -40,6 +42,7 @@
         } @else {
           <input
             pInputText
+            id="regular-period-start-date"
             name="regularStartDate"
             [ngModel]="startDateValue"
             (ngModelChange)="updateStartDate($event)"
@@ -50,11 +53,12 @@
         }
       </label>
 
-      <label>
+      <label for="regular-period-end-date">
         {{ labels.regular.fields.dateEnd }}
         @if (isEditing) {
           <input
             pInputText
+            id="regular-period-end-date"
             name="regularEndDate"
             [ngModel]="endDateValue"
             (ngModelChange)="updateEndDate($event)"
@@ -65,6 +69,7 @@
         } @else {
           <input
             pInputText
+            id="regular-period-end-date"
             name="regularEndDate"
             [ngModel]="endDateValue"
             (ngModelChange)="updateEndDate($event)"
@@ -98,12 +103,12 @@
         <p-table [value]="interventions" styleClass="interventions-table" [tableStyle]="{ 'min-width': isLocked ? '44rem' : '54rem' }">
           <ng-template pTemplate="header">
             <tr>
-              <th>{{ labels.common.fields.user }}</th>
-              <th>{{ labels.common.table.start }}</th>
-              <th>{{ labels.common.table.end }}</th>
-              <th>{{ labels.common.fields.comment }}</th>
+              <th scope="col">{{ labels.common.fields.user }}</th>
+              <th scope="col">{{ labels.common.table.start }}</th>
+              <th scope="col">{{ labels.common.table.end }}</th>
+              <th scope="col">{{ labels.common.fields.comment }}</th>
               @if (!isLocked) {
-                <th>{{ labels.common.table.actions }}</th>
+                <th scope="col">{{ labels.common.table.actions }}</th>
               }
             </tr>
           </ng-template>

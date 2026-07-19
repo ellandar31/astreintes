@@ -24,7 +24,7 @@
   <p-table [value]="filteredOperations" styleClass="exceptional-table" [tableStyle]="{ 'min-width': '60rem' }">
     <ng-template pTemplate="header">
       <tr>
-        <th>
+        <th scope="col">
           <div class="header-cell">
             <span>{{ labels.common.table.type }}</span>
             <p-button icon="pi pi-sort-alt" [rounded]="true" [text]="true" size="small" (onClick)="setSort('type')" [title]="labels.common.actions.sort"></p-button>
@@ -35,7 +35,7 @@
             <input pInputText id="typeFilter" class="header-filter" [(ngModel)]="filters.type" name="typeFilter" [placeholder]="labels.common.table.type" />
           }
         </th>
-        <th>
+        <th scope="col">
           <div class="header-cell">
             <span>{{ labels.common.fields.initiator }}</span>
             <p-button icon="pi pi-sort-alt" [rounded]="true" [text]="true" size="small" (onClick)="setSort('initiatorName')" [title]="labels.common.actions.sort"></p-button>
@@ -46,7 +46,7 @@
             <input pInputText id="initiatorFilter" class="header-filter" [(ngModel)]="filters.initiatorName" name="initiatorFilter" [placeholder]="labels.common.fields.initiator" />
           }
         </th>
-        <th>
+        <th scope="col">
           <div class="header-cell">
             <span>{{ labels.common.fields.title }}</span>
             <p-button icon="pi pi-sort-alt" [rounded]="true" [text]="true" size="small" (onClick)="setSort('title')" [title]="labels.common.actions.sort"></p-button>
@@ -57,7 +57,7 @@
             <input pInputText id="titleFilter" class="header-filter" [(ngModel)]="filters.title" name="titleFilter" [placeholder]="labels.common.fields.title" />
           }
         </th>
-        <th>
+        <th scope="col">
           <div class="header-cell">
             <span>{{ labels.exceptional.fields.dateStart }}</span>
             <p-button icon="pi pi-sort-alt" [rounded]="true" [text]="true" size="small" (onClick)="setSort('startDate')" [title]="labels.common.actions.sort"></p-button>
@@ -68,7 +68,7 @@
             <input pInputText id="startDateFilter" class="header-filter" [(ngModel)]="filters.startDate" name="startDateFilter" [placeholder]="labels.exceptional.fields.datePlaceholder" />
           }
         </th>
-        <th>{{ labels.common.table.actions }}</th>
+        <th scope="col">{{ labels.common.table.actions }}</th>
       </tr>
     </ng-template>
 

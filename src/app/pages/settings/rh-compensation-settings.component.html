@@ -15,8 +15,8 @@
       <p-table [value]="onCallRows" styleClass="settings-table editable-table" [tableStyle]="{ 'min-width': '30rem' }">
         <ng-template pTemplate="header">
           <tr>
-            <th>{{ labels.settings.rhCompensation.type }}</th>
-            <th>{{ labels.settings.rhCompensation.coefficientOnCall }}</th>
+            <th scope="col">{{ labels.settings.rhCompensation.type }}</th>
+            <th scope="col">{{ labels.settings.rhCompensation.coefficientOnCall }}</th>
           </tr>
         </ng-template>
         <ng-template pTemplate="body" let-row>
@@ -47,10 +47,10 @@
       <p-table [value]="periodRows" styleClass="settings-table editable-table" [tableStyle]="{ 'min-width': '56rem' }">
         <ng-template pTemplate="header">
           <tr>
-            <th>{{ labels.settings.rhCompensation.range }}</th>
-            <th>{{ labels.settings.rhCompensation.coefficientIntervention }}</th>
-            <th>{{ labels.settings.rhCompensation.coefficientWork }}</th>
-            <th>{{ labels.settings.rhCompensation.coefficientRest }}</th>
+            <th scope="col">{{ labels.settings.rhCompensation.range }}</th>
+            <th scope="col">{{ labels.settings.rhCompensation.coefficientIntervention }}</th>
+            <th scope="col">{{ labels.settings.rhCompensation.coefficientWork }}</th>
+            <th scope="col">{{ labels.settings.rhCompensation.coefficientRest }}</th>
           </tr>
         </ng-template>
         <ng-template pTemplate="body" let-row>

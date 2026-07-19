@@ -6,9 +6,10 @@
     </div>
 
     @if (canSelectUser) {
-      <label>
+      <label for="validation-selected-user">
         {{ labels.common.users.user }}
         <p-select
+          inputId="validation-selected-user"
           [options]="users"
           [(ngModel)]="selectedUserId"
           name="selectedUser"
@@ -53,12 +54,12 @@
           <p-table [value]="section.items" styleClass="validation-table" [tableStyle]="{ 'min-width': '48.75rem' }">
             <ng-template pTemplate="header">
               <tr>
-                <th>{{ labels.common.table.type }}</th>
-                <th>{{ labels.common.table.item }}</th>
-                <th>{{ labels.common.table.person }}</th>
-                <th>{{ labels.common.table.period }}</th>
-                <th>{{ labels.common.table.visa }}</th>
-                <th>{{ labels.common.table.actions }}</th>
+                <th scope="col">{{ labels.common.table.type }}</th>
+                <th scope="col">{{ labels.common.table.item }}</th>
+                <th scope="col">{{ labels.common.table.person }}</th>
+                <th scope="col">{{ labels.common.table.period }}</th>
+                <th scope="col">{{ labels.common.table.visa }}</th>
+                <th scope="col">{{ labels.common.table.actions }}</th>
               </tr>
             </ng-template>
             <ng-template pTemplate="body" let-item>

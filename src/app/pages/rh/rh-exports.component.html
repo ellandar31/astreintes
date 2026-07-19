@@ -21,10 +21,10 @@
     <p-table [value]="exportRows('regular')" styleClass="export-table" [tableStyle]="{ 'min-width': '47.5rem' }">
       <ng-template pTemplate="header">
         <tr>
-          <th>{{ labels.rh.controls.types.onCall }}</th>
-          <th>{{ labels.common.table.period }}</th>
-          <th>{{ labels.common.fields.interventions }}</th>
-          <th>{{ labels.common.fields.action }}</th>
+          <th scope="col">{{ labels.rh.controls.types.onCall }}</th>
+          <th scope="col">{{ labels.common.table.period }}</th>
+          <th scope="col">{{ labels.common.fields.interventions }}</th>
+          <th scope="col">{{ labels.common.fields.action }}</th>
         </tr>
       </ng-template>
       <ng-template pTemplate="body" let-operation>
@@ -79,11 +79,11 @@
     <p-table [value]="exportRows('exceptionalOnCall')" styleClass="export-table" [tableStyle]="{ 'min-width': '53.75rem' }">
       <ng-template pTemplate="header">
         <tr>
-          <th>{{ labels.rh.controls.types.onCall }}</th>
-          <th>{{ labels.common.fields.initiator }}</th>
-          <th>{{ labels.common.table.period }}</th>
-          <th>{{ labels.common.fields.interventions }}</th>
-          <th>{{ labels.common.fields.action }}</th>
+          <th scope="col">{{ labels.rh.controls.types.onCall }}</th>
+          <th scope="col">{{ labels.common.fields.initiator }}</th>
+          <th scope="col">{{ labels.common.table.period }}</th>
+          <th scope="col">{{ labels.common.fields.interventions }}</th>
+          <th scope="col">{{ labels.common.fields.action }}</th>
         </tr>
       </ng-template>
       <ng-template pTemplate="body" let-operation>
@@ -139,11 +139,11 @@
     <p-table [value]="exportRows('exceptionalWork')" styleClass="export-table" [tableStyle]="{ 'min-width': '53.75rem' }">
       <ng-template pTemplate="header">
         <tr>
-          <th>{{ labels.common.fields.intervention }}</th>
-          <th>{{ labels.common.fields.initiator }}</th>
-          <th>{{ labels.common.table.period }}</th>
-          <th>{{ labels.common.fields.interventions }}</th>
-          <th>{{ labels.common.fields.action }}</th>
+          <th scope="col">{{ labels.common.fields.intervention }}</th>
+          <th scope="col">{{ labels.common.fields.initiator }}</th>
+          <th scope="col">{{ labels.common.table.period }}</th>
+          <th scope="col">{{ labels.common.fields.interventions }}</th>
+          <th scope="col">{{ labels.common.fields.action }}</th>
         </tr>
       </ng-template>
       <ng-template pTemplate="body" let-operation>

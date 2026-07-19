@@ -98,9 +98,10 @@
           />
         </label>
 
-        <label class="field">
+        <label class="field" for="auth-password">
           <span>{{ labels.app.auth.password }}</span>
           <p-password
+            inputId="auth-password"
             [autocomplete]="isCreatingAccount ? 'new-password' : 'current-password'"
             [feedback]="isCreatingAccount"
             [toggleMask]="true"

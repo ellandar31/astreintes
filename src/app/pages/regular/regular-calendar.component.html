@@ -6,9 +6,10 @@
     </div>
 
     <div class="regular-actions">
-      <label>
+      <label for="regular-team">
         {{ labels.regular.fields.team }}
         <p-select
+          inputId="regular-team"
           [options]="teams"
           [(ngModel)]="selectedTeamId"
           name="regularTeam"

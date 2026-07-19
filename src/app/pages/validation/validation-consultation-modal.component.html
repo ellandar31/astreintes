@@ -41,12 +41,12 @@
         <p-table [value]="progressItems" styleClass="progress-table" [tableStyle]="{ 'min-width': '56.25rem' }">
           <ng-template pTemplate="header">
             <tr>
-              <th>{{ labels.common.table.role }}</th>
-              <th>{{ labels.common.table.person }}</th>
-              <th>{{ labels.common.table.period }}</th>
-              <th>{{ labels.common.table.status }}</th>
-              <th>{{ labels.common.table.date }}</th>
-              <th>{{ labels.common.table.actions }}</th>
+              <th scope="col">{{ labels.common.table.role }}</th>
+              <th scope="col">{{ labels.common.table.person }}</th>
+              <th scope="col">{{ labels.common.table.period }}</th>
+              <th scope="col">{{ labels.common.table.status }}</th>
+              <th scope="col">{{ labels.common.table.date }}</th>
+              <th scope="col">{{ labels.common.table.actions }}</th>
             </tr>
           </ng-template>
           <ng-template pTemplate="body" let-progress>

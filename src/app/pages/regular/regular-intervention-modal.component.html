@@ -1,8 +1,9 @@
 <app-modal [title]="modalTitle" size="small" (closed)="closed.emit()">
   <form class="intervention-form" #interventionNgForm="ngForm" (ngSubmit)="save(interventionNgForm)">
-    <label>
+    <label for="regular-intervention-user">
       {{ labels.common.fields.user }}
       <p-select
+        inputId="regular-intervention-user"
         [options]="users"
         name="regularInterventionUser"
         [ngModel]="form.userId"
@@ -23,19 +24,19 @@
       </p-select>
     </label>
 
-    <label>
+    <label for="regular-intervention-start-date">
       {{ labels.regular.fields.dateStart }}
-      <input pInputText name="regularInterventionStartDate" [(ngModel)]="form.startDate" required type="datetime-local" />
+      <input id="regular-intervention-start-date" pInputText name="regularInterventionStartDate" [(ngModel)]="form.startDate" required type="datetime-local" />
     </label>
 
-    <label>
+    <label for="regular-intervention-end-date">
       {{ labels.regular.fields.dateEnd }}
-      <input pInputText name="regularInterventionEndDate" [(ngModel)]="form.endDate" required type="datetime-local" />
+      <input id="regular-intervention-end-date" pInputText name="regularInterventionEndDate" [(ngModel)]="form.endDate" required type="datetime-local" />
     </label>
 
-    <label>
+    <label for="regular-intervention-comment">
       {{ labels.common.fields.comment }}
-      <textarea name="regularInterventionComment" [(ngModel)]="form.comment" rows="4"></textarea>
+      <textarea id="regular-intervention-comment" name="regularInterventionComment" [(ngModel)]="form.comment" rows="4"></textarea>
     </label>
 
     @if (error) {

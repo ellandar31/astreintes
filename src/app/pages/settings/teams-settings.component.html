@@ -6,15 +6,16 @@
 
   <p-card styleClass="settings-form">
     <form #teamNgForm="ngForm" (ngSubmit)="saveTeam(teamNgForm)">
-      <label>
+      <label for="team-name">
         {{ labels.settings.teams.name }}
-        <input pInputText name="teamName" [(ngModel)]="teamForm.name" required [placeholder]="labels.settings.teams.namePlaceholder" />
+        <input id="team-name" pInputText name="teamName" [(ngModel)]="teamForm.name" required [placeholder]="labels.settings.teams.namePlaceholder" />
       </label>
 
       <div class="inline-form inline-form-compact">
-        <label>
+        <label for="team-member">
           {{ labels.common.fields.user }}
           <p-select
+            inputId="team-member"
             [options]="availableUsers()"
             name="teamMemberId"
             [(ngModel)]="teamForm.selectedMemberId"
@@ -76,9 +77,9 @@
   <p-table [value]="teams()" styleClass="settings-table" [tableStyle]="{ 'min-width': '46rem' }">
     <ng-template pTemplate="header">
       <tr>
-        <th>{{ labels.settings.teams.name }}</th>
-        <th>{{ labels.settings.teams.members }}</th>
-        <th>{{ labels.common.fields.actions }}</th>
+        <th scope="col">{{ labels.settings.teams.name }}</th>
+        <th scope="col">{{ labels.settings.teams.members }}</th>
+        <th scope="col">{{ labels.common.fields.actions }}</th>
       </tr>
     </ng-template>
     <ng-template pTemplate="body" let-team>

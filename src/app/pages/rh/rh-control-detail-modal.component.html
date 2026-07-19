@@ -11,14 +11,14 @@
     <p-table [value]="item.lines" styleClass="rh-table detail-table" [tableStyle]="{ 'min-width': '73.75rem' }">
       <ng-template pTemplate="header">
         <tr>
-          <th>{{ labels.rh.detail.nature }}</th>
-          <th>{{ labels.rh.detail.range }}</th>
-          <th>{{ labels.rh.detail.appliedRule }}</th>
-          <th>{{ labels.rh.detail.hours }}</th>
-          <th>{{ labels.rh.detail.coefficient }}</th>
-          <th>{{ labels.rh.detail.controlTotal }}</th>
-          <th>{{ labels.rh.detail.rest }}</th>
-          <th>{{ labels.rh.detail.calculationDetail }}</th>
+          <th scope="col">{{ labels.rh.detail.nature }}</th>
+          <th scope="col">{{ labels.rh.detail.range }}</th>
+          <th scope="col">{{ labels.rh.detail.appliedRule }}</th>
+          <th scope="col">{{ labels.rh.detail.hours }}</th>
+          <th scope="col">{{ labels.rh.detail.coefficient }}</th>
+          <th scope="col">{{ labels.rh.detail.controlTotal }}</th>
+          <th scope="col">{{ labels.rh.detail.rest }}</th>
+          <th scope="col">{{ labels.rh.detail.calculationDetail }}</th>
         </tr>
       </ng-template>
       <ng-template pTemplate="body" let-line>

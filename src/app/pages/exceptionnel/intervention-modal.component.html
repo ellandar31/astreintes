@@ -1,8 +1,9 @@
 <app-modal [title]="labels.exceptional.modal.addIntervention" size="small" (closed)="closed.emit()">
   <form class="operation-form" #interventionNgForm="ngForm" (ngSubmit)="save(interventionNgForm)">
-    <label>
+    <label for="exceptional-intervention-user">
       {{ labels.common.fields.user }}
       <p-select
+        inputId="exceptional-intervention-user"
         [options]="users"
         name="interventionUser"
         [ngModel]="form.userId"
@@ -23,20 +24,20 @@
       </p-select>
     </label>
 
-    <label>
+    <label for="exceptional-intervention-start-date">
       {{ labels.regular.fields.dateStart }}
-      <input pInputText name="interventionStartDate" [(ngModel)]="form.startDate" required type="datetime-local" />
+      <input id="exceptional-intervention-start-date" pInputText name="interventionStartDate" [(ngModel)]="form.startDate" required type="datetime-local" />
     </label>
 
-    <label>
+    <label for="exceptional-intervention-end-date">
       {{ labels.regular.fields.dateEnd }}
-      <input pInputText name="interventionEndDate" [(ngModel)]="form.endDate" required type="datetime-local" />
+      <input id="exceptional-intervention-end-date" pInputText name="interventionEndDate" [(ngModel)]="form.endDate" required type="datetime-local" />
     </label>
 
-    <label class="checkbox-label">
-      <p-checkbox name="wasOnSite" [(ngModel)]="form.wasOnSite" [binary]="true"></p-checkbox>
-      <span>{{ labels.exceptional.fields.userOnSite }}</span>
-    </label>
+    <div class="checkbox-label">
+      <p-checkbox inputId="exceptional-intervention-was-on-site" name="wasOnSite" [(ngModel)]="form.wasOnSite" [binary]="true"></p-checkbox>
+      <label for="exceptional-intervention-was-on-site">{{ labels.exceptional.fields.userOnSite }}</label>
+    </div>
 
     @if (error) {
       <p-message severity="error" [text]="error"></p-message>
