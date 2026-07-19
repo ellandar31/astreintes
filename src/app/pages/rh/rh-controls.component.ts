@@ -1,5 +1,5 @@
 import { CommonModule } from "@angular/common";
-import { ChangeDetectionStrategy, Component, Input, OnChanges, OnDestroy, SimpleChanges, effect, inject } from "@angular/core";
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges, effect, inject } from "@angular/core";
 import { ButtonModule } from "primeng/button";
 import { CardModule } from "primeng/card";
 import { TableModule } from "primeng/table";
@@ -79,7 +79,7 @@ interface RhMonthControlSection {
   styleUrl: "./rh-controls.component.css",
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class RhControlsComponent implements OnChanges, OnDestroy {
+export class RhControlsComponent implements OnChanges, OnDestroy, OnInit {
   @Input({ required: true }) currentUser: StoreAuthUser | null = null;
   readonly labels = APP_LABELS;
 
@@ -106,6 +106,7 @@ export class RhControlsComponent implements OnChanges, OnDestroy {
   ];
 
   private readonly store = inject(Store);
+  private readonly changeDetector = inject(ChangeDetectorRef);
   private readonly exceptionalOperationsSignal = this.store.selectSignal(selectExceptionalOperations);
   private readonly regularInterventionsSignal = this.store.selectSignal(selectRegularInterventions);
   private readonly regularPeriodsSignal = this.store.selectSignal(selectRegularPeriods);
@@ -164,6 +165,10 @@ export class RhControlsComponent implements OnChanges, OnDestroy {
     this.store.dispatch(SettingsActions.rhCompensationWatchStopped());
     this.store.dispatch(RegularActions.watchStopped());
     this.store.dispatch(ExceptionalActions.watchStopped());
+  }
+
+  ngOnInit(): void {
+    this.rebuildControlSections();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -285,6 +290,7 @@ export class RhControlsComponent implements OnChanges, OnDestroy {
 
     this.syncSelectedDetailItem();
     this.ensureDefaultExpandedState();
+    this.changeDetector.markForCheck();
   }
 
   /**
