@@ -1,5 +1,5 @@
 import { CommonModule } from "@angular/common";
-import { Component, Input, OnChanges, OnDestroy, SimpleChanges, effect, inject } from "@angular/core";
+import { ChangeDetectionStrategy, Component, Input, OnChanges, OnDestroy, SimpleChanges, effect, inject } from "@angular/core";
 import { Store } from "@ngrx/store";
 import { APP_LABELS } from "../../i18n/labels";
 import { SignatureVisa, createEmptyVisa } from "../../shared/visa.models";
@@ -64,6 +64,7 @@ interface RhMonthControlSection {
   imports: [CommonModule, RhControlDetailModalComponent],
   templateUrl: "./rh-controls.component.html",
   styleUrl: "./rh-controls.component.css",
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RhControlsComponent implements OnChanges, OnDestroy {
   @Input({ required: true }) currentUser: StoreAuthUser | null = null;
@@ -77,6 +78,7 @@ export class RhControlsComponent implements OnChanges, OnDestroy {
   selectedDetailItem: RhControlDetailItem | null = null;
   expandedMonthSectionKey: string | null = null;
   expandedUserId: string | null = null;
+  userSections: RhUserControlSection[] = [];
 
   onCallCompensationRules: OnCallCompensationRule[] = [
     { id: "week", label: APP_LABELS.rh.rules.week, coefficient: 0 },
@@ -108,26 +110,27 @@ export class RhControlsComponent implements OnChanges, OnDestroy {
       this.users = [...this.usersSignal()]
         .filter((user) => Boolean(user.email))
         .sort((first, second) => this.userLabel(first).localeCompare(this.userLabel(second))) as RhUser[];
-      this.ensureDefaultExpandedState();
+      this.rebuildControlSections();
     });
 
     effect(() => {
       this.regularPeriods = this.regularPeriodsSignal() as RhRegularPeriod[];
-      this.ensureDefaultExpandedState();
+      this.rebuildControlSections();
     });
 
     effect(() => {
       this.regularInterventions = this.regularInterventionsSignal() as RhRegularIntervention[];
-      this.ensureDefaultExpandedState();
+      this.rebuildControlSections();
     });
 
     effect(() => {
       this.publicHolidays = this.publicHolidaysSignal() as RhPublicHoliday[];
+      this.rebuildControlSections();
     });
 
     effect(() => {
       this.exceptionalOperations = this.exceptionalOperationsSignal() as RhExceptionalOperation[];
-      this.ensureDefaultExpandedState();
+      this.rebuildControlSections();
     });
 
     effect(() => {
@@ -139,6 +142,7 @@ export class RhControlsComponent implements OnChanges, OnDestroy {
 
       this.onCallCompensationRules = this.mergeRows(this.onCallCompensationRules, settings.onCall);
       this.periodCompensationRules = this.mergeRows(this.periodCompensationRules, settings.periods);
+      this.rebuildControlSections();
     });
   }
 
@@ -151,15 +155,15 @@ export class RhControlsComponent implements OnChanges, OnDestroy {
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes["currentUser"]) {
-      this.ensureDefaultExpandedState();
+      this.rebuildControlSections();
     }
   }
 
-  get currentProfile(): RhUser | undefined {
+  private get currentProfile(): RhUser | undefined {
     return this.users.find((user) => this.isCurrentUser(user));
   }
 
-  get visibleUsers(): RhUser[] {
+  private get visibleUsers(): RhUser[] {
     const profile = this.currentProfile;
 
     if (!profile) {
@@ -171,26 +175,6 @@ export class RhControlsComponent implements OnChanges, OnDestroy {
     }
 
     return this.users;
-  }
-
-  get userSections(): RhUserControlSection[] {
-    return this.visibleUsers
-      .map((user) => {
-        const monthSections = this.monthSectionsForUser(user);
-
-        return {
-          user,
-          itemCount: monthSections.reduce((total, section) => total + section.items.length, 0),
-          monthSections,
-        };
-      })
-      .filter((section) => section.itemCount > 0 || this.isCurrentUser(section.user));
-  }
-
-  get sentMonthOptions(): string[] {
-    const allItems = this.visibleUsers.flatMap((user) => this.allItemsForUser(user));
-    return Array.from(new Set(allItems.map((item) => this.sentToRhMonthKey(item.sentToRhAt)).filter(Boolean)))
-      .sort((first, second) => second.localeCompare(first));
   }
 
   toggleMonthSection(userId: string, monthKey: string): void {
@@ -217,10 +201,6 @@ export class RhControlsComponent implements OnChanges, OnDestroy {
     return this.expandedUserId === userId;
   }
 
-  itemsForUserAndMonth(user: RhUser, monthKey: string): RhControlDetailItem[] {
-    return this.allItemsForUser(user).filter((item) => this.sentToRhMonthKey(item.sentToRhAt) === monthKey);
-  }
-
   openDetail(item: RhControlDetailItem): void {
     this.selectedDetailItem = item;
   }
@@ -238,30 +218,71 @@ export class RhControlsComponent implements OnChanges, OnDestroy {
     return new Intl.DateTimeFormat("fr-FR", { month: "long", year: "numeric" }).format(new Date(year, month - 1, 1));
   }
 
-  private allItemsForUser(user: RhUser): RhControlDetailItem[] {
+  private rebuildControlSections(): void {
+    const visibleUsers = this.visibleUsers;
+    const calculator = new RhExportCalculationLibrary(this.exportContext());
+    const regularInterventionsByPeriod = this.regularInterventionsByPeriod();
+    const userItems = new Map<string, RhControlDetailItem[]>();
+    const monthKeys = new Set<string>();
+
+    visibleUsers.forEach((user) => {
+      const items = this.allItemsForUser(user, calculator, regularInterventionsByPeriod);
+      userItems.set(user.id, items);
+      items.forEach((item) => {
+        const monthKey = this.sentToRhMonthKey(item.sentToRhAt);
+
+        if (monthKey) {
+          monthKeys.add(monthKey);
+        }
+      });
+    });
+
+    const sortedMonthKeys = Array.from(monthKeys).sort((first, second) => second.localeCompare(first));
+
+    this.userSections = visibleUsers
+      .map((user) => {
+        const items = userItems.get(user.id) || [];
+        const monthSections = sortedMonthKeys
+          .map((monthKey) => ({
+            monthKey,
+            monthLabel: this.formatMonth(monthKey),
+            items: items.filter((item) => this.sentToRhMonthKey(item.sentToRhAt) === monthKey),
+          }))
+          .filter((section) => section.items.length > 0);
+
+        return {
+          user,
+          itemCount: items.length,
+          monthSections,
+        };
+      })
+      .filter((section) => section.itemCount > 0 || this.isCurrentUser(section.user));
+
+    this.syncSelectedDetailItem();
+    this.ensureDefaultExpandedState();
+  }
+
+  private allItemsForUser(
+    user: RhUser,
+    calculator: RhExportCalculationLibrary,
+    regularInterventionsByPeriod: Map<string, RhRegularIntervention[]>,
+  ): RhControlDetailItem[] {
     return [
-      ...this.regularControlItems(user),
-      ...this.exceptionalControlItems(user),
+      ...this.regularControlItems(user, calculator, regularInterventionsByPeriod),
+      ...this.exceptionalControlItems(user, calculator),
     ].sort((first, second) => this.sentToRhTime(second.sentToRhAt) - this.sentToRhTime(first.sentToRhAt));
   }
 
-  private monthSectionsForUser(user: RhUser): RhMonthControlSection[] {
-    return this.sentMonthOptions
-      .map((monthKey) => ({
-        monthKey,
-        monthLabel: this.formatMonth(monthKey),
-        items: this.itemsForUserAndMonth(user, monthKey),
-      }))
-      .filter((section) => section.items.length > 0);
-  }
-
-  private regularControlItems(user: RhUser): RhControlDetailItem[] {
+  private regularControlItems(
+    user: RhUser,
+    calculator: RhExportCalculationLibrary,
+    regularInterventionsByPeriod: Map<string, RhRegularIntervention[]>,
+  ): RhControlDetailItem[] {
     return this.regularPeriods
       .filter((period) => Boolean(period.sentToRhAt))
       .filter((period) => this.matchesUser(period.userId, period.userEmail, user))
       .map((period) => {
-        const operation = this.regularExportOperation(period);
-        const calculator = new RhExportCalculationLibrary(this.exportContext());
+        const operation = this.regularExportOperation(period, regularInterventionsByPeriod.get(period.id) || []);
         const lines = [
           ...calculator.onCallCompensationRows(operation).map((row, index) => this.onCallLine(row, calculator, `regular-oncall-${index}`)),
           ...calculator.interventionCompensationRows(operation, false).map((row, index) =>
@@ -282,13 +303,12 @@ export class RhControlsComponent implements OnChanges, OnDestroy {
       .filter((item) => item.lines.length > 0);
   }
 
-  private exceptionalControlItems(user: RhUser): RhControlDetailItem[] {
+  private exceptionalControlItems(user: RhUser, calculator: RhExportCalculationLibrary): RhControlDetailItem[] {
     return this.exceptionalOperations
       .filter((operation) => Boolean(operation.sentToRhAt))
       .map((operation) => this.exceptionalExportOperationForUser(operation, user))
       .filter((operation): operation is ExportOperation => Boolean(operation))
       .map((operation) => {
-        const calculator = new RhExportCalculationLibrary(this.exportContext());
         const isWork = operation.exportTitle === this.labels.rh.controls.types.exceptionalWork;
         const lines = [
           ...calculator.onCallCompensationRows(operation).map((row, index) => this.onCallLine(row, calculator, `exceptional-oncall-${index}`)),
@@ -315,9 +335,8 @@ export class RhControlsComponent implements OnChanges, OnDestroy {
       .filter((item) => item.lines.length > 0);
   }
 
-  private regularExportOperation(period: RhRegularPeriod): ExportOperation {
-    const interventions = this.regularInterventions
-      .filter((intervention) => intervention.periodId === period.id)
+  private regularExportOperation(period: RhRegularPeriod, periodInterventions: RhRegularIntervention[]): ExportOperation {
+    const interventions = periodInterventions
       .filter((intervention) => this.matchesRegularPeriodUser(intervention, period))
       .sort((first, second) => first.startDate.localeCompare(second.startDate));
     const userName = period.userName || period.userEmail;
@@ -446,22 +465,44 @@ export class RhControlsComponent implements OnChanges, OnDestroy {
   }
 
   private ensureDefaultExpandedState(): void {
-    if (this.expandedUserId) {
+    if (this.expandedUserId && this.userSections.some((section) => section.user.id === this.expandedUserId)) {
       return;
     }
 
-    const defaultUser = this.visibleUsers.find((user) => this.isCurrentUser(user)) || this.visibleUsers[0];
+    const defaultSection = this.userSections.find((section) => this.isCurrentUser(section.user)) || this.userSections[0];
 
-    if (defaultUser) {
-      this.expandedUserId = defaultUser.id;
-      this.expandFirstMonthForUser(defaultUser.id);
+    if (defaultSection) {
+      this.expandedUserId = defaultSection.user.id;
+      this.expandFirstMonthForUser(defaultSection.user.id);
+      return;
     }
+
+    this.expandedUserId = null;
+    this.expandedMonthSectionKey = null;
   }
 
   private expandFirstMonthForUser(userId: string): void {
-    const user = this.visibleUsers.find((item) => item.id === userId);
-    const firstMonth = user ? this.monthSectionsForUser(user)[0]?.monthKey : "";
+    const firstMonth = this.userSections.find((section) => section.user.id === userId)?.monthSections[0]?.monthKey || "";
     this.expandedMonthSectionKey = firstMonth ? this.monthSectionKey(userId, firstMonth) : null;
+  }
+
+  private regularInterventionsByPeriod(): Map<string, RhRegularIntervention[]> {
+    return this.regularInterventions.reduce((index, intervention) => {
+      const interventions = index.get(intervention.periodId) || [];
+      interventions.push(intervention);
+      index.set(intervention.periodId, interventions);
+      return index;
+    }, new Map<string, RhRegularIntervention[]>());
+  }
+
+  private syncSelectedDetailItem(): void {
+    if (!this.selectedDetailItem) {
+      return;
+    }
+
+    this.selectedDetailItem =
+      this.userSections.flatMap((section) => section.monthSections.flatMap((monthSection) => monthSection.items))
+        .find((item) => item.id === this.selectedDetailItem?.id) || this.selectedDetailItem;
   }
 
   private monthSectionKey(userId: string, monthKey: string): string {
