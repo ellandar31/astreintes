@@ -2,21 +2,15 @@
   display: block;
 }
 
-:host ::ng-deep .rh-panel {
-  border: 1px solid #dde5eb;
-  border-radius: 8px;
-  box-shadow: none;
-}
-
 :host ::ng-deep .rh-panel .p-card-body {
   display: grid;
-  gap: 16px;
-  padding: 16px;
+  gap: var(--app-space-2xl);
+  padding: var(--app-space-2xl);
 }
 
 :host ::ng-deep .rh-panel .p-card-content {
   display: grid;
-  gap: 16px;
+  gap: var(--app-space-2xl);
   padding: 0;
 }
 
@@ -24,44 +18,38 @@
   align-items: end;
   display: flex;
   flex-wrap: wrap;
-  gap: 14px;
+  gap: var(--app-space-xl);
   justify-content: space-between;
 }
 
 .rh-panel-header h2,
 .export-section h3 {
-  color: #1f2937;
+  color: var(--app-color-heading);
   margin: 0;
 }
 
 .period-control {
   display: grid;
-  gap: 6px;
+  gap: var(--app-space-xs);
   font-weight: 800;
-  min-width: 180px;
-}
-
-:host ::ng-deep .export-section {
-  border: 1px solid #dde5eb;
-  border-radius: 8px;
-  box-shadow: none;
+  min-width: 11.25rem;
 }
 
 :host ::ng-deep .export-section .p-card-body {
   display: grid;
-  gap: 12px;
-  padding: 14px;
+  gap: var(--app-space-lg);
+  padding: var(--app-space-xl);
 }
 
 :host ::ng-deep .export-section .p-card-content {
   display: grid;
-  gap: 12px;
+  gap: var(--app-space-lg);
   padding: 0;
 }
 
 .export-section p {
-  color: #607080;
-  margin: 6px 0 0;
+  color: var(--app-color-muted);
+  margin: var(--app-space-xs) 0 0;
 }
 
 .export-section-heading {
@@ -70,29 +58,9 @@
   justify-content: space-between;
 }
 
-:host ::ng-deep .export-table {
-  border: 1px solid #dde5eb;
-  border-radius: 8px;
-  overflow: auto;
-}
-
-:host ::ng-deep .export-table .p-datatable-tbody > tr > td,
-:host ::ng-deep .export-table .p-datatable-thead > tr > th {
-  border-bottom: 1px solid #dde5eb;
-  padding: 9px 10px;
-  text-align: left;
-}
-
-:host ::ng-deep .export-table .p-datatable-thead > tr > th {
-  background: #f7fafb;
-  color: #526171;
-  font-size: 0.78rem;
-  text-transform: uppercase;
-}
-
 .action-buttons {
   align-items: center;
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: var(--app-space-sm);
 }

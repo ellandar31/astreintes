@@ -5,30 +5,30 @@
 .validation-page {
   align-content: start;
   display: grid;
-  gap: 16px;
+  gap: var(--app-space-2xl);
   width: 100%;
-  padding: 10px 0 24px;
+  padding: var(--app-space-md) 0 var(--app-space-4xl);
 }
 
 .validation-header {
   align-items: end;
   display: flex;
   flex-wrap: wrap;
-  gap: 14px;
+  gap: var(--app-space-xl);
   justify-content: space-between;
 }
 
 .validation-header h2 {
-  color: #1f2937;
+  color: var(--app-color-heading);
   margin: 0;
 }
 
 .validation-header label {
-  color: #263442;
+  color: var(--app-color-label);
   display: grid;
   font-weight: 800;
-  gap: 6px;
-  min-width: 260px;
+  gap: var(--app-space-xs);
+  min-width: 16.25rem;
 }
 
 :host ::ng-deep .user-select {
@@ -38,8 +38,8 @@
 .validation-layout {
   align-items: start;
   display: grid;
-  gap: 16px;
-  grid-template-columns: 260px minmax(0, 1fr);
+  gap: var(--app-space-2xl);
+  grid-template-columns: 16.25rem minmax(0, 1fr);
   width: 100%;
 }
 
@@ -47,131 +47,98 @@
   width: 100%;
 }
 
-:host ::ng-deep .validation-submenu {
-  border: 1px solid #dde5eb;
-  border-radius: 8px;
-  box-shadow: none;
-}
-
 :host ::ng-deep .validation-submenu .p-card-body {
-  padding: 12px;
+  padding: var(--app-space-lg);
 }
 
 :host ::ng-deep .validation-submenu .p-card-content {
   display: grid;
-  gap: 6px;
+  gap: var(--app-space-xs);
   padding: 0;
 }
 
 :host ::ng-deep .validation-submenu-button {
   align-items: center;
-  background: #ffffff;
+  background: var(--app-color-surface);
   border-color: transparent;
-  color: #526171;
+  color: var(--app-color-subtle);
   display: flex;
-  gap: 10px;
+  gap: var(--app-space-md);
   justify-content: space-between;
   width: 100%;
 }
 
 :host ::ng-deep .validation-submenu-button:not(.active):enabled:hover {
-  background: #f7fafb;
-  border-color: #dde5eb;
-  color: #263442;
+  background: var(--app-color-surface-muted);
+  border-color: var(--app-color-border);
+  color: var(--app-color-label);
 }
 
 :host ::ng-deep .validation-submenu-button.active {
-  background: #174f5b;
-  border-color: #174f5b;
-  color: #ffffff;
+  background: var(--app-color-primary);
+  border-color: var(--app-color-primary);
+  color: var(--app-color-surface);
 }
 
 .validation-submenu-button strong {
-  background: #edf3f5;
-  border-radius: 999px;
-  color: #526171;
-  font-size: 0.78rem;
-  min-width: 24px;
-  padding: 2px 7px;
+  background: var(--app-color-surface-soft);
+  border-radius: var(--app-radius-pill);
+  color: var(--app-color-subtle);
+  font-size: var(--app-font-sm);
+  min-width: 1.5rem;
+  padding: var(--app-space-3xs) 0.4375rem;
   text-align: center;
 }
 
 :host ::ng-deep .validation-submenu-button.active strong {
-  background: #ffffff;
-  color: #174f5b;
+  background: var(--app-color-surface);
+  color: var(--app-color-primary);
 }
 
 .validation-content {
   min-width: 0;
 }
 
-:host ::ng-deep .validation-content {
-  border: 1px solid #dde5eb;
-  border-radius: 8px;
-  box-shadow: none;
-}
-
 :host ::ng-deep .validation-content .p-card-body {
-  padding: 16px;
+  padding: var(--app-space-2xl);
 }
 
 :host ::ng-deep .validation-content .p-card-content {
   padding: 0;
 }
 
-:host ::ng-deep .validation-table {
-  border: 1px solid #dde5eb;
-  border-radius: 8px;
-  overflow: auto;
-}
-
 .validation-section {
   display: grid;
-  gap: 10px;
+  gap: var(--app-space-md);
 }
 
 .validation-section h3 {
-  color: #1f2937;
+  color: var(--app-color-heading);
   margin: 0;
-}
-
-:host ::ng-deep .validation-table .p-datatable-tbody > tr > td,
-:host ::ng-deep .validation-table .p-datatable-thead > tr > th {
-  border-bottom: 1px solid #dde5eb;
-  padding: 10px;
-  text-align: left;
-  vertical-align: top;
-}
-
-:host ::ng-deep .validation-table .p-datatable-thead > tr > th {
-  background: #f7fafb;
-  color: #526171;
-  font-size: 0.78rem;
-  text-transform: uppercase;
 }
 
 .actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: var(--app-space-sm);
 }
 
 .compact-button {
-  min-height: 32px;
-  padding: 6px 10px;
+  min-height: 2rem;
+  padding: var(--app-space-xs) var(--app-space-md);
 }
 
 .signed {
-  color: #1b6b48;
+  color: var(--app-color-success);
   font-weight: 800;
 }
 
 .pending {
-  color: #8a5a16;
+  color: var(--app-color-warning);
   font-weight: 800;
 }
 
-@media (max-width: 760px) {
+@media (max-width: 47.5rem) {
   .validation-layout {
     grid-template-columns: 1fr;
   }

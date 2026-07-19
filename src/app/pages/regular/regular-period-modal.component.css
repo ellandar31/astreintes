@@ -1,12 +1,12 @@
 .period-form {
   display: grid;
-  gap: 14px;
+  gap: var(--app-space-xl);
 }
 
 .period-summary-grid {
   display: grid;
-  gap: 12px;
-  grid-template-columns: minmax(220px, 0.8fr) minmax(220px, 1fr) minmax(220px, 1fr);
+  gap: var(--app-space-lg);
+  grid-template-columns: minmax(13.75rem, 0.8fr) minmax(13.75rem, 1fr) minmax(13.75rem, 1fr);
 }
 
 :host ::ng-deep .user-select,
@@ -17,22 +17,22 @@
 .form-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: var(--app-space-md);
   justify-content: space-between;
 }
 
 .sent-rh-message,
 .rh-sent-message {
   align-items: center;
-  background: #fff1f2;
-  border: 1px solid #fecdd3;
-  border-radius: 6px;
-  color: #a51d2d;
+  background: var(--app-color-danger-bg);
+  border: var(--app-border-width) solid var(--app-color-danger-border);
+  border-radius: var(--app-radius-sm);
+  color: var(--app-color-danger);
   display: flex;
-  gap: 8px;
+  gap: var(--app-space-sm);
   font-weight: 900;
   margin: 0;
-  padding: 10px 12px;
+  padding: var(--app-space-md) var(--app-space-lg);
 }
 
 .rh-sent-message strong {
@@ -40,17 +40,16 @@
 }
 
 .interventions-section {
-  border-top: 1px solid #dde5eb;
   display: grid;
-  gap: 10px;
-  margin-top: 16px;
-  padding: 12px;
-  border: 1px solid #dde5eb;
-  border-radius: 8px;  
+  gap: var(--app-space-md);
+  margin-top: var(--app-space-2xl);
+  padding: var(--app-space-lg);
+  border: var(--app-border-width) solid var(--app-color-border);
+  border-radius: var(--app-radius-md);
 }
 
 .section-heading h3 {
-  color: #1f2937;
+  color: var(--app-color-heading);
   font-size: 1rem;
   margin: 0;
 }
@@ -59,27 +58,8 @@
   align-items: center;
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: var(--app-space-md);
   justify-content: space-between;
-}
-
-:host ::ng-deep .interventions-table {
-  border: 1px solid #dde5eb;
-  border-radius: 8px;
-  overflow: auto;
-}
-
-:host ::ng-deep .interventions-table .p-datatable-thead > tr > th {
-  background: #f7fafb;
-  color: #526171;
-  font-size: 0.78rem;
-  text-transform: uppercase;
-}
-
-:host ::ng-deep .interventions-table .p-datatable-tbody > tr > td,
-:host ::ng-deep .interventions-table .p-datatable-thead > tr > th {
-  border-color: #dde5eb;
-  padding: 9px 10px;
 }
 
 .comment-cell {
@@ -91,29 +71,29 @@
 .action-cell {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: var(--app-space-xs);
   justify-content: flex-end;
 }
 
 .compact-button {
-  min-height: 32px;
-  padding: 6px 10px;
+  min-height: 2rem;
+  padding: var(--app-space-xs) var(--app-space-md);
 }
 
 .empty-interventions {
-  color: #667085;
+  color: var(--app-color-subtle);
   margin: 0;
 }
 
 .panel-kicker {
-  color: #12736b;
-  font-size: 0.72rem;
+  color: var(--app-color-accent);
+  font-size: var(--app-font-xs);
   font-weight: 900;
   margin: 0;
   text-transform: uppercase;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 56.25rem) {
   .period-summary-grid {
     grid-template-columns: 1fr;
   }

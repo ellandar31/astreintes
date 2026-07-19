@@ -1,6 +1,6 @@
 .intervention-form {
   display: grid;
-  gap: 14px;
+  gap: var(--app-space-xl);
 }
 
 :host ::ng-deep .user-select,
@@ -9,33 +9,33 @@
 }
 
 .intervention-form textarea {
-  border: 1px solid #cbd6df;
-  border-radius: 6px;
+  border: var(--app-border-width) solid var(--app-color-border-strong);
+  border-radius: var(--app-radius-sm);
   font: inherit;
-  min-height: 96px;
-  padding: 10px 12px;
+  min-height: 6rem;
+  padding: var(--app-space-md) var(--app-space-lg);
   resize: vertical;
   width: 100%;
 }
 
 .intervention-form textarea:focus {
-  border-color: #21736d;
-  box-shadow: 0 0 0 3px rgba(33, 115, 109, 0.15);
+  border-color: var(--app-color-primary-alt);
+  box-shadow: 0 0 0 0.1875rem var(--app-color-primary-focus);
   outline: none;
 }
 
 .form-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: var(--app-space-md);
 }
 
 .error-message {
-  background: #fff1f2;
-  border: 1px solid #fecdd3;
-  border-radius: 8px;
-  color: #9f1239;
+  background: var(--app-color-danger-bg);
+  border: var(--app-border-width) solid var(--app-color-danger-border);
+  border-radius: var(--app-radius-md);
+  color: var(--app-color-danger);
   font-weight: 800;
   margin: 0;
-  padding: 10px 12px;
+  padding: var(--app-space-md) var(--app-space-lg);
 }

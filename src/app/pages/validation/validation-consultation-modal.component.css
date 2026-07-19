@@ -1,98 +1,78 @@
 .item-details {
   display: grid;
-  gap: 14px;
+  gap: var(--app-space-xl);
 }
 
 .item-details h3 {
-  color: #1f2937;
+  color: var(--app-color-heading);
   margin: 0;
 }
 
 .item-details dl {
   display: grid;
-  gap: 10px;
-  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: var(--app-space-md);
+  grid-template-columns: repeat(auto-fit, minmax(13.125rem, 1fr));
   margin: 0;
 }
 
 .item-details dt {
-  color: #607080;
+  color: var(--app-color-muted);
   font-size: 0.82rem;
   font-weight: 800;
 }
 
 .item-details dd {
-  color: #1f2937;
-  margin: 3px 0 0;
+  color: var(--app-color-heading);
+  margin: 0.1875rem 0 0;
 }
 
 .signed {
-  color: #1b6b48;
+  color: var(--app-color-success);
   font-weight: 800;
 }
 
 .pending {
-  color: #8a5a16;
+  color: var(--app-color-warning);
   font-weight: 800;
 }
 
 .visa-preview {
-  border: 1px solid #dde5eb;
-  border-radius: 8px;
-  max-height: 120px;
-  max-width: 320px;
+  border: var(--app-border-width) solid var(--app-color-border);
+  border-radius: var(--app-radius-md);
+  max-height: 7.5rem;
+  max-width: 20rem;
   object-fit: contain;
-  padding: 8px;
+  padding: var(--app-space-sm);
 }
 
 .name-visa {
-  border: 1px solid #dde5eb;
-  border-radius: 8px;
-  color: #1f2937;
+  border: var(--app-border-width) solid var(--app-color-border);
+  border-radius: var(--app-radius-md);
+  color: var(--app-color-heading);
   font-size: 1.15rem;
   font-weight: 800;
   margin: 0;
-  padding: 12px;
+  padding: var(--app-space-lg);
 }
 
 .modal-actions {
   display: flex;
-  gap: 8px;
+  gap: var(--app-space-sm);
   justify-content: flex-end;
 }
 
 .progress-section {
   display: grid;
-  gap: 10px;
+  gap: var(--app-space-md);
 }
 
 .progress-section h4 {
-  color: #1f2937;
+  color: var(--app-color-heading);
   margin: 0;
-}
-
-:host ::ng-deep .progress-table {
-  border: 1px solid #dde5eb;
-  border-radius: 8px;
-  overflow: auto;
-}
-
-:host ::ng-deep .progress-table .p-datatable-tbody > tr > td,
-:host ::ng-deep .progress-table .p-datatable-thead > tr > th {
-  border-bottom: 1px solid #dde5eb;
-  padding: 9px 10px;
-  text-align: left;
-}
-
-:host ::ng-deep .progress-table .p-datatable-thead > tr > th {
-  background: #f7fafb;
-  color: #526171;
-  font-size: 0.78rem;
-  text-transform: uppercase;
 }
 
 .row-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: var(--app-space-xs);
 }

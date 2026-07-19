@@ -1,31 +1,31 @@
 .detail-modal {
   display: grid;
-  gap: 14px;
+  gap: var(--app-space-xl);
 }
 
 .detail-header {
   align-items: start;
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: var(--app-space-lg);
   justify-content: space-between;
 }
 
 .control-type {
-  color: #00796b;
-  font-size: 0.78rem;
+  color: var(--app-color-accent);
+  font-size: var(--app-font-sm);
   font-weight: 800;
-  margin: 0 0 4px;
+  margin: 0 0 var(--app-space-2xs);
   text-transform: uppercase;
 }
 
 .control-period {
-  color: #526171;
+  color: var(--app-color-subtle);
   margin: 0;
 }
 
 .sent-date {
-  color: #b91c1c;
+  color: var(--app-color-danger-strong);
   margin: 0;
   white-space: nowrap;
 }
@@ -34,32 +34,11 @@
   font-weight: 800;
 }
 
-:host ::ng-deep .rh-table {
-  border: 1px solid #dde5eb;
-  border-radius: 8px;
-  overflow: auto;
-}
-
-:host ::ng-deep .rh-table .p-datatable-tbody > tr > td,
-:host ::ng-deep .rh-table .p-datatable-thead > tr > th {
-  border-bottom: 1px solid #dde5eb;
-  padding: 10px 12px;
-  text-align: left;
-  vertical-align: top;
-}
-
-:host ::ng-deep .rh-table .p-datatable-thead > tr > th {
-  background: #f7fafb;
-  color: #526171;
-  font-size: 0.78rem;
-  text-transform: uppercase;
-}
-
 :host ::ng-deep .rh-table pre {
-  color: #526171;
+  color: var(--app-color-subtle);
   font-family: inherit;
   font-size: 0.82rem;
   margin: 0;
-  max-width: 380px;
+  max-width: 23.75rem;
   white-space: pre-wrap;
 }

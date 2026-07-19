@@ -6,14 +6,14 @@
 }
 
 .regular-view {
-  background: #ffffff;
-  border: 1px solid #dde5eb;
-  border-radius: 8px;
+  background: var(--app-color-surface);
+  border: var(--app-border-width) solid var(--app-color-border);
+  border-radius: var(--app-radius-md);
   display: grid;
-  gap: 14px;
+  gap: var(--app-space-xl);
   height: 100%;
   min-height: 0;
-  padding: 14px;
+  padding: var(--app-space-xl);
   width: 100%;
 }
 
@@ -21,13 +21,13 @@
   align-items: end;
   display: flex;
   flex-wrap: wrap;
-  gap: 14px;
+  gap: var(--app-space-xl);
   justify-content: space-between;
 }
 
 .regular-toolbar h2,
 .month-navigation h3 {
-  color: #1f2937;
+  color: var(--app-color-heading);
   margin: 0;
 }
 
@@ -35,11 +35,11 @@
   align-items: end;
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: var(--app-space-lg);
 }
 
 .regular-actions label {
-  min-width: 240px;
+  min-width: 15rem;
 }
 
 :host ::ng-deep .team-select {
@@ -47,19 +47,19 @@
 }
 
 :host ::ng-deep .regular-actions .p-button {
-  min-height: 42px;
+  min-height: 2.625rem;
 }
 
 .month-navigation {
   align-items: center;
   display: flex;
-  gap: 14px;
+  gap: var(--app-space-xl);
   justify-content: center;
 }
 
 .calendar-shell {
-  border: 1px solid #dde5eb;
-  border-radius: 8px;
+  border: var(--app-border-width) solid var(--app-color-border);
+  border-radius: var(--app-radius-md);
   min-height: 0;
   overflow: auto;
 }
@@ -67,29 +67,29 @@
 .week-header,
 .month-grid {
   display: grid;
-  grid-template-columns: repeat(7, minmax(130px, 1fr));
+  grid-template-columns: repeat(7, minmax(8.125rem, 1fr));
 }
 
 .week-header {
-  background: #f7fafb;
-  border-bottom: 1px solid #dde5eb;
+  background: var(--app-color-surface-muted);
+  border-bottom: var(--app-border-width) solid var(--app-color-border);
 }
 
 .week-header span {
-  color: #526171;
+  color: var(--app-color-subtle);
   font-size: 0.82rem;
   font-weight: 900;
-  padding: 9px 10px;
+  padding: 0.5625rem var(--app-space-md);
   text-align: center;
 }
 
 .day-cell {
-  border-bottom: 1px solid #dde5eb;
-  border-right: 1px solid #dde5eb;
+  border-bottom: var(--app-border-width) solid var(--app-color-border);
+  border-right: var(--app-border-width) solid var(--app-color-border);
   display: grid;
-  gap: 8px;
-  min-height: 118px;
-  padding: 8px;
+  gap: var(--app-space-sm);
+  min-height: 7.375rem;
+  padding: var(--app-space-sm);
 }
 
 .day-cell:nth-child(7n) {
@@ -97,23 +97,23 @@
 }
 
 .outside-month {
-  background: #f7fafb;
-  color: #596675;
+  background: var(--app-color-surface-muted);
+  color: var(--app-color-subtle);
 }
 
 .public-holiday {
-  background: #fff7e8;
-  box-shadow: inset 0 0 0 2px #f0b65f;
+  background: var(--app-color-calendar-holiday-bg);
+  box-shadow: inset 0 0 0 0.125rem var(--app-color-calendar-holiday);
 }
 
 .outside-month.public-holiday {
-  background: #fff3dc;
+  background: var(--app-color-calendar-holiday-muted-bg);
 }
 
 .day-heading {
   align-items: flex-start;
   display: flex;
-  gap: 6px;
+  gap: var(--app-space-xs);
   justify-content: space-between;
   min-width: 0;
 }
@@ -124,41 +124,41 @@
 }
 
 .holiday-label {
-  background: #f0b65f;
-  border-radius: 999px;
-  color: #2f2a1f;
+  background: var(--app-color-calendar-holiday);
+  border-radius: var(--app-radius-pill);
+  color: var(--app-color-calendar-holiday-text);
   display: block;
   font-size: 0.68rem;
   font-weight: 900;
   line-height: 1.2;
   max-width: 82%;
   overflow: hidden;
-  padding: 3px 7px;
+  padding: 0.1875rem 0.4375rem;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .period-list {
   display: grid;
-  gap: 4px;
+  gap: var(--app-space-2xs);
   align-content: start;
 }
 
 .period-bar {
-  background: var(--period-color, #174f5b);
-  border-radius: 999px;
-  color: #ffffff;
+  background: var(--period-color, var(--app-color-primary));
+  border-radius: var(--app-radius-pill);
+  color: var(--app-color-surface);
   cursor: pointer;
-  min-height: 22px;
+  min-height: 1.375rem;
   overflow: hidden;
 }
 
-.period-bar.color-0 { --period-color: #17235b; } /* Bleu */
-.period-bar.color-1 { --period-color: #21736d; } /* Vert */
-.period-bar.color-2 { --period-color: #8c5e2a; } /* Ocre */
-.period-bar.color-3 { --period-color: #6b4fa1; } /* Violet */
-.period-bar.color-4 { --period-color: #a84d5d; } /* Rouge brique */
-.period-bar.color-5 { --period-color: #2f6f8f; } /* Bleu clair */
+.period-bar.color-0 { --period-color: var(--app-period-color-0); } /* Bleu */
+.period-bar.color-1 { --period-color: var(--app-period-color-1); } /* Vert */
+.period-bar.color-2 { --period-color: var(--app-period-color-2); } /* Ocre */
+.period-bar.color-3 { --period-color: var(--app-period-color-3); } /* Violet */
+.period-bar.color-4 { --period-color: var(--app-period-color-4); } /* Rouge brique */
+.period-bar.color-5 { --period-color: var(--app-period-color-5); } /* Bleu clair */
 
 .period-bar:not(.period-start) {
   opacity: 0.78;
@@ -169,13 +169,13 @@
   font-size: 0.78rem;
   font-weight: 900;
   overflow: hidden;
-  padding: 3px 8px;
+  padding: 0.1875rem var(--app-space-sm);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 
-@media (max-width: 760px) {
+@media (max-width: 47.5rem) {
   .regular-toolbar,
   .regular-actions {
     align-items: stretch;

@@ -1,42 +1,36 @@
 .settings-layout {
   align-items: start;
   display: grid;
-  gap: 16px;
-  grid-template-columns: 260px minmax(0, 1fr);
-  min-height: 620px;
+  gap: var(--app-space-2xl);
+  grid-template-columns: 16.25rem minmax(0, 1fr);
+  min-height: 38.75rem;
 }
 
 .settings-menu {
   width: 100%;
 }
 
-:host ::ng-deep .settings-menu {
-  border: 1px solid #dde5eb;
-  border-radius: 8px;
-  box-shadow: none;
-}
-
 :host ::ng-deep .settings-menu .p-card-header {
-  padding: 12px 12px 0;
+  padding: var(--app-space-lg) var(--app-space-lg) 0;
 }
 
 :host ::ng-deep .settings-menu .p-card-body {
-  padding: 10px 12px 12px;
+  padding: var(--app-space-md) var(--app-space-lg) var(--app-space-lg);
 }
 
 :host ::ng-deep .settings-menu .p-card-content {
   display: grid;
-  gap: 6px;
+  gap: var(--app-space-xs);
   padding: 0;
 }
 
 .settings-menu-heading {
-  border-bottom: 1px solid #dde5eb;
-  padding: 2px 4px 10px;
+  border-bottom: var(--app-border-width) solid var(--app-color-border);
+  padding: var(--app-space-3xs) var(--app-space-2xs) var(--app-space-md);
 }
 
 .settings-menu-heading h3 {
-  color: #1f2937;
+  color: var(--app-color-heading);
   margin: 0;
 }
 
@@ -49,23 +43,17 @@
   min-width: 0;
 }
 
-:host ::ng-deep .settings-content {
-  border: 1px solid #dde5eb;
-  border-radius: 8px;
-  box-shadow: none;
-}
-
 :host ::ng-deep .settings-content .p-card-body {
-  padding: 16px;
+  padding: var(--app-space-2xl);
 }
 
 :host ::ng-deep .settings-content .p-card-content {
   display: grid;
-  gap: 14px;
+  gap: var(--app-space-xl);
   padding: 0;
 }
 
-@media (max-width: 760px) {
+@media (max-width: 47.5rem) {
   .settings-layout {
     grid-template-columns: 1fr;
     min-height: auto;

@@ -6,28 +6,22 @@
 
 .template-grid {
   display: grid;
-  gap: 12px;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--app-space-lg);
+  grid-template-columns: repeat(auto-fit, minmax(13.75rem, 1fr));
 }
 
 .template-item {
   display: block;
 }
 
-:host ::ng-deep .template-item {
-  border: 1px solid #dde5eb;
-  border-radius: 8px;
-  box-shadow: none;
-  height: 100%;
-}
-
 :host ::ng-deep .template-item .p-card-body {
-  padding: 14px;
+  height: 100%;
+  padding: var(--app-space-xl);
 }
 
 :host ::ng-deep .template-item .p-card-content {
   display: grid;
-  gap: 12px;
+  gap: var(--app-space-lg);
   padding: 0;
 }
 
@@ -37,22 +31,22 @@
 }
 
 .template-item p {
-  color: #607080;
-  margin-top: 6px;
+  color: var(--app-color-muted);
+  margin-top: var(--app-space-xs);
 }
 
 .file-button {
   align-items: center;
-  background: #eef4f5;
-  border-radius: 6px;
-  color: #1f3f47;
+  background: var(--app-color-surface-soft);
+  border-radius: var(--app-radius-sm);
+  color: var(--app-color-primary);
   cursor: pointer;
   display: inline-flex;
   font-weight: 900;
   justify-content: center;
-  min-height: 38px;
-  padding: 0 12px;
-  gap: 8px;
+  min-height: var(--app-size-control-md);
+  padding: 0 var(--app-space-lg);
+  gap: var(--app-space-sm);
 }
 
 .file-button input {

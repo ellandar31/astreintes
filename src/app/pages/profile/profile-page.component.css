@@ -1,87 +1,81 @@
 .page-view {
   align-content: start;
-  background: #ffffff;
+  background: var(--app-color-surface);
   display: grid;
-  gap: 18px;
-  min-height: 220px;
+  gap: var(--app-space-3xl);
+  min-height: 13.75rem;
   padding: 0;
 }
 
 .profile-layout {
   display: grid;
-  gap: 16px;
-  grid-template-columns: minmax(260px, 0.8fr) minmax(420px, 1.2fr);
+  gap: var(--app-space-2xl);
+  grid-template-columns: minmax(16.25rem, 0.8fr) minmax(26.25rem, 1.2fr);
 }
 
 .profile-panel {
   height: 100%;
 }
 
-:host ::ng-deep .profile-panel {
-  border: 1px solid #dde5eb;
-  border-radius: 8px;
-  box-shadow: none;
-  height: 100%;
-}
-
 :host ::ng-deep .profile-panel .p-card-header {
-  padding: 14px 14px 0;
+  padding: var(--app-space-xl) var(--app-space-xl) 0;
 }
 
 :host ::ng-deep .profile-panel .p-card-body {
-  padding: 14px;
+  height: 100%;
+  padding: var(--app-space-xl);
 }
 
 :host ::ng-deep .profile-panel .p-card-content {
   display: grid;
-  gap: 14px;
+  gap: var(--app-space-xl);
   padding: 0;
 }
 
 .profile-panel-header {
   display: grid;
-  gap: 2px;
+  gap: var(--app-space-3xs);
 }
 
 .profile-panel-header h3 {
-  color: #1f2937;
+  color: var(--app-color-heading);
   font-size: 1rem;
   margin: 0;
 }
 
 .panel-kicker {
-  color: #12736b;
-  font-size: 0.72rem;
+  color: var(--app-color-accent);
+  font-size: var(--app-font-xs);
   font-weight: 900;
   margin: 0;
   text-transform: uppercase;
 }
 
 .profile-field {
-  background: #f7fafb;
-  border: 1px solid #dde5eb;
-  border-radius: 8px;
+  background: var(--app-color-surface-muted);
+  border: var(--app-border-width) solid var(--app-color-border);
+  border-radius: var(--app-radius-md);
   display: grid;
-  gap: 6px;
-  padding: 12px;
+  gap: var(--app-space-xs);
+  padding: var(--app-space-lg);
 }
 
 .profile-field span {
-  color: #607080;
+  color: var(--app-color-muted);
   font-size: 0.82rem;
   font-weight: 800;
 }
 
 .profile-field strong {
-  color: #1f2937;
+  color: var(--app-color-heading);
   overflow-wrap: anywhere;
 }
 
 .profile-control {
-  color: #263442;
+  color: var(--app-color-label);
   display: grid;
   font-weight: 800;
-  gap: 6px;
+  gap: var(--app-space-xs);
 }
 
 .profile-control input {
@@ -97,47 +91,47 @@
 }
 
 :host ::ng-deep .signature-modes .p-togglebutton {
-  min-width: 72px;
+  min-width: 4.5rem;
 }
 
 .file-input {
-  background: #fff;
-  border: 1px solid #cbd6df;
-  border-radius: 6px;
-  min-height: 38px;
-  padding: 8px 10px;
+  background: var(--app-color-surface);
+  border: var(--app-border-width) solid var(--app-color-border-strong);
+  border-radius: var(--app-radius-sm);
+  min-height: var(--app-size-control-md);
+  padding: var(--app-space-sm) var(--app-space-md);
 }
 
 .signature-pad-shell {
   display: grid;
-  gap: 8px;
+  gap: var(--app-space-sm);
 }
 
 .signature-pad-shell canvas {
-  border: 1px solid #cbd6df;
-  border-radius: 6px;
-  height: 120px;
+  border: var(--app-border-width) solid var(--app-color-border-strong);
+  border-radius: var(--app-radius-sm);
+  height: 7.5rem;
   touch-action: none;
   width: 100%;
 }
 
 .signature-preview {
-  border: 1px solid #dde5eb;
-  border-radius: 8px;
+  border: var(--app-border-width) solid var(--app-color-border);
+  border-radius: var(--app-radius-md);
   display: grid;
-  gap: 8px;
-  min-height: 112px;
-  padding: 12px;
+  gap: var(--app-space-sm);
+  min-height: 7rem;
+  padding: var(--app-space-lg);
 }
 
 .signature-preview span {
-  color: #607080;
+  color: var(--app-color-muted);
   font-size: 0.82rem;
   font-weight: 800;
 }
 
 .signature-preview img {
-  max-height: 90px;
+  max-height: 5.625rem;
   max-width: 100%;
   object-fit: contain;
 }
@@ -146,17 +140,17 @@
   align-items: center;
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: var(--app-space-lg);
   grid-column: 1 / -1;
   justify-content: flex-end;
 }
 
 .compact-button {
-  min-height: 32px;
-  padding: 6px 10px;
+  min-height: 2rem;
+  padding: var(--app-space-xs) var(--app-space-md);
 }
 
-@media (max-width: 900px) {
+@media (max-width: 56.25rem) {
   .profile-layout {
     grid-template-columns: 1fr;
   }

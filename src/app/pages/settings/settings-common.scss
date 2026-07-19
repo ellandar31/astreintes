@@ -1,11 +1,11 @@
 .settings-section {
   display: grid;
-  gap: 18px;
+  gap: var(--app-space-3xl);
 }
 
 .settings-section h3,
 .settings-item h4 {
-  color: #1f2937;
+  color: var(--app-color-heading);
   margin: 0;
 }
 
@@ -13,75 +13,49 @@
   display: block;
 }
 
-:host ::ng-deep .settings-form {
-  background: #f7fafb;
-  border: 1px solid #dde5eb;
-  border-radius: 8px;
-  box-shadow: none;
-}
-
 :host ::ng-deep .settings-form .p-card-body {
-  padding: 14px;
+  padding: var(--app-space-xl);
 }
 
 :host ::ng-deep .settings-form .p-card-content,
 .settings-form form {
   display: grid;
-  gap: 14px;
+  gap: var(--app-space-xl);
   padding: 0;
 }
 
 .form-grid,
 .inline-form {
   display: grid;
-  gap: 12px;
+  gap: var(--app-space-lg);
 }
 
 .form-grid {
-  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(10.625rem, 1fr));
 }
 
 .inline-form {
   align-items: end;
-  grid-template-columns: minmax(220px, 1fr) minmax(130px, 170px) auto;
+  grid-template-columns: minmax(13.75rem, 1fr) minmax(8.125rem, 10.625rem) auto;
 }
 
 .inline-form-compact {
-  grid-template-columns: minmax(220px, 1fr) auto;
+  grid-template-columns: minmax(13.75rem, 1fr) auto;
 }
 
 .form-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
-}
-
-.settings-table {
-  border: 1px solid #dde5eb;
-  border-radius: 8px;
-  overflow: hidden;
+  gap: var(--app-space-md);
 }
 
 :host ::ng-deep .settings-table .p-datatable-table {
-  font-size: 0.92rem;
-}
-
-:host ::ng-deep .settings-table .p-datatable-thead > tr > th {
-  background: #f7fafb;
-  color: #526171;
-  font-size: 0.78rem;
-  text-transform: uppercase;
-}
-
-:host ::ng-deep .settings-table .p-datatable-tbody > tr > td,
-:host ::ng-deep .settings-table .p-datatable-thead > tr > th {
-  border-color: #dde5eb;
-  padding: 10px 12px;
+  font-size: var(--app-font-base);
 }
 
 :host ::ng-deep .compact-table .p-datatable-tbody > tr > td,
 :host ::ng-deep .compact-table .p-datatable-thead > tr > th {
-  padding: 8px 10px;
+  padding: var(--app-space-sm) var(--app-space-md);
 }
 
 :host ::ng-deep .role-select,
@@ -95,26 +69,26 @@
 
 .settings-list {
   display: grid;
-  gap: 10px;
+  gap: var(--app-space-md);
 }
 
 .settings-item {
   align-items: center;
-  border: 1px solid #dde5eb;
-  border-radius: 8px;
+  border: var(--app-border-width) solid var(--app-color-border);
+  border-radius: var(--app-radius-md);
   display: flex;
-  gap: 16px;
-  padding: 12px;
+  gap: var(--app-space-2xl);
+  padding: var(--app-space-lg);
 }
 
 .settings-item p {
-  color: #607080;
-  margin: 4px 0 0;
+  color: var(--app-color-muted);
+  margin: var(--app-space-2xs) 0 0;
 }
 
 .settings-item-users {
   display: grid;
-  grid-template-columns: minmax(180px, 1fr) minmax(160px, 220px) minmax(160px, 1fr) auto;
+  grid-template-columns: minmax(11.25rem, 1fr) minmax(10rem, 13.75rem) minmax(10rem, 1fr) auto;
 }
 
 .item-actions {
@@ -127,27 +101,27 @@
 .item-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: var(--app-space-sm);
 }
 
 .tag,
 .item-tags span {
   align-items: center;
-  background: #eef4f5;
-  border-radius: 999px;
-  color: #1f3f47;
+  background: var(--app-color-surface-soft);
+  border-radius: var(--app-radius-pill);
+  color: var(--app-color-primary);
   display: inline-flex;
   font-size: 0.82rem;
   font-weight: 800;
-  gap: 8px;
-  min-height: 30px;
-  padding: 0 10px;
+  gap: var(--app-space-sm);
+  min-height: 1.875rem;
+  padding: 0 var(--app-space-md);
 }
 
 .tag-content {
   align-items: center;
   display: inline-flex;
-  gap: 8px;
+  gap: var(--app-space-sm);
 }
 
 .tag-content button {
@@ -168,12 +142,12 @@
 }
 
 .role-help {
-  color: #607080;
+  color: var(--app-color-muted);
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   align-items: flex-start;
   font-size: 0.86rem;
-  gap: 8px 10px;
+  gap: var(--app-space-sm) var(--app-space-md);
 }
 
 .role-help p {
@@ -181,7 +155,7 @@
   width: 100%;
 }
 
-@media (max-width: 760px) {
+@media (max-width: 47.5rem) {
   .inline-form,
   .inline-form-compact,
   .settings-item,

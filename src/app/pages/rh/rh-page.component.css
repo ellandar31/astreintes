@@ -7,8 +7,8 @@
 .rh-layout {
   align-items: start;
   display: grid;
-  gap: 16px;
-  grid-template-columns: 240px minmax(0, 1fr);
+  gap: var(--app-space-2xl);
+  grid-template-columns: 15rem minmax(0, 1fr);
   width: 100%;
 }
 
@@ -16,48 +16,42 @@
   width: 100%;
 }
 
-:host ::ng-deep .rh-menu {
-  border: 1px solid #dde5eb;
-  border-radius: 8px;
-  box-shadow: none;
-}
-
 :host ::ng-deep .rh-menu .p-card-body {
-  padding: 10px;
+  padding: var(--app-space-md);
 }
 
 :host ::ng-deep .rh-menu .p-card-content {
   display: grid;
-  gap: 6px;
+  gap: var(--app-space-xs);
   padding: 0;
 }
 
 :host ::ng-deep .rh-menu-button {
-  background: #ffffff;
+  background: var(--app-color-surface);
   border-color: transparent;
-  color: #526171;
+  color: var(--app-color-subtle);
   justify-content: flex-start;
   text-align: left;
   width: 100%;
 }
 
 :host ::ng-deep .rh-menu-button:not(.active):enabled:hover {
-  background: #f7fafb;
-  border-color: #dde5eb;
-  color: #263442;
+  background: var(--app-color-surface-muted);
+  border-color: var(--app-color-border);
+  color: var(--app-color-label);
 }
 
 :host ::ng-deep .rh-menu-button.active {
-  background: #174f5b;
-  border-color: #174f5b;
-  color: #ffffff;
+  background: var(--app-color-primary);
+  border-color: var(--app-color-primary);
+  color: var(--app-color-surface);
 }
 
 .rh-content {
   min-width: 0;
 }
 
-@media (max-width: 860px) {
+@media (max-width: 53.75rem) {
   .rh-layout {
     grid-template-columns: 1fr;
   }

@@ -6,35 +6,29 @@
 
 .compensation-form {
   display: grid;
-  gap: 16px;
+  gap: var(--app-space-2xl);
 }
 
 .compensation-block {
   display: block;
 }
 
-:host ::ng-deep .compensation-block {
-  border: 1px solid #dde5eb;
-  border-radius: 8px;
-  box-shadow: none;
-}
-
 :host ::ng-deep .compensation-block .p-card-header {
-  padding: 14px 14px 0;
+  padding: var(--app-space-xl) var(--app-space-xl) 0;
 }
 
 :host ::ng-deep .compensation-block .p-card-body {
-  padding: 12px 14px 14px;
+  padding: var(--app-space-lg) var(--app-space-xl) var(--app-space-xl);
 }
 
 :host ::ng-deep .compensation-block .p-card-content {
   display: grid;
-  gap: 12px;
+  gap: var(--app-space-lg);
   padding: 0;
 }
 
 .compensation-block h4 {
-  color: #1f2937;
+  color: var(--app-color-heading);
   margin: 0;
 }
 
@@ -44,20 +38,20 @@
 
 .editable-table {
   border-collapse: collapse;
-  min-width: 680px;
+  min-width: 42.5rem;
   width: 100%;
 }
 
 .editable-table th,
 .editable-table td {
-  border-bottom: 1px solid #dde5eb;
-  padding: 10px 12px;
+  border-bottom: var(--app-border-width) solid var(--app-color-border);
+  padding: var(--app-space-md) var(--app-space-lg);
   text-align: left;
 }
 
 .editable-table th {
-  background: #f7fafb;
-  color: #526171;
-  font-size: 0.78rem;
+  background: var(--app-color-surface-muted);
+  color: var(--app-color-subtle);
+  font-size: var(--app-font-sm);
   text-transform: uppercase;
 }

@@ -159,7 +159,9 @@ export class ProfilePageComponent implements OnChanges, OnDestroy {
 
     context.lineWidth = 2;
     context.lineCap = "round";
-    context.strokeStyle = "#111827";
+    context.strokeStyle = getComputedStyle(document.documentElement)
+      .getPropertyValue("--app-color-heading-strong")
+      .trim();
     context.lineTo(point.x, point.y);
     context.stroke();
     context.beginPath();

@@ -1,20 +1,20 @@
 .operation-form {
   display: grid;
-  gap: 18px;
+  gap: var(--app-space-3xl);
 }
 
 .summary-panel {
-  border: 1px solid #dde5eb;
-  border-radius: 6px;
+  border: var(--app-border-width) solid var(--app-color-border);
+  border-radius: var(--app-radius-sm);
   display: grid;
-  gap: 12px;
-  grid-template-columns: minmax(220px, 300px) minmax(220px, 300px) minmax(360px, 1fr);
-  padding: 10px;
+  gap: var(--app-space-lg);
+  grid-template-columns: minmax(13.75rem, 18.75rem) minmax(13.75rem, 18.75rem) minmax(22.5rem, 1fr);
+  padding: var(--app-space-md);
 }
 
 .summary-panel input,
 .timeline-panel input {
-  min-height: 46px;
+  min-height: var(--app-size-control-lg);
 }
 
 :host ::ng-deep .user-select,
@@ -25,22 +25,22 @@
 .timeline-grid {
   align-items: start;
   display: grid;
-  gap: 18px;
+  gap: var(--app-space-3xl);
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .timeline-panel,
 .interventions-panel {
-  border: 1px solid #dde5eb;
-  border-radius: 8px;
+  border: var(--app-border-width) solid var(--app-color-border);
+  border-radius: var(--app-radius-md);
   display: grid;
-  gap: 10px;
-  padding: 12px;
+  gap: var(--app-space-md);
+  padding: var(--app-space-lg);
 }
 
 .panel-kicker {
-  color: #12736b;
-  font-size: 0.72rem;
+  color: var(--app-color-accent);
+  font-size: var(--app-font-xs);
   font-weight: 900;
   margin: 0;
   text-transform: uppercase;
@@ -48,20 +48,20 @@
 
 .date-grid {
   display: grid;
-  gap: 10px;
+  gap: var(--app-space-md);
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .users-box {
-  border-top: 1px solid #dde5eb;
+  border-top: var(--app-border-width) solid var(--app-color-border);
   display: grid;
-  gap: 10px;
-  padding-top: 10px;
+  gap: var(--app-space-md);
+  padding-top: var(--app-space-md);
 }
 
 .users-box h3,
 .interventions-panel h3 {
-  color: #1f2937;
+  color: var(--app-color-heading);
   font-size: 1rem;
   margin: 0;
 }
@@ -70,39 +70,39 @@
   align-items: center;
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: var(--app-space-md);
   justify-content: space-between;
 }
 
 .inline-form {
   align-items: end;
   display: grid;
-  gap: 10px;
+  gap: var(--app-space-md);
   grid-template-columns: minmax(0, 1fr) auto;
 }
 
 :host ::ng-deep .inline-form .p-button {
-  min-width: 88px;
+  min-width: 5.5rem;
 }
 
 .tag-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  min-height: 28px;
+  gap: var(--app-space-sm);
+  min-height: 1.75rem;
 }
 
 .tag {
   align-items: center;
-  background: #eef4f5;
-  border-radius: 999px;
-  color: #1f3f47;
+  background: var(--app-color-surface-soft);
+  border-radius: var(--app-radius-pill);
+  color: var(--app-color-primary);
   display: inline-flex;
   font-size: 0.82rem;
   font-weight: 800;
-  gap: 8px;
-  min-height: 30px;
-  padding: 0 10px;
+  gap: var(--app-space-sm);
+  min-height: 1.875rem;
+  padding: 0 var(--app-space-md);
 }
 
 .tag button {
@@ -115,26 +115,26 @@
 
 .participant-list {
   display: grid;
-  gap: 8px;
+  gap: var(--app-space-sm);
   overflow-x: auto;
-  padding-bottom: 2px;
+  padding-bottom: var(--app-space-3xs);
 }
 
 .participant-row {
   align-items: end;
-  background: #f8fbfc;
-  border: 1px solid #dde5eb;
-  border-radius: 8px;
+  background: var(--app-color-surface-muted);
+  border: var(--app-border-width) solid var(--app-color-border);
+  border-radius: var(--app-radius-md);
   display: grid;
-  gap: 10px;
-  grid-template-columns: minmax(120px, 0.7fr) repeat(2, minmax(175px, 1fr)) 34px;
-  min-width: 520px;
-  padding: 10px;
+  gap: var(--app-space-md);
+  grid-template-columns: minmax(7.5rem, 0.7fr) repeat(2, minmax(10.9375rem, 1fr)) var(--app-size-control-sm);
+  min-width: 32.5rem;
+  padding: var(--app-space-md);
 }
 
 .participant-name {
   display: grid;
-  gap: 2px;
+  gap: var(--app-space-3xs);
   min-width: 0;
 }
 
@@ -148,12 +148,12 @@
 
 .participant-name span,
 .participant-name small {
-  color: #607080;
-  font-size: 0.78rem;
+  color: var(--app-color-muted);
+  font-size: var(--app-font-sm);
 }
 
 .participant-row input[type="datetime-local"] {
-  min-width: 180px;
+  min-width: 11.25rem;
   width: 100%;
 }
 
@@ -161,50 +161,33 @@
   align-items: center;
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: var(--app-space-lg);
   justify-content: space-between;
 }
 
-:host ::ng-deep .interventions-table {
-  border: 1px solid #dde5eb;
-  border-radius: 8px;
-  overflow: auto;
-}
-
-:host ::ng-deep .interventions-table .p-datatable-tbody > tr > td,
-:host ::ng-deep .interventions-table .p-datatable-thead > tr > th {
-  border-bottom: 1px solid #dde5eb;
-  padding: 9px 10px;
-  text-align: left;
+:host ::ng-deep .interventions-table .p-datatable-tbody > tr > td {
   vertical-align: middle;
-}
-
-:host ::ng-deep .interventions-table .p-datatable-thead > tr > th {
-  background: #f7fafb;
-  color: #526171;
-  font-size: 0.8rem;
-  font-weight: 900;
 }
 
 .table-actions {
   display: flex;
-  gap: 8px;
+  gap: var(--app-space-sm);
 }
 
 .empty-row {
-  color: #607080;
+  color: var(--app-color-muted);
   text-align: center;
 }
 
 .form-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
-  padding-top: 2px;
+  gap: var(--app-space-md);
+  padding-top: var(--app-space-3xs);
 }
 
 .form-error {
-  color: #a51d2d;
+  color: var(--app-color-danger);
   flex-basis: 100%;
   font-size: 0.9rem;
   font-weight: 800;
@@ -213,26 +196,26 @@
 
 .sent-rh-message {
   align-items: center;
-  background: #fff1f2;
-  border: 1px solid #fecdd3;
-  border-radius: 6px;
-  color: #a51d2d;
+  background: var(--app-color-danger-bg);
+  border: var(--app-border-width) solid var(--app-color-danger-border);
+  border-radius: var(--app-radius-sm);
+  color: var(--app-color-danger);
   display: flex;
   flex: 1 1 100%;
-  gap: 8px;
+  gap: var(--app-space-sm);
   font-weight: 900;
   margin: 0;
-  padding: 10px 12px;
+  padding: var(--app-space-md) var(--app-space-lg);
 }
 
-@media (max-width: 980px) {
+@media (max-width: 61.25rem) {
   .summary-panel,
   .timeline-grid {
     grid-template-columns: 1fr;
   }
 }
 
-@media (max-width: 760px) {
+@media (max-width: 47.5rem) {
   .date-grid,
   .inline-form,
   .participant-row {

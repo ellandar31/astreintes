@@ -1,8 +1,71 @@
 @import "primeicons/primeicons.css";
 
 :root {
-  color: #17202a;
-  background: #f4f6f8;
+  --app-color-text: #17202a;
+  --app-color-heading: #1f2937;
+  --app-color-heading-strong: #111827;
+  --app-color-muted: #607080;
+  --app-color-subtle: #526171;
+  --app-color-label: #2e3b47;
+  --app-color-surface: #ffffff;
+  --app-color-surface-muted: #f7fafb;
+  --app-color-surface-soft: #eef4f5;
+  --app-color-page: #f4f6f8;
+  --app-color-primary: #174f5b;
+  --app-color-primary-alt: #21736d;
+  --app-color-primary-soft: rgba(23, 79, 91, 0.12);
+  --app-color-primary-focus: rgba(33, 115, 109, 0.15);
+  --app-color-accent: #00796b;
+  --app-color-border: #dde5eb;
+  --app-color-border-strong: #cbd6df;
+  --app-color-danger: #a51d2d;
+  --app-color-danger-strong: #b91c1c;
+  --app-color-danger-bg: #fff1f2;
+  --app-color-danger-border: #fecdd3;
+  --app-color-success: #067647;
+  --app-color-success-bg: #ecfdf3;
+  --app-color-success-border: #bbf7d0;
+  --app-color-warning: #8a5a16;
+  --app-color-calendar-holiday-bg: #fff7e8;
+  --app-color-calendar-holiday-muted-bg: #fff3dc;
+  --app-color-calendar-holiday: #f0b65f;
+  --app-color-calendar-holiday-text: #2f2a1f;
+  --app-period-color-0: #17235b;
+  --app-period-color-1: #21736d;
+  --app-period-color-2: #8c5e2a;
+  --app-period-color-3: #6b4fa1;
+  --app-period-color-4: #a84d5d;
+  --app-period-color-5: #2f6f8f;
+  --app-radius-sm: 0.375rem;
+  --app-radius-md: 0.5rem;
+  --app-radius-pill: 999rem;
+  --app-border-width: 1px;
+  --app-space-3xs: 0.125rem;
+  --app-space-2xs: 0.25rem;
+  --app-space-xs: 0.375rem;
+  --app-space-sm: 0.5rem;
+  --app-space-md: 0.625rem;
+  --app-space-lg: 0.75rem;
+  --app-space-xl: 0.875rem;
+  --app-space-2xl: 1rem;
+  --app-space-3xl: 1.125rem;
+  --app-space-4xl: 1.5rem;
+  --app-space-5xl: 2rem;
+  --app-font-xs: 0.72rem;
+  --app-font-sm: 0.78rem;
+  --app-font-md: 0.9rem;
+  --app-font-base: 0.92rem;
+  --app-font-lg: 1.05rem;
+  --app-font-xl: 1.22rem;
+  --app-font-2xl: 1.4rem;
+  --app-size-control-sm: 2.125rem;
+  --app-size-control-md: 2.375rem;
+  --app-size-control-lg: 2.875rem;
+  --app-shadow-modal: 0 1.625rem 4.375rem rgba(15, 23, 42, 0.28);
+  --app-shadow-auth: 0 1.5rem 4.375rem rgba(11, 31, 42, 0.24);
+
+  color: var(--app-color-text);
+  background: var(--app-color-page);
   font-family:
     Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
     sans-serif;
@@ -16,7 +79,7 @@
 
 body {
   margin: 0;
-  min-width: 320px;
+  min-width: 20rem;
   min-height: 100vh;
 }
 
@@ -53,7 +116,7 @@ button:disabled {
   display: flex;
   min-height: 100vh;
   justify-content: center;
-  padding: 24px;
+  padding: var(--app-space-4xl);
 }
 
 .auth-layout {
@@ -67,21 +130,21 @@ button:disabled {
 .auth-panel {
   background: rgba(255, 255, 255, 0.94);
   border: 1px solid rgba(255, 255, 255, 0.5);
-  border-radius: 8px;
-  box-shadow: 0 24px 70px rgba(11, 31, 42, 0.24);
+  border-radius: var(--app-radius-md);
+  box-shadow: var(--app-shadow-auth);
   display: grid;
-  gap: 22px;
-  max-width: 430px;
-  padding: 32px;
+  gap: 1.375rem;
+  max-width: 26.875rem;
+  padding: var(--app-space-5xl);
   width: 100%;
 }
 
 .eyebrow {
-  color: #21736d;
-  font-size: 0.72rem;
+  color: var(--app-color-primary-alt);
+  font-size: var(--app-font-xs);
   font-weight: 800;
   letter-spacing: 0;
-  margin: 0 0 4px;
+  margin: 0 0 var(--app-space-2xs);
   text-transform: uppercase;
 }
 
@@ -94,44 +157,44 @@ p {
 }
 
 h1 {
-  color: #111827;
+  color: var(--app-color-heading-strong);
   font-size: clamp(1.8rem, 4vw, 2.7rem);
   line-height: 1.05;
-  margin-bottom: 10px;
+  margin-bottom: var(--app-space-md);
 }
 
 h2 {
-  color: #1f2937;
-  font-size: 1.4rem;
+  color: var(--app-color-heading);
+  font-size: var(--app-font-2xl);
   margin-bottom: 0;
 }
 
 .muted {
-  color: #607080;
+  color: var(--app-color-muted);
   margin-bottom: 0;
 }
 
 .auth-form {
   display: grid;
-  gap: 16px;
+  gap: var(--app-space-2xl);
 }
 
 label {
-  color: #2e3b47;
+  color: var(--app-color-label);
   display: grid;
-  font-size: 0.92rem;
+  font-size: var(--app-font-base);
   font-weight: 700;
-  gap: 8px;
+  gap: var(--app-space-sm);
 }
 
 input, 
 select {
-  background: #fff;
-  border: 1px solid #ccd6df;
-  border-radius: 6px;
-  color: #17202a;
-  min-height: 46px;
-  padding: 10px 12px;
+  background: var(--app-color-surface);
+  border: var(--app-border-width) solid var(--app-color-border-strong);
+  border-radius: var(--app-radius-sm);
+  color: var(--app-color-text);
+  min-height: var(--app-size-control-lg);
+  padding: var(--app-space-md) var(--app-space-lg);
 }
 
 select.user-select {
@@ -144,8 +207,8 @@ select.user-select {
 
 input:focus,
 select:focus {
-  border-color: #21736d;
-  box-shadow: 0 0 0 3px rgba(33, 115, 109, 0.15);
+  border-color: var(--app-color-primary-alt);
+  box-shadow: 0 0 0 0.1875rem var(--app-color-primary-focus);
   outline: none;
 }
 
@@ -157,86 +220,86 @@ select:focus {
 .icon-button,
 .tab {
   border: 0;
-  border-radius: 6px;
-  min-height: 42px;
+  border-radius: var(--app-radius-sm);
+  min-height: 2.625rem;
 }
 
 .primary-button {
-  background: #174f5b;
-  color: #fff;
+  background: var(--app-color-primary);
+  color: var(--app-color-surface);
   font-weight: 800;
-  padding: 0 16px;
+  padding: 0 var(--app-space-2xl);
 }
 
 .secondary-button {
-  background: #eef4f5;
+  background: var(--app-color-surface-soft);
   color: #1f3f47;
   font-weight: 800;
-  padding: 0 14px;
+  padding: 0 var(--app-space-xl);
 }
 
 .danger-button {
-  background: #fff1f2;
-  color: #a51d2d;
+  background: var(--app-color-danger-bg);
+  color: var(--app-color-danger);
   font-weight: 800;
-  padding: 0 14px;
+  padding: 0 var(--app-space-xl);
 }
 
 .google-button {
-  background: #fff;
-  border: 1px solid #ccd6df;
-  color: #1f2937;
+  background: var(--app-color-surface);
+  border: var(--app-border-width) solid var(--app-color-border-strong);
+  color: var(--app-color-heading);
   font-weight: 800;
 }
 
 .text-button {
   background: transparent;
-  color: #174f5b;
+  color: var(--app-color-primary);
   font-weight: 800;
   justify-self: center;
-  padding: 0 8px;
+  padding: 0 var(--app-space-sm);
 }
 
 .error-message {
-  background: #fff1f2;
-  border: 1px solid #fecdd3;
-  border-radius: 6px;
-  color: #b42318;
+  background: var(--app-color-danger-bg);
+  border: var(--app-border-width) solid var(--app-color-danger-border);
+  border-radius: var(--app-radius-sm);
+  color: var(--app-color-danger-strong);
   margin: 0;
-  padding: 10px 12px;
+  padding: var(--app-space-md) var(--app-space-lg);
 }
 
 .loader {
   animation: spin 0.9s linear infinite;
-  border: 4px solid #ccd6df;
-  border-top-color: #21736d;
+  border: 0.25rem solid var(--app-color-border-strong);
+  border-top-color: var(--app-color-primary-alt);
   border-radius: 50%;
-  height: 44px;
-  width: 44px;
+  height: 2.75rem;
+  width: 2.75rem;
 }
 
 .app-shell {
   display: grid;
   grid-template-rows: auto auto 1fr;
-  gap: 6px;
+  gap: var(--app-space-xs);
   min-height: 100vh;
-  padding: 12px;
+  padding: var(--app-space-lg);
 }
 
 .top-bar {
   align-items: center;
-  background: #ffffff;
-  border: 1px solid #dde5eb;
-  border-radius: 8px;
+  background: var(--app-color-surface);
+  border: var(--app-border-width) solid var(--app-color-border);
+  border-radius: var(--app-radius-md);
   display: flex;
-  gap: 14px;
+  gap: var(--app-space-xl);
   justify-content: space-between;
-  min-height: 60px;
-  padding: 8px 14px;
+  min-height: 3.75rem;
+  padding: var(--app-space-sm) var(--app-space-xl);
 }
 
 .top-bar h1 {
-  font-size: 1.22rem;
+  font-size: var(--app-font-xl);
   margin: 0;
 }
 
@@ -244,61 +307,144 @@ select:focus {
 .tabs {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: var(--app-space-md);
 }
 
 .icon-button {
   align-items: center;
-  background: #eef4f5;
+  background: var(--app-color-surface-soft);
   color: #1f3f47;
   display: inline-flex;
   font-size: 0.88rem;
   font-weight: 800;
-  gap: 8px;
-  min-height: 34px;
-  padding: 0 10px;
+  gap: var(--app-space-sm);
+  min-height: var(--app-size-control-sm);
+  padding: 0 var(--app-space-md);
 }
 
 .button-icon {
   align-items: center;
-  background: rgba(23, 79, 91, 0.12);
-  border-radius: 999px;
+  background: var(--app-color-primary-soft);
+  border-radius: var(--app-radius-pill);
   display: inline-flex;
-  font-size: 0.72rem;
+  font-size: var(--app-font-xs);
   font-weight: 900;
-  height: 20px;
+  height: 1.25rem;
   justify-content: center;
-  width: 20px;
+  width: 1.25rem;
 }
 
 .icon-button.danger {
-  background: #fff1f2;
-  color: #a51d2d;
+  background: var(--app-color-danger-bg);
+  color: var(--app-color-danger);
 }
 
 .tabs {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
-  background: #ffffff;
-  border: 1px solid #dde5eb;
-  border-radius: 8px;
-  padding: 2px;
+  gap: var(--app-space-md);
+  background: var(--app-color-surface);
+  border: var(--app-border-width) solid var(--app-color-border);
+  border-radius: var(--app-radius-md);
+  padding: var(--app-space-3xs);
 }
 
 .tab {
   background: transparent;
-  color: #526171;
-  flex: 1 1 140px;
-  font-size: 0.9rem;
+  color: var(--app-color-subtle);
+  flex: 1 1 8.75rem;
+  font-size: var(--app-font-md);
   font-weight: 800;
-  min-height: 34px;
-  padding: 0 12px;
+  min-height: var(--app-size-control-sm);
+  padding: 0 var(--app-space-lg);
 }
 
 .tab.active {
-  background: #174f5b;
-  color: #ffffff;
+  background: var(--app-color-primary);
+  color: var(--app-color-surface);
+}
+
+/* Les composants PrimeNG restent localement configurables, mais les patrons
+   visuels partagés vivent ici pour éviter les surcharges dispersées. */
+:is(
+  .settings-form,
+  .settings-content,
+  .settings-menu,
+  .profile-panel,
+  .validation-content,
+  .validation-submenu,
+  .rh-menu,
+  .rh-panel,
+  .export-section,
+  .user-section,
+  .month-section,
+  .compensation-block,
+  .template-item
+) {
+  border: var(--app-border-width) solid var(--app-color-border);
+  border-radius: var(--app-radius-md);
+  box-shadow: none;
+}
+
+:is(
+  .settings-table,
+  .validation-table,
+  .progress-table,
+  .exceptional-table,
+  .interventions-table,
+  .rh-table,
+  .export-table
+) {
+  border: var(--app-border-width) solid var(--app-color-border);
+  border-radius: var(--app-radius-md);
+  overflow: auto;
+}
+
+:is(
+  .settings-table,
+  .validation-table,
+  .progress-table,
+  .exceptional-table,
+  .interventions-table,
+  .rh-table,
+  .export-table
+) .p-datatable-thead > tr > th {
+  background: var(--app-color-surface-muted);
+  color: var(--app-color-subtle);
+  font-size: var(--app-font-sm);
+  text-transform: uppercase;
+}
+
+:is(
+  .settings-table,
+  .validation-table,
+  .progress-table,
+  .exceptional-table,
+  .interventions-table,
+  .rh-table,
+  .export-table
+) .p-datatable-tbody > tr > td,
+:is(
+  .settings-table,
+  .validation-table,
+  .progress-table,
+  .exceptional-table,
+  .interventions-table,
+  .rh-table,
+  .export-table
+) .p-datatable-thead > tr > th {
+  border-color: var(--app-color-border);
+  padding: var(--app-space-md) var(--app-space-lg);
+  text-align: left;
+  vertical-align: top;
+}
+
+.empty-state {
+  border: var(--app-border-width) dashed var(--app-color-border-strong);
+  border-radius: var(--app-radius-md);
+  color: var(--app-color-subtle);
+  padding: var(--app-space-4xl);
+  text-align: center;
 }
 
 
@@ -308,13 +454,13 @@ select:focus {
   }
 }
 
-@media (max-width: 760px) {
+@media (max-width: 47.5rem) {
   .auth-panel {
-    padding: 24px;
+    padding: var(--app-space-4xl);
   }
 
   .app-shell {
-    padding: 14px;
+    padding: var(--app-space-xl);
   }
 
   .top-bar {
@@ -333,10 +479,10 @@ select:focus {
 }
 
 .success-message {
-  background: #ecfdf3;
-  border: 1px solid #bbf7d0;
-  border-radius: 6px;
-  color: #067647;
-  margin: 0 0 12px;
-  padding: 10px 12px;
+  background: var(--app-color-success-bg);
+  border: var(--app-border-width) solid var(--app-color-success-border);
+  border-radius: var(--app-radius-sm);
+  color: var(--app-color-success);
+  margin: 0 0 var(--app-space-lg);
+  padding: var(--app-space-md) var(--app-space-lg);
 }
