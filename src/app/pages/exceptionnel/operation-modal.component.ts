@@ -1,6 +1,7 @@
 import { CommonModule } from "@angular/common";
 import { Component, EventEmitter, Input, Output } from "@angular/core";
 import { FormsModule, NgForm } from "@angular/forms";
+import { APP_LABELS } from "../../i18n/labels";
 import { ModalComponent } from "../../shared/modal.component";
 import { createEmptyVisa } from "../../shared/visa.models";
 import {
@@ -19,6 +20,7 @@ import {
   styleUrl: "./operation-modal.component.css",
 })
 export class OperationModalComponent {
+  readonly labels = APP_LABELS;
   @Input({ required: true }) form: ExceptionalOperationForm = {
     type: "astreinte",
     initiatorUid: "",
@@ -50,7 +52,7 @@ export class OperationModalComponent {
   validationError = "";
 
   get title(): string {
-    return this.operation ? "Modifier l'opération" : this.operationTypeLabel(this.form.type);
+    return this.operation ? this.labels.exceptional.modal.editOperation : this.operationTypeLabel(this.form.type);
   }
 
   save(form: NgForm): void {
@@ -75,7 +77,7 @@ export class OperationModalComponent {
   }
 
   operationTypeLabel(type: ExceptionalOperationForm["type"]): string {
-    return type === "astreinte" ? "Astreinte exceptionnelle" : "Travail exceptionnel";
+    return type === "astreinte" ? this.labels.exceptional.types.astreinte : this.labels.exceptional.types.travaux;
   }
 
   formatDate(value: string | undefined): string {
@@ -206,7 +208,8 @@ export class OperationModalComponent {
   }
 
   private participantOverlapError(): string {
-    return this.listOverlapError("plannedUsers", "prévisionnel") || this.listOverlapError("actualUsers", "réel");
+    return this.listOverlapError("plannedUsers", this.labels.exceptional.sections.planned.toLowerCase()) ||
+      this.listOverlapError("actualUsers", this.labels.exceptional.sections.actual.toLowerCase());
   }
 
   private listOverlapError(listName: "plannedUsers" | "actualUsers", label: string): string {
@@ -223,7 +226,9 @@ export class OperationModalComponent {
         }
 
         if (this.dateRangesOverlap(first.startDate, first.endDate, second.startDate, second.endDate)) {
-          return `Les périodes ${label} de ${first.displayName || first.email} se recouvrent.`;
+          return this.labels.exceptional.errors.participantOverlap
+            .replace("{scope}", label)
+            .replace("{user}", first.displayName || first.email);
         }
       }
     }

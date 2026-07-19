@@ -1,7 +1,7 @@
-<app-modal title="Ajouter une intervention" size="small" (closed)="closed.emit()">
+<app-modal [title]="labels.exceptional.modal.addIntervention" size="small" (closed)="closed.emit()">
   <form class="operation-form" #interventionNgForm="ngForm" (ngSubmit)="save(interventionNgForm)">
     <label>
-      Utilisateur
+      {{ labels.common.fields.user }}
       <select
         class="user-select"
         name="interventionUser"
@@ -9,7 +9,7 @@
         (ngModelChange)="selectUser($event)"
         required
       >
-        <option value="">Sélectionner un utilisateur</option>
+        <option value="">{{ labels.common.users.select }}</option>
         @for (user of users; track user.id) {
           <option [ngValue]="user.id" [title]="userLabel(user)">{{ userLabel(user) }}</option>
         }
@@ -17,26 +17,26 @@
     </label>
 
     <label>
-      Date de début
+      {{ labels.regular.fields.dateStart }}
       <input name="interventionStartDate" [(ngModel)]="form.startDate" required type="datetime-local" />
     </label>
 
     <label>
-      Date de fin
+      {{ labels.regular.fields.dateEnd }}
       <input name="interventionEndDate" [(ngModel)]="form.endDate" required type="datetime-local" />
     </label>
 
     <label class="checkbox-label">
       <input name="wasOnSite" [(ngModel)]="form.wasOnSite" type="checkbox" />
-      <span>Utilisateur sur site</span>
+      <span>{{ labels.exceptional.fields.userOnSite }}</span>
     </label>
 
     @if (error) {
       <p class="error-message">{{ error }}</p>
     }
-   
+
     <div class="form-actions">
-      <button class="primary-button" [disabled]="interventionNgForm.invalid" type="submit">Ajouter</button>
+      <button class="primary-button" [disabled]="interventionNgForm.invalid" type="submit">{{ labels.common.actions.add }}</button>
     </div>
   </form>
 </app-modal>

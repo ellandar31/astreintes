@@ -2,17 +2,17 @@
   <form class="period-form" [class.consultation-mode]="isLocked" #periodNgForm="ngForm" (ngSubmit)="save(periodNgForm)">
     <div class="period-summary-grid">
       <label>
-        Utilisateur
-        <select class="user-select" name="regularUser" [disabled]="isLocked"  [ngModel]="form.userId" (ngModelChange)="selectUser($event)" required>
-        <option value="">Sélectionner un utilisateur</option>
-        @for (user of users; track user.id) {
-          <option [ngValue]="user.id" [title]="userLabel(user)">{{ userLabel(user) }}</option>
-        }
+        {{ labels.common.fields.user }}
+        <select class="user-select" name="regularUser" [disabled]="isLocked" [ngModel]="form.userId" (ngModelChange)="selectUser($event)" required>
+          <option value="">{{ labels.common.users.select }}</option>
+          @for (user of users; track user.id) {
+            <option [ngValue]="user.id" [title]="userLabel(user)">{{ userLabel(user) }}</option>
+          }
         </select>
       </label>
 
       <label>
-        Date de début
+        {{ labels.regular.fields.dateStart }}
         @if (isEditing) {
           <input
             name="regularStartDate"
@@ -35,7 +35,7 @@
       </label>
 
       <label>
-        Date de fin
+        {{ labels.regular.fields.dateEnd }}
         @if (isEditing) {
           <input
             name="regularEndDate"
@@ -62,12 +62,12 @@
       <section class="interventions-section" aria-labelledby="regular-period-interventions-title">
         <div class="section-heading">
           <div>
-            <p class="panel-kicker">Interventions</p>
-            <h3 id="regular-period-interventions-title">Interventions rattachées</h3>
+            <p class="panel-kicker">{{ labels.regular.sections.interventions }}</p>
+            <h3 id="regular-period-interventions-title">{{ labels.regular.sections.attachedInterventions }}</h3>
           </div>
           @if (!isLocked) {
             <button class="secondary-button compact-button" (click)="addIntervention()" type="button">
-              Ajouter une intervention
+              {{ labels.regular.actions.addIntervention }}
             </button>
           }
         </div>
@@ -75,12 +75,12 @@
         @if (interventions.length) {
           <div class="interventions-table">
             <div class="interventions-row interventions-header">
-              <span>Utilisateur</span>
-              <span>Début</span>
-              <span>Fin</span>
-              <span>Commentaire</span>
+              <span>{{ labels.common.fields.user }}</span>
+              <span>{{ labels.common.table.start }}</span>
+              <span>{{ labels.common.table.end }}</span>
+              <span>{{ labels.common.fields.comment }}</span>
               @if (!isLocked) {
-                <span>Actions</span>
+                <span>{{ labels.common.table.actions }}</span>
               }
             </div>
 
@@ -89,13 +89,13 @@
                 <span>{{ intervention.userName || intervention.userEmail }}</span>
                 <span>{{ formatDateTime(intervention.startDate) }}</span>
                 <span>{{ formatDateTime(intervention.endDate) }}</span>
-                <span class="comment-cell">{{ intervention.comment || "-" }}</span>
+                <span class="comment-cell">{{ intervention.comment || labels.common.empty.dash }}</span>
                 <span class="action-cell">
                   @if (!isLocked) {
                     <button class="secondary-button compact-button" (click)="editIntervention(intervention)" type="button">
                       ✎
                     </button>
-                    <button class="danger-button compact-button" (click)="deleteIntervention(intervention)" type="button">                    
+                    <button class="danger-button compact-button" (click)="deleteIntervention(intervention)" type="button">
                       X
                     </button>
                   }
@@ -104,19 +104,19 @@
             }
           </div>
         } @else {
-          <p class="empty-interventions">Aucune intervention associée.</p>
+          <p class="empty-interventions">{{ labels.regular.empty.noAssociatedIntervention }}</p>
         }
       </section>
     }
     @if (!isLocked) {
       <div class="form-actions">
-        <button class="primary-button" [disabled]="periodNgForm.invalid" type="submit">Enregistrer</button>
+        <button class="primary-button" [disabled]="periodNgForm.invalid" type="submit">{{ labels.common.actions.save }}</button>
         @if (isEditing) {
-          <button class="danger-button" (click)="deletePeriod()" type="button">Supprimer</button>
+          <button class="danger-button" (click)="deletePeriod()" type="button">{{ labels.common.actions.delete }}</button>
         }
       </div>
     } @else {
-      <p class="sent-rh-message">Envoyé aux RH le <strong>{{ formatDateTime(sentToRhAt) }}</strong></p>
+      <p class="sent-rh-message">{{ labels.common.messages.rhSentAt }} <strong>{{ formatDateTime(sentToRhAt) }}</strong></p>
     }
   </form>
 </app-modal>

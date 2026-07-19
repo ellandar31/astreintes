@@ -18,7 +18,7 @@
   </header>
 
   <div class="validation-layout">
-    <aside class="validation-submenu" aria-label="Menus de validation">
+      <aside class="validation-submenu" [attr.aria-label]="labels.validation.sections.menu">
 
       @for (section of validationSections; track section.id) {
         <button

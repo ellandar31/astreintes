@@ -1,20 +1,20 @@
 <section class="settings-section" aria-labelledby="teams-title">
   <div>
-    <p class="eyebrow">Paramétrage</p>
-    <h3 id="teams-title">Gestion des équipes</h3>
+    <p class="eyebrow">{{ labels.settings.teams.eyebrow }}</p>
+    <h3 id="teams-title">{{ labels.settings.teams.title }}</h3>
   </div>
 
   <form class="settings-form" #teamNgForm="ngForm" (ngSubmit)="saveTeam(teamNgForm)">
     <label>
-      Nom de l'équipe
-      <input name="teamName" [(ngModel)]="teamForm.name" required placeholder="Ex: Exploitation" />
+      {{ labels.settings.teams.name }}
+      <input name="teamName" [(ngModel)]="teamForm.name" required [placeholder]="labels.settings.teams.namePlaceholder" />
     </label>
 
     <div class="inline-form inline-form-compact">
       <label>
-        Utilisateur
+        {{ labels.common.fields.user }}
         <select class="user-select" name="teamMemberId" [(ngModel)]="teamForm.selectedMemberId" [disabled]="!availableUsers().length">
-          <option value="">Sélectionner un utilisateur</option>
+          <option value="">{{ labels.common.users.select }}</option>
           @for (user of availableUsers(); track user.id) {
             <option [ngValue]="user.id" [title]="userLabel(user)">{{ userLabel(user) }}</option>
           }
@@ -22,20 +22,20 @@
       </label>
 
       <button class="secondary-button" [disabled]="!teamForm.selectedMemberId" (click)="addTeamMember()" type="button">
-        Ajouter
+        {{ labels.common.actions.add }}
       </button>
     </div>
 
     @if (!users().length) {
-      <p class="muted">Aucun utilisateur disponible. Les utilisateurs apparaissent ici après une connexion à l'application.</p>
+      <p class="muted">{{ labels.settings.empty.noAvailableUser }}</p>
     }
 
     @if (teamForm.members.length) {
-      <div class="tag-list" aria-label="Membres de l'équipe">
+      <div class="tag-list" [attr.aria-label]="labels.settings.teams.members">
         @for (member of teamForm.members; track member) {
           <span class="tag">
             {{ memberLabel(member) }}
-            <button (click)="removeTeamMember(member)" title="Retirer" type="button">X</button>
+            <button (click)="removeTeamMember(member)" [title]="labels.common.actions.remove" type="button">{{ labels.common.icons.remove }}</button>
           </span>
         }
       </div>
@@ -43,9 +43,9 @@
 
     <div class="form-actions">
       <button class="primary-button" [disabled]="teamNgForm.invalid" type="submit">
-        {{ editingTeamId ? "Enregistrer l'équipe" : "Créer l'équipe" }}
+        {{ editingTeamId ? labels.settings.teams.saveEdit : labels.settings.teams.saveCreate }}
       </button>
-      <button class="text-button" (click)="resetTeamForm(teamNgForm)" type="button">Réinitialiser</button>
+      <button class="text-button" (click)="resetTeamForm(teamNgForm)" type="button">{{ labels.common.actions.reset }}</button>
     </div>
   </form>
 
@@ -54,7 +54,7 @@
       <article class="settings-item">
         <div>
           <h4>{{ team.name }}</h4>
-          <p>{{ team.members.length }} membre(s)</p>
+          <p>{{ team.members.length }} {{ labels.settings.teams.memberCount }}</p>
         </div>
 
         <div class="item-tags">
@@ -64,12 +64,12 @@
         </div>
 
         <div class="item-actions">
-          <button class="secondary-button" (click)="editTeam(team)" type="button">Modifier</button>
-          <button class="danger-button" (click)="deleteTeam(team)" type="button">Supprimer</button>
+          <button class="secondary-button" (click)="editTeam(team)" type="button">{{ labels.common.actions.edit }}</button>
+          <button class="danger-button" (click)="deleteTeam(team)" type="button">{{ labels.common.actions.delete }}</button>
         </div>
       </article>
     } @empty {
-      <p class="muted">Aucune équipe définie.</p>
+      <p class="muted">{{ labels.settings.empty.noTeam }}</p>
     }
   </div>
 </section>

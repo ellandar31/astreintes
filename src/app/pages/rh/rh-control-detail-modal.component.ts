@@ -1,5 +1,6 @@
 import { CommonModule } from "@angular/common";
 import { Component, EventEmitter, Input, Output } from "@angular/core";
+import { APP_LABELS } from "../../i18n/labels";
 import { ModalComponent } from "../../shared/modal.component";
 import { RhControlDetailItem, RhControlDetailLine } from "./rh-control-detail.models";
 
@@ -13,6 +14,7 @@ import { RhControlDetailItem, RhControlDetailLine } from "./rh-control-detail.mo
 export class RhControlDetailModalComponent {
   @Input({ required: true }) item!: RhControlDetailItem;
   @Output() closed = new EventEmitter<void>();
+  readonly labels = APP_LABELS;
 
   formatLineTotal(line: RhControlDetailLine): string {
     return `${this.formatNumber(line.hours)} h x ${this.formatNumber(line.coefficient)}`;

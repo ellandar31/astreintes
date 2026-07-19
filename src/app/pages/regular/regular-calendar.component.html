@@ -1,13 +1,13 @@
 <section class="regular-view" aria-labelledby="regular-title">
   <header class="regular-toolbar">
     <div>
-      <p class="eyebrow">Régulier</p>
-      <h2 id="regular-title">Planning d'astreinte</h2>
+      <p class="eyebrow">{{ labels.regular.eyebrow }}</p>
+      <h2 id="regular-title">{{ labels.regular.title }}</h2>
     </div>
 
     <div class="regular-actions">
       <label>
-        Équipe
+        {{ labels.regular.fields.team }}
         <select [(ngModel)]="selectedTeamId" name="regularTeam">
           @for (team of teams; track team.id) {
             <option [ngValue]="team.id">{{ team.name }}</option>
@@ -16,18 +16,18 @@
       </label>
 
       <button class="primary-button" [disabled]="!selectedTeamId" (click)="openPeriodModal()" type="button">
-        Ajouter une période d'astreinte
+        {{ labels.regular.actions.addOnCallPeriod }}
       </button>
       <button class="secondary-button" (click)="openInterventionModal()" type="button">
-        Ajouter une intervention
+        {{ labels.regular.actions.addIntervention }}
       </button>
     </div>
   </header>
 
-  <div class="month-navigation" aria-label="Navigation mensuelle">
-    <button class="month-button" (click)="previousMonth()" title="Mois précédent" type="button">‹</button>
+  <div class="month-navigation" [attr.aria-label]="labels.regular.sections.monthNavigation">
+    <button class="month-button" (click)="previousMonth()" [title]="labels.regular.actions.previousMonth" type="button">‹</button>
     <h3>{{ monthLabel }}</h3>
-    <button class="month-button" (click)="nextMonth()" title="Mois suivant" type="button">›</button>
+    <button class="month-button" (click)="nextMonth()" [title]="labels.regular.actions.nextMonth" type="button">›</button>
   </div>
 
   <div class="calendar-shell">

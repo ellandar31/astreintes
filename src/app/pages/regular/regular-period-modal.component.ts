@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Input, Output } from "@angular/core";
 import { FormsModule, NgForm } from "@angular/forms";
+import { APP_LABELS } from "../../i18n/labels";
 import { ModalComponent } from "../../shared/modal.component";
 import { RegularIntervention, RegularOnCallPeriodForm, RegularUser } from "./regular.models";
 
@@ -11,6 +12,7 @@ import { RegularIntervention, RegularOnCallPeriodForm, RegularUser } from "./reg
   styleUrl: "./regular-period-modal.component.css",
 })
 export class RegularPeriodModalComponent {
+  readonly labels = APP_LABELS;
   @Input({ required: true }) form: RegularOnCallPeriodForm = {
     userId: "",
     userName: "",
@@ -31,7 +33,7 @@ export class RegularPeriodModalComponent {
   @Output() saved = new EventEmitter<RegularOnCallPeriodForm>();
 
   get modalTitle(): string {
-    return this.isEditing ? "Modifier la période d'astreinte" : "Ajouter une période d'astreinte";
+    return this.isEditing ? this.labels.regular.modal.editPeriod : this.labels.regular.modal.addPeriod;
   }
 
   get startDateValue(): string {

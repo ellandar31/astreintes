@@ -2,6 +2,7 @@ import { CommonModule } from "@angular/common";
 import { Component, inject } from "@angular/core";
 import { FormsModule, NgForm } from "@angular/forms";
 import { Store } from "@ngrx/store";
+import { APP_LABELS } from "./i18n/labels";
 import { ExceptionalOperationsComponent } from "./pages/exceptionnel/exceptional-operations.component";
 import { ProfilePageComponent } from "./pages/profile/profile-page.component";
 import { RegularCalendarComponent } from "./pages/regular/regular-calendar.component";
@@ -19,10 +20,10 @@ import {
 } from "./state/auth/auth.selectors";
 
 const tabs = [
-  { id: "regular", label: "Régulier" },
-  { id: "exceptional", label: "Exceptionnel" },
-  { id: "validation", label: "Validation" },
-  { id: "rh", label: "RH" },
+  { id: "regular", label: APP_LABELS.app.tabs.regular },
+  { id: "exceptional", label: APP_LABELS.app.tabs.exceptional },
+  { id: "validation", label: APP_LABELS.app.tabs.validation },
+  { id: "rh", label: APP_LABELS.app.tabs.rh },
 ] as const;
 type TabId = (typeof tabs)[number]["id"];
 type ModalView = "profile" | "settings";
@@ -45,6 +46,7 @@ type ModalView = "profile" | "settings";
   styleUrl: "./app.component.css",
 })
 export class AppComponent {
+  readonly labels = APP_LABELS;
   readonly tabs = tabs;
   activeTab: TabId = "regular";
   email = "";
@@ -84,7 +86,7 @@ export class AppComponent {
     if (form.invalid) {
       this.store.dispatch(
         AuthActions.emailLoginFormInvalid({
-          error: "Renseignez une adresse email valide et un mot de passe d'au moins 6 caractères.",
+          error: this.labels.app.auth.invalidForm,
         }),
       );
       return;

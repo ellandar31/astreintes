@@ -2,6 +2,7 @@ import { CommonModule } from "@angular/common";
 import { Component, EventEmitter, OnDestroy, Output, effect, inject } from "@angular/core";
 import { FormsModule, NgForm } from "@angular/forms";
 import { Store } from "@ngrx/store";
+import { APP_LABELS } from "../../i18n/labels";
 import { SettingsActions } from "../../state/settings/settings.actions";
 import { selectSettingsMessage, selectSettingsTeams, selectSettingsUsers } from "../../state/settings/settings.selectors";
 import { ManagedUser, Team } from "./settings.models";
@@ -17,6 +18,7 @@ export class TeamsSettingsComponent implements OnDestroy {
   @Output() failure = new EventEmitter<string>();
   @Output() success = new EventEmitter<string>();
 
+  readonly labels = APP_LABELS;
   editingTeamId: string | null = null;
   teamForm = {
     name: "",

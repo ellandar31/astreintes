@@ -11,7 +11,7 @@
   >
     <header class="modal-header">
       <h2 id="modal-title">{{ title }}</h2>
-      <button class="modal-close" (click)="closed.emit()" title="Fermer" type="button">X</button>
+      <button class="modal-close" (click)="closed.emit()" [title]="labels.common.actions.close" type="button">{{ labels.common.icons.close }}</button>
     </header>
 
     <div class="modal-content">

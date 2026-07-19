@@ -1,12 +1,12 @@
 <section class="rh-panel" aria-labelledby="rh-exports-title">
   <header class="rh-panel-header">
     <div>
-      <p class="eyebrow">Exports RH</p>
-      <h2 id="rh-exports-title">Exports Word par astreinte</h2>
+      <p class="eyebrow">{{ labels.rh.exports.eyebrow }}</p>
+      <h2 id="rh-exports-title">{{ labels.rh.exports.title }}</h2>
     </div>
 
     <label class="period-control">
-      Période
+      {{ labels.common.fields.period }}
       <input [(ngModel)]="selectedMonth" name="exportMonth" type="month" />
     </label>
   </header>
@@ -14,7 +14,7 @@
   <section class="export-section" aria-labelledby="regular-export-title">
     <div class="export-section-heading">
       <div>
-        <h3 id="regular-export-title">Astreintes régulières</h3>
+        <h3 id="regular-export-title">{{ labels.rh.exports.sections.regular }}</h3>
       </div>
     </div>
 
@@ -22,10 +22,10 @@
       <table class="export-table">
         <thead>
           <tr>
-            <th>Astreinte</th>
-            <th>Période</th>
-            <th>Interventions</th>
-            <th>Action</th>
+            <th>{{ labels.rh.controls.types.onCall }}</th>
+            <th>{{ labels.common.table.period }}</th>
+            <th>{{ labels.common.fields.interventions }}</th>
+            <th>{{ labels.common.fields.action }}</th>
           </tr>
         </thead>
         <tbody>
@@ -42,7 +42,7 @@
                     (click)="exportOperation('regular', operation)"
                     type="button"
                   >
-                    Word
+                    {{ labels.common.actions.exportWord }}
                   </button>
                   <button
                     class="secondary-button compact-button"
@@ -50,22 +50,22 @@
                     (click)="exportPdfOperation('regular', operation)"
                     type="button"
                   >
-                    PDF
+                    {{ labels.common.actions.exportPdf }}
                   </button>
                   <button
                     class="secondary-button compact-button"
                     (click)="exportExcelOperation('regular', operation)"
                     type="button"
                   >
-                    Excel
+                    {{ labels.common.actions.exportExcel }}
                   </button>
                   @if (operation.sentToRhAt) {
                     <button class="danger-button compact-button" (click)="unmarkSentToRh(operation)" type="button">
-                      Annuler envoi RH
+                      {{ labels.common.actions.cancelRhSend }}
                     </button>
                   } @else {
                     <button class="secondary-button compact-button" (click)="markSentToRh(operation)" type="button">
-                      Envoyer RH
+                      {{ labels.common.actions.rhSend }}
                     </button>
                   }
                 </div>
@@ -73,7 +73,7 @@
             </tr>
           } @empty {
             <tr>
-              <td colspan="4">Aucune astreinte régulière sur la période.</td>
+              <td colspan="4">{{ labels.rh.exports.empty.regular }}</td>
             </tr>
           }
         </tbody>
@@ -84,7 +84,7 @@
   <section class="export-section" aria-labelledby="exceptional-on-call-export-title">
     <div class="export-section-heading">
       <div>
-        <h3 id="exceptional-on-call-export-title">Astreintes exceptionnelles</h3>
+        <h3 id="exceptional-on-call-export-title">{{ labels.rh.exports.sections.exceptionalOnCall }}</h3>
       </div>
     </div>
 
@@ -92,18 +92,18 @@
       <table class="export-table">
         <thead>
           <tr>
-            <th>Opération</th>
-            <th>Initiateur</th>
-            <th>Période</th>
-            <th>Interventions</th>
-            <th>Action</th>
+            <th>{{ labels.rh.controls.types.onCall }}</th>
+            <th>{{ labels.common.fields.initiator }}</th>
+            <th>{{ labels.common.table.period }}</th>
+            <th>{{ labels.common.fields.interventions }}</th>
+            <th>{{ labels.common.fields.action }}</th>
           </tr>
         </thead>
         <tbody>
           @for (operation of exportRows("exceptionalOnCall"); track operation.title + operation.forecastStartDate) {
             <tr>
               <td>{{ operation.title }}</td>
-              <td>{{ operation.initiatorName || "-" }}</td>
+              <td>{{ operation.initiatorName || labels.common.empty.dash }}</td>
               <td>{{ formatRange(operation.forecastStartDate, operation.forecastEndDate) }}</td>
               <td>{{ operation.interventions.length }}</td>
               <td>
@@ -114,7 +114,7 @@
                     (click)="exportOperation('exceptionalOnCall', operation)"
                     type="button"
                   >
-                    Word
+                    {{ labels.common.actions.exportWord }}
                   </button>
                   <button
                     class="secondary-button compact-button"
@@ -122,22 +122,22 @@
                     (click)="exportPdfOperation('exceptionalOnCall', operation)"
                     type="button"
                   >
-                    PDF
+                    {{ labels.common.actions.exportPdf }}
                   </button>
                   <button
                     class="secondary-button compact-button"
                     (click)="exportExcelOperation('exceptionalOnCall', operation)"
                     type="button"
                   >
-                    Excel
+                    {{ labels.common.actions.exportExcel }}
                   </button>
                   @if (operation.sentToRhAt) {
                     <button class="danger-button compact-button" (click)="unmarkSentToRh(operation)" type="button">
-                      Annuler envoi RH
+                      {{ labels.common.actions.cancelRhSend }}
                     </button>
                   } @else {
                     <button class="secondary-button compact-button" (click)="markSentToRh(operation)" type="button">
-                      Envoyer RH
+                      {{ labels.common.actions.rhSend }}
                     </button>
                   }
                 </div>
@@ -145,7 +145,7 @@
             </tr>
           } @empty {
             <tr>
-              <td colspan="5">Aucune astreinte exceptionnelle sur la période.</td>
+              <td colspan="5">{{ labels.rh.exports.empty.exceptionalOnCall }}</td>
             </tr>
           }
         </tbody>
@@ -156,7 +156,7 @@
   <section class="export-section" aria-labelledby="exceptional-work-export-title">
     <div class="export-section-heading">
       <div>
-        <h3 id="exceptional-work-export-title">Travaux supplémentaires</h3>
+        <h3 id="exceptional-work-export-title">{{ labels.rh.exports.sections.exceptionalWork }}</h3>
       </div>
     </div>
 
@@ -164,18 +164,18 @@
       <table class="export-table">
         <thead>
           <tr>
-            <th>Opération</th>
-            <th>Initiateur</th>
-            <th>Période</th>
-            <th>Interventions</th>
-            <th>Action</th>
+            <th>{{ labels.common.fields.intervention }}</th>
+            <th>{{ labels.common.fields.initiator }}</th>
+            <th>{{ labels.common.table.period }}</th>
+            <th>{{ labels.common.fields.interventions }}</th>
+            <th>{{ labels.common.fields.action }}</th>
           </tr>
         </thead>
         <tbody>
           @for (operation of exportRows("exceptionalWork"); track operation.title + operation.forecastStartDate) {
             <tr>
               <td>{{ operation.title }}</td>
-              <td>{{ operation.initiatorName || "-" }}</td>
+              <td>{{ operation.initiatorName || labels.common.empty.dash }}</td>
               <td>{{ formatRange(operation.forecastStartDate, operation.forecastEndDate) }}</td>
               <td>{{ operation.interventions.length }}</td>
               <td>
@@ -186,7 +186,7 @@
                     (click)="exportOperation('exceptionalWork', operation)"
                     type="button"
                   >
-                    Word
+                    {{ labels.common.actions.exportWord }}
                   </button>
                   <button
                     class="secondary-button compact-button"
@@ -194,22 +194,22 @@
                     (click)="exportPdfOperation('exceptionalWork', operation)"
                     type="button"
                   >
-                    PDF
+                    {{ labels.common.actions.exportPdf }}
                   </button>
                   <button
                     class="secondary-button compact-button"
                     (click)="exportExcelOperation('exceptionalWork', operation)"
                     type="button"
                   >
-                    Excel
+                    {{ labels.common.actions.exportExcel }}
                   </button>
                   @if (operation.sentToRhAt) {
                     <button class="danger-button compact-button" (click)="unmarkSentToRh(operation)" type="button">
-                      Annuler envoi RH
+                      {{ labels.common.actions.cancelRhSend }}
                     </button>
                   } @else {
                     <button class="secondary-button compact-button" (click)="markSentToRh(operation)" type="button">
-                      Envoyer RH
+                      {{ labels.common.actions.rhSend }}
                     </button>
                   }
                 </div>
@@ -217,7 +217,7 @@
             </tr>
           } @empty {
             <tr>
-              <td colspan="5">Aucun travail supplémentaire sur la période.</td>
+              <td colspan="5">{{ labels.rh.exports.empty.exceptionalWork }}</td>
             </tr>
           }
         </tbody>

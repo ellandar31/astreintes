@@ -2,6 +2,7 @@ import { CommonModule } from "@angular/common";
 import { Component, EventEmitter, OnDestroy, Output, effect, inject } from "@angular/core";
 import { FormsModule, NgForm } from "@angular/forms";
 import { Store } from "@ngrx/store";
+import { APP_LABELS } from "../../i18n/labels";
 import { SettingsActions } from "../../state/settings/settings.actions";
 import {
   selectSettingsHolidays,
@@ -22,20 +23,21 @@ export class HolidaysSettingsComponent implements OnDestroy {
   @Output() failure = new EventEmitter<string>();
   @Output() success = new EventEmitter<string>();
 
+  readonly labels = APP_LABELS;
   readonly zones = [
-    { id: "metropole", label: "Métropole" },
-    { id: "alsace-moselle", label: "Alsace-Moselle" },
-    { id: "guadeloupe", label: "Guadeloupe" },
-    { id: "guyane", label: "Guyane" },
-    { id: "la-reunion", label: "La Réunion" },
-    { id: "martinique", label: "Martinique" },
-    { id: "mayotte", label: "Mayotte" },
-    { id: "nouvelle-caledonie", label: "Nouvelle-Calédonie" },
-    { id: "polynesie-francaise", label: "Polynésie française" },
-    { id: "saint-barthelemy", label: "Saint-Barthélemy" },
-    { id: "saint-martin", label: "Saint-Martin" },
-    { id: "saint-pierre-et-miquelon", label: "Saint-Pierre-et-Miquelon" },
-    { id: "wallis-et-futuna", label: "Wallis-et-Futuna" },
+    { id: "metropole", label: APP_LABELS.settings.zones.metropole },
+    { id: "alsace-moselle", label: APP_LABELS.settings.zones.alsaceMoselle },
+    { id: "guadeloupe", label: APP_LABELS.settings.zones.guadeloupe },
+    { id: "guyane", label: APP_LABELS.settings.zones.guyane },
+    { id: "la-reunion", label: APP_LABELS.settings.zones.laReunion },
+    { id: "martinique", label: APP_LABELS.settings.zones.martinique },
+    { id: "mayotte", label: APP_LABELS.settings.zones.mayotte },
+    { id: "nouvelle-caledonie", label: APP_LABELS.settings.zones.nouvelleCaledonie },
+    { id: "polynesie-francaise", label: APP_LABELS.settings.zones.polynesieFrancaise },
+    { id: "saint-barthelemy", label: APP_LABELS.settings.zones.saintBarthelemy },
+    { id: "saint-martin", label: APP_LABELS.settings.zones.saintMartin },
+    { id: "saint-pierre-et-miquelon", label: APP_LABELS.settings.zones.saintPierreEtMiquelon },
+    { id: "wallis-et-futuna", label: APP_LABELS.settings.zones.wallisEtFutuna },
   ];
 
   importForm = {

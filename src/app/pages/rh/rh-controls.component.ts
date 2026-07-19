@@ -1,6 +1,7 @@
 import { CommonModule } from "@angular/common";
 import { Component, Input, OnChanges, OnDestroy, SimpleChanges, effect, inject } from "@angular/core";
 import { Store } from "@ngrx/store";
+import { APP_LABELS } from "../../i18n/labels";
 import { SignatureVisa, createEmptyVisa } from "../../shared/visa.models";
 import { ExceptionalActions } from "../../state/exceptional/exceptional.actions";
 import { selectExceptionalOperations } from "../../state/exceptional/exceptional.selectors";
@@ -66,6 +67,7 @@ interface RhMonthControlSection {
 })
 export class RhControlsComponent implements OnChanges, OnDestroy {
   @Input({ required: true }) currentUser: StoreAuthUser | null = null;
+  readonly labels = APP_LABELS;
 
   users: RhUser[] = [];
   regularPeriods: RhRegularPeriod[] = [];
@@ -77,15 +79,15 @@ export class RhControlsComponent implements OnChanges, OnDestroy {
   expandedUserId: string | null = null;
 
   onCallCompensationRules: OnCallCompensationRule[] = [
-    { id: "week", label: "Semaine", coefficient: 0 },
-    { id: "weekendHoliday", label: "Samedi / Dimanche / Jour ferie", coefficient: 0 },
+    { id: "week", label: APP_LABELS.rh.rules.week, coefficient: 0 },
+    { id: "weekendHoliday", label: APP_LABELS.rh.rules.weekendHoliday, coefficient: 0 },
   ];
   periodCompensationRules: PeriodCompensationRule[] = [
-    { id: "week_18_21", label: "Semaine 18h-21h", interventionCoefficient: 0, workCoefficient: 0, restCoefficient: 0 },
-    { id: "night_21_7", label: "Nuit (21h-7h)", interventionCoefficient: 0, workCoefficient: 0, restCoefficient: 0 },
-    { id: "week_7_8", label: "Semaine 7h-8h", interventionCoefficient: 0, workCoefficient: 0, restCoefficient: 0 },
-    { id: "saturday_7_21", label: "Samedi (7h-21h)", interventionCoefficient: 0, workCoefficient: 0, restCoefficient: 0 },
-    { id: "sunday_holiday_7_21", label: "Dimanche/Jours feries (7h-21h)", interventionCoefficient: 0, workCoefficient: 0, restCoefficient: 0 },
+    { id: "week_18_21", label: APP_LABELS.rh.rules.weekEvening, interventionCoefficient: 0, workCoefficient: 0, restCoefficient: 0 },
+    { id: "night_21_7", label: APP_LABELS.rh.rules.night, interventionCoefficient: 0, workCoefficient: 0, restCoefficient: 0 },
+    { id: "week_7_8", label: APP_LABELS.rh.rules.weekEarly, interventionCoefficient: 0, workCoefficient: 0, restCoefficient: 0 },
+    { id: "saturday_7_21", label: APP_LABELS.rh.rules.saturdayDay, interventionCoefficient: 0, workCoefficient: 0, restCoefficient: 0 },
+    { id: "sunday_holiday_7_21", label: APP_LABELS.rh.rules.sundayHolidayDay, interventionCoefficient: 0, workCoefficient: 0, restCoefficient: 0 },
   ];
 
   private readonly store = inject(Store);
@@ -262,12 +264,14 @@ export class RhControlsComponent implements OnChanges, OnDestroy {
         const calculator = new RhExportCalculationLibrary(this.exportContext());
         const lines = [
           ...calculator.onCallCompensationRows(operation).map((row, index) => this.onCallLine(row, calculator, `regular-oncall-${index}`)),
-          ...calculator.interventionCompensationRows(operation, false).map((row, index) => this.interventionLine(row, calculator, `regular-intervention-${index}`, "Intervention")),
+          ...calculator.interventionCompensationRows(operation, false).map((row, index) =>
+            this.interventionLine(row, calculator, `regular-intervention-${index}`, this.labels.rh.controls.types.intervention),
+          ),
         ];
 
         return {
           id: `regular-${period.id}`,
-          type: "Astreinte reguliere",
+          type: this.labels.rh.controls.types.regularOnCall,
           title: operation.title,
           sentToRhAt: period.sentToRhAt,
           sentToRhLabel: this.formatDateTime(period.sentToRhAt),
@@ -285,11 +289,16 @@ export class RhControlsComponent implements OnChanges, OnDestroy {
       .filter((operation): operation is ExportOperation => Boolean(operation))
       .map((operation) => {
         const calculator = new RhExportCalculationLibrary(this.exportContext());
-        const isWork = operation.exportTitle === "Travaux Exceptionnels";
+        const isWork = operation.exportTitle === this.labels.rh.controls.types.exceptionalWork;
         const lines = [
           ...calculator.onCallCompensationRows(operation).map((row, index) => this.onCallLine(row, calculator, `exceptional-oncall-${index}`)),
           ...calculator.interventionCompensationRows(operation, isWork).map((row, index) =>
-            this.interventionLine(row, calculator, `exceptional-intervention-${index}`, isWork ? "Travaux" : "Intervention"),
+            this.interventionLine(
+              row,
+              calculator,
+              `exceptional-intervention-${index}`,
+              isWork ? this.labels.rh.controls.types.work : this.labels.rh.controls.types.intervention,
+            ),
           ),
         ];
 
@@ -316,8 +325,8 @@ export class RhControlsComponent implements OnChanges, OnDestroy {
     return {
       sourceId: period.id,
       sourceCollection: "regularOnCallPeriods",
-      title: `Astreinte reguliere - ${userName}`,
-      exportTitle: "Astreintes Regulieres",
+      title: `${this.labels.rh.controls.types.regularOnCall} - ${userName}`,
+      exportTitle: this.labels.rh.controls.types.regularOnCallPlural,
       initiatorName: "",
       operationManagerName: "",
       forecastStartDate: period.startDate,
@@ -341,7 +350,9 @@ export class RhControlsComponent implements OnChanges, OnDestroy {
   }
 
   private exceptionalExportOperationForUser(operation: RhExceptionalOperation, user: RhUser): ExportOperation | null {
-    const operationType = operation.type === "travaux" ? "Travaux Exceptionnels" : "Astreintes Exceptionnelles";
+    const operationType = operation.type === "travaux"
+      ? this.labels.rh.controls.types.exceptionalWork
+      : this.labels.rh.controls.types.exceptionalOnCall;
     const forecastStart = operation.startDate || "";
     const forecastEnd = operation.forecastEndDate || operation.startDate || "";
     const actualStart = operation.actualStartDate || forecastStart;
@@ -392,7 +403,7 @@ export class RhControlsComponent implements OnChanges, OnDestroy {
   private onCallLine(row: OnCallCompensationRow, calculator: RhExportCalculationLibrary, id: string): RhControlDetailLine {
     return {
       id,
-      nature: "Astreinte",
+      nature: this.labels.rh.controls.types.onCall,
       label: row.label,
       period: formatRange(row.startDate, row.endDate),
       hours: row.hours,

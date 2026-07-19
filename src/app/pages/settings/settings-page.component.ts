@@ -1,5 +1,6 @@
 import { CommonModule } from "@angular/common";
 import { Component } from "@angular/core";
+import { APP_LABELS } from "../../i18n/labels";
 import { HolidaysSettingsComponent } from "./holidays-settings.component";
 import { RhCompensationSettingsComponent } from "./rh-compensation-settings.component";
 import { RhExportTemplatesSettingsComponent } from "./rh-export-templates-settings.component";
@@ -22,12 +23,13 @@ import { UsersSettingsComponent } from "./users-settings.component";
   styleUrl: "./settings-page.component.css",
 })
 export class SettingsPageComponent {
+  readonly labels = APP_LABELS;
   readonly sections: Array<{ id: SettingsSection; label: string }> = [
-    { id: "users", label: "Gestion des utilisateurs" },
-    { id: "teams", label: "Gestion des équipes" },
-    { id: "holidays", label: "Gestion des jours fériés" },
-    { id: "rhCompensation", label: "Coefficient RH" },
-    { id: "rhExports", label: "Modèles Word RH" },
+    { id: "users", label: APP_LABELS.settings.menu.users },
+    { id: "teams", label: APP_LABELS.settings.menu.teams },
+    { id: "holidays", label: APP_LABELS.settings.menu.holidays },
+    { id: "rhCompensation", label: APP_LABELS.settings.menu.rhCompensation },
+    { id: "rhExports", label: APP_LABELS.settings.menu.rhExports },
   ];
 
   activeSection: SettingsSection = "users";

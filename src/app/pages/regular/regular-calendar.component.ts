@@ -3,6 +3,7 @@ import { Component, OnDestroy, effect, inject } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { createEmptyVisa } from "../../shared/visa.models";
 import { Store } from "@ngrx/store";
+import { APP_LABELS } from "../../i18n/labels";
 import { RegularActions } from "../../state/regular/regular.actions";
 import {
   selectRegularError,
@@ -39,7 +40,8 @@ interface CalendarDay {
   styleUrl: "./regular-calendar.component.css",
 })
 export class RegularCalendarComponent implements OnDestroy {
-  readonly weekDays = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
+  readonly labels = APP_LABELS;
+  readonly weekDays = APP_LABELS.regular.weekDays;
 
   editingInterventionId: string | null = null;
   interventionPeriodId: string | null = null;
@@ -203,12 +205,12 @@ export class RegularCalendarComponent implements OnDestroy {
     const currentPeriod = this.periods.find((period) => period.id === this.editingPeriodId);
 
     if (!currentPeriod) {
-      this.interventionError = "Impossible d'ajouter une intervention : l'astreinte doit être enregistrée avant.";
+      this.interventionError = this.labels.regular.errors.interventionRequiresSavedPeriod;
       return;
     }
 
     if (this.isPeriodSentToRh(currentPeriod)) {
-      this.interventionError = "Cette astreinte a été envoyée aux RH et ne peut plus être modifiée.";
+      this.interventionError = this.labels.regular.errors.lockedPeriod;
       return;
     }
 
@@ -279,20 +281,19 @@ export class RegularCalendarComponent implements OnDestroy {
     this.interventionError = "";
 
     if (form.endDate <= form.startDate) {
-      this.interventionError = "La date de fin doit être postérieure à la date de début.";
+      this.interventionError = this.labels.regular.errors.endAfterStart;
       return;
     }
 
     const parentPeriod = this.findInterventionPeriod(form);
 
     if (!parentPeriod) {
-      this.interventionError =
-        "L'intervention doit être entièrement comprise dans une période d'astreinte régulière existante pour cet utilisateur.";
+      this.interventionError = this.labels.regular.errors.interventionOutsidePeriod;
       return;
     }
 
     if (this.isPeriodSentToRh(parentPeriod)) {
-      this.interventionError = "Cette astreinte a été envoyée aux RH et ne peut plus être modifiée.";
+      this.interventionError = this.labels.regular.errors.lockedPeriod;
       return;
     }
 
@@ -314,7 +315,7 @@ export class RegularCalendarComponent implements OnDestroy {
       return;
     }
 
-    const shouldDelete = window.confirm("Supprimer cette intervention ?");
+    const shouldDelete = window.confirm(this.labels.regular.actions.deleteInterventionConfirm);
 
     if (!shouldDelete) {
       return;
@@ -337,7 +338,7 @@ export class RegularCalendarComponent implements OnDestroy {
       return;
     }
 
-    const shouldDelete = window.confirm("Supprimer cette période d'astreinte ?");
+    const shouldDelete = window.confirm(this.labels.regular.actions.deletePeriodConfirm);
 
     if (!shouldDelete) {
       return;
@@ -450,7 +451,7 @@ export class RegularCalendarComponent implements OnDestroy {
 
   private validatePeriod(form: RegularOnCallPeriodForm): string {
     if (form.endDate <= form.startDate) {
-      return "La date de fin de l'astreinte doit être postérieure à la date de début.";
+      return this.labels.regular.errors.periodEndAfterStart;
     }
 
     const hasOverlappingPeriod = this.periods.some(
@@ -464,7 +465,7 @@ export class RegularCalendarComponent implements OnDestroy {
       return "";
     }
 
-    return "Cet utilisateur possède déjà une astreinte sur cette période, même si elle appartient à une autre équipe.";
+    return this.labels.regular.errors.periodOverlap;
   }
 
   private toDateKey(date: Date): string {

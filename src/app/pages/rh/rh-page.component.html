@@ -1,5 +1,5 @@
-<section class="rh-layout" aria-label="RH">
-  <aside class="rh-menu" aria-label="Menu RH">
+<section class="rh-layout" [attr.aria-label]="labels.app.tabs.rh">
+  <aside class="rh-menu" [attr.aria-label]="labels.app.tabs.rh">
     @for (section of sections; track section.id) {
       <button
         class="rh-menu-button"

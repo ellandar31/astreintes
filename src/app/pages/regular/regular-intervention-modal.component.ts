@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Input, Output } from "@angular/core";
 import { FormsModule, NgForm } from "@angular/forms";
+import { APP_LABELS } from "../../i18n/labels";
 import { ModalComponent } from "../../shared/modal.component";
 import { RegularInterventionForm, RegularUser } from "./regular.models";
 
@@ -11,6 +12,7 @@ import { RegularInterventionForm, RegularUser } from "./regular.models";
   styleUrl: "./regular-intervention-modal.component.css",
 })
 export class RegularInterventionModalComponent {
+  readonly labels = APP_LABELS;
   @Input({ required: true }) form: RegularInterventionForm = {
     userId: "",
     userName: "",
@@ -26,7 +28,7 @@ export class RegularInterventionModalComponent {
   @Output() saved = new EventEmitter<RegularInterventionForm>();
 
   get modalTitle(): string {
-    return this.isEditing ? "Modifier une intervention" : "Ajouter une intervention";
+    return this.isEditing ? this.labels.regular.modal.editIntervention : this.labels.regular.modal.addIntervention;
   }
 
   save(form: NgForm): void {

@@ -1,9 +1,12 @@
+import { APP_LABELS } from "../../../i18n/labels";
 import { createEmptyVisa, SignatureVisa } from "../../../shared/visa.models";
 import { ExportOperation, ExportTemplateId, RhExportContext, WordExportTemplate } from "./rh-export.models";
 import { escapeAttribute, escapeHtml, formatDate, formatRange, formatTime } from "./rh-export-utils";
 
 type PdfTableCell = string | SignatureVisa | undefined;
 type PdfDocument = InstanceType<typeof import("jspdf").jsPDF>;
+
+const DOCUMENT_LABELS = APP_LABELS.rhDocuments;
 
 export class RhWordPdfExportLibrary {
   buildWordHtml(template: WordExportTemplate, operations: ExportOperation[], templateId: ExportTemplateId, context: RhExportContext): string {
@@ -60,21 +63,21 @@ export class RhWordPdfExportLibrary {
     return `
       <section class="operation">
         <h1>${escapeHtml(operation.exportTitle)}</h1>
-        <h2>Autorisation</h2>
+        <h2>${DOCUMENT_LABELS.authorization}</h2>
         <table class="meta">
-          <tr><th>Objet des Astreintes</th><td>${escapeHtml(operation.title)}</td></tr>
-          <tr><th>Initiateur de l'opération</th><td>${escapeHtml(operation.initiatorName)}</td></tr>
-          <tr><th>Responsable de l'opération</th><td>${escapeHtml(operation.operationManagerName)}</td></tr>
-          <tr><th>Date & horaires prévus</th><td>${formatRange(operation.forecastStartDate, operation.forecastEndDate)}</td></tr>
+          <tr><th>${DOCUMENT_LABELS.fields.object}</th><td>${escapeHtml(operation.title)}</td></tr>
+          <tr><th>${DOCUMENT_LABELS.fields.operationInitiator}</th><td>${escapeHtml(operation.initiatorName)}</td></tr>
+          <tr><th>${DOCUMENT_LABELS.fields.operationManager}</th><td>${escapeHtml(operation.operationManagerName)}</td></tr>
+          <tr><th>${DOCUMENT_LABELS.fields.plannedSchedule}</th><td>${formatRange(operation.forecastStartDate, operation.forecastEndDate)}</td></tr>
         </table>
-        <h3>Dates prévisionnelles</h3>
+        <h3>${DOCUMENT_LABELS.fields.forecastDates}</h3>
         ${this.peopleTable(operation.plannedUsers)}
         ${this.globalVisasHtml(operation)}
-        <h3>Dates réelles</h3>
+        <h3>${DOCUMENT_LABELS.fields.actualDates}</h3>
         ${this.peopleTable(operation.actualUsers)}
         ${this.globalVisasHtml(operation)}
-        <p class="muted">Pensez à demander au Directeur de Garde l'autorisation d'accès aux bâtiments en dehors des heures ouvrables.</p>
-        <h3>Interventions au cours de l'astreinte</h3>
+        <p class="muted">${DOCUMENT_LABELS.reminder}</p>
+        <h3>${DOCUMENT_LABELS.fields.interventionsDuringOnCall}</h3>
         ${this.interventionsTable(operation.interventions)}
         ${this.globalVisasHtml(operation)}
       </section>
@@ -85,7 +88,7 @@ export class RhWordPdfExportLibrary {
     const normalizedRows = rows.length ? rows : [{ name: "", startDate: "", endDate: "", visa: createEmptyVisa() }];
     return `
       <table>
-        <thead><tr><th>Nom & Prénom de l'Agent</th><th>Date Début</th><th>Heure Début</th><th>Date Fin</th><th>Heure Fin</th><th>Visa de l'Agent</th></tr></thead>
+        <thead><tr><th>${DOCUMENT_LABELS.fields.agentName}</th><th>${DOCUMENT_LABELS.fields.startDate}</th><th>${DOCUMENT_LABELS.fields.startTime}</th><th>${DOCUMENT_LABELS.fields.endDate}</th><th>${DOCUMENT_LABELS.fields.endTime}</th><th>${DOCUMENT_LABELS.fields.agentVisa}</th></tr></thead>
         <tbody>
           ${normalizedRows
             .map((row) => `<tr><td>${escapeHtml(row.name)}</td><td>${formatDate(row.startDate)}</td><td>${formatTime(row.startDate)}</td><td>${formatDate(row.endDate)}</td><td>${formatTime(row.endDate)}</td><td>${this.visaHtml(row.visa, "line")}</td></tr>`)
@@ -99,12 +102,12 @@ export class RhWordPdfExportLibrary {
     const normalizedRows = rows.length ? rows : [{ userName: "", startDate: "", endDate: "", wasOnSite: false, comment: "", visa: createEmptyVisa() }];
     return `
       <table>
-        <thead><tr><th>Nom & Prénom de l'Agent</th><th>Date Début</th><th>Heure Début</th><th>Date Fin</th><th>Heure Fin</th><th>* Int Site</th><th>Visa de l'Agent</th></tr></thead>
+        <thead><tr><th>${DOCUMENT_LABELS.fields.agentName}</th><th>${DOCUMENT_LABELS.fields.startDate}</th><th>${DOCUMENT_LABELS.fields.startTime}</th><th>${DOCUMENT_LABELS.fields.endDate}</th><th>${DOCUMENT_LABELS.fields.endTime}</th><th>${DOCUMENT_LABELS.fields.siteIntervention}</th><th>${DOCUMENT_LABELS.fields.agentVisa}</th></tr></thead>
         <tbody>
           ${normalizedRows.map((row) => this.interventionRowHtml(row)).join("")}
         </tbody>
       </table>
-      <p class="muted">* Cocher la case si intervention avec déplacement.</p>
+      <p class="muted">${DOCUMENT_LABELS.checkedSiteHint}</p>
     `;
   }
 
@@ -113,11 +116,11 @@ export class RhWordPdfExportLibrary {
       <table class="visa-table">
         <tr>
           <td>
-            <div class="visa-label">Visa initiateur</div>
+            <div class="visa-label">${DOCUMENT_LABELS.fields.initiatorVisa}</div>
             <div>${this.visaHtml(operation.initiatorVisa, "global") || "&nbsp;"}</div>
           </td>
           <td class="right">
-            <div class="visa-label">Visa directeur</div>
+            <div class="visa-label">${APP_LABELS.validation.sections.director}</div>
             <div>${this.visaHtml(operation.directorVisa, "global") || "&nbsp;"}</div>
           </td>
         </tr>
@@ -134,17 +137,17 @@ export class RhWordPdfExportLibrary {
 
     if (this.isImageVisa(visa)) {
       const size = variant === "global" ? { width: 130, height: 34, className: "visa-image global-visa-image" } : { width: 95, height: 26, className: "visa-image" };
-      return `<img class="${size.className}" src="${escapeAttribute(visa.signatureValue)}" alt="Signature de ${escapeAttribute(visa.signedByName || "l'agent")}" width="${size.width}" height="${size.height}" />${date}`;
+      return `<img class="${size.className}" src="${escapeAttribute(visa.signatureValue)}" alt="${APP_LABELS.profile.signatureAlt}" width="${size.width}" height="${size.height}" />${date}`;
     }
 
-    const name = visa.signedByName || visa.signatureValue || "Signé";
+    const name = visa.signedByName || visa.signatureValue || DOCUMENT_LABELS.signed;
     return `${escapeHtml(name)}${date}`;
   }
 
   private interventionRowHtml(row: ExportOperation["interventions"][number]): string {
     const comment = row.comment ? `<br><span class="muted">${escapeHtml(row.comment)}</span>` : "";
 
-    return `<tr><td>${escapeHtml(row.userName)}${comment}</td><td>${formatDate(row.startDate)}</td><td>${formatTime(row.startDate)}</td><td>${formatDate(row.endDate)}</td><td>${formatTime(row.endDate)}</td><td>${row.wasOnSite ? "X" : ""}</td><td>${this.visaHtml(row.visa, "line")}</td></tr>`;
+    return `<tr><td>${escapeHtml(row.userName)}${comment}</td><td>${formatDate(row.startDate)}</td><td>${formatTime(row.startDate)}</td><td>${formatDate(row.endDate)}</td><td>${formatTime(row.endDate)}</td><td>${row.wasOnSite ? APP_LABELS.common.icons.close : ""}</td><td>${this.visaHtml(row.visa, "line")}</td></tr>`;
   }
 
   private operationPdf(doc: PdfDocument, template: WordExportTemplate, operation: ExportOperation): void {
@@ -158,35 +161,31 @@ export class RhWordPdfExportLibrary {
     doc.text(operation.exportTitle || template.label, pageWidth - margin, y, { align: "right" });
     y += 28;
 
-    y = this.pdfSectionTitle(doc, "Autorisation", y);
+    y = this.pdfSectionTitle(doc, DOCUMENT_LABELS.authorization, y);
     y = this.pdfTable(
       doc,
-      ["Champ", "Valeur"],
+      [DOCUMENT_LABELS.field, DOCUMENT_LABELS.fields.value],
       [
-        ["Objet des Astreintes", operation.title],
-        ["Initiateur de l'opération", operation.initiatorName],
-        ["Responsable de l'opération", operation.operationManagerName],
-        ["Date & horaires prévus", formatRange(operation.forecastStartDate, operation.forecastEndDate)],
+        [DOCUMENT_LABELS.fields.object, operation.title],
+        [DOCUMENT_LABELS.fields.operationInitiator, operation.initiatorName],
+        [DOCUMENT_LABELS.fields.operationManager, operation.operationManagerName],
+        [DOCUMENT_LABELS.fields.plannedSchedule, formatRange(operation.forecastStartDate, operation.forecastEndDate)],
       ],
       [150, pageWidth - margin * 2 - 150],
       y,
     );
 
-    y = this.pdfSectionTitle(doc, "Dates prévisionnelles", y + 6);
+    y = this.pdfSectionTitle(doc, DOCUMENT_LABELS.fields.forecastDates, y + 6);
     y = this.pdfPeopleTable(doc, operation.plannedUsers, y);
     y = this.pdfGlobalVisas(doc, operation, y + 4);
 
-    y = this.pdfSectionTitle(doc, "Dates réelles", y + 6);
+    y = this.pdfSectionTitle(doc, DOCUMENT_LABELS.fields.actualDates, y + 6);
     y = this.pdfPeopleTable(doc, operation.actualUsers, y);
     y = this.pdfGlobalVisas(doc, operation, y + 4);
 
-    y = this.pdfParagraph(
-      doc,
-      "Pensez à demander au Directeur de Garde l'autorisation d'accès aux bâtiments en dehors des heures ouvrables.",
-      y + 4,
-    );
+    y = this.pdfParagraph(doc, DOCUMENT_LABELS.reminder, y + 4);
 
-    y = this.pdfSectionTitle(doc, "Interventions au cours de l'astreinte", y + 6);
+    y = this.pdfSectionTitle(doc, DOCUMENT_LABELS.fields.interventionsDuringOnCall, y + 6);
     y = this.pdfInterventionsTable(doc, operation.interventions, y);
     this.pdfGlobalVisas(doc, operation, y + 4);
   }
@@ -196,7 +195,7 @@ export class RhWordPdfExportLibrary {
 
     return this.pdfTable(
       doc,
-      ["Nom & Prénom de l'Agent", "Date Début", "Heure Début", "Date Fin", "Heure Fin", "Visa de l'Agent"],
+      [DOCUMENT_LABELS.fields.agentName, DOCUMENT_LABELS.fields.startDate, DOCUMENT_LABELS.fields.startTime, DOCUMENT_LABELS.fields.endDate, DOCUMENT_LABELS.fields.endTime, DOCUMENT_LABELS.fields.agentVisa],
       normalizedRows.map((row) => [row.name, formatDate(row.startDate), formatTime(row.startDate), formatDate(row.endDate), formatTime(row.endDate), row.visa]),
       [128, 68, 58, 68, 58, 143],
       y,
@@ -208,14 +207,14 @@ export class RhWordPdfExportLibrary {
 
     return this.pdfTable(
       doc,
-      ["Nom & Prénom de l'Agent", "Date Début", "Heure Début", "Date Fin", "Heure Fin", "Site", "Visa de l'Agent"],
+      [DOCUMENT_LABELS.fields.agentName, DOCUMENT_LABELS.fields.startDate, DOCUMENT_LABELS.fields.startTime, DOCUMENT_LABELS.fields.endDate, DOCUMENT_LABELS.fields.endTime, DOCUMENT_LABELS.fields.site, DOCUMENT_LABELS.fields.agentVisa],
       normalizedRows.map((row) => [
         row.comment ? `${row.userName}\n${row.comment}` : row.userName,
         formatDate(row.startDate),
         formatTime(row.startDate),
         formatDate(row.endDate),
         formatTime(row.endDate),
-        row.wasOnSite ? "X" : "",
+        row.wasOnSite ? APP_LABELS.common.icons.close : "",
         row.visa,
       ]),
       [117, 66, 55, 66, 55, 35, 129],
@@ -232,8 +231,8 @@ export class RhWordPdfExportLibrary {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(9);
     doc.setTextColor(40, 57, 138);
-    doc.text("Visa initiateur", margin, y + 10);
-    doc.text("Visa directeur", pageWidth - margin, y + 10, { align: "right" });
+    doc.text(DOCUMENT_LABELS.fields.initiatorVisa, margin, y + 10);
+    doc.text(APP_LABELS.validation.sections.director, pageWidth - margin, y + 10, { align: "right" });
 
     this.pdfVisa(doc, operation.initiatorVisa, margin, y + 18, blockWidth - 10, "global");
     this.pdfVisa(doc, operation.directorVisa, margin + blockWidth + 10, y + 18, blockWidth - 10, "global", "right");
@@ -305,10 +304,10 @@ export class RhWordPdfExportLibrary {
       try {
         doc.addImage(visa.signatureValue, "PNG", imageX, y, imageWidth, imageHeight);
       } catch {
-        this.pdfText(doc, visa.signedByName || "Signé", x, y + 10, width, align);
+        this.pdfText(doc, visa.signedByName || DOCUMENT_LABELS.signed, x, y + 10, width, align);
       }
     } else {
-      this.pdfText(doc, visa.signedByName || visa.signatureValue || "Signé", x, y + 10, width, align);
+      this.pdfText(doc, visa.signedByName || visa.signatureValue || DOCUMENT_LABELS.signed, x, y + 10, width, align);
     }
 
     if (visa.signedAt) {
@@ -363,5 +362,4 @@ export class RhWordPdfExportLibrary {
       /^data:image\/(?:png|jpeg|jpg|gif|webp);base64,/i.test(visa.signatureValue)
     );
   }
-
 }

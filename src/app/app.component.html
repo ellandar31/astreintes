@@ -1,31 +1,31 @@
 @if (loadingSession()) {
   <main class="center-screen">
-    <div class="loader" aria-label="Chargement"></div>
+    <div class="loader" [attr.aria-label]="labels.app.loading"></div>
   </main>
 } @else if (user()) {
   <main class="app-shell">
     <header class="top-bar">
       <div>
-        <p class="eyebrow">Astreintes et travaux</p>
-        <h1>Suivi des astreintes</h1>
+        <p class="eyebrow">{{ labels.app.eyebrow }}</p>
+        <h1>{{ labels.app.title }}</h1>
       </div>
 
-      <div class="top-actions" aria-label="Actions utilisateur">
-        <button class="icon-button" [title]="'Profil - ' + displayName()" (click)="showProfile()" type="button">
-          <span class="button-icon" aria-hidden="true">P</span>
-          <span>Profil</span>
+      <div class="top-actions" [attr.aria-label]="labels.app.userActions">
+        <button class="icon-button" [title]="labels.common.modal.profile + ' - ' + displayName()" (click)="showProfile()" type="button">
+          <span class="button-icon" aria-hidden="true">{{ labels.common.icons.profile }}</span>
+          <span>{{ labels.common.modal.profile }}</span>
         </button>
-        <button class="icon-button" title="Paramétrage" (click)="showSettings()" type="button">
-          <span class="button-icon" aria-hidden="true">S</span>
-          <span>Paramétrage</span>
+        <button class="icon-button" [title]="labels.common.modal.settings" (click)="showSettings()" type="button">
+          <span class="button-icon" aria-hidden="true">{{ labels.common.icons.settings }}</span>
+          <span>{{ labels.common.modal.settings }}</span>
         </button>
-        <button class="icon-button danger" (click)="logout()" title="Déconnexion" type="button">
-          X
+        <button class="icon-button danger" (click)="logout()" [title]="labels.app.auth.logout" type="button">
+          {{ labels.common.icons.close }}
         </button>
       </div>
     </header>
 
-    <nav class="tabs" aria-label="Sections de l'application">
+    <nav class="tabs" [attr.aria-label]="labels.app.sections">
       @for (tab of tabs; track tab.id) {
         <button
           [attr.aria-current]="activeTab === tab.id ? 'page' : null"
@@ -50,11 +50,11 @@
     }
 
     @if (modalView === "profile") {
-      <app-modal title="Profil" size="large" (closed)="closeModal()">
+      <app-modal [title]="labels.common.modal.profile" size="large" (closed)="closeModal()">
         <app-profile-page [user]="user()" (saved)="closeModal()"></app-profile-page>
       </app-modal>
     } @else if (modalView === "settings") {
-      <app-modal title="Paramétrage" size="large" (closed)="closeModal()">
+      <app-modal [title]="labels.common.modal.settings" size="large" (closed)="closeModal()">
         <app-settings-page></app-settings-page>
       </app-modal>
     }
@@ -63,33 +63,33 @@
   <main class="auth-layout">
     <section class="auth-panel" aria-labelledby="auth-title">
       <div>
-        <p class="eyebrow">Astreintes et travaux</p>
-        <h1 id="auth-title">Connexion</h1>
-        <p class="muted">Accédez au suivi des astreintes avec votre compte.</p>
+        <p class="eyebrow">{{ labels.app.eyebrow }}</p>
+        <h1 id="auth-title">{{ labels.app.auth.title }}</h1>
+        <p class="muted">{{ labels.app.auth.subtitle }}</p>
       </div>
 
       <form class="auth-form" #authForm="ngForm" (ngSubmit)="loginWithEmail(authForm)">
         <label>
-          Email
+          {{ labels.app.auth.email }}
           <input
             autocomplete="email"
             inputmode="email"
             name="email"
             [(ngModel)]="email"
-            placeholder="nom@entreprise.fr"
+            [placeholder]="labels.app.auth.emailPlaceholder"
             required
             type="email"
           />
         </label>
 
         <label>
-          Mot de passe
+          {{ labels.app.auth.password }}
           <input
             [autocomplete]="isCreatingAccount ? 'new-password' : 'current-password'"
             minlength="6"
             name="password"
             [(ngModel)]="password"
-            placeholder="6 caractères minimum"
+            [placeholder]="labels.app.auth.passwordPlaceholder"
             required
             type="password"
           />
@@ -100,16 +100,16 @@
         }
 
         <button class="primary-button" [disabled]="isSubmitting()" type="submit">
-          {{ isCreatingAccount ? "Créer le compte" : "Se connecter" }}
+          {{ isCreatingAccount ? labels.app.auth.createAccount : labels.app.auth.login }}
         </button>
       </form>
 
       <button class="google-button" [disabled]="isSubmitting()" (click)="loginWithGoogle()" type="button">
-        Continuer avec Google
+        {{ labels.app.auth.google }}
       </button>
 
       <button class="text-button" (click)="toggleAccountMode()" type="button">
-        {{ isCreatingAccount ? "J'ai déjà un compte" : "Créer un compte email" }}
+        {{ isCreatingAccount ? labels.app.auth.existingAccount : labels.app.auth.createEmailAccount }}
       </button>
     </section>
   </main>

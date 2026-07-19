@@ -2,6 +2,7 @@ import { CommonModule } from "@angular/common";
 import { Component, ElementRef, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild, effect, inject } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { Store } from "@ngrx/store";
+import { APP_LABELS } from "../../i18n/labels";
 import { SignatureProfile, VisaSignatureMode } from "../../shared/visa.models";
 import { StoreAuthUser } from "../../store/app-store";
 import { ProfileActions } from "../../state/profile/profile.actions";
@@ -26,6 +27,7 @@ export class ProfilePageComponent implements OnChanges, OnDestroy {
 
   @ViewChild("signaturePad") signaturePad?: ElementRef<HTMLCanvasElement>;
 
+  readonly labels = APP_LABELS;
   profile: SignatureProfile = this.emptyProfile();
   isDrawing = false;
 
@@ -61,11 +63,11 @@ export class ProfilePageComponent implements OnChanges, OnDestroy {
   }
 
   get displayedName(): string {
-    return this.displayName || "Non renseigné";
+    return this.displayName || this.labels.common.users.unspecified;
   }
 
   get email(): string {
-    return this.user?.email || "Non renseigné";
+    return this.user?.email || this.labels.common.users.unspecified;
   }
 
   get signaturePreview(): string {

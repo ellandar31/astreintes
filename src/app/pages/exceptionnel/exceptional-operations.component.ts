@@ -2,6 +2,7 @@ import { CommonModule } from "@angular/common";
 import { Component, Input, OnDestroy, effect, inject } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { Store } from "@ngrx/store";
+import { APP_LABELS } from "../../i18n/labels";
 import { createEmptyVisa } from "../../shared/visa.models";
 import { ExceptionalActions } from "../../state/exceptional/exceptional.actions";
 import {
@@ -36,6 +37,7 @@ import { OperationModalComponent } from "./operation-modal.component";
 })
 export class ExceptionalOperationsComponent implements OnDestroy {
   @Input({ required: true }) user: StoreAuthUser | null = null;
+  readonly labels = APP_LABELS;
 
   activeFilterField: FilterField = null;
   filters: Record<SortField, string> = {
@@ -240,7 +242,7 @@ export class ExceptionalOperationsComponent implements OnDestroy {
     }
 
     if (this.isSentToRh(this.selectedOperation)) {
-      this.interventionError = "Cette opération a été envoyée aux RH et ne peut plus être modifiée.";
+      this.interventionError = this.labels.exceptional.errors.lockedOperation;
       return;
     }
 
@@ -327,10 +329,10 @@ export class ExceptionalOperationsComponent implements OnDestroy {
 
   sortIndicator(field: SortField): string {
     if (this.sortField !== field) {
-      return "â‡…";
+      return this.labels.common.icons.sortNeutral;
     }
 
-    return this.sortDirection === "asc" ? "â†‘" : "â†“";
+    return this.sortDirection === "asc" ? this.labels.common.icons.sortAsc : this.labels.common.icons.sortDesc;
   }
 
   toggleFilter(field: SortField): void {
@@ -338,7 +340,7 @@ export class ExceptionalOperationsComponent implements OnDestroy {
   }
 
   operationTypeLabel(type: ExceptionalOperationType): string {
-    return type === "astreinte" ? "Astreinte exceptionnelle" : "Travail exceptionnel";
+    return type === "astreinte" ? this.labels.exceptional.types.astreinte : this.labels.exceptional.types.travaux;
   }
 
   formatDate(value: string): string {
@@ -358,7 +360,7 @@ export class ExceptionalOperationsComponent implements OnDestroy {
     return {
       type,
       initiatorUid: this.user?.uid || "",
-      initiatorName: this.user?.displayName || this.user?.email || "Utilisateur",
+      initiatorName: this.user?.displayName || this.user?.email || this.labels.common.fields.user,
       operationManagerName: "",
       title: "",
       startDate: "",
@@ -400,7 +402,7 @@ export class ExceptionalOperationsComponent implements OnDestroy {
 
   private validateIntervention(form: ExceptionalInterventionForm, operation: ExceptionalOperation): string {
     if (form.endDate <= form.startDate) {
-      return "La date de fin doit être postérieure à la date de début.";
+      return this.labels.exceptional.errors.interventionEndAfterStart;
     }
 
     const hasMatchingActualPeriod = (operation.actualUsers || []).some(
@@ -414,7 +416,7 @@ export class ExceptionalOperationsComponent implements OnDestroy {
       return "";
     }
 
-    return "L'intervention doit être entièrement comprise dans une période réelle de cet utilisateur.";
+    return this.labels.exceptional.errors.interventionOutsideActualPeriod;
   }
 
   private matchesUser(userId: string | undefined, email: string | undefined, selectedId: string, selectedEmail: string): boolean {

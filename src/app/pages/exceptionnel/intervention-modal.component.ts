@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Input, Output } from "@angular/core";
 import { FormsModule, NgForm } from "@angular/forms";
+import { APP_LABELS } from "../../i18n/labels";
 import { ModalComponent } from "../../shared/modal.component";
 import { ExceptionalInterventionForm, ExceptionalOperation, SelectableUser } from "./exceptional.models";
 
@@ -11,6 +12,7 @@ import { ExceptionalInterventionForm, ExceptionalOperation, SelectableUser } fro
   styleUrl: "./intervention-modal.component.css",
 })
 export class InterventionModalComponent {
+  readonly labels = APP_LABELS;
   @Input({ required: true }) form: ExceptionalInterventionForm = {
     startDate: "",
     endDate: "",

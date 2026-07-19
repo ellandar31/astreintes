@@ -1,21 +1,21 @@
 <section class="settings-section">
   <div class="settings-section-header">
     <div>
-      <p class="eyebrow">Paramétrage RH</p>
-      <h3>Configuration des coefficients RH</h3>
+      <p class="eyebrow">{{ labels.settings.rhCompensation.eyebrow }}</p>
+      <h3>{{ labels.settings.rhCompensation.title }}</h3>
     </div>
   </div>
 
   <form class="compensation-form" (ngSubmit)="saveCompensationRules()">
     <section class="compensation-block">
-      <h4>Astreintes</h4>
+      <h4>{{ labels.settings.rhCompensation.onCall }}</h4>
 
       <div class="editable-table-wrapper">
         <table class="editable-table">
           <thead>
             <tr>
-              <th>Type d'astreinte</th>
-              <th>Coefficient astreinte</th>
+              <th>{{ labels.settings.rhCompensation.type }}</th>
+              <th>{{ labels.settings.rhCompensation.coefficientOnCall }}</th>
             </tr>
           </thead>
           <tbody>
@@ -23,7 +23,7 @@
               <tr>
                 <td><strong>{{ row.label }}</strong></td>
                 <td>
-                  <label class="sr-only" [for]="'onCall-' + row.id">Coefficient astreinte {{ row.label }}</label>
+                  <label class="sr-only" [for]="'onCall-' + row.id">{{ labels.settings.rhCompensation.coefficientOnCall }} {{ row.label }}</label>
                   <input [id]="'onCall-' + row.id" type="number" min="0" step="0.01" name="onCall-{{ row.id }}" [(ngModel)]="row.coefficient" />
                 </td>
               </tr>
@@ -34,16 +34,16 @@
     </section>
 
     <section class="compensation-block">
-      <h4>Interventions, travaux et repos compensatoire</h4>
+      <h4>{{ labels.settings.rhCompensation.interventionWorkRest }}</h4>
 
       <div class="editable-table-wrapper">
         <table class="editable-table">
           <thead>
             <tr>
-              <th>Plage</th>
-              <th>Coefficient interventions</th>
-              <th>Coefficient travaux</th>
-              <th>Coefficient repos</th>
+              <th>{{ labels.settings.rhCompensation.range }}</th>
+              <th>{{ labels.settings.rhCompensation.coefficientIntervention }}</th>
+              <th>{{ labels.settings.rhCompensation.coefficientWork }}</th>
+              <th>{{ labels.settings.rhCompensation.coefficientRest }}</th>
             </tr>
           </thead>
           <tbody>
@@ -51,15 +51,15 @@
               <tr>
                 <td><strong>{{ row.label }}</strong></td>
                 <td>
-                  <label class="sr-only" [for]="'intervention-' + row.id">Coefficient interventions {{ row.label }}</label>
+                  <label class="sr-only" [for]="'intervention-' + row.id">{{ labels.settings.rhCompensation.coefficientIntervention }} {{ row.label }}</label>
                   <input [id]="'intervention-' + row.id" type="number" min="0" step="0.01" name="intervention-{{ row.id }}" [(ngModel)]="row.interventionCoefficient" />
                 </td>
                 <td>
-                  <label class="sr-only" [for]="'work-' + row.id">Coefficient travaux {{ row.label }}</label>
+                  <label class="sr-only" [for]="'work-' + row.id">{{ labels.settings.rhCompensation.coefficientWork }} {{ row.label }}</label>
                   <input [id]="'work-' + row.id" type="number" min="0" step="0.01" name="work-{{ row.id }}" [(ngModel)]="row.workCoefficient" />
                 </td>
                 <td>
-                  <label class="sr-only" [for]="'rest-' + row.id">Coefficient repos {{ row.label }}</label>
+                  <label class="sr-only" [for]="'rest-' + row.id">{{ labels.settings.rhCompensation.coefficientRest }} {{ row.label }}</label>
                   <input [id]="'rest-' + row.id" type="number" min="0" step="0.01" name="rest-{{ row.id }}" [(ngModel)]="row.restCoefficient" />
                 </td>
               </tr>
@@ -68,11 +68,11 @@
         </table>
       </div>
 
-      <p class="muted">Arrondi automatiquement à l'heure supérieure.</p>
+      <p class="muted">{{ labels.settings.rhCompensation.autoRound }}</p>
     </section>
 
     <div class="form-actions">
-      <button class="primary-button" type="submit">Enregistrer les règles RH</button>
+      <button class="primary-button" type="submit">{{ labels.settings.rhCompensation.save }}</button>
     </div>
   </form>
 </section>

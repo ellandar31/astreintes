@@ -1,16 +1,16 @@
 <section class="exceptional-view" aria-labelledby="exceptional-title">
   <header class="exceptional-toolbar">
     <div>
-      <p class="eyebrow">Exceptionnel</p>
-      <h2 id="exceptional-title">Opérations exceptionnelles</h2>
+      <p class="eyebrow">{{ labels.exceptional.eyebrow }}</p>
+      <h2 id="exceptional-title">{{ labels.exceptional.title }}</h2>
     </div>
 
     <div class="create-actions">
       <button class="primary-button" (click)="openCreateModal('astreinte')" type="button">
-        Astreinte exceptionnelle
+        {{ labels.exceptional.actions.addExceptionalOnCall }}
       </button>
       <button class="secondary-button" (click)="openCreateModal('travaux')" type="button">
-        Travail exceptionnel
+        {{ labels.exceptional.actions.addExceptionalWork }}
       </button>
     </div>
   </header>
@@ -21,53 +21,53 @@
         <tr>
           <th>
             <div class="header-cell">
-              <span>Type</span>
-              <button class="header-icon" (click)="setSort('type')" title="Trier" type="button">{{ sortIndicator("type") }}</button>
-              <button class="header-icon" (click)="toggleFilter('type')" title="Filtrer" type="button">⌕</button>
+              <span>{{ labels.common.table.type }}</span>
+              <button class="header-icon" (click)="setSort('type')" [title]="labels.common.actions.sort" type="button">{{ sortIndicator("type") }}</button>
+              <button class="header-icon" (click)="toggleFilter('type')" [title]="labels.common.actions.filter" type="button">⌕</button>
             </div>
             @if (activeFilterField === "type") {
-              <label class="sr-only" for="typeFilter">Filtrer par type</label>
-              <input id="typeFilter" class="header-filter" [(ngModel)]="filters.type" name="typeFilter" placeholder="Type" />
+              <label class="sr-only" for="typeFilter">{{ labels.exceptional.fields.typeFilter }}</label>
+              <input id="typeFilter" class="header-filter" [(ngModel)]="filters.type" name="typeFilter" [placeholder]="labels.common.table.type" />
             }
           </th>
           <th>
             <div class="header-cell">
-              <span>Initiateur</span>
-              <button class="header-icon" (click)="setSort('initiatorName')" title="Trier" type="button">
+              <span>{{ labels.common.fields.initiator }}</span>
+              <button class="header-icon" (click)="setSort('initiatorName')" [title]="labels.common.actions.sort" type="button">
                 {{ sortIndicator("initiatorName") }}
               </button>
-              <button class="header-icon" (click)="toggleFilter('initiatorName')" title="Filtrer" type="button">⌕</button>
+              <button class="header-icon" (click)="toggleFilter('initiatorName')" [title]="labels.common.actions.filter" type="button">⌕</button>
             </div>
             @if (activeFilterField === "initiatorName") {
-              <label class="sr-only" for="initiatorFilter">Filtrer par initiateur</label>
-              <input id="initiatorFilter" class="header-filter" [(ngModel)]="filters.initiatorName" name="initiatorFilter" placeholder="Initiateur" />
+              <label class="sr-only" for="initiatorFilter">{{ labels.exceptional.fields.initiatorFilter }}</label>
+              <input id="initiatorFilter" class="header-filter" [(ngModel)]="filters.initiatorName" name="initiatorFilter" [placeholder]="labels.common.fields.initiator" />
             }
           </th>
           <th>
             <div class="header-cell">
-              <span>Titre</span>
-              <button class="header-icon" (click)="setSort('title')" title="Trier" type="button">{{ sortIndicator("title") }}</button>
-              <button class="header-icon" (click)="toggleFilter('title')" title="Filtrer" type="button">⌕</button>
+              <span>{{ labels.common.fields.title }}</span>
+              <button class="header-icon" (click)="setSort('title')" [title]="labels.common.actions.sort" type="button">{{ sortIndicator("title") }}</button>
+              <button class="header-icon" (click)="toggleFilter('title')" [title]="labels.common.actions.filter" type="button">⌕</button>
             </div>
             @if (activeFilterField === "title") {
-              <label class="sr-only" for="titleFilter">Filtrer par titre</label>
-              <input id="titleFilter" class="header-filter" [(ngModel)]="filters.title" name="titleFilter" placeholder="Titre" />
+              <label class="sr-only" for="titleFilter">{{ labels.exceptional.fields.titleFilter }}</label>
+              <input id="titleFilter" class="header-filter" [(ngModel)]="filters.title" name="titleFilter" [placeholder]="labels.common.fields.title" />
             }
           </th>
           <th>
             <div class="header-cell">
-              <span>Date de début</span>
-              <button class="header-icon" (click)="setSort('startDate')" title="Trier" type="button">
+              <span>{{ labels.exceptional.fields.dateStart }}</span>
+              <button class="header-icon" (click)="setSort('startDate')" [title]="labels.common.actions.sort" type="button">
                 {{ sortIndicator("startDate") }}
               </button>
-              <button class="header-icon" (click)="toggleFilter('startDate')" title="Filtrer" type="button">⌕</button>
+              <button class="header-icon" (click)="toggleFilter('startDate')" [title]="labels.common.actions.filter" type="button">⌕</button>
             </div>
             @if (activeFilterField === "startDate") {
-              <label class="sr-only" for="startDateFilter">Filtrer par date de début</label>
-              <input id="startDateFilter" class="header-filter" [(ngModel)]="filters.startDate" name="startDateFilter" placeholder="AAAA-MM-JJ" />
+              <label class="sr-only" for="startDateFilter">{{ labels.exceptional.fields.startDateFilter }}</label>
+              <input id="startDateFilter" class="header-filter" [(ngModel)]="filters.startDate" name="startDateFilter" [placeholder]="labels.exceptional.fields.datePlaceholder" />
             }
           </th>
-          <th>Actions</th>
+          <th>{{ labels.common.table.actions }}</th>
         </tr>
       </thead>
 
@@ -77,15 +77,15 @@
             <td>{{ operationTypeLabel(operation.type) }}</td>
             <td>{{ operation.initiatorName }}</td>
             <td>{{ operation.title }}</td>
-            <td>{{ formatDate(operation.startDate) }}</td>            
+            <td>{{ formatDate(operation.startDate) }}</td>
             <td>
               <div class="table-actions">
                 @if (isSentToRh(operation)) {
                   <button
                     class="action-button"
                     (click)="openEditModal(operation)"
-                    title="Consulter"
-                    aria-label="Consulter"
+                    [title]="labels.common.actions.consult"
+                    [attr.aria-label]="labels.common.actions.consult"
                     type="button"
                   >
                     <svg
@@ -108,8 +108,8 @@
                     class="action-button"
                     (click)="openEditModal(operation)"
                     [disabled]="isSentToRh(operation)"
-                    title="Modifier"
-                    aria-label="Modifier"
+                    [title]="labels.common.actions.edit"
+                    [attr.aria-label]="labels.common.actions.edit"
                     type="button"
                   >
                     ✎
@@ -118,8 +118,8 @@
                     class="action-button danger"
                     [disabled]="isSentToRh(operation)"
                     (click)="deleteOperation(operation)"
-                    title="Supprimer"
-                    aria-label="Supprimer"
+                    [title]="labels.common.actions.delete"
+                    [attr.aria-label]="labels.common.actions.delete"
                     type="button"
                   >
                     X
@@ -128,8 +128,8 @@
                     class="action-button"
                     [disabled]="isSentToRh(operation)"
                     (click)="openInterventionModal(operation)"
-                    title="Ajouter une intervention"
-                    aria-label="Ajouter une intervention"
+                    [title]="labels.exceptional.actions.addIntervention"
+                    [attr.aria-label]="labels.exceptional.actions.addIntervention"
                     type="button"
                   >
                     +
@@ -140,7 +140,7 @@
           </tr>
         } @empty {
           <tr>
-            <td colspan="5" class="empty-row">Aucune opération exceptionnelle.</td>
+            <td colspan="5" class="empty-row">{{ labels.exceptional.empty.noOperation }}</td>
           </tr>
         }
       </tbody>

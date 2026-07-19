@@ -2,6 +2,7 @@ import { CommonModule } from "@angular/common";
 import { Component, OnDestroy, effect, inject } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { Store } from "@ngrx/store";
+import { APP_LABELS } from "../../i18n/labels";
 import { SignatureVisa, createEmptyVisa } from "../../shared/visa.models";
 import { ExceptionalActions } from "../../state/exceptional/exceptional.actions";
 import { selectExceptionalOperations } from "../../state/exceptional/exceptional.selectors";
@@ -45,10 +46,11 @@ interface RegularInterventionExport {
   styleUrl: "./rh-exports.component.css",
 })
 export class RhExportsComponent implements OnDestroy {
+  readonly labels = APP_LABELS;
   readonly templates: WordExportTemplate[] = [
-    { id: "regular", label: "Astreintes régulières", fileName: "" },
-    { id: "exceptionalOnCall", label: "Astreintes exceptionnelles", fileName: "" },
-    { id: "exceptionalWork", label: "Travaux exceptionnels", fileName: "" },
+    { id: "regular", label: APP_LABELS.rh.exports.sections.regular, fileName: "" },
+    { id: "exceptionalOnCall", label: APP_LABELS.rh.exports.sections.exceptionalOnCall, fileName: "" },
+    { id: "exceptionalWork", label: APP_LABELS.exceptional.types.travaux, fileName: "" },
   ];
 
   selectedMonth = this.toMonthKey(new Date());
@@ -58,15 +60,15 @@ export class RhExportsComponent implements OnDestroy {
   exceptionalOperations: RhExceptionalOperation[] = [];
   publicHolidays: Array<{ id: string; date: string; label: string }> = [];
   onCallCompensationRules: OnCallCompensationRule[] = [
-    { id: "week", label: "Semaine", coefficient: 0 },
-    { id: "weekendHoliday", label: "Samedi / Dimanche / Jour férié", coefficient: 0 },
+    { id: "week", label: APP_LABELS.rh.rules.week, coefficient: 0 },
+    { id: "weekendHoliday", label: APP_LABELS.rh.rules.weekendHoliday, coefficient: 0 },
   ];
   periodCompensationRules: PeriodCompensationRule[] = [
-    { id: "week_18_21", label: "Semaine 18h-21h", interventionCoefficient: 0, workCoefficient: 0, restCoefficient: 0 },
-    { id: "night_21_7", label: "Nuit (21h-7h)", interventionCoefficient: 0, workCoefficient: 0, restCoefficient: 0 },
-    { id: "week_7_8", label: "Semaine 7h-8h", interventionCoefficient: 0, workCoefficient: 0, restCoefficient: 0 },
-    { id: "saturday_7_21", label: "Samedi (7h-21h)", interventionCoefficient: 0, workCoefficient: 0, restCoefficient: 0 },
-    { id: "sunday_holiday_7_21", label: "Dimanche/Jours fériés (7h-21h)", interventionCoefficient: 0, workCoefficient: 0, restCoefficient: 0 },
+    { id: "week_18_21", label: APP_LABELS.rh.rules.weekEvening, interventionCoefficient: 0, workCoefficient: 0, restCoefficient: 0 },
+    { id: "night_21_7", label: APP_LABELS.rh.rules.night, interventionCoefficient: 0, workCoefficient: 0, restCoefficient: 0 },
+    { id: "week_7_8", label: APP_LABELS.rh.rules.weekEarly, interventionCoefficient: 0, workCoefficient: 0, restCoefficient: 0 },
+    { id: "saturday_7_21", label: APP_LABELS.rh.rules.saturdayDay, interventionCoefficient: 0, workCoefficient: 0, restCoefficient: 0 },
+    { id: "sunday_holiday_7_21", label: APP_LABELS.rh.rules.sundayHolidayDay, interventionCoefficient: 0, workCoefficient: 0, restCoefficient: 0 },
   ];
 
   private readonly wordPdfExportLibrary = new RhWordPdfExportLibrary();
@@ -134,7 +136,7 @@ export class RhExportsComponent implements OnDestroy {
     const template = this.templateFor(templateId);
 
     if (!template.fileName) {
-      this.exportMessage = "Aucun modèle Word n'est configuré pour cet export dans les paramètres RH.";
+      this.exportMessage = this.labels.rh.exports.errors.missingTemplate;
       return;
     }
 
@@ -143,7 +145,7 @@ export class RhExportsComponent implements OnDestroy {
       "application/msword;charset=utf-8",
       this.wordPdfExportLibrary.buildWordHtml(template, [operation], templateId, this.exportContext()),
     );
-    this.exportMessage = `Export Word généré pour ${operation.title}.`;
+    this.exportMessage = this.formatMessage(this.labels.rh.exports.messages.wordGenerated, operation.title);
   }
 
   exportExcelOperation(templateId: ExportTemplateId, operation: ExportOperation): void {
@@ -153,7 +155,7 @@ export class RhExportsComponent implements OnDestroy {
       "application/vnd.ms-excel;charset=utf-8",
       this.excelExportLibrary.buildExcelHtml(templateId, operation, this.exportContext()),
     );
-    this.exportMessage = `Export Excel généré pour ${operation.title}.`;
+    this.exportMessage = this.formatMessage(this.labels.rh.exports.messages.excelGenerated, operation.title);
   }
 
   async exportPdfOperation(templateId: ExportTemplateId, operation: ExportOperation): Promise<void> {
@@ -161,7 +163,7 @@ export class RhExportsComponent implements OnDestroy {
     const template = this.templateFor(templateId);
 
     if (!template.fileName) {
-      this.exportMessage = "Aucun modèle Word n'est configuré pour cet export dans les paramètres RH.";
+      this.exportMessage = this.labels.rh.exports.errors.missingTemplate;
       return;
     }
 
@@ -169,7 +171,7 @@ export class RhExportsComponent implements OnDestroy {
       `${this.slug(operation.title)}_${this.selectedMonth}.pdf`,
       await this.wordPdfExportLibrary.buildPdfBlob(template, [operation]),
     );
-    this.exportMessage = `Export PDF généré pour ${operation.title}.`;
+    this.exportMessage = this.formatMessage(this.labels.rh.exports.messages.pdfGenerated, operation.title);
   }
 
   markSentToRh(operation: ExportOperation): void {
@@ -177,7 +179,7 @@ export class RhExportsComponent implements OnDestroy {
 
     this.dispatchRhSentUpdate(operation, true);
 
-    this.exportMessage = `${operation.title} marqué comme envoyé aux RH.`;
+    this.exportMessage = this.formatMessage(this.labels.rh.exports.messages.rhSent, operation.title);
   }
 
   unmarkSentToRh(operation: ExportOperation): void {
@@ -185,7 +187,7 @@ export class RhExportsComponent implements OnDestroy {
 
     this.dispatchRhSentUpdate(operation, false);
 
-    this.exportMessage = `Envoi RH supprimé pour ${operation.title}.`;
+    this.exportMessage = this.formatMessage(this.labels.rh.exports.messages.rhUnsent, operation.title);
   }
 
   exportRows(templateId: ExportTemplateId): ExportOperation[] {
@@ -221,8 +223,8 @@ export class RhExportsComponent implements OnDestroy {
           return {
             sourceId: period.id,
             sourceCollection: "regularOnCallPeriods",
-            title: `Astreinte régulière - ${period.userName || period.userEmail}`,
-            exportTitle: "Astreintes Régulières",
+            title: `${this.labels.rh.controls.types.regularOnCall} - ${period.userName || period.userEmail}`,
+            exportTitle: this.labels.rh.controls.types.regularOnCallPlural,
             initiatorName: "",
             operationManagerName: "",
             forecastStartDate: period.startDate,
@@ -247,7 +249,9 @@ export class RhExportsComponent implements OnDestroy {
     }
 
     const operationType = templateId === "exceptionalOnCall" ? "astreinte" : "travaux";
-    const exportTitle = templateId === "exceptionalOnCall" ? "Astreintes Exceptionnelles" : "Travaux Exceptionnels";
+    const exportTitle = templateId === "exceptionalOnCall"
+      ? this.labels.rh.controls.types.exceptionalOnCall
+      : this.labels.rh.controls.types.exceptionalWork;
 
     return this.exceptionalOperations
       .filter((operation) => operation.type === operationType)
@@ -311,6 +315,10 @@ export class RhExportsComponent implements OnDestroy {
     }
 
     this.store.dispatch(RegularActions.periodRhSentUpdateRequested({ periodId: operation.sourceId, sent }));
+  }
+
+  private formatMessage(template: string, title: string): string {
+    return template.replace("{title}", title);
   }
 
   private monthRange(monthKey: string): { start: Date; end: Date } {

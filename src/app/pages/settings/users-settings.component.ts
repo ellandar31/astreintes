@@ -2,6 +2,7 @@ import { CommonModule } from "@angular/common";
 import { Component, EventEmitter, OnDestroy, Output, effect, inject } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { Store } from "@ngrx/store";
+import { APP_LABELS } from "../../i18n/labels";
 import { SettingsActions } from "../../state/settings/settings.actions";
 import { selectSettingsMessage, selectSettingsUsers } from "../../state/settings/settings.selectors";
 import { ManagedUser, UserRole } from "./settings.models";
@@ -17,11 +18,12 @@ export class UsersSettingsComponent implements OnDestroy {
   @Output() failure = new EventEmitter<string>();
   @Output() success = new EventEmitter<string>();
 
+  readonly labels = APP_LABELS;
   readonly roles: Array<{ value: UserRole; label: string; description: string }> = [
-    { value: 0, label: "Administrateur", description: "Accès complet, incluant les droits utilisateur." },
-    { value: 1, label: "Utilisateur", description: "Accès standard par défaut." },
-    { value: 2, label: "Initiateur", description: "Droits utilisateur inclus, avec capacité d'initier." },
-    { value: 3, label: "Directeur", description: "Droits utilisateur inclus, avec capacité de viser les validations directeur." },
+    { value: 0, label: APP_LABELS.settings.users.roles.admin, description: APP_LABELS.settings.users.roles.adminDescription },
+    { value: 1, label: APP_LABELS.settings.users.roles.user, description: APP_LABELS.settings.users.roles.userDescription },
+    { value: 2, label: APP_LABELS.settings.users.roles.initiator, description: APP_LABELS.settings.users.roles.initiatorDescription },
+    { value: 3, label: APP_LABELS.settings.users.roles.director, description: APP_LABELS.settings.users.roles.directorDescription },
   ];
 
   private readonly store = inject(Store);
@@ -64,7 +66,7 @@ export class UsersSettingsComponent implements OnDestroy {
   }
 
   roleLabel(role: UserRole): string {
-    return this.roles.find((item) => item.value === Number(role))?.label || "Utilisateur";
+    return this.roles.find((item) => item.value === Number(role))?.label || this.labels.settings.users.roles.user;
   }
 
   roleValue(value: string | number): UserRole {

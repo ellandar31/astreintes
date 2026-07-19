@@ -1,8 +1,8 @@
 <section class="rh-panel" aria-labelledby="rh-controls-title">
   <header class="rh-panel-header">
     <div>
-      <p class="eyebrow">Controles RH</p>
-      <h2 id="rh-controls-title">Detail des coefficients envoyes aux RH</h2>
+      <p class="eyebrow">{{ labels.rh.controls.eyebrow }}</p>
+      <h2 id="rh-controls-title">{{ labels.rh.controls.title }}</h2>
     </div>
   </header>
 
@@ -18,7 +18,7 @@
           <span class="user-label">{{ userLabel(userSection.user) }}</span>
           <span class="section-meta">
             <span class="chevron" [class.expanded]="isUserExpanded(userSection.user.id)" aria-hidden="true"></span>
-            <span>{{ userSection.itemCount }} element(s) affiche(s)</span>
+            <span>{{ userSection.itemCount }} {{ labels.rh.controls.itemCountDisplayed }}</span>
           </span>
         </button>
 
@@ -35,7 +35,7 @@
                   <span class="month-label">{{ monthSection.monthLabel }}</span>
                   <span class="section-meta">
                     <span class="chevron" [class.expanded]="isMonthExpanded(userSection.user.id, monthSection.monthKey)" aria-hidden="true"></span>
-                    <span>{{ monthSection.items.length }} element(s)</span>
+                    <span>{{ monthSection.items.length }} {{ labels.rh.controls.itemCount }}</span>
                   </span>
                 </button>
 
@@ -44,12 +44,12 @@
                     <table class="rh-table summary-table">
                       <thead>
                         <tr>
-                          <th>Type</th>
-                          <th>Element</th>
-                          <th>Periode</th>
-                          <th>Envoi RH</th>
-                          <th>Lignes</th>
-                          <th>Actions</th>
+                          <th>{{ labels.common.table.type }}</th>
+                          <th>{{ labels.common.table.item }}</th>
+                          <th>{{ labels.common.table.period }}</th>
+                          <th>{{ labels.common.messages.rhSentAt }}</th>
+                          <th>{{ labels.common.fields.lines }}</th>
+                          <th>{{ labels.common.table.actions }}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -58,11 +58,11 @@
                             <td>{{ item.type }}</td>
                             <td>{{ item.title }}</td>
                             <td>{{ item.period }}</td>
-                            <td class="sent-date">Le <strong>{{ item.sentToRhLabel }}</strong></td>
+                            <td class="sent-date">{{ labels.rh.controls.sentPrefix }} <strong>{{ item.sentToRhLabel }}</strong></td>
                             <td>{{ item.lines.length }}</td>
                             <td>
                               <button class="secondary-button compact-button" (click)="openDetail(item)" type="button">
-                                Consulter
+                                {{ labels.common.actions.consult }}
                               </button>
                             </td>
                           </tr>
@@ -74,7 +74,7 @@
               </article>
             } @empty {
               <div class="empty-state">
-                Aucun element envoye aux RH pour cet utilisateur.
+                {{ labels.rh.controls.emptyForUser }}
               </div>
             }
           </div>
@@ -82,7 +82,7 @@
       </article>
     } @empty {
       <div class="empty-state">
-        Aucun element envoye aux RH.
+        {{ labels.rh.controls.emptyGlobal }}
       </div>
     }
   </div>

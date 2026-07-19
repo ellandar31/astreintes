@@ -1,9 +1,9 @@
 <section class="settings-section" aria-labelledby="users-title">
   <div>
-    <p class="eyebrow">Administration</p>
-    <h3 id="users-title">Gestion des utilisateurs</h3>
+    <p class="eyebrow">{{ labels.settings.users.eyebrow }}</p>
+    <h3 id="users-title">{{ labels.settings.users.title }}</h3>
     <p class="muted">
-      Cette liste est alimentée automatiquement quand une personne se connecte à l'application.
+      {{ labels.settings.users.autoList }}
     </p>
   </div>
 
@@ -22,7 +22,7 @@
         </div>
 
         <label>
-          Rôle
+          {{ labels.common.fields.role }}
           <select
             [ngModel]="user.role"
             (ngModelChange)="updateUserRole(user, roleValue($event))"
@@ -39,15 +39,15 @@
             class="icon-button danger"
             (click)="deleteUser(user)"
             type="button"
-            title="Supprimer l'utilisateur"
-            aria-label="Supprimer l'utilisateur"
+            [title]="labels.settings.users.deleteTitle"
+            [attr.aria-label]="labels.settings.users.deleteTitle"
           >
             X
           </button>
         </div>
       </article>
     } @empty {
-      <p class="muted">Aucun utilisateur applicatif enregistré. Connectez-vous une première fois avec un compte.</p>
+      <p class="muted">{{ labels.settings.empty.noUser }}</p>
     }
   </div>
 </section>

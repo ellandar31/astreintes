@@ -1,8 +1,8 @@
 <app-modal [title]="title" size="large" (closed)="closed.emit()">
   <form class="operation-form" #operationNgForm="ngForm" (ngSubmit)="save(operationNgForm)">
-    <section class="summary-panel" aria-label="Informations générales">
+    <section class="summary-panel" [attr.aria-label]="labels.exceptional.sections.generalInformation">
       <label>
-        Initiateur
+        {{ labels.common.fields.initiator }}
         <select
           class="user-select"
           name="initiatorUid"
@@ -11,7 +11,7 @@
           [disabled]="isLocked"
           required
         >
-          <option value="">Sélectionner un utilisateur</option>
+          <option value="">{{ labels.common.users.select }}</option>
           @for (user of users; track user.id) {
             <option [ngValue]="user.id" [title]="userLabel(user)">{{ userLabel(user) }}</option>
           }
@@ -19,30 +19,29 @@
       </label>
 
       <label>
-        Responsable d'opération
+        {{ labels.exceptional.fields.operationManager }}
         <input name="operationManagerName" [(ngModel)]="form.operationManagerName" [disabled]="isLocked" required />
       </label>
 
       <label>
-        Titre de l'opération
+        {{ labels.exceptional.fields.operationTitle }}
         <input name="title" [(ngModel)]="form.title" [disabled]="isLocked" required />
       </label>
-      
     </section>
 
     <div class="timeline-grid">
       <section class="timeline-panel" aria-labelledby="planned-title">
-        <p class="panel-kicker" id="planned-title">Prévisionnel</p>
+        <p class="panel-kicker" id="planned-title">{{ labels.exceptional.sections.planned }}</p>
 
         <div class="users-box">
-          <h3>Utilisateurs et dates prévisionnelles</h3>
+          <h3>{{ labels.exceptional.fields.plannedUsers }}</h3>
 
           @if (!isLocked) {
             <div class="inline-form">
               <label>
-                Utilisateur
+                {{ labels.common.fields.user }}
                 <select class="user-select" name="plannedUser" [(ngModel)]="selectedPlannedUserId" [disabled]="!availableUsers().length">
-                  <option value="">Sélectionner un utilisateur</option>
+                  <option value="">{{ labels.common.users.select }}</option>
                   @for (user of availableUsers(); track user.id) {
                     <option [ngValue]="user.id" [title]="userLabel(user)">{{ userLabel(user) }}</option>
                   }
@@ -55,7 +54,7 @@
                 (click)="addParticipant('plannedUsers', selectedPlannedUserId)"
                 type="button"
               >
-                Ajouter
+                {{ labels.common.actions.add }}
               </button>
             </div>
           }
@@ -68,32 +67,32 @@
                 </div>
 
                 <label>
-                  Début
+                  {{ labels.common.table.start }}
                   <input [name]="'plannedStartDate' + participantIndex" [(ngModel)]="participant.startDate" [disabled]="isLocked" required type="datetime-local" />
                 </label>
 
                 <label>
-                  Fin
+                  {{ labels.common.table.end }}
                   <input [name]="'plannedEndDate' + participantIndex" [(ngModel)]="participant.endDate" [disabled]="isLocked" required type="datetime-local" />
                 </label>
 
                 @if (!isLocked) {
-                  <button class="remove-button" (click)="removeParticipant('plannedUsers', participantIndex)" title="Retirer" type="button">X</button>
+                  <button class="remove-button" (click)="removeParticipant('plannedUsers', participantIndex)" [title]="labels.common.actions.remove" type="button">{{ labels.common.icons.remove }}</button>
                 }
               </div>
             } @empty {
-              <p class="muted">Aucun utilisateur</p>
+              <p class="muted">{{ labels.common.empty.noUser }}</p>
             }
           </div>
         </div>
       </section>
 
       <section class="timeline-panel" aria-labelledby="actual-title">
-        <p class="panel-kicker" id="actual-title">Réel</p>
+        <p class="panel-kicker" id="actual-title">{{ labels.exceptional.sections.actual }}</p>
 
         <div class="users-box">
           <div class="users-box-heading">
-            <h3>Utilisateurs et dates réelles</h3>
+            <h3>{{ labels.exceptional.fields.actualUsers }}</h3>
             @if (!isLocked) {
               <button
                 class="secondary-button compact-button"
@@ -101,7 +100,7 @@
                 (click)="initializeActualFromPlanned()"
                 type="button"
               >
-                Initialiser depuis le prévisionnel
+                {{ labels.exceptional.actions.initializeActualFromPlanned }}
               </button>
             }
           </div>
@@ -109,9 +108,9 @@
           @if (!isLocked) {
             <div class="inline-form">
               <label>
-                Utilisateur
+                {{ labels.common.fields.user }}
                 <select class="user-select" name="actualUser" [(ngModel)]="selectedActualUserId" [disabled]="!availableUsers().length">
-                  <option value="">Sélectionner un utilisateur</option>
+                  <option value="">{{ labels.common.users.select }}</option>
                   @for (user of availableUsers(); track user.id) {
                     <option [ngValue]="user.id" [title]="userLabel(user)">{{ userLabel(user) }}</option>
                   }
@@ -124,7 +123,7 @@
                 (click)="addParticipant('actualUsers', selectedActualUserId)"
                 type="button"
               >
-                Ajouter
+                {{ labels.common.actions.add }}
               </button>
             </div>
           }
@@ -137,21 +136,21 @@
                 </div>
 
                 <label>
-                  Début
+                  {{ labels.common.table.start }}
                   <input [name]="'actualStartDate' + participantIndex" [(ngModel)]="participant.startDate" [disabled]="isLocked" required type="datetime-local" />
                 </label>
 
                 <label>
-                  Fin
+                  {{ labels.common.table.end }}
                   <input [name]="'actualEndDate' + participantIndex" [(ngModel)]="participant.endDate" [disabled]="isLocked" required type="datetime-local" />
                 </label>
 
                 @if (!isLocked) {
-                  <button class="remove-button" (click)="removeParticipant('actualUsers', participantIndex)" title="Retirer" type="button">X</button>
+                  <button class="remove-button" (click)="removeParticipant('actualUsers', participantIndex)" [title]="labels.common.actions.remove" type="button">{{ labels.common.icons.remove }}</button>
                 }
               </div>
             } @empty {
-              <p class="muted">Aucun utilisateur</p>
+              <p class="muted">{{ labels.common.empty.noUser }}</p>
             }
           </div>
         </div>
@@ -162,13 +161,13 @@
       <section class="interventions-panel" aria-labelledby="interventions-title">
         <div class="section-heading">
           <div>
-            <p class="panel-kicker">Interventions</p>
-            <h3 id="interventions-title">Interventions rattachées</h3>
+            <p class="panel-kicker">{{ labels.exceptional.sections.interventions }}</p>
+            <h3 id="interventions-title">{{ labels.regular.sections.attachedInterventions }}</h3>
           </div>
 
           @if (!isLocked) {
             <button class="secondary-button" (click)="addIntervention.emit(operation)" type="button">
-              Ajouter une intervention
+              {{ labels.exceptional.actions.addIntervention }}
             </button>
           }
         </div>
@@ -177,13 +176,13 @@
           <table>
             <thead>
               <tr>
-                <th>Utilisateur</th>
-                <th>Début</th>
-                <th>Fin</th>
-                <th>Sur site</th>
-                <th>Visa agent</th>
+                <th>{{ labels.common.fields.user }}</th>
+                <th>{{ labels.common.table.start }}</th>
+                <th>{{ labels.common.table.end }}</th>
+                <th>{{ labels.exceptional.fields.userOnSite }}</th>
+                <th>{{ labels.exceptional.fields.visaAgent }}</th>
                 @if (!isLocked) {
-                  <th>Actions</th>
+                  <th>{{ labels.common.table.actions }}</th>
                 }
               </tr>
             </thead>
@@ -193,16 +192,16 @@
                   <td>{{ intervention.userName || intervention.userEmail }}</td>
                   <td>{{ formatDate(intervention.startDate || intervention.date) }}</td>
                   <td>{{ formatDate(intervention.endDate) }}</td>
-                  <td>{{ intervention.wasOnSite ? "Oui" : "Non" }}</td>
-                  <td>{{ intervention.agentVisa.signed ? "Signé" : "À signer" }}</td>
+                  <td>{{ intervention.wasOnSite ? labels.common.statuses.yes : labels.common.statuses.no }}</td>
+                  <td>{{ intervention.agentVisa.signed ? labels.common.statuses.signedOn : labels.common.statuses.toSign }}</td>
                   @if (!isLocked) {
                     <td>
                       <div class="table-actions">
                         <button
                           class="action-button"
                           (click)="$event.stopPropagation(); editIntervention.emit({ operation, intervention, index })"
-                          title="Modifier"
-                          aria-label="Modifier l'intervention"
+                          [title]="labels.common.actions.edit"
+                          [attr.aria-label]="labels.common.actions.edit"
                           type="button"
                         >
                           ✎
@@ -210,8 +209,8 @@
                         <button
                           class="action-button danger"
                           (click)="$event.stopPropagation(); deleteIntervention.emit({ operation, index })"
-                          title="Supprimer"
-                          aria-label="Supprimer l'intervention"
+                          [title]="labels.common.actions.delete"
+                          [attr.aria-label]="labels.common.actions.delete"
                           type="button"
                         >
                           X
@@ -222,7 +221,7 @@
                 </tr>
               } @empty {
                 <tr>
-                  <td colspan="6" class="empty-row">Aucune intervention.</td>
+                  <td colspan="6" class="empty-row">{{ labels.exceptional.empty.noIntervention }}</td>
                 </tr>
               }
             </tbody>
@@ -236,9 +235,9 @@
         <p class="form-error">{{ validationError }}</p>
       }
       @if (isLocked) {
-        <p class="sent-rh-message">Envoyé aux RH le <strong>{{ formatDateTime(operation?.sentToRhAt) }}</strong></p>
+        <p class="sent-rh-message">{{ labels.common.messages.rhSentAt }} <strong>{{ formatDateTime(operation?.sentToRhAt) }}</strong></p>
       } @else {
-      <button class="primary-button" [disabled]="operationNgForm.invalid" type="submit">Enregistrer</button>
+        <button class="primary-button" [disabled]="operationNgForm.invalid" type="submit">{{ labels.common.actions.save }}</button>
       }
     </div>
   </form>

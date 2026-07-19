@@ -2,6 +2,7 @@ import { CommonModule } from "@angular/common";
 import { Component, EventEmitter, OnDestroy, Output, effect, inject } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { Store } from "@ngrx/store";
+import { APP_LABELS } from "../../i18n/labels";
 import { SettingsActions } from "../../state/settings/settings.actions";
 import { selectSettingsMessage, selectSettingsRhTemplates } from "../../state/settings/settings.selectors";
 import { RhExportTemplateSetting } from "./settings.models";
@@ -17,6 +18,7 @@ export class RhExportTemplatesSettingsComponent implements OnDestroy {
   @Output() failure = new EventEmitter<string>();
   @Output() success = new EventEmitter<string>();
 
+  readonly labels = APP_LABELS;
   templates: RhExportTemplateSetting[] = [];
 
   private readonly store = inject(Store);

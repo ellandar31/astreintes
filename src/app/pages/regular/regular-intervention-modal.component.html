@@ -1,9 +1,9 @@
 <app-modal [title]="modalTitle" size="small" (closed)="closed.emit()">
   <form class="intervention-form" #interventionNgForm="ngForm" (ngSubmit)="save(interventionNgForm)">
     <label>
-      Utilisateur
+      {{ labels.common.fields.user }}
       <select class="user-select" name="regularInterventionUser" [ngModel]="form.userId" (ngModelChange)="selectUser($event)" required>
-        <option value="">Sélectionner un utilisateur</option>
+        <option value="">{{ labels.common.users.select }}</option>
         @for (user of users; track user.id) {
           <option [ngValue]="user.id" [title]="userLabel(user)">{{ userLabel(user) }}</option>
         }
@@ -11,17 +11,17 @@
     </label>
 
     <label>
-      Date de début
+      {{ labels.regular.fields.dateStart }}
       <input name="regularInterventionStartDate" [(ngModel)]="form.startDate" required type="datetime-local" />
     </label>
 
     <label>
-      Date de fin
+      {{ labels.regular.fields.dateEnd }}
       <input name="regularInterventionEndDate" [(ngModel)]="form.endDate" required type="datetime-local" />
     </label>
 
     <label>
-      Commentaire
+      {{ labels.common.fields.comment }}
       <textarea name="regularInterventionComment" [(ngModel)]="form.comment" rows="4"></textarea>
     </label>
 
@@ -30,7 +30,7 @@
     }
 
     <div class="form-actions">
-      <button class="primary-button" [disabled]="interventionNgForm.invalid" type="submit">Enregistrer</button>
+      <button class="primary-button" [disabled]="interventionNgForm.invalid" type="submit">{{ labels.common.actions.save }}</button>
     </div>
   </form>
 </app-modal>

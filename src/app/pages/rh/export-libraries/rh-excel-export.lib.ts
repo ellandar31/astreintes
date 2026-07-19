@@ -1,6 +1,9 @@
+import { APP_LABELS } from "../../../i18n/labels";
 import { ExportOperation, ExportTemplateId, RhExportContext } from "./rh-export.models";
 import { RhExportCalculationLibrary } from "./rh-export-calculations";
 import { escapeHtml, formatRange } from "./rh-export-utils";
+
+const DOCUMENT_LABELS = APP_LABELS.rhDocuments;
 
 export class RhExcelExportLibrary {
   buildExcelHtml(templateId: ExportTemplateId, operation: ExportOperation, context: RhExportContext): string {
@@ -24,16 +27,16 @@ export class RhExcelExportLibrary {
         <body>
           <table>
             <tr><td class="title" colspan="8">${escapeHtml(operation.title)}</td></tr>
-            <tr><th>Type</th><td colspan="7">${escapeHtml(operation.exportTitle)}</td></tr>
-            <tr><th>Initiateur</th><td colspan="7">${escapeHtml(operation.initiatorName)}</td></tr>
-            <tr><th>Responsable</th><td colspan="7">${escapeHtml(operation.operationManagerName)}</td></tr>
-            <tr><th>Période prévisionnelle</th><td colspan="7">${formatRange(operation.forecastStartDate, operation.forecastEndDate)}</td></tr>
-            <tr><th>Période réelle</th><td colspan="7">${formatRange(operation.actualStartDate, operation.actualEndDate)}</td></tr>
+            <tr><th>${DOCUMENT_LABELS.fields.type}</th><td colspan="7">${escapeHtml(operation.exportTitle)}</td></tr>
+            <tr><th>${DOCUMENT_LABELS.fields.initiator}</th><td colspan="7">${escapeHtml(operation.initiatorName)}</td></tr>
+            <tr><th>${DOCUMENT_LABELS.fields.manager}</th><td colspan="7">${escapeHtml(operation.operationManagerName)}</td></tr>
+            <tr><th>${DOCUMENT_LABELS.fields.forecastPeriod}</th><td colspan="7">${formatRange(operation.forecastStartDate, operation.forecastEndDate)}</td></tr>
+            <tr><th>${DOCUMENT_LABELS.fields.actualPeriod}</th><td colspan="7">${formatRange(operation.actualStartDate, operation.actualEndDate)}</td></tr>
           </table>
           <br />
           <table>
-            <tr><td class="title" colspan="7">Astreinte</td></tr>
-            <tr><th>Utilisateur</th><th>Début-Fin</th><th>Type indemnisation</th><th>Détail calcul</th><th>Heures</th><th>Coefficient</th></tr>
+            <tr><td class="title" colspan="7">${DOCUMENT_LABELS.sections.onCall}</td></tr>
+            <tr><th>${DOCUMENT_LABELS.fields.user}</th><th>${DOCUMENT_LABELS.fields.range}</th><th>${DOCUMENT_LABELS.fields.indemnityType}</th><th>${DOCUMENT_LABELS.fields.calculationDetail}</th><th>${DOCUMENT_LABELS.fields.hours}</th><th>${DOCUMENT_LABELS.fields.coefficient}</th></tr>
             ${onCallRows
               .map(
                 (row) => `<tr><td>${escapeHtml(row.name)}</td><td>${formatRange(row.startDate, row.endDate)}</td><td>${escapeHtml(row.label)}</td><td>${calculator.segmentDetailsHtml(row.segments)}</td><td>${row.hours}</td><td>${row.coefficient}</td></tr>`,
@@ -42,8 +45,8 @@ export class RhExcelExportLibrary {
           </table>
           <br />
           <table>
-            <tr><td class="title" colspan="9">Interventions / travaux</td></tr>
-            <tr><th>Utilisateur</th><th>Début-Fin</th><th>Plage</th><th>Détail calcul</th><th>Heures</th><th>Coefficient</th><th>Repos compensatoire</th><th>Commentaire</th></tr>
+            <tr><td class="title" colspan="9">${DOCUMENT_LABELS.sections.interventionsAndWork}</td></tr>
+            <tr><th>${DOCUMENT_LABELS.fields.user}</th><th>${DOCUMENT_LABELS.fields.range}</th><th>${APP_LABELS.rh.detail.range}</th><th>${DOCUMENT_LABELS.fields.calculationDetail}</th><th>${DOCUMENT_LABELS.fields.hours}</th><th>${DOCUMENT_LABELS.fields.coefficient}</th><th>${DOCUMENT_LABELS.fields.rest}</th><th>${DOCUMENT_LABELS.fields.comment}</th></tr>
             ${interventionRows
               .map(
                 (row) => `<tr><td>${escapeHtml(row.userName)}</td><td>${formatRange(row.startDate, row.endDate)}</td><td>${escapeHtml(row.label)}</td><td>${calculator.segmentDetailsHtml(row.segments)}</td><td>${row.hours}</td><td>${row.coefficient}</td><td>${row.restCoefficient}</td><td>${escapeHtml(row.comment)}</td></tr>`,

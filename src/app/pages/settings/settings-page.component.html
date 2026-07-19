@@ -1,8 +1,8 @@
-<section class="settings-layout" aria-label="Paramétrage">
-  <aside class="settings-menu" aria-label="Menu de paramétrage">
+<section class="settings-layout" [attr.aria-label]="labels.settings.menu.title">
+  <aside class="settings-menu" [attr.aria-label]="labels.settings.menu.title">
     <div class="settings-menu-heading">
-      <p class="eyebrow">Modules</p>
-      <h3>Paramétrage</h3>
+      <p class="eyebrow">{{ labels.settings.menu.modules }}</p>
+      <h3>{{ labels.settings.menu.title }}</h3>
     </div>
 
     @for (section of sections; track section.id) {

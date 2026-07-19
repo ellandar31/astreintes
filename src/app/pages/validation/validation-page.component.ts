@@ -312,7 +312,7 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
         },
         ...interventions.map((intervention) => ({
           id: `regular-intervention-${intervention.id}`,
-          role: "Intervenant intervention",
+          role: this.labels.validation.roles.interventionStakeholder,
           userLabel: intervention.userName || intervention.userEmail,
           startDate: intervention.startDate,
           endDate: intervention.endDate,
@@ -320,7 +320,7 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
           actionItem: {
             id: `regular-intervention-${intervention.id}`,
             kind: "regular-intervention-agent" as const,
-            category: "Intervention",
+            category: this.labels.common.fields.intervention,
             title: period.userName || period.userEmail,
             userLabel: intervention.userName || intervention.userEmail,
             startDate: intervention.startDate,
@@ -403,7 +403,7 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
         actionItem: {
           id: `exceptional-intervention-${operation.id}-${index}`,
           kind: "exceptional-intervention-agent" as const,
-          category: "Intervention",
+          category: this.labels.common.fields.intervention,
           title: operation.title,
           userLabel: intervention.userName || intervention.userEmail,
           startDate: intervention.startDate || intervention.date || "",

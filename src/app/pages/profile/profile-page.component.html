@@ -1,52 +1,52 @@
 <section class="page-view" aria-labelledby="profile-title">
   <div>
-    <p class="eyebrow">Profil</p>
-    <h2 id="profile-title">Mon profil</h2>
+    <p class="eyebrow">{{ labels.profile.eyebrow }}</p>
+    <h2 id="profile-title">{{ labels.profile.title }}</h2>
   </div>
 
   <div class="profile-layout">
     <section class="profile-panel" aria-labelledby="profile-global-title">
       <div>
-        <p class="panel-kicker">Options globales</p>
-        <h3 id="profile-global-title">Informations</h3>
+        <p class="panel-kicker">{{ labels.profile.sections.globalOptions }}</p>
+        <h3 id="profile-global-title">{{ labels.profile.sections.information }}</h3>
       </div>
 
       <label>
-        Nom
-        <input [(ngModel)]="profile.displayName" name="displayName" type="text" placeholder="Nom affiché" />
+        {{ labels.common.fields.name }}
+        <input [(ngModel)]="profile.displayName" name="displayName" type="text" [placeholder]="labels.profile.fields.displayNamePlaceholder" />
       </label>
 
       <div class="profile-field">
-        <span>Email</span>
+        <span>{{ labels.common.fields.email }}</span>
         <strong>{{ email }}</strong>
       </div>
 
       <label>
-        Nom utilisé pour le visa
+        {{ labels.profile.fields.signatureName }}
         <input [(ngModel)]="profile.signatureName" name="signatureName" type="text" />
       </label>
     </section>
 
     <section class="profile-panel signature-panel" aria-labelledby="profile-signature-title">
       <div>
-        <p class="panel-kicker">Signature</p>
-        <h3 id="profile-signature-title">Visa</h3>
+        <p class="panel-kicker">{{ labels.profile.sections.signature }}</p>
+        <h3 id="profile-signature-title">{{ labels.profile.sections.visa }}</h3>
       </div>
 
-      <div class="signature-modes" aria-label="Mode de signature">
+      <div class="signature-modes" [attr.aria-label]="labels.profile.fields.signatureMode">
         <button [class.active]="profile.signatureMode === 'name'" (click)="updateSignatureMode('name')" type="button">
-          Nom
+          {{ labels.profile.modes.name }}
         </button>
         <button [class.active]="profile.signatureMode === 'image'" (click)="updateSignatureMode('image')" type="button">
-          Image
+          {{ labels.profile.modes.image }}
         </button>
         <button [class.active]="profile.signatureMode === 'draw'" (click)="updateSignatureMode('draw')" type="button">
-          Pad
+          {{ labels.profile.modes.draw }}
         </button>
       </div>
 
       <label>
-        Image de signature
+        {{ labels.profile.fields.signatureImage }}
         <input accept="image/*" (change)="loadSignatureImage($event)" type="file" />
       </label>
 
@@ -63,13 +63,13 @@
           (touchmove)="draw($event)"
           (touchend)="stopDrawing()"
         ></canvas>
-        <button class="secondary-button compact-button" (click)="clearDrawing()" type="button">Effacer le pad</button>
+        <button class="secondary-button compact-button" (click)="clearDrawing()" type="button">{{ labels.profile.actions.clearPad }}</button>
       </div>
 
       <div class="signature-preview">
-        <span>Aperçu</span>
+        <span>{{ labels.profile.preview }}</span>
         @if (signaturePreview) {
-          <img [src]="signaturePreview" alt="Signature" />
+          <img [src]="signaturePreview" [alt]="labels.profile.signatureAlt" />
         } @else {
           <strong>{{ profile.signatureName || displayedName || email }}</strong>
         }
@@ -78,7 +78,7 @@
 
     <div class="profile-actions">
       <button class="primary-button" [disabled]="isSaving()" (click)="saveProfile()" type="button">
-        {{ isSaving() ? "Enregistrement..." : "Enregistrer le profil" }}
+        {{ isSaving() ? labels.profile.actions.saving : labels.profile.actions.saveProfile }}
       </button>
 
       @if (message()) {

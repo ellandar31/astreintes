@@ -5,21 +5,21 @@
         <p class="control-type">{{ item.type }}</p>
         <p class="control-period">{{ item.period }}</p>
       </div>
-      <p class="sent-date">Envoye aux RH le <strong>{{ item.sentToRhLabel }}</strong></p>
+      <p class="sent-date">{{ labels.common.messages.rhSentAt }} <strong>{{ item.sentToRhLabel }}</strong></p>
     </header>
 
     <div class="rh-table-shell">
       <table class="rh-table detail-table">
         <thead>
           <tr>
-            <th>Nature</th>
-            <th>Plage</th>
-            <th>Regle appliquee</th>
-            <th>Heures</th>
-            <th>Coefficient</th>
-            <th>Total controle</th>
-            <th>Repos</th>
-            <th>Detail du calcul</th>
+            <th>{{ labels.rh.detail.nature }}</th>
+            <th>{{ labels.rh.detail.range }}</th>
+            <th>{{ labels.rh.detail.appliedRule }}</th>
+            <th>{{ labels.rh.detail.hours }}</th>
+            <th>{{ labels.rh.detail.coefficient }}</th>
+            <th>{{ labels.rh.detail.controlTotal }}</th>
+            <th>{{ labels.rh.detail.rest }}</th>
+            <th>{{ labels.rh.detail.calculationDetail }}</th>
           </tr>
         </thead>
         <tbody>
@@ -35,7 +35,7 @@
                 @if (line.restCoefficient !== undefined) {
                   {{ formatNumber(line.restCoefficient) }}
                 } @else {
-                  -
+                  {{ labels.common.empty.dash }}
                 }
               </td>
               <td><pre>{{ line.details }}</pre></td>
