@@ -1,6 +1,7 @@
 import { CommonModule } from "@angular/common";
-import { Component } from "@angular/core";
+import { Component, inject } from "@angular/core";
 import { FormsModule, NgForm } from "@angular/forms";
+import { Store } from "@ngrx/store";
 import { ExceptionalOperationsComponent } from "./pages/exceptionnel/exceptional-operations.component";
 import { ProfilePageComponent } from "./pages/profile/profile-page.component";
 import { RegularCalendarComponent } from "./pages/regular/regular-calendar.component";
@@ -8,10 +9,22 @@ import { RhPageComponent } from "./pages/rh/rh-page.component";
 import { SettingsPageComponent } from "./pages/settings/settings-page.component";
 import { ValidationPageComponent } from "./pages/validation/validation-page.component";
 import { ModalComponent } from "./shared/modal.component";
-import { StoreAuthUser, appStore } from "./store/app-store";
+import { AuthActions } from "./state/auth/auth.actions";
+import {
+  selectAuthError,
+  selectAuthUser,
+  selectDisplayName,
+  selectIsSubmitting,
+  selectLoadingSession,
+} from "./state/auth/auth.selectors";
 
-const tabs = ["Régulier", "Exceptionnel", "Validation", "RH"] as const;
-type TabName = (typeof tabs)[number];
+const tabs = [
+  { id: "regular", label: "Régulier" },
+  { id: "exceptional", label: "Exceptionnel" },
+  { id: "validation", label: "Validation" },
+  { id: "rh", label: "RH" },
+] as const;
+type TabId = (typeof tabs)[number]["id"];
 type ModalView = "profile" | "settings";
 
 @Component({
@@ -33,33 +46,26 @@ type ModalView = "profile" | "settings";
 })
 export class AppComponent {
   readonly tabs = tabs;
-  activeTab: TabName = "Régulier";
+  activeTab: TabId = "regular";
   email = "";
-  error = "";
   isCreatingAccount = false;
-  isSubmitting = false;
-  loadingSession = true;
   modalView: ModalView | null = null;
   password = "";
-  user: StoreAuthUser | null = null;
-
-  get displayName(): string {
-    return this.user?.displayName || this.user?.email || "Utilisateur";
-  }
+  private readonly store = inject(Store);
+  readonly displayName = this.store.selectSignal(selectDisplayName);
+  readonly error = this.store.selectSignal(selectAuthError);
+  readonly isSubmitting = this.store.selectSignal(selectIsSubmitting);
+  readonly loadingSession = this.store.selectSignal(selectLoadingSession);
+  readonly user = this.store.selectSignal(selectAuthUser);
 
   constructor() {
-    appStore.auth.onSessionChanged((currentUser) => {
-      this.user = currentUser;
-      this.loadingSession = false;
-
-      if (currentUser) {
-        void this.registerAuthenticatedUser(currentUser);
-      }
-    });
+    // La surveillance Firebase devient une action NgRx pour éviter que le shell
+    // porte directement la logique de session et de synchronisation utilisateur.
+    this.store.dispatch(AuthActions.sessionWatchStarted());
   }
 
-  selectTab(tab: TabName): void {
-    this.activeTab = tab;
+  selectTab(tabId: TabId): void {
+    this.activeTab = tabId;
   }
 
   showProfile(): void {
@@ -74,67 +80,35 @@ export class AppComponent {
     this.modalView = null;
   }
 
-  async loginWithEmail(form: NgForm): Promise<void> {
+  loginWithEmail(form: NgForm): void {
     if (form.invalid) {
+      this.store.dispatch(
+        AuthActions.emailLoginFormInvalid({
+          error: "Renseignez une adresse email valide et un mot de passe d'au moins 6 caractères.",
+        }),
+      );
       return;
     }
 
-    this.error = "";
-    this.isSubmitting = true;
-
-    try {
-      if (this.isCreatingAccount) {
-        await appStore.auth.createWithEmail(this.email, this.password);
-      } else {
-        await appStore.auth.signInWithEmail(this.email, this.password);
-      }
-    } catch {
-      this.error = "Connexion impossible. Vérifiez l'adresse email et le mot de passe.";
-    } finally {
-      this.isSubmitting = false;
-    }
+    this.store.dispatch(
+      AuthActions.emailLoginRequested({
+        email: this.email,
+        password: this.password,
+        createAccount: this.isCreatingAccount,
+      }),
+    );
   }
 
-  async loginWithGoogle(): Promise<void> {
-    this.error = "";
-    this.isSubmitting = true;
-
-    try {
-      await appStore.auth.signInWithGoogle();
-    } catch {
-      this.error = "Connexion Google impossible pour le moment.";
-    } finally {
-      this.isSubmitting = false;
-    }
+  loginWithGoogle(): void {
+    this.store.dispatch(AuthActions.googleLoginRequested());
   }
 
-  async logout(): Promise<void> {
-    await appStore.auth.signOut();
+  logout(): void {
+    this.store.dispatch(AuthActions.logoutRequested());
   }
 
   toggleAccountMode(): void {
     this.isCreatingAccount = !this.isCreatingAccount;
-    this.error = "";
-  }
-
-  private async registerAuthenticatedUser(currentUser: StoreAuthUser): Promise<void> {
-    const userReference = appStore.paths.user(currentUser.uid);
-    const savedUser = await appStore.data.getDocument(userReference);
-    const userPayload = {
-      uid: currentUser.uid,
-      email: currentUser.email || "",
-      displayName: currentUser.displayName || "",
-      lastLoginAt: appStore.data.serverTimestamp(),
-    };
-
-    if (savedUser) {
-      await appStore.data.setDocument(userReference, userPayload, { merge: true });
-      return;
-    }
-
-    await appStore.data.setDocument(userReference, {
-      ...userPayload,
-      role: 1,
-    });
+    this.store.dispatch(AuthActions.errorCleared());
   }
 }

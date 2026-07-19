@@ -1,10 +1,15 @@
 import { CommonModule } from "@angular/common";
-import { Component, EventEmitter, OnDestroy, Output } from "@angular/core";
+import { Component, EventEmitter, OnDestroy, Output, effect, inject } from "@angular/core";
 import { FormsModule, NgForm } from "@angular/forms";
-import { StoreUnsubscribe, appStore } from "../../store/app-store";
+import { Store } from "@ngrx/store";
+import { SettingsActions } from "../../state/settings/settings.actions";
+import {
+  selectSettingsHolidays,
+  selectSettingsImportedHolidays,
+  selectSettingsIsLoadingOfficialHolidays,
+  selectSettingsMessage,
+} from "../../state/settings/settings.selectors";
 import { PublicHoliday } from "./settings.models";
-
-type HolidaySourceResponse = Record<string, string>;
 
 @Component({
   selector: "app-holidays-settings",
@@ -33,9 +38,6 @@ export class HolidaysSettingsComponent implements OnDestroy {
     { id: "wallis-et-futuna", label: "Wallis-et-Futuna" },
   ];
 
-  holidays: PublicHoliday[] = [];
-  importedHolidays: PublicHoliday[] = [];
-  isLoadingOfficialHolidays = false;
   importForm = {
     zone: "metropole",
     year: new Date().getFullYear(),
@@ -46,100 +48,69 @@ export class HolidaysSettingsComponent implements OnDestroy {
     label: "",
   };
 
-  private readonly unsubscribe: StoreUnsubscribe = appStore.data.observeCollection<PublicHoliday>(
-    appStore.paths.publicHolidays(),
-    (documents) => {
-      this.holidays = documents
-        .map((document) => ({ ...document.data, id: document.id }) as PublicHoliday)
-        .sort((first, second) => first.date.localeCompare(second.date));
-    },
-    (error) => this.emitError(error),
-  );
+  private readonly store = inject(Store);
+  private readonly settingsMessage = this.store.selectSignal(selectSettingsMessage);
+  private lastHandledMessage: number | null = null;
 
-  ngOnDestroy(): void {
-    this.unsubscribe();
-  }
+  readonly holidays = this.store.selectSignal(selectSettingsHolidays);
+  readonly importedHolidays = this.store.selectSignal(selectSettingsImportedHolidays);
+  readonly isLoadingOfficialHolidays = this.store.selectSignal(selectSettingsIsLoadingOfficialHolidays);
 
-  async loadOfficialHolidays(): Promise<void> {
-    this.isLoadingOfficialHolidays = true;
+  constructor() {
+    this.store.dispatch(SettingsActions.holidaysWatchStarted());
 
-    try {
-      const response = await fetch(
-        `https://calendrier.api.gouv.fr/jours-feries/${this.importForm.zone}/${this.importForm.year}.json`,
-      );
+    effect(() => {
+      const message = this.settingsMessage();
 
-      if (!response.ok) {
-        throw new Error(`Réponse API invalide (${response.status})`);
+      if (!message || message.source !== "holidays" || message.completedAt === this.lastHandledMessage) {
+        return;
       }
 
-      const data = (await response.json()) as HolidaySourceResponse;
-      this.importedHolidays = Object.entries(data)
-        .map(([date, label]) => this.toHoliday(this.importForm.zone, date, label, "api.gouv.fr"))
-        .sort((first, second) => first.date.localeCompare(second.date));
+      this.lastHandledMessage = message.completedAt;
 
-      this.success.emit(`${this.importedHolidays.length} jours fériés officiels chargés.`);
-    } catch (error) {
-      this.emitError(error);
-    } finally {
-      this.isLoadingOfficialHolidays = false;
-    }
+      if (message.kind === "success") {
+        this.success.emit(message.message);
+        return;
+      }
+
+      this.failure.emit(message.message);
+    });
   }
 
-  async saveImportedHolidays(): Promise<void> {
-    if (!this.importedHolidays.length) {
+  ngOnDestroy(): void {
+    this.store.dispatch(SettingsActions.holidaysWatchStopped());
+  }
+
+  loadOfficialHolidays(): void {
+    this.store.dispatch(SettingsActions.officialHolidaysLoadRequested({ year: this.importForm.year, zone: this.importForm.zone }));
+  }
+
+  saveImportedHolidays(): void {
+    const holidays = this.importedHolidays();
+
+    if (!holidays.length) {
       return;
     }
 
-    try {
-      await Promise.all(
-        this.importedHolidays.map((holiday) =>
-          appStore.data.setDocument(appStore.paths.publicHoliday(holiday.id), {
-            date: holiday.date,
-            label: holiday.label,
-            zone: holiday.zone,
-            source: holiday.source,
-          }),
-        ),
-      );
-
-      this.success.emit("Jours fériés officiels enregistrés.");
-    } catch (error) {
-      this.emitError(error);
-    }
+    this.store.dispatch(SettingsActions.importedHolidaysSaveRequested({ holidays }));
   }
 
-  async saveManualHoliday(form: NgForm): Promise<void> {
+  saveManualHoliday(form: NgForm): void {
     if (form.invalid) {
       return;
     }
 
     const holiday = this.toHoliday(this.manualForm.zone, this.manualForm.date, this.manualForm.label, "manual");
-
-    try {
-      await appStore.data.setDocument(appStore.paths.publicHoliday(holiday.id), {
-        date: holiday.date,
-        label: holiday.label,
-        zone: holiday.zone,
-        source: holiday.source,
-      });
-      form.resetForm({
-        zone: this.manualForm.zone,
-        date: "",
-        label: "",
-      });
-      this.success.emit("Jour férié enregistré.");
-    } catch (error) {
-      this.emitError(error);
-    }
+    this.store.dispatch(SettingsActions.manualHolidaySaveRequested({ holiday }));
+    form.resetForm({
+      zone: this.manualForm.zone,
+      date: "",
+      label: "",
+    });
   }
 
-  async deleteHoliday(holiday: PublicHoliday): Promise<void> {
-    try {
-      await appStore.data.deleteDocument(appStore.paths.publicHoliday(holiday.id));
-      this.success.emit("Jour férié supprimé.");
-    } catch (error) {
-      this.emitError(error);
-    }
+  deleteHoliday(holiday: PublicHoliday): void {
+    this.store.dispatch(SettingsActions.holidayDeleteRequested({ holidayId: holiday.id }));
   }
 
   zoneLabel(zone: string): string {
@@ -154,17 +125,5 @@ export class HolidaysSettingsComponent implements OnDestroy {
       zone,
       source,
     };
-  }
-
-  private emitError(error: unknown): void {
-    let message = "Erreur pendant la gestion des jours fériés.";
-
-    if (appStore.errors.isError(error)) {
-      message = `Erreur Base de Données (${error.code}) : ${error.message}`;
-    } else if (error instanceof Error) {
-      message = error.message;
-    }
-
-    this.failure.emit(message);
   }
 }

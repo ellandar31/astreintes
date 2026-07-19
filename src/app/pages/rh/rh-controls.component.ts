@@ -1,8 +1,18 @@
 import { CommonModule } from "@angular/common";
-import { Component, Input, OnChanges, OnDestroy, SimpleChanges } from "@angular/core";
-import { asSafeString } from "../../shared/value-normalizers";
+import { Component, Input, OnChanges, OnDestroy, SimpleChanges, effect, inject } from "@angular/core";
+import { Store } from "@ngrx/store";
 import { SignatureVisa, createEmptyVisa } from "../../shared/visa.models";
-import { StoreAuthUser, StoreUnsubscribe, appStore } from "../../store/app-store";
+import { ExceptionalActions } from "../../state/exceptional/exceptional.actions";
+import { selectExceptionalOperations } from "../../state/exceptional/exceptional.selectors";
+import { RegularActions } from "../../state/regular/regular.actions";
+import {
+  selectRegularInterventions,
+  selectRegularPeriods,
+  selectRegularPublicHolidays,
+} from "../../state/regular/regular.selectors";
+import { SettingsActions } from "../../state/settings/settings.actions";
+import { selectSettingsRhCompensation, selectSettingsUsers } from "../../state/settings/settings.selectors";
+import { StoreAuthUser } from "../../store/app-store";
 import {
   ExportOperation,
   InterventionCompensationRow,
@@ -78,48 +88,63 @@ export class RhControlsComponent implements OnChanges, OnDestroy {
     { id: "sunday_holiday_7_21", label: "Dimanche/Jours feries (7h-21h)", interventionCoefficient: 0, workCoefficient: 0, restCoefficient: 0 },
   ];
 
-  private readonly unsubscribes: StoreUnsubscribe[] = [
-    appStore.data.observeCollection<RhUser>(appStore.paths.users(), (documents) => {
-      this.users = documents
-        .map((document) => ({ ...document.data, id: document.id }) as RhUser)
-        .filter((user) => Boolean(user.email))
-        .sort((first, second) => this.userLabel(first).localeCompare(this.userLabel(second)));
+  private readonly store = inject(Store);
+  private readonly exceptionalOperationsSignal = this.store.selectSignal(selectExceptionalOperations);
+  private readonly regularInterventionsSignal = this.store.selectSignal(selectRegularInterventions);
+  private readonly regularPeriodsSignal = this.store.selectSignal(selectRegularPeriods);
+  private readonly publicHolidaysSignal = this.store.selectSignal(selectRegularPublicHolidays);
+  private readonly rhCompensationSignal = this.store.selectSignal(selectSettingsRhCompensation);
+  private readonly usersSignal = this.store.selectSignal(selectSettingsUsers);
 
+  constructor() {
+    this.store.dispatch(SettingsActions.usersWatchStarted());
+    this.store.dispatch(SettingsActions.rhCompensationWatchStarted());
+    this.store.dispatch(RegularActions.watchStarted());
+    this.store.dispatch(ExceptionalActions.watchStarted());
+
+    effect(() => {
+      this.users = [...this.usersSignal()]
+        .filter((user) => Boolean(user.email))
+        .sort((first, second) => this.userLabel(first).localeCompare(this.userLabel(second))) as RhUser[];
       this.ensureDefaultExpandedState();
-    }),
-    appStore.data.observeCollection<RhRegularPeriod>(appStore.paths.regularOnCallPeriods(), (documents) => {
-      this.regularPeriods = documents.map((document) => ({ ...document.data, id: document.id }) as RhRegularPeriod);
+    });
+
+    effect(() => {
+      this.regularPeriods = this.regularPeriodsSignal() as RhRegularPeriod[];
       this.ensureDefaultExpandedState();
-    }),
-    appStore.data.observeCollection<RhRegularIntervention>(appStore.paths.regularInterventionsGroup(), (documents) => {
-      this.regularInterventions = documents.map((document) => {
-        const data = document.data;
-        const periodId = document.parentId || asSafeString(data["periodId"]);
-        return { ...data, id: document.id, periodId } as RhRegularIntervention;
-      });
+    });
+
+    effect(() => {
+      this.regularInterventions = this.regularInterventionsSignal() as RhRegularIntervention[];
       this.ensureDefaultExpandedState();
-    }),
-    appStore.data.observeCollection<RhPublicHoliday>(appStore.paths.publicHolidays(), (documents) => {
-      this.publicHolidays = documents.map((document) => ({ ...document.data, id: document.id }) as RhPublicHoliday);
-    }),
-    appStore.data.observeCollection<RhExceptionalOperation>(appStore.paths.exceptionalOperations(), (documents) => {
-      this.exceptionalOperations = documents.map((document) => ({ ...document.data, id: document.id }) as RhExceptionalOperation);
+    });
+
+    effect(() => {
+      this.publicHolidays = this.publicHolidaysSignal() as RhPublicHoliday[];
+    });
+
+    effect(() => {
+      this.exceptionalOperations = this.exceptionalOperationsSignal() as RhExceptionalOperation[];
       this.ensureDefaultExpandedState();
-    }),
-    appStore.data.observeDocument<Record<string, unknown>>(appStore.paths.rhCompensationRules(), (data) => {
-      if (!data) {
+    });
+
+    effect(() => {
+      const settings = this.rhCompensationSignal();
+
+      if (!settings) {
         return;
       }
 
-      const savedOnCallRows = Array.isArray(data["onCall"]) ? (data["onCall"] as Partial<OnCallCompensationRule>[]) : [];
-      const savedPeriodRows = Array.isArray(data["periods"]) ? (data["periods"] as Partial<PeriodCompensationRule>[]) : [];
-      this.onCallCompensationRules = this.mergeRows(this.onCallCompensationRules, savedOnCallRows);
-      this.periodCompensationRules = this.mergeRows(this.periodCompensationRules, savedPeriodRows);
-    }),
-  ];
+      this.onCallCompensationRules = this.mergeRows(this.onCallCompensationRules, settings.onCall);
+      this.periodCompensationRules = this.mergeRows(this.periodCompensationRules, settings.periods);
+    });
+  }
 
   ngOnDestroy(): void {
-    this.unsubscribes.forEach((unsubscribe) => unsubscribe());
+    this.store.dispatch(SettingsActions.usersWatchStopped());
+    this.store.dispatch(SettingsActions.rhCompensationWatchStopped());
+    this.store.dispatch(RegularActions.watchStopped());
+    this.store.dispatch(ExceptionalActions.watchStopped());
   }
 
   ngOnChanges(changes: SimpleChanges): void {

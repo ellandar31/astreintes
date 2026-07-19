@@ -1,9 +1,17 @@
 import { CommonModule } from "@angular/common";
-import { Component, OnDestroy } from "@angular/core";
+import { Component, OnDestroy, effect, inject } from "@angular/core";
 import { FormsModule } from "@angular/forms";
-import { asSafeString } from "../../shared/value-normalizers";
 import { createEmptyVisa } from "../../shared/visa.models";
-import { StoreUnsubscribe, appStore } from "../../store/app-store";
+import { Store } from "@ngrx/store";
+import { RegularActions } from "../../state/regular/regular.actions";
+import {
+  selectRegularError,
+  selectRegularInterventions,
+  selectRegularPeriods,
+  selectRegularPublicHolidays,
+  selectRegularTeams,
+  selectRegularUsers,
+} from "../../state/regular/regular.selectors";
 import {
   RegularIntervention,
   RegularInterventionForm,
@@ -49,61 +57,52 @@ export class RegularCalendarComponent implements OnDestroy {
   teams: RegularTeam[] = [];
   users: RegularUser[] = [];
 
-  private readonly unsubscribes: StoreUnsubscribe[] = [
-    appStore.data.observeCollection<Record<string, unknown>>(appStore.paths.teams(), (documents) => {
-      this.teams = documents
-        .map((document) => {
-          const data = document.data;
-          return {
-            id: document.id,
-            name: asSafeString(data["name"]),
-            members: Array.isArray(data["members"]) ? data["members"].map(String) : [],
-          };
-        })
-        .sort((first, second) => first.name.localeCompare(second.name));
+  private readonly store = inject(Store);
+  private readonly regularError = this.store.selectSignal(selectRegularError);
+  private readonly regularInterventions = this.store.selectSignal(selectRegularInterventions);
+  private readonly regularPeriods = this.store.selectSignal(selectRegularPeriods);
+  private readonly regularPublicHolidays = this.store.selectSignal(selectRegularPublicHolidays);
+  private readonly regularTeams = this.store.selectSignal(selectRegularTeams);
+  private readonly regularUsers = this.store.selectSignal(selectRegularUsers);
+
+  constructor() {
+    this.store.dispatch(RegularActions.watchStarted());
+
+    effect(() => {
+      this.teams = this.regularTeams();
 
       if (!this.selectedTeamId && this.teams.length) {
         this.selectedTeamId = this.teams[0].id;
       }
-    }),
-    appStore.data.observeCollection<RegularUser>(appStore.paths.users(), (documents) => {
-      this.users = documents
-        .map((document) => ({ ...document.data, id: document.id }) as RegularUser)
-        .filter((user) => Boolean(user.email))
-        .sort((first, second) => this.userLabel(first).localeCompare(this.userLabel(second)));
-    }),
-    appStore.data.observeCollection<RegularOnCallPeriod>(appStore.paths.regularOnCallPeriods(), (documents) => {
-      this.periods = documents.map((document) => ({ ...document.data, id: document.id }) as RegularOnCallPeriod);
-    }),
-    appStore.data.observeCollection<RegularIntervention>(
-      appStore.paths.regularInterventionsGroup(),
-      (documents) => {
-        this.interventions = documents.map((document) => {
-          const data = document.data;
-          const periodId = document.parentId || asSafeString(data["periodId"]);
-          return { ...data, id: document.id, periodId } as RegularIntervention;
-        });
-      },
-      (error) => {
-        this.interventionError = this.toErrorMessage(error, "Impossible de charger les interventions.");
-      },
-    ),
-    appStore.data.observeCollection<Record<string, unknown>>(appStore.paths.publicHolidays(), (documents) => {
-      this.publicHolidays = documents
-        .map((document) => {
-          const data = document.data;
-          return {
-            id: document.id,
-            date: asSafeString(data["date"]),
-            label: asSafeString(data["label"], "Jour ferie"),
-          };
-        })
-        .filter((holiday) => Boolean(holiday.date));
-    }),
-  ];
+    });
+
+    effect(() => {
+      this.users = this.regularUsers();
+    });
+
+    effect(() => {
+      this.periods = this.regularPeriods();
+    });
+
+    effect(() => {
+      this.interventions = this.regularInterventions();
+    });
+
+    effect(() => {
+      this.publicHolidays = this.regularPublicHolidays();
+    });
+
+    effect(() => {
+      const error = this.regularError();
+
+      if (error) {
+        this.interventionError = error;
+      }
+    });
+  }
 
   ngOnDestroy(): void {
-    this.unsubscribes.forEach((unsubscribe) => unsubscribe());
+    this.store.dispatch(RegularActions.watchStopped());
   }
 
   get monthLabel(): string {
@@ -248,7 +247,7 @@ export class RegularCalendarComponent implements OnDestroy {
     this.interventionError = "";
   }
 
-  async savePeriod(form: RegularOnCallPeriodForm): Promise<void> {
+  savePeriod(form: RegularOnCallPeriodForm): void {
     if (!this.selectedTeamId) {
       return;
     }
@@ -266,32 +265,17 @@ export class RegularCalendarComponent implements OnDestroy {
       return;
     }
 
-    if (this.editingPeriodId) {
-      await appStore.data.updateDocument(appStore.paths.regularOnCallPeriod(this.editingPeriodId), {
-        ...form,
-        teamId: this.selectedTeamId,
-        agentVisa: this.periods.find((period) => period.id === this.editingPeriodId)?.agentVisa || createEmptyVisa(),
-        directorVisa: this.periods.find((period) => period.id === this.editingPeriodId)?.directorVisa || createEmptyVisa(),
-        updatedAt: appStore.data.serverTimestamp(),
-      });
-
-      this.closePeriodModal();
-      return;
-    }
-
-    await appStore.data.addDocument(appStore.paths.regularOnCallPeriods(), {
-      ...form,
-      teamId: this.selectedTeamId,
-      agentVisa: createEmptyVisa(),
-      directorVisa: createEmptyVisa(),
-      createdAt: appStore.data.serverTimestamp(),
-      updatedAt: appStore.data.serverTimestamp(),
-    });
-
+    this.store.dispatch(RegularActions.periodSaveRequested({
+      editingPeriodId: this.editingPeriodId,
+      existingAgentVisa: currentPeriod?.agentVisa || createEmptyVisa(),
+      existingDirectorVisa: currentPeriod?.directorVisa || createEmptyVisa(),
+      form,
+      selectedTeamId: this.selectedTeamId,
+    }));
     this.closePeriodModal();
   }
 
-  async saveIntervention(form: RegularInterventionForm): Promise<void> {
+  saveIntervention(form: RegularInterventionForm): void {
     this.interventionError = "";
 
     if (form.endDate <= form.startDate) {
@@ -312,40 +296,20 @@ export class RegularCalendarComponent implements OnDestroy {
       return;
     }
 
-    try {
-      const existingIntervention = this.editingInterventionId
-        ? this.interventions.find((intervention) => intervention.id === this.editingInterventionId)
-        : undefined;
-      const payload = {
-        ...form,
-        comment: form.comment.trim(),
-        teamId: parentPeriod.teamId,
-        agentVisa: existingIntervention?.agentVisa || createEmptyVisa(),
-        updatedAt: appStore.data.serverTimestamp(),
-      };
+    const existingIntervention = this.editingInterventionId
+      ? this.interventions.find((intervention) => intervention.id === this.editingInterventionId)
+      : undefined;
 
-      if (this.editingInterventionId && existingIntervention?.periodId === parentPeriod.id) {
-        await appStore.data.updateDocument(appStore.paths.regularIntervention(parentPeriod.id, this.editingInterventionId), payload);
-      } else if (this.editingInterventionId && existingIntervention) {
-        await appStore.data.addDocument(appStore.paths.regularInterventions(parentPeriod.id), {
-          ...payload,
-          createdAt: appStore.data.serverTimestamp(),
-        });
-        await appStore.data.deleteDocument(appStore.paths.regularIntervention(existingIntervention.periodId, existingIntervention.id));
-      } else {
-        await appStore.data.addDocument(appStore.paths.regularInterventions(parentPeriod.id), {
-          ...payload,
-          createdAt: appStore.data.serverTimestamp(),
-        });
-      }
-
-      this.closeInterventionModal();
-    } catch (error) {
-      this.interventionError = this.toErrorMessage(error, "Impossible d'enregistrer l'intervention.");
-    }
+    this.store.dispatch(RegularActions.interventionSaveRequested({
+      editingInterventionId: this.editingInterventionId,
+      existingIntervention,
+      form,
+      parentPeriod,
+    }));
+    this.closeInterventionModal();
   }
 
-  async deleteIntervention(intervention: RegularIntervention): Promise<void> {
+  deleteIntervention(intervention: RegularIntervention): void {
     if (this.isPeriodSentToRh(this.periodForIntervention(intervention))) {
       return;
     }
@@ -356,15 +320,13 @@ export class RegularCalendarComponent implements OnDestroy {
       return;
     }
 
-    try {
-      await appStore.data.deleteDocument(appStore.paths.regularIntervention(intervention.periodId, intervention.id));
-    } catch (error) {
-      this.interventionError = this.toErrorMessage(error, "Impossible de supprimer l'intervention.");
-      this.isInterventionModalOpen = true;
-    }
+    this.store.dispatch(RegularActions.interventionDeleteRequested({
+      interventionId: intervention.id,
+      periodId: intervention.periodId,
+    }));
   }
 
-  async deletePeriod(): Promise<void> {
+  deletePeriod(): void {
     if (!this.editingPeriodId) {
       return;
     }
@@ -381,12 +343,12 @@ export class RegularCalendarComponent implements OnDestroy {
       return;
     }
 
-    await Promise.all(
-      this.interventions
+    this.store.dispatch(RegularActions.periodDeleteRequested({
+      interventions: this.interventions
         .filter((intervention) => intervention.periodId === this.editingPeriodId)
-        .map((intervention) => appStore.data.deleteDocument(appStore.paths.regularIntervention(intervention.periodId, intervention.id))),
-    );
-    await appStore.data.deleteDocument(appStore.paths.regularOnCallPeriod(this.editingPeriodId));
+        .map((intervention) => ({ id: intervention.id, periodId: intervention.periodId })),
+      periodId: this.editingPeriodId,
+    }));
     this.closePeriodModal();
   }
 
@@ -535,15 +497,4 @@ export class RegularCalendarComponent implements OnDestroy {
     return firstStart < secondEnd && firstEnd > secondStart;
   }
 
-  private toErrorMessage(error: unknown, fallback: string): string {
-    if (appStore.errors.isError(error)) {
-      if (error.code === "permission-denied") {
-        return `${fallback} Les règles ne permettent pas encore cette opération.`;
-      }
-
-      return `${fallback} Erreur de la base (${error.code}) : ${error.message}`;
-    }
-
-    return fallback;
-  }
 }

@@ -1,9 +1,18 @@
 import { CommonModule } from "@angular/common";
-import { Component, OnDestroy } from "@angular/core";
+import { Component, OnDestroy, effect, inject } from "@angular/core";
 import { FormsModule } from "@angular/forms";
-import { asSafeString } from "../../shared/value-normalizers";
+import { Store } from "@ngrx/store";
 import { SignatureVisa, createEmptyVisa } from "../../shared/visa.models";
-import { StoreDocumentReference, StoreUnsubscribe, appStore } from "../../store/app-store";
+import { ExceptionalActions } from "../../state/exceptional/exceptional.actions";
+import { selectExceptionalOperations } from "../../state/exceptional/exceptional.selectors";
+import { RegularActions } from "../../state/regular/regular.actions";
+import {
+  selectRegularInterventions,
+  selectRegularPeriods,
+  selectRegularPublicHolidays,
+} from "../../state/regular/regular.selectors";
+import { SettingsActions } from "../../state/settings/settings.actions";
+import { selectSettingsRhCompensation, selectSettingsRhTemplates } from "../../state/settings/settings.selectors";
 import { RhExceptionalOperation, RhRegularPeriod } from "./rh.models";
 import { RhExcelExportLibrary } from "./export-libraries/rh-excel-export.lib";
 import {
@@ -60,48 +69,64 @@ export class RhExportsComponent implements OnDestroy {
     { id: "sunday_holiday_7_21", label: "Dimanche/Jours fériés (7h-21h)", interventionCoefficient: 0, workCoefficient: 0, restCoefficient: 0 },
   ];
 
-  private readonly unsubscribes: StoreUnsubscribe[] = [
-    appStore.data.observeDocument<Record<string, unknown>>(appStore.paths.rhExportTemplates(), (data) => {
-      const savedTemplates = Array.isArray(data?.["templates"]) ? (data["templates"] as Partial<WordExportTemplate>[]) : [];
+  private readonly wordPdfExportLibrary = new RhWordPdfExportLibrary();
+  private readonly excelExportLibrary = new RhExcelExportLibrary();
+  private readonly store = inject(Store);
+  private readonly exceptionalOperationsSignal = this.store.selectSignal(selectExceptionalOperations);
+  private readonly regularInterventionsSignal = this.store.selectSignal(selectRegularInterventions);
+  private readonly regularPeriodsSignal = this.store.selectSignal(selectRegularPeriods);
+  private readonly publicHolidaysSignal = this.store.selectSignal(selectRegularPublicHolidays);
+  private readonly rhCompensationSignal = this.store.selectSignal(selectSettingsRhCompensation);
+  private readonly rhTemplatesSignal = this.store.selectSignal(selectSettingsRhTemplates);
+
+  constructor() {
+    this.store.dispatch(SettingsActions.rhCompensationWatchStarted());
+    this.store.dispatch(SettingsActions.rhTemplatesWatchStarted());
+    this.store.dispatch(RegularActions.watchStarted());
+    this.store.dispatch(ExceptionalActions.watchStarted());
+
+    effect(() => {
+      const savedTemplates = this.rhTemplatesSignal();
 
       this.templates.forEach((template) => {
         const savedTemplate = savedTemplates.find((item) => item.id === template.id);
         template.fileName = savedTemplate?.fileName || "";
       });
-    }),
-    appStore.data.observeDocument<Record<string, unknown>>(appStore.paths.rhCompensationRules(), (data) => {
-      if (!data) {
+    });
+
+    effect(() => {
+      const settings = this.rhCompensationSignal();
+
+      if (!settings) {
         return;
       }
 
-      const savedOnCallRows = Array.isArray(data["onCall"]) ? (data["onCall"] as Partial<OnCallCompensationRule>[]) : [];
-      const savedPeriodRows = Array.isArray(data["periods"]) ? (data["periods"] as Partial<PeriodCompensationRule>[]) : [];
-      this.onCallCompensationRules = this.mergeRows(this.onCallCompensationRules, savedOnCallRows);
-      this.periodCompensationRules = this.mergeRows(this.periodCompensationRules, savedPeriodRows);
-    }),
-    appStore.data.observeCollection<RhRegularPeriod>(appStore.paths.regularOnCallPeriods(), (documents) => {
-      this.regularPeriods = documents.map((document) => ({ ...document.data, id: document.id }) as RhRegularPeriod);
-    }),
-    appStore.data.observeCollection<RegularInterventionExport>(appStore.paths.regularInterventionsGroup(), (documents) => {
-      this.regularInterventions = documents.map((document) => {
-        const data = document.data;
-        const periodId = document.parentId || asSafeString(data["periodId"]);
-        return { ...data, id: document.id, periodId } as RegularInterventionExport;
-      });
-    }),
-    appStore.data.observeCollection<RhExceptionalOperation>(appStore.paths.exceptionalOperations(), (documents) => {
-      this.exceptionalOperations = documents.map((document) => ({ ...document.data, id: document.id }) as RhExceptionalOperation);
-    }),
-    appStore.data.observeCollection<{ date: string; label: string }>(appStore.paths.publicHolidays(), (documents) => {
-      this.publicHolidays = documents.map((document) => ({ ...document.data, id: document.id }) as { id: string; date: string; label: string });
-    }),
-  ];
+      this.onCallCompensationRules = this.mergeRows(this.onCallCompensationRules, settings.onCall);
+      this.periodCompensationRules = this.mergeRows(this.periodCompensationRules, settings.periods);
+    });
 
-  private readonly wordPdfExportLibrary = new RhWordPdfExportLibrary();
-  private readonly excelExportLibrary = new RhExcelExportLibrary();
+    effect(() => {
+      this.regularPeriods = this.regularPeriodsSignal() as RhRegularPeriod[];
+    });
+
+    effect(() => {
+      this.regularInterventions = this.regularInterventionsSignal() as RegularInterventionExport[];
+    });
+
+    effect(() => {
+      this.exceptionalOperations = this.exceptionalOperationsSignal() as RhExceptionalOperation[];
+    });
+
+    effect(() => {
+      this.publicHolidays = this.publicHolidaysSignal();
+    });
+  }
 
   ngOnDestroy(): void {
-    this.unsubscribes.forEach((unsubscribe) => unsubscribe());
+    this.store.dispatch(SettingsActions.rhCompensationWatchStopped());
+    this.store.dispatch(SettingsActions.rhTemplatesWatchStopped());
+    this.store.dispatch(RegularActions.watchStopped());
+    this.store.dispatch(ExceptionalActions.watchStopped());
   }
 
   exportOperation(templateId: ExportTemplateId, operation: ExportOperation): void {
@@ -147,22 +172,18 @@ export class RhExportsComponent implements OnDestroy {
     this.exportMessage = `Export PDF généré pour ${operation.title}.`;
   }
 
-  async markSentToRh(operation: ExportOperation): Promise<void> {
+  markSentToRh(operation: ExportOperation): void {
     this.exportMessage = "";
 
-    await appStore.data.updateDocument(this.exportOperationDoc(operation), {
-      sentToRhAt: appStore.data.serverTimestamp(),
-    });
+    this.dispatchRhSentUpdate(operation, true);
 
     this.exportMessage = `${operation.title} marqué comme envoyé aux RH.`;
   }
 
-  async unmarkSentToRh(operation: ExportOperation): Promise<void> {
+  unmarkSentToRh(operation: ExportOperation): void {
     this.exportMessage = "";
 
-    await appStore.data.updateDocument(this.exportOperationDoc(operation), {
-      sentToRhAt: appStore.data.deleteField(),
-    });
+    this.dispatchRhSentUpdate(operation, false);
 
     this.exportMessage = `Envoi RH supprimé pour ${operation.title}.`;
   }
@@ -283,10 +304,13 @@ export class RhExportsComponent implements OnDestroy {
     return itemStart < end && itemEnd >= start;
   }
 
-  private exportOperationDoc(operation: ExportOperation): StoreDocumentReference {
-    return operation.sourceCollection === "exceptionalOperations"
-      ? appStore.paths.exceptionalOperation(operation.sourceId)
-      : appStore.paths.regularOnCallPeriod(operation.sourceId);
+  private dispatchRhSentUpdate(operation: ExportOperation, sent: boolean): void {
+    if (operation.sourceCollection === "exceptionalOperations") {
+      this.store.dispatch(ExceptionalActions.operationRhSentUpdateRequested({ operationId: operation.sourceId, sent }));
+      return;
+    }
+
+    this.store.dispatch(RegularActions.periodRhSentUpdateRequested({ periodId: operation.sourceId, sent }));
   }
 
   private monthRange(monthKey: string): { start: Date; end: Date } {

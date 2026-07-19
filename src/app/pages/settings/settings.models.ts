@@ -31,3 +31,28 @@ export interface PublicHoliday {
   zone: string;
   source: "api.gouv.fr" | "manual";
 }
+
+export interface OnCallCompensationRule {
+  id: string;
+  label: string;
+  coefficient: number;
+}
+
+export interface PeriodCompensationRule {
+  id: string;
+  label: string;
+  interventionCoefficient: number;
+  workCoefficient: number;
+  restCoefficient: number;
+}
+
+export interface RhCompensationSettings {
+  onCall: OnCallCompensationRule[];
+  periods: PeriodCompensationRule[];
+}
+
+export interface RhExportTemplateSetting {
+  id: "regular" | "exceptionalOnCall" | "exceptionalWork";
+  label: string;
+  fileName: string;
+}

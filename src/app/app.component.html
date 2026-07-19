@@ -1,8 +1,8 @@
-@if (loadingSession) {
+@if (loadingSession()) {
   <main class="center-screen">
     <div class="loader" aria-label="Chargement"></div>
   </main>
-} @else if (user) {
+} @else if (user()) {
   <main class="app-shell">
     <header class="top-bar">
       <div>
@@ -11,7 +11,7 @@
       </div>
 
       <div class="top-actions" aria-label="Actions utilisateur">
-        <button class="icon-button" [title]="'Profil - ' + displayName" (click)="showProfile()" type="button">
+        <button class="icon-button" [title]="'Profil - ' + displayName()" (click)="showProfile()" type="button">
           <span class="button-icon" aria-hidden="true">P</span>
           <span>Profil</span>
         </button>
@@ -20,38 +20,38 @@
           <span>Paramétrage</span>
         </button>
         <button class="icon-button danger" (click)="logout()" title="Déconnexion" type="button">
-          X          
+          X
         </button>
       </div>
     </header>
 
     <nav class="tabs" aria-label="Sections de l'application">
-      @for (tab of tabs; track tab) {
+      @for (tab of tabs; track tab.id) {
         <button
-          [attr.aria-current]="activeTab === tab ? 'page' : null"
-          [class.active]="activeTab === tab"
+          [attr.aria-current]="activeTab === tab.id ? 'page' : null"
+          [class.active]="activeTab === tab.id"
           class="tab"
-          (click)="selectTab(tab)"
+          (click)="selectTab(tab.id)"
           type="button"
         >
-          {{ tab }}
+          {{ tab.label }}
         </button>
       }
     </nav>
 
-    @if (activeTab === "Régulier") {
+    @if (activeTab === "regular") {
       <app-regular-calendar></app-regular-calendar>
-    } @else if (activeTab === "Exceptionnel") {
-      <app-exceptional-operations [user]="user"></app-exceptional-operations>
-    } @else if (activeTab === "Validation") {
-      <app-validation-page [user]="user"></app-validation-page>
-    } @else if (activeTab === "RH") {
-      <app-rh-page [user]="user"></app-rh-page>
+    } @else if (activeTab === "exceptional") {
+      <app-exceptional-operations [user]="user()"></app-exceptional-operations>
+    } @else if (activeTab === "validation") {
+      <app-validation-page [user]="user()"></app-validation-page>
+    } @else if (activeTab === "rh") {
+      <app-rh-page [user]="user()"></app-rh-page>
     }
 
     @if (modalView === "profile") {
       <app-modal title="Profil" size="large" (closed)="closeModal()">
-        <app-profile-page [user]="user" (saved)="closeModal()">></app-profile-page>
+        <app-profile-page [user]="user()" (saved)="closeModal()"></app-profile-page>
       </app-modal>
     } @else if (modalView === "settings") {
       <app-modal title="Paramétrage" size="large" (closed)="closeModal()">
@@ -95,16 +95,16 @@
           />
         </label>
 
-        @if (error) {
-          <p class="error-message">{{ error }}</p>
+        @if (error()) {
+          <p class="error-message">{{ error() }}</p>
         }
 
-        <button class="primary-button" [disabled]="isSubmitting || authForm.invalid" type="submit">
+        <button class="primary-button" [disabled]="isSubmitting()" type="submit">
           {{ isCreatingAccount ? "Créer le compte" : "Se connecter" }}
         </button>
       </form>
 
-      <button class="google-button" [disabled]="isSubmitting" (click)="loginWithGoogle()" type="button">
+      <button class="google-button" [disabled]="isSubmitting()" (click)="loginWithGoogle()" type="button">
         Continuer avec Google
       </button>
 

@@ -3,7 +3,7 @@
     <p class="eyebrow">Administration</p>
     <h3 id="users-title">Gestion des utilisateurs</h3>
     <p class="muted">
-      Cette liste est alimentée automatiquement quand une personne se connecte à l'application.      
+      Cette liste est alimentée automatiquement quand une personne se connecte à l'application.
     </p>
   </div>
 
@@ -14,7 +14,7 @@
   </div>
 
   <div class="settings-list">
-    @for (user of users; track user.id) {
+    @for (user of users(); track user.id) {
       <article class="settings-item settings-item-users">
         <div>
           <h4>{{ user.displayName || user.email }}</h4>
@@ -35,14 +35,14 @@
         </label>
 
         <div class="item-actions">
-          
           <button
             class="icon-button danger"
             (click)="deleteUser(user)"
             type="button"
             title="Supprimer l'utilisateur"
-            aria-label="Supprimer l'utilisateur">
-            🗑️
+            aria-label="Supprimer l'utilisateur"
+          >
+            X
           </button>
         </div>
       </article>

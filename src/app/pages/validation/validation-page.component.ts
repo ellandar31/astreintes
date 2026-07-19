@@ -1,11 +1,23 @@
 import { CommonModule } from "@angular/common";
-import { Component, Input, OnChanges, OnDestroy, SimpleChanges } from "@angular/core";
+import { Component, Input, OnChanges, OnDestroy, SimpleChanges, effect, inject } from "@angular/core";
 import { FormsModule } from "@angular/forms";
+import { Store } from "@ngrx/store";
 import { APP_LABELS } from "../../i18n/labels";
-import { normalizeObjectTextEncoding } from "../../i18n/text-encoding";
-import { asSafeString } from "../../shared/value-normalizers";
 import { SignatureVisa, createEmptyVisa } from "../../shared/visa.models";
-import { StoreAuthUser, StoreUnsubscribe, appStore } from "../../store/app-store";
+import { ExceptionalActions } from "../../state/exceptional/exceptional.actions";
+import {
+  selectExceptionalError,
+  selectExceptionalOperations,
+} from "../../state/exceptional/exceptional.selectors";
+import { RegularActions } from "../../state/regular/regular.actions";
+import {
+  selectRegularError,
+  selectRegularInterventions,
+  selectRegularPeriods,
+} from "../../state/regular/regular.selectors";
+import { SettingsActions } from "../../state/settings/settings.actions";
+import { selectSettingsMessage, selectSettingsUsers } from "../../state/settings/settings.selectors";
+import { StoreAuthUser } from "../../store/app-store";
 import { ExceptionalOperation } from "../exceptionnel/exceptional.models";
 import { RegularIntervention, RegularOnCallPeriod } from "../regular/regular.models";
 import { ValidationConsultationModalComponent } from "./validation-consultation-modal.component";
@@ -33,28 +45,55 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
   validationMessage = "";
   readonly canDeleteVisaForModal = (item: ValidationItem): boolean => this.canDeleteVisa(item);
 
-  private readonly unsubscribes: StoreUnsubscribe[] = [
-    appStore.data.observeCollection<AppUser>(appStore.paths.users(), (documents) => {
-      this.users = documents
-        .map((document) => this.fromStore<AppUser>(document.id, document.data))
+  private readonly store = inject(Store);
+  private readonly exceptionalError = this.store.selectSignal(selectExceptionalError);
+  private readonly exceptionalOperationsSignal = this.store.selectSignal(selectExceptionalOperations);
+  private readonly regularError = this.store.selectSignal(selectRegularError);
+  private readonly regularInterventionsSignal = this.store.selectSignal(selectRegularInterventions);
+  private readonly regularPeriodsSignal = this.store.selectSignal(selectRegularPeriods);
+  private readonly settingsMessage = this.store.selectSignal(selectSettingsMessage);
+  private readonly settingsUsers = this.store.selectSignal(selectSettingsUsers);
+
+  constructor() {
+    this.store.dispatch(SettingsActions.usersWatchStarted());
+    this.store.dispatch(RegularActions.watchStarted());
+    this.store.dispatch(ExceptionalActions.watchStarted());
+
+    effect(() => {
+      this.users = [...this.settingsUsers()]
         .filter((item) => Boolean(item.email))
-        .sort((first, second) => this.userLabel(first).localeCompare(this.userLabel(second)));
+        .sort((first, second) => this.userLabel(first).localeCompare(this.userLabel(second))) as AppUser[];
       this.refreshProfile();
-    }),
-    appStore.data.observeCollection<RegularOnCallPeriod>(appStore.paths.regularOnCallPeriods(), (documents) => {
-      this.regularPeriods = documents.map((document) => this.fromStore<RegularOnCallPeriod>(document.id, document.data));
-    }),
-    appStore.data.observeCollection<RegularIntervention>(appStore.paths.regularInterventionsGroup(), (documents) => {
-      this.regularInterventions = documents.map((document) => {
-        const data = document.data;
-        const periodId = document.parentId || asSafeString(data["periodId"]);
-        return this.fromStore<RegularIntervention>(document.id, { ...data, periodId });
-      });
-    }),
-    appStore.data.observeCollection<ExceptionalOperation>(appStore.paths.exceptionalOperations(), (documents) => {
-      this.exceptionalOperations = documents.map((document) => this.fromStore<ExceptionalOperation>(document.id, document.data));
-    }),
-  ];
+    });
+
+    effect(() => {
+      this.regularPeriods = this.regularPeriodsSignal();
+    });
+
+    effect(() => {
+      this.regularInterventions = this.regularInterventionsSignal();
+    });
+
+    effect(() => {
+      this.exceptionalOperations = this.exceptionalOperationsSignal();
+    });
+
+    effect(() => {
+      const error = this.regularError() || this.exceptionalError();
+
+      if (error) {
+        this.validationMessage = error;
+      }
+    });
+
+    effect(() => {
+      const message = this.settingsMessage();
+
+      if (message?.kind === "failure" && message.source === "users") {
+        this.validationMessage = message.message;
+      }
+    });
+  }
 
   ngOnChanges(changes: SimpleChanges): void {
     if (!changes["user"]) {
@@ -66,7 +105,9 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.unsubscribes.forEach((unsubscribe) => unsubscribe());
+    this.store.dispatch(SettingsActions.usersWatchStopped());
+    this.store.dispatch(RegularActions.watchStopped());
+    this.store.dispatch(ExceptionalActions.watchStopped());
   }
 
   get canSelectUser(): boolean {
@@ -383,7 +424,7 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
     this.selectedItem = null;
   }
 
-  async signItem(item: ValidationItem): Promise<void> {
+  signItem(item: ValidationItem): void {
     if (!this.user) {
       return;
     }
@@ -399,16 +440,18 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
         [field]: visa,
       };
 
-      await appStore.data.updateDocument(appStore.paths.regularOnCallPeriod((item.payload as RegularOnCallPeriod).id), {
-        [field]: visa,
-      });
+      this.store.dispatch(RegularActions.periodVisaUpdateRequested({
+        field,
+        periodId: period.id,
+        visa,
+      }));
       this.regularPeriods = this.regularPeriods.map((currentPeriod) =>
         currentPeriod.id === updatedPeriod.id ? updatedPeriod : currentPeriod,
       );
       updatedPayload = updatedPeriod;
 
       if (item.kind === "regular-period-agent" && item.isGlobalAction) {
-        await this.updateRegularInterventionVisas(updatedPeriod, visa);
+        this.updateRegularInterventionVisas(updatedPeriod, visa);
       }
     } else if (item.kind === "regular-intervention-agent") {
       const intervention = item.payload as RegularIntervention;
@@ -417,15 +460,17 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
         agentVisa: visa,
       };
 
-      await appStore.data.updateDocument(appStore.paths.regularIntervention(intervention.periodId, intervention.id), {
-        agentVisa: visa,
-      });
+      this.store.dispatch(RegularActions.interventionVisaUpdateRequested({
+        interventionId: intervention.id,
+        periodId: intervention.periodId,
+        visa,
+      }));
       this.regularInterventions = this.regularInterventions.map((currentIntervention) =>
         currentIntervention.id === updatedIntervention.id ? updatedIntervention : currentIntervention,
       );
       updatedPayload = updatedIntervention;
     } else {
-      updatedPayload = await this.signExceptionalItem(item, visa);
+      updatedPayload = this.signExceptionalItem(item, visa);
     }
 
     this.selectedItem =
@@ -450,7 +495,7 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
     return new Intl.DateTimeFormat("fr-FR", { dateStyle: "short", timeStyle: "short" }).format(new Date(value));
   }
 
-  async deleteVisa(item: ValidationItem): Promise<void> {
+  deleteVisa(item: ValidationItem): void {
     if (!this.canDeleteVisa(item)) {
       return;
     }
@@ -466,16 +511,18 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
         [field]: emptyVisa,
       };
 
-      await appStore.data.updateDocument(appStore.paths.regularOnCallPeriod((item.payload as RegularOnCallPeriod).id), {
-        [field]: emptyVisa,
-      });
+      this.store.dispatch(RegularActions.periodVisaUpdateRequested({
+        field,
+        periodId: period.id,
+        visa: emptyVisa,
+      }));
       this.regularPeriods = this.regularPeriods.map((currentPeriod) =>
         currentPeriod.id === updatedPeriod.id ? updatedPeriod : currentPeriod,
       );
       updatedPayload = updatedPeriod;
 
       if (item.kind === "regular-period-agent" && item.isGlobalAction) {
-        await this.updateRegularInterventionVisas(updatedPeriod, emptyVisa);
+        this.updateRegularInterventionVisas(updatedPeriod, emptyVisa);
       }
     } else if (item.kind === "regular-intervention-agent") {
       const intervention = item.payload as RegularIntervention;
@@ -484,15 +531,17 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
         agentVisa: emptyVisa,
       };
 
-      await appStore.data.updateDocument(appStore.paths.regularIntervention(intervention.periodId, intervention.id), {
-        agentVisa: emptyVisa,
-      });
+      this.store.dispatch(RegularActions.interventionVisaUpdateRequested({
+        interventionId: intervention.id,
+        periodId: intervention.periodId,
+        visa: emptyVisa,
+      }));
       this.regularInterventions = this.regularInterventions.map((currentIntervention) =>
         currentIntervention.id === updatedIntervention.id ? updatedIntervention : currentIntervention,
       );
       updatedPayload = updatedIntervention;
     } else {
-      updatedPayload = await this.signExceptionalItem(item, emptyVisa);
+      updatedPayload = this.signExceptionalItem(item, emptyVisa);
     }
 
     this.selectedItem =
@@ -613,7 +662,7 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
     return Boolean(visa?.signed);
   }
 
-  private async signExceptionalItem(item: ValidationItem, visa: SignatureVisa): Promise<ExceptionalOperation> {
+  private signExceptionalItem(item: ValidationItem, visa: SignatureVisa): ExceptionalOperation {
     const operation = item.payload as ExceptionalOperation;
     const payload: Partial<ExceptionalOperation> = {};
 
@@ -656,7 +705,10 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
       this.applyExceptionalInterventionVisa(item, operation, payload, visa);
     }
 
-    await appStore.data.setDocument(appStore.paths.exceptionalOperation(operation.id), payload, { merge: true });
+    this.store.dispatch(ExceptionalActions.operationPatchRequested({
+      operationId: operation.id,
+      payload,
+    }));
     const updatedOperation = {
       ...operation,
       ...payload,
@@ -668,20 +720,17 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
     return updatedOperation;
   }
 
-  private async updateRegularInterventionVisas(period: RegularOnCallPeriod, visa: SignatureVisa): Promise<void> {
+  private updateRegularInterventionVisas(period: RegularOnCallPeriod, visa: SignatureVisa): void {
     const interventions = this.regularInterventions.filter(
       (intervention) =>
         intervention.periodId === period.id &&
         this.matchesUser(intervention.userId, intervention.userEmail, period.userId, period.userEmail),
     );
 
-    await Promise.all(
-      interventions.map((intervention) =>
-        appStore.data.updateDocument(appStore.paths.regularIntervention(intervention.periodId, intervention.id), {
-          agentVisa: visa,
-        }),
-      ),
-    );
+    this.store.dispatch(RegularActions.interventionsVisaBatchUpdateRequested({
+      interventions: interventions.map((intervention) => ({ id: intervention.id, periodId: intervention.periodId })),
+      visa,
+    }));
     this.regularInterventions = this.regularInterventions.map((intervention) =>
       interventions.some((updatedIntervention) => updatedIntervention.id === intervention.id)
         ? { ...intervention, agentVisa: visa }
@@ -883,7 +932,4 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
       .map((participant) => participant.visa || createEmptyVisa());
   }
 
-  private fromStore<T extends { id: string }>(id: string, data: Partial<T> | Record<string, unknown>): T {
-    return normalizeObjectTextEncoding({ ...data, id }) as T;
-  }
 }

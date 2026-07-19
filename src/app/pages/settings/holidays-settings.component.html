@@ -23,12 +23,12 @@
     </div>
 
     <div class="form-actions">
-      <button class="primary-button" [disabled]="importNgForm.invalid || isLoadingOfficialHolidays" type="submit">
+      <button class="primary-button" [disabled]="importNgForm.invalid || isLoadingOfficialHolidays()" type="submit">
         Charger les jours officiels
       </button>
       <button
         class="secondary-button"
-        [disabled]="!importedHolidays.length"
+        [disabled]="!importedHolidays().length"
         (click)="saveImportedHolidays()"
         type="button"
       >
@@ -37,9 +37,9 @@
     </div>
   </form>
 
-  @if (importedHolidays.length) {
+  @if (importedHolidays().length) {
     <div class="settings-list">
-      @for (holiday of importedHolidays; track holiday.id) {
+      @for (holiday of importedHolidays(); track holiday.id) {
         <article class="settings-item">
           <div>
             <h4>{{ holiday.label }}</h4>
@@ -85,7 +85,7 @@
   </form>
 
   <div class="settings-list">
-    @for (holiday of holidays; track holiday.id) {
+    @for (holiday of holidays(); track holiday.id) {
       <article class="settings-item">
         <div>
           <h4>{{ holiday.label }}</h4>

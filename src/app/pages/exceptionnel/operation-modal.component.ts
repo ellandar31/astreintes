@@ -1,9 +1,8 @@
 import { CommonModule } from "@angular/common";
-import { Component, EventEmitter, Input, OnDestroy, Output } from "@angular/core";
+import { Component, EventEmitter, Input, Output } from "@angular/core";
 import { FormsModule, NgForm } from "@angular/forms";
 import { ModalComponent } from "../../shared/modal.component";
 import { createEmptyVisa } from "../../shared/visa.models";
-import { StoreUnsubscribe, appStore } from "../../store/app-store";
 import {
   ExceptionalIntervention,
   ExceptionalOperation,
@@ -19,7 +18,7 @@ import {
   templateUrl: "./operation-modal.component.html",
   styleUrl: "./operation-modal.component.css",
 })
-export class OperationModalComponent implements OnDestroy {
+export class OperationModalComponent {
   @Input({ required: true }) form: ExceptionalOperationForm = {
     type: "astreinte",
     initiatorUid: "",
@@ -35,6 +34,7 @@ export class OperationModalComponent implements OnDestroy {
   };
   @Input() isLocked = false;
   @Input() operation: ExceptionalOperation | null = null;
+  @Input() users: SelectableUser[] = [];
   @Output() addIntervention = new EventEmitter<ExceptionalOperation>();
   @Output() closed = new EventEmitter<void>();
   @Output() deleteIntervention = new EventEmitter<{ operation: ExceptionalOperation; index: number }>();
@@ -48,18 +48,6 @@ export class OperationModalComponent implements OnDestroy {
   selectedActualUserId = "";
   selectedPlannedUserId = "";
   validationError = "";
-  users: SelectableUser[] = [];
-
-  private readonly unsubscribe: StoreUnsubscribe = appStore.data.observeCollection<SelectableUser>(appStore.paths.users(), (documents) => {
-    this.users = documents
-        .map((document) => ({ ...document.data, id: document.id }) as SelectableUser)
-      .filter((user) => Boolean(user.email))
-      .sort((first, second) => this.userLabel(first).localeCompare(this.userLabel(second)));
-  });
-
-  ngOnDestroy(): void {
-    this.unsubscribe();
-  }
 
   get title(): string {
     return this.operation ? "Modifier l'opération" : this.operationTypeLabel(this.form.type);

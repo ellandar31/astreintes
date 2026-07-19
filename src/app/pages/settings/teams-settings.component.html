@@ -26,7 +26,7 @@
       </button>
     </div>
 
-    @if (!users.length) {
+    @if (!users().length) {
       <p class="muted">Aucun utilisateur disponible. Les utilisateurs apparaissent ici après une connexion à l'application.</p>
     }
 
@@ -50,7 +50,7 @@
   </form>
 
   <div class="settings-list">
-    @for (team of teams; track team.id) {
+    @for (team of teams(); track team.id) {
       <article class="settings-item">
         <div>
           <h4>{{ team.name }}</h4>

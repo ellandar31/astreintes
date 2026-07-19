@@ -2,7 +2,6 @@ import { FirebaseError, initializeApp } from "firebase/app";
 import {
   Auth,
   GoogleAuthProvider,
-  User,
   createUserWithEmailAndPassword,
   getAuth,
   onAuthStateChanged,
@@ -42,7 +41,12 @@ const firebaseConfig = {
   appId: "1:497580775943:web:26b4dc0330610fb784a8a2",
 };
 
-export type StoreAuthUser = User;
+export interface StoreAuthUser {
+  displayName: string | null;
+  email: string | null;
+  uid: string;
+}
+
 export type StoreUnsubscribe = () => void;
 export type StoreCollection = CollectionReference<DocumentData> | Query<DocumentData>;
 export type StoreDocumentReference = DocumentReference<DocumentData>;
@@ -58,6 +62,18 @@ const auth: Auth = getAuth(firebaseApp);
 const db = getFirestore(firebaseApp);
 const googleProvider = new GoogleAuthProvider();
 
+function mapAuthUser(user: { displayName: string | null; email: string | null; uid: string } | null): StoreAuthUser | null {
+  if (!user) {
+    return null;
+  }
+
+  return {
+    displayName: user.displayName,
+    email: user.email,
+    uid: user.uid,
+  };
+}
+
 function mapSnapshot<T>(snapshot: QuerySnapshot<DocumentData>): StoreDocument<T>[] {
   return snapshot.docs.map((documentSnapshot) => ({
     id: documentSnapshot.id,
@@ -69,7 +85,7 @@ function mapSnapshot<T>(snapshot: QuerySnapshot<DocumentData>): StoreDocument<T>
 export const appStore = {
   auth: {
     onSessionChanged(callback: (user: StoreAuthUser | null) => void): StoreUnsubscribe {
-      return onAuthStateChanged(auth, callback);
+      return onAuthStateChanged(auth, (user) => callback(mapAuthUser(user)));
     },
 
     createWithEmail(email: string, password: string): Promise<unknown> {
@@ -88,8 +104,12 @@ export const appStore = {
       return signOut(auth);
     },
 
-    updateProfile(user: StoreAuthUser, profile: { displayName?: string }): Promise<void> {
-      return updateProfile(user, profile);
+    updateProfile(_user: StoreAuthUser, profile: { displayName?: string }): Promise<void> {
+      if (!auth.currentUser) {
+        return Promise.resolve();
+      }
+
+      return updateProfile(auth.currentUser, profile);
     },
   },
 

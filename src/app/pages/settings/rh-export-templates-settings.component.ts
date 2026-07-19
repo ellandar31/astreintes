@@ -1,13 +1,10 @@
 import { CommonModule } from "@angular/common";
-import { Component, EventEmitter, OnDestroy, Output } from "@angular/core";
+import { Component, EventEmitter, OnDestroy, Output, effect, inject } from "@angular/core";
 import { FormsModule } from "@angular/forms";
-import { StoreUnsubscribe, appStore } from "../../store/app-store";
-
-interface RhExportTemplateSetting {
-  id: "regular" | "exceptionalOnCall" | "exceptionalWork";
-  label: string;
-  fileName: string;
-}
+import { Store } from "@ngrx/store";
+import { SettingsActions } from "../../state/settings/settings.actions";
+import { selectSettingsMessage, selectSettingsRhTemplates } from "../../state/settings/settings.selectors";
+import { RhExportTemplateSetting } from "./settings.models";
 
 @Component({
   selector: "app-rh-export-templates-settings",
@@ -20,24 +17,40 @@ export class RhExportTemplatesSettingsComponent implements OnDestroy {
   @Output() failure = new EventEmitter<string>();
   @Output() success = new EventEmitter<string>();
 
-  templates: RhExportTemplateSetting[] = [
-    { id: "regular", label: "Astreintes régulières", fileName: "" },
-    { id: "exceptionalOnCall", label: "Astreintes exceptionnelles", fileName: "" },
-    { id: "exceptionalWork", label: "Travaux exceptionnels", fileName: "" },
-  ];
+  templates: RhExportTemplateSetting[] = [];
 
-  private readonly settingsRef = appStore.paths.rhExportTemplates();
-  private readonly unsubscribe: StoreUnsubscribe = appStore.data.observeDocument<Record<string, unknown>>(this.settingsRef, (data) => {
-    const savedTemplates = Array.isArray(data?.["templates"]) ? (data["templates"] as Partial<RhExportTemplateSetting>[]) : [];
+  private readonly store = inject(Store);
+  private readonly savedTemplates = this.store.selectSignal(selectSettingsRhTemplates);
+  private readonly settingsMessage = this.store.selectSignal(selectSettingsMessage);
+  private lastHandledMessage: number | null = null;
 
-    this.templates = this.templates.map((template) => {
-      const savedTemplate = savedTemplates.find((item) => item.id === template.id);
-      return savedTemplate ? { ...template, ...savedTemplate } : template;
+  constructor() {
+    this.store.dispatch(SettingsActions.rhTemplatesWatchStarted());
+
+    effect(() => {
+      this.templates = this.savedTemplates().map((template) => ({ ...template }));
     });
-  });
+
+    effect(() => {
+      const message = this.settingsMessage();
+
+      if (!message || message.source !== "rhTemplates" || message.completedAt === this.lastHandledMessage) {
+        return;
+      }
+
+      this.lastHandledMessage = message.completedAt;
+
+      if (message.kind === "success") {
+        this.success.emit(message.message);
+        return;
+      }
+
+      this.failure.emit(message.message);
+    });
+  }
 
   ngOnDestroy(): void {
-    this.unsubscribe();
+    this.store.dispatch(SettingsActions.rhTemplatesWatchStopped());
   }
 
   setTemplateFile(template: RhExportTemplateSetting, event: Event): void {
@@ -46,15 +59,7 @@ export class RhExportTemplatesSettingsComponent implements OnDestroy {
     template.fileName = file?.name || template.fileName;
   }
 
-  async saveTemplates(): Promise<void> {
-    try {
-      await appStore.data.setDocument(this.settingsRef, {
-        templates: this.templates,
-        updatedAt: new Date().toISOString(),
-      });
-      this.success.emit("Modèles Word RH enregistrés.");
-    } catch {
-      this.failure.emit("Erreur pendant l'enregistrement des modèles Word RH.");
-    }
+  saveTemplates(): void {
+    this.store.dispatch(SettingsActions.rhTemplatesSaveRequested({ templates: this.templates }));
   }
 }

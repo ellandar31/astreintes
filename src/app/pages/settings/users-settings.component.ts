@@ -1,7 +1,9 @@
 import { CommonModule } from "@angular/common";
-import { Component, EventEmitter, OnDestroy, Output } from "@angular/core";
+import { Component, EventEmitter, OnDestroy, Output, effect, inject } from "@angular/core";
 import { FormsModule } from "@angular/forms";
-import { StoreUnsubscribe, appStore } from "../../store/app-store";
+import { Store } from "@ngrx/store";
+import { SettingsActions } from "../../state/settings/settings.actions";
+import { selectSettingsMessage, selectSettingsUsers } from "../../state/settings/settings.selectors";
 import { ManagedUser, UserRole } from "./settings.models";
 
 @Component({
@@ -22,40 +24,43 @@ export class UsersSettingsComponent implements OnDestroy {
     { value: 3, label: "Directeur", description: "Droits utilisateur inclus, avec capacité de viser les validations directeur." },
   ];
 
-  users: ManagedUser[] = [];
+  private readonly store = inject(Store);
+  private readonly settingsMessage = this.store.selectSignal(selectSettingsMessage);
+  private lastHandledMessage: number | null = null;
 
-  private readonly unsubscribe: StoreUnsubscribe = appStore.data.observeCollection<ManagedUser>(
-    appStore.paths.users(),
-    (documents) => {
-      this.users = documents
-        .map((document) => ({ ...document.data, id: document.id }) as ManagedUser)
-        .sort((first, second) => first.email.localeCompare(second.email));
-    },
-    (error) => this.emitError(error),
-  );
+  readonly users = this.store.selectSignal(selectSettingsUsers);
+
+  constructor() {
+    this.store.dispatch(SettingsActions.usersWatchStarted());
+
+    effect(() => {
+      const message = this.settingsMessage();
+
+      if (!message || message.source !== "users" || message.completedAt === this.lastHandledMessage) {
+        return;
+      }
+
+      this.lastHandledMessage = message.completedAt;
+
+      if (message.kind === "success") {
+        this.success.emit(message.message);
+        return;
+      }
+
+      this.failure.emit(message.message);
+    });
+  }
 
   ngOnDestroy(): void {
-    this.unsubscribe();
+    this.store.dispatch(SettingsActions.usersWatchStopped());
   }
 
-  async updateUserRole(user: ManagedUser, role: UserRole): Promise<void> {
-    try {
-      await appStore.data.updateDocument(appStore.paths.user(user.id), {
-        role: Number(role) as UserRole,
-      });
-      this.success.emit("Rôle utilisateur mis à jour.");
-    } catch (error) {
-      this.emitError(error);
-    }
+  updateUserRole(user: ManagedUser, role: UserRole): void {
+    this.store.dispatch(SettingsActions.userRoleUpdateRequested({ role, userId: user.id }));
   }
 
-  async deleteUser(user: ManagedUser): Promise<void> {
-    try {
-      await appStore.data.deleteDocument(appStore.paths.user(user.id));
-      this.success.emit("Utilisateur retiré de la liste applicative.");
-    } catch (error) {
-      this.emitError(error);
-    }
+  deleteUser(user: ManagedUser): void {
+    this.store.dispatch(SettingsActions.userDeleteRequested({ userId: user.id }));
   }
 
   roleLabel(role: UserRole): string {
@@ -64,13 +69,5 @@ export class UsersSettingsComponent implements OnDestroy {
 
   roleValue(value: string | number): UserRole {
     return Number(value) as UserRole;
-  }
-
-  private emitError(error: unknown): void {
-    this.failure.emit(
-      appStore.errors.isError(error)
-        ? `Erreur Base de données (${error.code}) : ${error.message}`
-        : "Erreur pendant la gestion des utilisateurs.",
-    );
   }
 }

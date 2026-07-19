@@ -1,8 +1,15 @@
 import { CommonModule } from "@angular/common";
-import { Component, Input, OnDestroy } from "@angular/core";
+import { Component, Input, OnDestroy, effect, inject } from "@angular/core";
 import { FormsModule } from "@angular/forms";
+import { Store } from "@ngrx/store";
 import { createEmptyVisa } from "../../shared/visa.models";
-import { StoreAuthUser, StoreUnsubscribe, appStore } from "../../store/app-store";
+import { ExceptionalActions } from "../../state/exceptional/exceptional.actions";
+import {
+  selectExceptionalError,
+  selectExceptionalOperations,
+  selectExceptionalUsers,
+} from "../../state/exceptional/exceptional.selectors";
+import { StoreAuthUser } from "../../store/app-store";
 import {
   ExceptionalIntervention,
   ExceptionalInterventionForm,
@@ -12,6 +19,7 @@ import {
   FilterField,
   ModalMode,
   OperationParticipant,
+  SelectableUser,
   SignatureVisa,
   SortDirection,
   SortField,
@@ -55,20 +63,42 @@ export class ExceptionalOperationsComponent implements OnDestroy {
     label: "",
     comment: "",
   };
+  users: SelectableUser[] = [];
 
-  private readonly unsubscribe: StoreUnsubscribe = appStore.data.observeCollection<ExceptionalOperation>(appStore.paths.exceptionalOperations(), (documents) => {
-    this.operations = documents
-      .map((document) => this.normalizeOperation({ ...document.data, id: document.id } as ExceptionalOperation))
-      .sort((first, second) => (first.startDate || "").localeCompare(second.startDate || ""));
+  private readonly store = inject(Store);
+  private readonly exceptionalError = this.store.selectSignal(selectExceptionalError);
+  private readonly exceptionalOperations = this.store.selectSignal(selectExceptionalOperations);
+  private readonly exceptionalUsers = this.store.selectSignal(selectExceptionalUsers);
 
-    if (this.selectedOperation) {
-      this.selectedOperation =
-        this.operations.find((operation) => operation.id === this.selectedOperation?.id) || this.selectedOperation;
-    }
-  });
+  constructor() {
+    this.store.dispatch(ExceptionalActions.watchStarted());
+
+    effect(() => {
+      this.operations = this.exceptionalOperations()
+        .map((operation) => this.normalizeOperation(operation))
+        .sort((first, second) => (first.startDate || "").localeCompare(second.startDate || ""));
+
+      if (this.selectedOperation) {
+        this.selectedOperation =
+          this.operations.find((operation) => operation.id === this.selectedOperation?.id) || this.selectedOperation;
+      }
+    });
+
+    effect(() => {
+      this.users = this.exceptionalUsers();
+    });
+
+    effect(() => {
+      const error = this.exceptionalError();
+
+      if (error) {
+        this.interventionError = error;
+      }
+    });
+  }
 
   ngOnDestroy(): void {
-    this.unsubscribe();
+    this.store.dispatch(ExceptionalActions.watchStopped());
   }
 
   get filteredOperations(): ExceptionalOperation[] {
@@ -162,7 +192,7 @@ export class ExceptionalOperationsComponent implements OnDestroy {
     this.closeModal();
   }
 
-  async saveOperation(form: ExceptionalOperationForm): Promise<void> {
+  saveOperation(form: ExceptionalOperationForm): void {
     if (this.selectedOperation && this.isSentToRh(this.selectedOperation)) {
       return;
     }
@@ -187,30 +217,24 @@ export class ExceptionalOperationsComponent implements OnDestroy {
       actualUsers,
       visas: this.selectedOperation?.visas || this.createEmptyOperationVisas(),
       interventions: this.selectedOperation?.interventions || [],
-      updatedAt: appStore.data.serverTimestamp(),
     };
 
-    if (this.selectedOperation) {
-      await appStore.data.setDocument(appStore.paths.exceptionalOperation(this.selectedOperation.id), payload, { merge: true });
-    } else {
-      await appStore.data.addDocument(appStore.paths.exceptionalOperations(), {
-        ...payload,
-        createdAt: appStore.data.serverTimestamp(),
-      });
-    }
-
+    this.store.dispatch(ExceptionalActions.operationSaveRequested({
+      operationId: this.selectedOperation?.id || null,
+      payload,
+    }));
     this.closeModal();
   }
 
-  async deleteOperation(operation: ExceptionalOperation): Promise<void> {
+  deleteOperation(operation: ExceptionalOperation): void {
     if (this.isSentToRh(operation)) {
       return;
     }
 
-    await appStore.data.deleteDocument(appStore.paths.exceptionalOperation(operation.id));
+    this.store.dispatch(ExceptionalActions.operationDeleteRequested({ operationId: operation.id }));
   }
 
-  async saveIntervention(form: ExceptionalInterventionForm): Promise<void> {
+  saveIntervention(form: ExceptionalInterventionForm): void {
     if (!this.selectedOperation) {
       return;
     }
@@ -252,23 +276,18 @@ export class ExceptionalOperationsComponent implements OnDestroy {
       interventions.push(interventionPayload);
     }
 
-    await appStore.data.setDocument(
-      appStore.paths.exceptionalOperation(this.selectedOperation.id),
-      {
-        interventions,
-        updatedAt: appStore.data.serverTimestamp(),
-      },
-      { merge: true },
-    );
-
     this.selectedOperation = {
       ...this.selectedOperation,
       interventions,
     };
+    this.store.dispatch(ExceptionalActions.interventionsSaveRequested({
+      operationId: this.selectedOperation.id,
+      interventions,
+    }));
     this.closeInterventionModal();
   }
 
-  async deleteIntervention(operation: ExceptionalOperation, index: number): Promise<void> {
+  deleteIntervention(operation: ExceptionalOperation, index: number): void {
     const currentOperation = this.operations.find((item) => item.id === operation.id) || operation;
 
     if (this.isSentToRh(currentOperation)) {
@@ -283,21 +302,17 @@ export class ExceptionalOperationsComponent implements OnDestroy {
 
     interventions.splice(index, 1);
 
-    await appStore.data.setDocument(
-      appStore.paths.exceptionalOperation(currentOperation.id),
-      {
-        interventions,
-        updatedAt: appStore.data.serverTimestamp(),
-      },
-      { merge: true },
-    );
-
     if (this.selectedOperation?.id === currentOperation.id) {
       this.selectedOperation = {
         ...this.selectedOperation,
         interventions,
       };
     }
+
+    this.store.dispatch(ExceptionalActions.interventionsSaveRequested({
+      operationId: currentOperation.id,
+      interventions,
+    }));
   }
 
   setSort(field: SortField): void {

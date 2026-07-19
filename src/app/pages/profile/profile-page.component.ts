@@ -1,8 +1,16 @@
 import { CommonModule } from "@angular/common";
-import { Component, ElementRef, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild } from "@angular/core";
+import { Component, ElementRef, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild, effect, inject } from "@angular/core";
 import { FormsModule } from "@angular/forms";
+import { Store } from "@ngrx/store";
 import { SignatureProfile, VisaSignatureMode } from "../../shared/visa.models";
-import { StoreAuthUser, StoreUnsubscribe, appStore } from "../../store/app-store";
+import { StoreAuthUser } from "../../store/app-store";
+import { ProfileActions } from "../../state/profile/profile.actions";
+import {
+  selectProfile,
+  selectProfileIsSaving,
+  selectProfileMessage,
+  selectProfileSaveCompletedAt,
+} from "../../state/profile/profile.selectors";
 
 @Component({
   selector: "app-profile-page",
@@ -15,21 +23,38 @@ export class ProfilePageComponent implements OnChanges, OnDestroy {
   @Input({ required: true }) user: StoreAuthUser | null = null;
 
   @Output() saved = new EventEmitter<void>();
-  
+
   @ViewChild("signaturePad") signaturePad?: ElementRef<HTMLCanvasElement>;
 
-  profile: SignatureProfile = {
-    displayName: "",
-    signatureMode: "name",
-    signatureName: "",
-    signatureImage: "",
-    signatureDrawing: "",
-  };
+  profile: SignatureProfile = this.emptyProfile();
   isDrawing = false;
-  isSaving = false;
-  message = "";
 
-  private unsubscribe: StoreUnsubscribe | null = null;
+  private readonly store = inject(Store);
+  private readonly savedProfile = this.store.selectSignal(selectProfile);
+  private readonly saveCompletedAt = this.store.selectSignal(selectProfileSaveCompletedAt);
+  private lastHandledSaveCompletion: number | null = null;
+
+  readonly isSaving = this.store.selectSignal(selectProfileIsSaving);
+  readonly message = this.store.selectSignal(selectProfileMessage);
+
+  constructor() {
+    effect(() => {
+      const profile = this.savedProfile();
+
+      if (profile) {
+        this.profile = { ...profile };
+      }
+    });
+
+    effect(() => {
+      const completedAt = this.saveCompletedAt();
+
+      if (completedAt && completedAt !== this.lastHandledSaveCompletion) {
+        this.lastHandledSaveCompletion = completedAt;
+        this.saved.emit();
+      }
+    });
+  }
 
   get displayName(): string {
     return this.profile.displayName || this.user?.displayName || "";
@@ -60,62 +85,25 @@ export class ProfilePageComponent implements OnChanges, OnDestroy {
       return;
     }
 
-    this.unsubscribe?.();
-    this.unsubscribe = null;
-
     if (!this.user) {
+      this.profile = this.emptyProfile();
+      this.store.dispatch(ProfileActions.watchStopped());
       return;
     }
 
-    this.unsubscribe = appStore.data.observeDocument<SignatureProfile>(appStore.paths.user(this.user.uid), (data) => {
-      this.profile = {
-        displayName: data?.displayName || this.user?.displayName || "",
-        signatureMode: data?.signatureMode || "name",
-        signatureName: data?.signatureName || this.user?.displayName || this.user?.email || "",
-        signatureImage: data?.signatureImage || "",
-        signatureDrawing: data?.signatureDrawing || "",
-      };
-    });
+    this.store.dispatch(ProfileActions.watchStarted({ user: this.user }));
   }
 
   ngOnDestroy(): void {
-    this.unsubscribe?.();
+    this.store.dispatch(ProfileActions.watchStopped());
   }
 
-  async saveProfile(): Promise<void> {
+  saveProfile(): void {
     if (!this.user) {
       return;
     }
 
-    this.isSaving = true;
-    this.message = "";
-
-    try {
-      const displayName = this.profile.displayName?.trim() || "";
-      const signatureName = this.profile.signatureName?.trim() || displayName || this.user.displayName || this.user.email || "";
-
-      if (displayName && displayName !== this.user.displayName) {
-        await appStore.auth.updateProfile(this.user, { displayName });
-      }
-
-    await appStore.data.setDocument(
-      appStore.paths.user(this.user.uid),
-      {
-        ...this.profile,
-        displayName,
-        email: this.user.email || "",
-        signatureName,
-      },
-      { merge: true },
-    );
-      this.message = "Profil enregistré.";
-      this.saved.emit();
-    } catch (error) {
-      this.message = "Impossible d'enregistrer le profil.";
-      console.error(error);
-    } finally {
-      this.isSaving = false;
-    }
+    this.store.dispatch(ProfileActions.saveRequested({ profile: { ...this.profile }, user: this.user }));
   }
 
   updateSignatureMode(mode: VisaSignatureMode): void {
@@ -186,6 +174,16 @@ export class ProfilePageComponent implements OnChanges, OnDestroy {
     const canvas = this.signaturePad.nativeElement;
     canvas.getContext("2d")?.clearRect(0, 0, canvas.width, canvas.height);
     this.profile.signatureDrawing = "";
+  }
+
+  private emptyProfile(): SignatureProfile {
+    return {
+      displayName: "",
+      signatureMode: "name",
+      signatureName: "",
+      signatureImage: "",
+      signatureDrawing: "",
+    };
   }
 
   private pointerPosition(event: MouseEvent | TouchEvent, canvas: HTMLCanvasElement): { x: number; y: number } {

@@ -77,12 +77,12 @@
     </section>
 
     <div class="profile-actions">
-      <button class="primary-button" [disabled]="isSaving" (click)="saveProfile()" type="button">
-        {{ isSaving ? "Enregistrement..." : "Enregistrer le profil" }}
+      <button class="primary-button" [disabled]="isSaving()" (click)="saveProfile()" type="button">
+        {{ isSaving() ? "Enregistrement..." : "Enregistrer le profil" }}
       </button>
 
-      @if (message) {
-        <p class="success-message">{{ message }}</p>
+      @if (message()) {
+        <p class="success-message">{{ message() }}</p>
       }
     </div>
   </div>

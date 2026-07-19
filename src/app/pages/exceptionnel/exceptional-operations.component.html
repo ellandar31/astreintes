@@ -153,6 +153,7 @@
     [form]="operationForm"
     [isLocked]="isSentToRh(selectedOperation)"
     [operation]="selectedOperation"
+    [users]="users"
     (addIntervention)="openInterventionModal($event, undefined, undefined, true)"
     (closed)="closeModal()"
     (deleteIntervention)="deleteIntervention($event.operation, $event.index)"
@@ -166,6 +167,7 @@
     [error]="interventionError"
     [form]="interventionForm"
     [operation]="selectedOperation"
+    [users]="users"
     (closed)="closeInterventionModal()"
     (saved)="saveIntervention($event)"
   ></app-intervention-modal>
