@@ -38,7 +38,7 @@ export class RhExportTemplatesSettingsComponent implements OnDestroy {
     effect(() => {
       const message = this.settingsMessage();
 
-      if (!message || message.source !== "rhTemplates" || message.completedAt === this.lastHandledMessage) {
+      if (message?.source !== "rhTemplates" || message.completedAt === this.lastHandledMessage) {
         return;
       }
 
@@ -60,7 +60,7 @@ export class RhExportTemplatesSettingsComponent implements OnDestroy {
   setTemplateFile(template: RhExportTemplateSetting, event: Event): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
-    template.fileName = file?.name || template.fileName;
+    template.fileName = file?.name ?? template.fileName;
   }
 
   saveTemplates(): void {

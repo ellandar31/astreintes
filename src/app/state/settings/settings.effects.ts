@@ -1,5 +1,6 @@
 import { Injectable, inject } from "@angular/core";
 import { Actions, createEffect, ofType } from "@ngrx/effects";
+import { Action } from "@ngrx/store";
 import { Observable, catchError, concatMap, from, map, mergeMap, of, switchMap, takeUntil } from "rxjs";
 import {
   ManagedUser,
@@ -12,7 +13,7 @@ import {
   UserRole,
 } from "../../pages/settings/settings.models";
 import { asSafeString } from "../../shared/value-normalizers";
-import { appStore } from "../../store/app-store";
+import { StoreCollection, StoreDocument, StoreDocumentReference, appStore } from "../../store/app-store";
 import { SettingsActions, SettingsMessageSource } from "./settings.actions";
 
 type HolidaySourceResponse = Record<string, string>;
@@ -54,21 +55,17 @@ export class SettingsEffects {
     this.actions$.pipe(
       ofType(SettingsActions.usersWatchStarted),
       switchMap(() =>
-        new Observable<ReturnType<typeof SettingsActions.usersChanged | typeof SettingsActions.operationFailed>>((subscriber) => {
-          const unsubscribe = appStore.data.observeCollection<ManagedUser>(
-            appStore.paths.users(),
-            (documents) => {
-              const users = documents
-                .map((document) => ({ ...document.data, id: document.id }) as ManagedUser)
-                .sort((first, second) => first.email.localeCompare(second.email));
+        this.observeSettingsCollection<ManagedUser>(
+          appStore.paths.users(),
+          (documents) => {
+            const users = documents
+              .map((document) => ({ ...document.data, id: document.id }) as ManagedUser)
+              .sort((first, second) => first.email.localeCompare(second.email));
 
-              subscriber.next(SettingsActions.usersChanged({ users }));
-            },
-            (error) => subscriber.next(this.failure("users", this.errorMessage(error, "Erreur pendant la gestion des utilisateurs."))),
-          );
-
-          return unsubscribe;
-        }).pipe(takeUntil(this.actions$.pipe(ofType(SettingsActions.usersWatchStopped)))),
+            return SettingsActions.usersChanged({ users });
+          },
+          (error) => this.failure("users", this.errorMessage(error, "Erreur pendant la gestion des utilisateurs.")),
+        ).pipe(takeUntil(this.actions$.pipe(ofType(SettingsActions.usersWatchStopped)))),
       ),
     ),
   );
@@ -79,88 +76,68 @@ export class SettingsEffects {
     this.actions$.pipe(
       ofType(SettingsActions.teamsWatchStarted),
       switchMap(() =>
-        new Observable<ReturnType<typeof SettingsActions.teamsChanged | typeof SettingsActions.operationFailed>>((subscriber) => {
-          const unsubscribe = appStore.data.observeCollection<Record<string, unknown>>(
-            appStore.paths.teams(),
-            (documents) => {
-              const teams = documents
-                .map((document) => this.teamFromStore(document.id, document.data))
-                .sort((first, second) => first.name.localeCompare(second.name));
+        this.observeSettingsCollection<Record<string, unknown>>(
+          appStore.paths.teams(),
+          (documents) => {
+            const teams = documents
+              .map((document) => this.teamFromStore(document.id, document.data))
+              .sort((first, second) => first.name.localeCompare(second.name));
 
-              subscriber.next(SettingsActions.teamsChanged({ teams }));
-            },
-            (error) => subscriber.next(this.failure("teams", this.errorMessage(error, "Erreur pendant la gestion des équipes."))),
-          );
-
-          return unsubscribe;
-        }).pipe(takeUntil(this.actions$.pipe(ofType(SettingsActions.teamsWatchStopped)))),
+            return SettingsActions.teamsChanged({ teams });
+          },
+          (error) => this.failure("teams", this.errorMessage(error, "Erreur pendant la gestion des équipes.")),
+        ).pipe(takeUntil(this.actions$.pipe(ofType(SettingsActions.teamsWatchStopped)))),
       ),
     ),
   );
-
   // Public holidays are settings data: users may override/import them, and the
   // calculation engine then treats this collection as the single source of truth.
   readonly watchHolidays$ = createEffect(() =>
     this.actions$.pipe(
       ofType(SettingsActions.holidaysWatchStarted),
       switchMap(() =>
-        new Observable<ReturnType<typeof SettingsActions.holidaysChanged | typeof SettingsActions.operationFailed>>((subscriber) => {
-          const unsubscribe = appStore.data.observeCollection<PublicHoliday>(
-            appStore.paths.publicHolidays(),
-            (documents) => {
-              const holidays = documents
-                .map((document) => ({ ...document.data, id: document.id }) as PublicHoliday)
-                .sort((first, second) => first.date.localeCompare(second.date));
+        this.observeSettingsCollection<PublicHoliday>(
+          appStore.paths.publicHolidays(),
+          (documents) => {
+            const holidays = documents
+              .map((document) => ({ ...document.data, id: document.id }) as PublicHoliday)
+              .sort((first, second) => first.date.localeCompare(second.date));
 
-              subscriber.next(SettingsActions.holidaysChanged({ holidays }));
-            },
-            (error) => subscriber.next(this.failure("holidays", this.holidayErrorMessage(error))),
-          );
-
-          return unsubscribe;
-        }).pipe(takeUntil(this.actions$.pipe(ofType(SettingsActions.holidaysWatchStopped)))),
+            return SettingsActions.holidaysChanged({ holidays });
+          },
+          (error) => this.failure("holidays", this.holidayErrorMessage(error)),
+        ).pipe(takeUntil(this.actions$.pipe(ofType(SettingsActions.holidaysWatchStopped)))),
       ),
     ),
   );
-
   // Compensation settings merge persisted coefficients with application defaults
   // so adding a new rule in code does not break existing deployments.
   readonly watchRhCompensation$ = createEffect(() =>
     this.actions$.pipe(
       ofType(SettingsActions.rhCompensationWatchStarted),
       switchMap(() =>
-        new Observable<ReturnType<typeof SettingsActions.rhCompensationChanged | typeof SettingsActions.operationFailed>>((subscriber) => {
-          const unsubscribe = appStore.data.observeDocument<Record<string, unknown>>(
-            appStore.paths.rhCompensationRules(),
-            (data) => subscriber.next(SettingsActions.rhCompensationChanged({ settings: this.compensationFromStore(data) })),
-            (error) => subscriber.next(this.failure("rhCompensation", this.errorMessage(error, "Erreur pendant la configuration des coefficients RH."))),
-          );
-
-          return unsubscribe;
-        }).pipe(takeUntil(this.actions$.pipe(ofType(SettingsActions.rhCompensationWatchStopped)))),
+        this.observeSettingsDocument<Record<string, unknown>>(
+          appStore.paths.rhCompensationRules(),
+          (data) => SettingsActions.rhCompensationChanged({ settings: this.compensationFromStore(data) }),
+          (error) => this.failure("rhCompensation", this.errorMessage(error, "Erreur pendant la configuration des coefficients RH.")),
+        ).pipe(takeUntil(this.actions$.pipe(ofType(SettingsActions.rhCompensationWatchStopped)))),
       ),
     ),
   );
-
   // Templates are stored as configuration even when the current implementation
   // generates documents in code; this keeps the UI ready for future template use.
   readonly watchRhTemplates$ = createEffect(() =>
     this.actions$.pipe(
       ofType(SettingsActions.rhTemplatesWatchStarted),
       switchMap(() =>
-        new Observable<ReturnType<typeof SettingsActions.rhTemplatesChanged | typeof SettingsActions.operationFailed>>((subscriber) => {
-          const unsubscribe = appStore.data.observeDocument<Record<string, unknown>>(
-            appStore.paths.rhExportTemplates(),
-            (data) => subscriber.next(SettingsActions.rhTemplatesChanged({ templates: this.templatesFromStore(data) })),
-            (error) => subscriber.next(this.failure("rhTemplates", this.errorMessage(error, "Erreur pendant la configuration des modèles Word RH."))),
-          );
-
-          return unsubscribe;
-        }).pipe(takeUntil(this.actions$.pipe(ofType(SettingsActions.rhTemplatesWatchStopped)))),
+        this.observeSettingsDocument<Record<string, unknown>>(
+          appStore.paths.rhExportTemplates(),
+          (data) => SettingsActions.rhTemplatesChanged({ templates: this.templatesFromStore(data) }),
+          (error) => this.failure("rhTemplates", this.errorMessage(error, "Erreur pendant la configuration des modèles Word RH.")),
+        ).pipe(takeUntil(this.actions$.pipe(ofType(SettingsActions.rhTemplatesWatchStopped)))),
       ),
     ),
   );
-
   // Role updates are serialized to avoid racing administrative changes from
   // repeated clicks; the last confirmed write is reflected by the live watch.
   readonly updateUserRole$ = createEffect(() =>
@@ -290,6 +267,50 @@ export class SettingsEffects {
       ),
     ),
   );
+
+  /**
+   * Wraps Firestore collection listeners as NgRx actions.
+   *
+   * The helper deliberately keeps subscription lifecycle management inside the
+   * effect while avoiding deeply nested callbacks in each watch effect. Each
+   * feature-specific watch only describes how documents become business actions.
+   */
+  private observeSettingsCollection<T>(
+    reference: StoreCollection,
+    toAction: (documents: StoreDocument<T>[]) => Action,
+    toFailure: (error: unknown) => Action,
+  ): Observable<Action> {
+    return new Observable<Action>((subscriber) => {
+      const unsubscribe = appStore.data.observeCollection<T>(
+        reference,
+        (documents) => subscriber.next(toAction(documents)),
+        (error) => subscriber.next(toFailure(error)),
+      );
+
+      return unsubscribe;
+    });
+  }
+
+  /**
+   * Wraps singleton settings documents with the same action/error contract used
+   * by collection watches. Document settings are optional because a new Firebase
+   * project starts without RH configuration documents.
+   */
+  private observeSettingsDocument<T>(
+    reference: StoreDocumentReference,
+    toAction: (data: T | undefined) => Action,
+    toFailure: (error: unknown) => Action,
+  ): Observable<Action> {
+    return new Observable<Action>((subscriber) => {
+      const unsubscribe = appStore.data.observeDocument<T>(
+        reference,
+        (data) => subscriber.next(toAction(data)),
+        (error) => subscriber.next(toFailure(error)),
+      );
+
+      return unsubscribe;
+    });
+  }
 
   /**
    * Fetches official French public holidays for the selected zone/year.

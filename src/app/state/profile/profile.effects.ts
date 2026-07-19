@@ -1,6 +1,6 @@
 import { Injectable, inject } from "@angular/core";
 import { Actions, createEffect, ofType } from "@ngrx/effects";
-import { Observable, catchError, concatMap, from, map, mergeMap, of, switchMap, takeUntil } from "rxjs";
+import { Observable, catchError, concatMap, from, mergeMap, of, switchMap, takeUntil } from "rxjs";
 import { SignatureProfile } from "../../shared/visa.models";
 import { appStore, StoreAuthUser } from "../../store/app-store";
 import { AuthActions } from "../auth/auth.actions";

@@ -5,7 +5,6 @@ import {
   RegularIntervention,
   RegularOnCallPeriod,
   RegularPublicHoliday,
-  RegularTeam,
   RegularUser,
 } from "../../pages/regular/regular.models";
 import { asSafeString } from "../../shared/value-normalizers";

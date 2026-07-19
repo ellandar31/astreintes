@@ -46,7 +46,7 @@ export class RhCompensationSettingsComponent implements OnDestroy {
     effect(() => {
       const message = this.settingsMessage();
 
-      if (!message || message.source !== "rhCompensation" || message.completedAt === this.lastHandledMessage) {
+      if (message?.source !== "rhCompensation" || message.completedAt === this.lastHandledMessage) {
         return;
       }
 

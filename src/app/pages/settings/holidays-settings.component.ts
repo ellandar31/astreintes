@@ -71,7 +71,7 @@ export class HolidaysSettingsComponent implements OnDestroy {
     effect(() => {
       const message = this.settingsMessage();
 
-      if (!message || message.source !== "holidays" || message.completedAt === this.lastHandledMessage) {
+      if (message?.source !== "holidays" || message.completedAt === this.lastHandledMessage) {
         return;
       }
 
@@ -123,7 +123,7 @@ export class HolidaysSettingsComponent implements OnDestroy {
   }
 
   zoneLabel(zone: string): string {
-    return this.zones.find((item) => item.id === zone)?.label || zone;
+    return this.zones.find((item) => item.id === zone)?.label ?? zone;
   }
 
   private toHoliday(zone: string, date: string, label: string, source: PublicHoliday["source"]): PublicHoliday {

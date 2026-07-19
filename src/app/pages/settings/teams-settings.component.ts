@@ -46,7 +46,7 @@ export class TeamsSettingsComponent implements OnDestroy {
     effect(() => {
       const message = this.settingsMessage();
 
-      if (!message || message.source !== "teams" || message.completedAt === this.lastHandledMessage) {
+      if (message?.source !== "teams" || message.completedAt === this.lastHandledMessage) {
         return;
       }
 

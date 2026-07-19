@@ -42,7 +42,7 @@ export class UsersSettingsComponent implements OnDestroy {
     effect(() => {
       const message = this.settingsMessage();
 
-      if (!message || message.source !== "users" || message.completedAt === this.lastHandledMessage) {
+      if (message?.source !== "users" || message.completedAt === this.lastHandledMessage) {
         return;
       }
 
@@ -70,7 +70,7 @@ export class UsersSettingsComponent implements OnDestroy {
   }
 
   roleLabel(role: UserRole): string {
-    return this.roles.find((item) => item.value === Number(role))?.label || this.labels.settings.users.roles.user;
+    return this.roles.find((item) => item.value === Number(role))?.label ?? this.labels.settings.users.roles.user;
   }
 
   roleValue(value: string | number): UserRole {
