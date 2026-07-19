@@ -12,6 +12,13 @@ import {
   SignatureVisa,
 } from "./exceptional.models";
 
+/**
+ * Formulaire d'édition d'une opération exceptionnelle.
+ *
+ * La modale porte les règles de saisie locales : participants datés,
+ * initialisation du réel depuis le prévisionnel et interdiction de périodes
+ * recouvrantes pour un même utilisateur dans une même zone.
+ */
 @Component({
   selector: "app-operation-modal",
   standalone: true,
@@ -55,6 +62,12 @@ export class OperationModalComponent {
     return this.operation ? this.labels.exceptional.modal.editOperation : this.operationTypeLabel(this.form.type);
   }
 
+  /**
+   * Valide la cohérence locale avant de remonter la sauvegarde.
+   *
+   * Le contrôle de recouvrement reste ici car il dépend de l'état temporaire du
+   * formulaire, avant persistance dans le store.
+   */
   save(form: NgForm): void {
     if (this.isLocked) {
       return;
@@ -109,6 +122,12 @@ export class OperationModalComponent {
     this.form.initiatorName = selectedUser?.displayName || selectedUser?.email || "";
   }
 
+  /**
+   * Ajoute un utilisateur dans la zone prévisionnelle ou réelle.
+   *
+   * Un utilisateur peut apparaître plusieurs fois si les périodes ne se
+   * recouvrent pas ; c'est indispensable pour les opérations discontinues.
+   */
   addParticipant(listName: "plannedUsers" | "actualUsers", userId: string): void {
     const user = this.users.find((item) => item.id === userId);
 
@@ -139,6 +158,11 @@ export class OperationModalComponent {
     this.form[listName] = this.form[listName].filter((_, currentIndex) => currentIndex !== index);
   }
 
+  /**
+   * Initialise les dates réelles depuis le prévisionnel uniquement quand le réel est vide.
+   *
+   * Cette limite évite d'écraser une saisie réelle déjà corrigée par l'utilisateur.
+   */
   initializeActualFromPlanned(): void {
     if (this.form.actualUsers.length || !this.form.plannedUsers.length) {
       return;
@@ -207,11 +231,18 @@ export class OperationModalComponent {
     return this.form.forecastEndDate || "";
   }
 
+  /** Vérifie les recouvrements séparément entre prévisionnel et réel. */
   private participantOverlapError(): string {
     return this.listOverlapError("plannedUsers", this.labels.exceptional.sections.planned.toLowerCase()) ||
       this.listOverlapError("actualUsers", this.labels.exceptional.sections.actual.toLowerCase());
   }
 
+  /**
+   * Cherche un recouvrement pour un même utilisateur.
+   *
+   * Le contrôle autorise plusieurs lignes par agent, mais uniquement si elles
+   * représentent des périodes distinctes.
+   */
   private listOverlapError(listName: "plannedUsers" | "actualUsers", label: string): string {
     const participants = this.form[listName];
 

@@ -6,6 +6,13 @@ import { appStore } from "../../store/app-store";
 import { ExceptionalActions } from "./exceptional.actions";
 
 @Injectable()
+/**
+ * Persistence boundary for exceptional on-call and exceptional work operations.
+ *
+ * Operations carry their participants, real/planned periods, interventions,
+ * visas and RH-send marker in a single aggregate. This keeps validation and RH
+ * exports consistent because they always read one coherent operation snapshot.
+ */
 export class ExceptionalEffects {
   private readonly actions$ = inject(Actions);
 
@@ -22,6 +29,9 @@ export class ExceptionalEffects {
     ),
   );
 
+  // setDocument with merge is used on edits so partial modal payloads can update
+  // an aggregate without dropping visas or RH metadata that may have changed via
+  // validation screens.
   readonly saveOperation$ = createEffect(() =>
     this.actions$.pipe(
       ofType(ExceptionalActions.operationSaveRequested),
@@ -82,6 +92,9 @@ export class ExceptionalEffects {
     ),
   );
 
+  // Interventions are saved as part of the operation aggregate: their validity
+  // depends on the operation's real periods and visas are reviewed with the same
+  // consultation modal.
   readonly saveInterventions$ = createEffect(() =>
     this.actions$.pipe(
       ofType(ExceptionalActions.interventionsSaveRequested),
@@ -105,6 +118,8 @@ export class ExceptionalEffects {
     ),
   );
 
+  // RH send status is a business lock. The timestamp is server-side so exports,
+  // validation and control screens share a trusted ordering.
   readonly updateOperationRhSent$ = createEffect(() =>
     this.actions$.pipe(
       ofType(ExceptionalActions.operationRhSentUpdateRequested),
@@ -123,6 +138,8 @@ export class ExceptionalEffects {
     ),
   );
 
+  // Operations are sorted by start date for deterministic tables; filtering and
+  // grouping remain component responsibilities once the store has the snapshot.
   private observeOperations(): Observable<ReturnType<typeof ExceptionalActions.operationsChanged | typeof ExceptionalActions.loadFailed>> {
     return new Observable((subscriber) => {
       const unsubscribe = appStore.data.observeCollection<ExceptionalOperation>(

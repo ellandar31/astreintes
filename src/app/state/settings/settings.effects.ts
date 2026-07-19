@@ -37,9 +37,19 @@ const defaultTemplates: RhExportTemplateSetting[] = [
 ];
 
 @Injectable()
+/**
+ * Centralizes persistence for all administration settings.
+ *
+ * The settings screens configure data reused by other modules: teams feed the
+ * regular calendar, public holidays affect compensation rules, and RH templates
+ * drive exports. Keeping these reads/writes in effects prevents components from
+ * coupling themselves to the current Firestore layout.
+ */
 export class SettingsEffects {
   private readonly actions$ = inject(Actions);
 
+  // Users are sourced from the application collection, not directly from
+  // Firebase Auth, because roles and display names are business data.
   readonly watchUsers$ = createEffect(() =>
     this.actions$.pipe(
       ofType(SettingsActions.usersWatchStarted),
@@ -63,6 +73,8 @@ export class SettingsEffects {
     ),
   );
 
+  // Teams are watched independently because the regular module needs live
+  // membership updates to validate overlapping on-call periods.
   readonly watchTeams$ = createEffect(() =>
     this.actions$.pipe(
       ofType(SettingsActions.teamsWatchStarted),
@@ -86,6 +98,8 @@ export class SettingsEffects {
     ),
   );
 
+  // Public holidays are settings data: users may override/import them, and the
+  // calculation engine then treats this collection as the single source of truth.
   readonly watchHolidays$ = createEffect(() =>
     this.actions$.pipe(
       ofType(SettingsActions.holidaysWatchStarted),
@@ -109,6 +123,8 @@ export class SettingsEffects {
     ),
   );
 
+  // Compensation settings merge persisted coefficients with application defaults
+  // so adding a new rule in code does not break existing deployments.
   readonly watchRhCompensation$ = createEffect(() =>
     this.actions$.pipe(
       ofType(SettingsActions.rhCompensationWatchStarted),
@@ -126,6 +142,8 @@ export class SettingsEffects {
     ),
   );
 
+  // Templates are stored as configuration even when the current implementation
+  // generates documents in code; this keeps the UI ready for future template use.
   readonly watchRhTemplates$ = createEffect(() =>
     this.actions$.pipe(
       ofType(SettingsActions.rhTemplatesWatchStarted),
@@ -143,6 +161,8 @@ export class SettingsEffects {
     ),
   );
 
+  // Role updates are serialized to avoid racing administrative changes from
+  // repeated clicks; the last confirmed write is reflected by the live watch.
   readonly updateUserRole$ = createEffect(() =>
     this.actions$.pipe(
       ofType(SettingsActions.userRoleUpdateRequested),
@@ -191,6 +211,9 @@ export class SettingsEffects {
     ),
   );
 
+  // The official holiday API is an external source. We load it separately from
+  // saving so the user can review the imported list before it becomes business
+  // data used by calculations.
   readonly loadOfficialHolidays$ = createEffect(() =>
     this.actions$.pipe(
       ofType(SettingsActions.officialHolidaysLoadRequested),
@@ -206,6 +229,8 @@ export class SettingsEffects {
     ),
   );
 
+  // Imported holidays are written with stable ids (zone + date) to make repeated
+  // imports idempotent and prevent duplicate holiday rows.
   readonly saveImportedHolidays$ = createEffect(() =>
     this.actions$.pipe(
       ofType(SettingsActions.importedHolidaysSaveRequested),
@@ -266,6 +291,12 @@ export class SettingsEffects {
     ),
   );
 
+  /**
+   * Fetches official French public holidays for the selected zone/year.
+   *
+   * The result is normalized immediately so the rest of the application never
+   * depends on the government API response shape.
+   */
   private async fetchOfficialHolidays(zone: string, year: number): Promise<PublicHoliday[]> {
     const response = await fetch(`https://calendrier.api.gouv.fr/jours-feries/${zone}/${year}.json`);
 
@@ -280,6 +311,8 @@ export class SettingsEffects {
       .sort((first, second) => first.date.localeCompare(second.date));
   }
 
+  // Legacy teams may contain members saved as strings or objects. Normalization
+  // keeps the regular module independent from previous UI choices.
   private teamFromStore(id: string, data: Record<string, unknown>): Team {
     return {
       id,
@@ -288,6 +321,8 @@ export class SettingsEffects {
     };
   }
 
+  // Defaults are merged at read time to preserve existing coefficients while
+  // ensuring newly introduced rules appear without a migration script.
   private compensationFromStore(data: Record<string, unknown> | undefined): RhCompensationSettings {
     const savedOnCallRows = Array.isArray(data?.["onCall"]) ? (data["onCall"] as Partial<OnCallCompensationRule>[]) : [];
     const savedPeriodRows = Array.isArray(data?.["periods"]) ? (data["periods"] as Partial<PeriodCompensationRule>[]) : [];
@@ -311,6 +346,8 @@ export class SettingsEffects {
     });
   }
 
+  // Accepts several historical member payloads because team membership changed
+  // during the application lifetime. Only stable identifiers are kept.
   private normalizeMembers(value: unknown): string[] {
     if (!Array.isArray(value)) {
       return [];

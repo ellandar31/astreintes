@@ -14,6 +14,14 @@ import { appStore } from "../../store/app-store";
 import { RegularActions } from "./regular.actions";
 
 @Injectable()
+/**
+ * Persistence boundary for the regular on-call calendar.
+ *
+ * The feature combines several business references (teams, users, holidays) with
+ * periods and their interventions. Components dispatch intent actions; this
+ * effect owns the Firestore layout, including interventions stored below their
+ * parent period.
+ */
 export class RegularEffects {
   private readonly actions$ = inject(Actions);
 
@@ -33,6 +41,8 @@ export class RegularEffects {
     ),
   );
 
+  // Existing visas are preserved when editing a period. Dates/users may change,
+  // but a signed period must not silently lose its audit trail.
   readonly savePeriod$ = createEffect(() =>
     this.actions$.pipe(
       ofType(RegularActions.periodSaveRequested),
@@ -59,6 +69,9 @@ export class RegularEffects {
     ),
   );
 
+  // Interventions belong to exactly one period. When an edit changes the parent
+  // period, Firestore cannot move a document between subcollections, so the
+  // helper recreates it under the new period and removes the previous copy.
   readonly saveIntervention$ = createEffect(() =>
     this.actions$.pipe(
       ofType(RegularActions.interventionSaveRequested),
@@ -138,6 +151,8 @@ export class RegularEffects {
     ),
   );
 
+  // A global regular-period visa also signs the user's attached interventions.
+  // The batch action keeps that cross-document business rule in one place.
   readonly updateInterventionVisas$ = createEffect(() =>
     this.actions$.pipe(
       ofType(RegularActions.interventionsVisaBatchUpdateRequested),
@@ -156,6 +171,8 @@ export class RegularEffects {
     ),
   );
 
+  // Once sent to RH, the period becomes read-only in the UI. Clearing the field
+  // is the controlled correction path before any further change.
   readonly updatePeriodRhSent$ = createEffect(() =>
     this.actions$.pipe(
       ofType(RegularActions.periodRhSentUpdateRequested),
@@ -231,6 +248,8 @@ export class RegularEffects {
     });
   }
 
+  // Collection-group reading keeps the UI simple while still storing
+  // interventions under their parent period for rules/security coherence.
   private observeInterventions(): Observable<ReturnType<typeof RegularActions.interventionsChanged | typeof RegularActions.loadFailed>> {
     return new Observable((subscriber) => {
       const unsubscribe = appStore.data.observeCollection<RegularIntervention>(

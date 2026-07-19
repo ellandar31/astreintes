@@ -58,6 +58,16 @@ interface RhMonthControlSection {
   items: RhControlDetailItem[];
 }
 
+/**
+ * Vue de contrôle RH.
+ *
+ * Cette page est volontairement plus proche d'un read-model que d'un écran CRUD :
+ * elle agrège des astreintes régulières, opérations exceptionnelles, interventions,
+ * jours fériés et règles d'indemnisation afin de produire un état contrôlable par
+ * utilisateur et par mois d'envoi RH. Les calculs peuvent devenir coûteux ; la vue
+ * maintient donc un modèle pré-calculé au lieu de recalculer les lignes dans le
+ * template Angular.
+ */
 @Component({
   selector: "app-rh-controls",
   standalone: true,
@@ -201,23 +211,35 @@ export class RhControlsComponent implements OnChanges, OnDestroy {
     return this.expandedUserId === userId;
   }
 
+  /** Ouvre le détail figé d'une ligne RH pour exposer le calcul qui justifie le coefficient affiché. */
   openDetail(item: RhControlDetailItem): void {
     this.selectedDetailItem = item;
   }
 
+  /** Ferme la consultation sans perdre le modèle pré-calculé de la page principale. */
   closeDetail(): void {
     this.selectedDetailItem = null;
   }
 
+  /** Affiche le nom humain quand il existe, tout en gardant le mail comme identifiant vérifiable. */
   userLabel(user: RhUser): string {
     return user.displayName ? `${user.displayName} (${user.email})` : user.email;
   }
 
+  /** Convertit la clé technique YYYY-MM en libellé métier lisible, utilisé dans les panneaux mensuels. */
   formatMonth(monthKey: string): string {
     const [year, month] = monthKey.split("-").map(Number);
     return new Intl.DateTimeFormat("fr-FR", { month: "long", year: "numeric" }).format(new Date(year, month - 1, 1));
   }
 
+  /**
+   * Reconstruit le modèle de lecture uniquement lorsque les sources NgRx changent.
+   *
+   * Les lignes RH impliquent plusieurs découpages calendaires et recherches de
+   * jours fériés. Les recalculer depuis un getter de template provoquait des
+   * lenteurs sur les longues périodes ; cette méthode rend le coût explicite et
+   * amorti sur les mises à jour de données.
+   */
   private rebuildControlSections(): void {
     const visibleUsers = this.visibleUsers;
     const calculator = new RhExportCalculationLibrary(this.exportContext());
@@ -262,6 +284,13 @@ export class RhControlsComponent implements OnChanges, OnDestroy {
     this.ensureDefaultExpandedState();
   }
 
+  /**
+   * Assemble les éléments RH visibles pour un utilisateur.
+   *
+   * La règle de confidentialité est appliquée en amont via visibleUsers : un
+   * utilisateur standard ne passe ici que pour son propre bloc, tandis que les
+   * profils habilités peuvent contrôler plusieurs utilisateurs.
+   */
   private allItemsForUser(
     user: RhUser,
     calculator: RhExportCalculationLibrary,
@@ -273,6 +302,12 @@ export class RhControlsComponent implements OnChanges, OnDestroy {
     ].sort((first, second) => this.sentToRhTime(second.sentToRhAt) - this.sentToRhTime(first.sentToRhAt));
   }
 
+  /**
+   * Transforme les astreintes régulières envoyées aux RH en lignes contrôlables.
+   *
+   * Les astreintes régulières n'ont pas de réel distinct du prévisionnel : la
+   * période validée sert donc aux deux tableaux d'export et au calcul de contrôle.
+   */
   private regularControlItems(
     user: RhUser,
     calculator: RhExportCalculationLibrary,
@@ -303,6 +338,12 @@ export class RhControlsComponent implements OnChanges, OnDestroy {
       .filter((item) => item.lines.length > 0);
   }
 
+  /**
+   * Extrait uniquement la part d'une opération exceptionnelle qui concerne l'utilisateur.
+   *
+   * Une opération peut concerner plusieurs agents sur des périodes différentes ;
+   * le contrôle RH doit isoler ce qui impacte le bulletin d'une personne donnée.
+   */
   private exceptionalControlItems(user: RhUser, calculator: RhExportCalculationLibrary): RhControlDetailItem[] {
     return this.exceptionalOperations
       .filter((operation) => Boolean(operation.sentToRhAt))
@@ -335,6 +376,12 @@ export class RhControlsComponent implements OnChanges, OnDestroy {
       .filter((item) => item.lines.length > 0);
   }
 
+  /**
+   * Adapte une période régulière au modèle commun d'export/calcul.
+   *
+   * Ce modèle commun est partagé par les exports Word/PDF/Excel et par la page
+   * de contrôle afin d'éviter deux interprétations concurrentes des mêmes règles.
+   */
   private regularExportOperation(period: RhRegularPeriod, periodInterventions: RhRegularIntervention[]): ExportOperation {
     const interventions = periodInterventions
       .filter((intervention) => this.matchesRegularPeriodUser(intervention, period))
@@ -368,6 +415,10 @@ export class RhControlsComponent implements OnChanges, OnDestroy {
     };
   }
 
+  /**
+   * Adapte une opération exceptionnelle au modèle commun, en ne gardant que les
+   * périodes réelles et interventions de l'utilisateur contrôlé.
+   */
   private exceptionalExportOperationForUser(operation: RhExceptionalOperation, user: RhUser): ExportOperation | null {
     const operationType = operation.type === "travaux"
       ? this.labels.rh.controls.types.exceptionalWork
@@ -464,6 +515,13 @@ export class RhControlsComponent implements OnChanges, OnDestroy {
     return user.id === this.currentUser?.uid || Boolean(this.currentUser?.email && user.email === this.currentUser.email);
   }
 
+  /**
+   * Maintient un seul panneau utilisateur/mois ouvert.
+   *
+   * Après reconstruction des données, l'ancien utilisateur sélectionné peut ne
+   * plus exister ou ne plus avoir d'élément visible ; on retombe alors sur le
+   * profil courant, puis sur le premier bloc disponible.
+   */
   private ensureDefaultExpandedState(): void {
     if (this.expandedUserId && this.userSections.some((section) => section.user.id === this.expandedUserId)) {
       return;
@@ -486,6 +544,10 @@ export class RhControlsComponent implements OnChanges, OnDestroy {
     this.expandedMonthSectionKey = firstMonth ? this.monthSectionKey(userId, firstMonth) : null;
   }
 
+  /**
+   * Indexe les interventions pour éviter un scan complet à chaque astreinte.
+   * Cet index est local au read-model RH et ne modifie pas la forme de stockage.
+   */
   private regularInterventionsByPeriod(): Map<string, RhRegularIntervention[]> {
     return this.regularInterventions.reduce((index, intervention) => {
       const interventions = index.get(intervention.periodId) || [];
@@ -495,6 +557,10 @@ export class RhControlsComponent implements OnChanges, OnDestroy {
     }, new Map<string, RhRegularIntervention[]>());
   }
 
+  /**
+   * Rafraîchit la modale de détail si les données changent pendant qu'elle est ouverte.
+   * Sans cela, l'utilisateur devrait fermer/réouvrir pour voir les nouveaux calculs.
+   */
   private syncSelectedDetailItem(): void {
     if (!this.selectedDetailItem) {
       return;

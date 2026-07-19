@@ -23,6 +23,15 @@ import { RegularIntervention, RegularOnCallPeriod } from "../regular/regular.mod
 import { ValidationConsultationModalComponent } from "./validation-consultation-modal.component";
 import { AppUser, ValidationItem, ValidationSection, ValidationSectionId, VisaProgressItem } from "./validation.models";
 
+/**
+ * Orchestration des visas.
+ *
+ * La page agrège les astreintes régulières, interventions et opérations
+ * exceptionnelles pour produire trois files de validation : intervenants,
+ * initiateurs et directeurs. Les droits ne sont pas purement UI : ils traduisent
+ * les contraintes métier de signature et déterminent les écritures envoyées au
+ * store NgRx.
+ */
 @Component({
   selector: "app-validation-page",
   standalone: true,
@@ -424,6 +433,13 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
     this.selectedItem = null;
   }
 
+  /**
+   * Signe l'élément sélectionné selon son type métier.
+   *
+   * Cas particulier important : une signature globale d'agent sur une opération
+   * ou une astreinte doit aussi viser les interventions associées de cet agent,
+   * pour éviter une validation partielle invisible côté RH.
+   */
   signItem(item: ValidationItem): void {
     if (!this.user) {
       return;
@@ -495,6 +511,13 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
     return new Intl.DateTimeFormat("fr-FR", { dateStyle: "short", timeStyle: "short" }).format(new Date(value));
   }
 
+  /**
+   * Supprime un visa uniquement si l'utilisateur courant est autorisé à agir.
+   *
+   * Pour les administrateurs, l'action peut viser le visa de l'utilisateur
+   * représenté par la ligne ; pour les autres profils, seule leur propre
+   * signature est modifiable.
+   */
   deleteVisa(item: ValidationItem): void {
     if (!this.canDeleteVisa(item)) {
       return;
@@ -558,6 +581,7 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
     this.validationMessage = this.labels.validation.messages.deleted;
   }
 
+  /** Expose au template la règle d'autorisation de suppression sans dupliquer la logique métier. */
   canDeleteVisa(item: ValidationItem): boolean {
     if (item.kind === "exceptional-operation-agent") {
       return this.exceptionalItemVisas(item).some((visa) => this.canActOnVisa(item, visa));
@@ -583,6 +607,13 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
     }
   }
 
+  /**
+   * Crée la ligne de visa global d'une opération exceptionnelle.
+   *
+   * Les visas historiques prévisionnel/réel sont conservés comme fallback pour
+   * rester compatible avec les opérations créées avant l'introduction du visa
+   * global unifié.
+   */
   private operationGlobalItem(operation: ExceptionalOperation, kind: "exceptional-operation-initiator" | "exceptional-operation-director"): ValidationItem {
     const isDirector = kind === "exceptional-operation-director";
     const visa = isDirector
@@ -602,6 +633,13 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
     };
   }
 
+  /**
+   * Fusionne les engagements agent d'une opération en une seule ligne de travail.
+   *
+   * Même si l'opération contient plusieurs périodes prévisionnelles/réelles pour
+   * le même utilisateur, la liste principale ne doit afficher qu'une opération ;
+   * le détail conserve les périodes ligne par ligne.
+   */
   private exceptionalOperationAgentItem(operation: ExceptionalOperation, selectedId: string, selectedEmail: string): ValidationItem | null {
     const participants = [
       ...(operation.plannedUsers || []),
@@ -641,12 +679,22 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
     };
   }
 
+  /**
+   * Le directeur ne peut viser une astreinte régulière qu'après validation agent.
+   * Les interventions rattachées doivent être signées également car elles
+   * impactent le même envoi RH.
+   */
   private isRegularPeriodReadyForDirector(period: RegularOnCallPeriod): boolean {
     const interventions = this.regularInterventions.filter((intervention) => intervention.periodId === period.id);
 
     return this.isVisaSigned(period.agentVisa) && interventions.every((intervention) => this.isVisaSigned(intervention.agentVisa));
   }
 
+  /**
+   * Le visa directeur d'une opération exceptionnelle est volontairement en bout
+   * de chaîne : initiateur, agents prévisionnels/réels et intervenants doivent
+   * avoir signé avant qu'elle apparaisse dans la file directeur.
+   */
   private isExceptionalOperationReadyForDirector(operation: ExceptionalOperation): boolean {
     const initiatorVisa = operation.visas?.initiatorGlobal || operation.visas?.actualInitiator;
     const participantVisas = [
@@ -662,6 +710,13 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
     return Boolean(visa?.signed);
   }
 
+  /**
+   * Applique un visa à la bonne zone d'une opération exceptionnelle.
+   *
+   * Les signatures peuvent être globales, par période ou par intervention. Cette
+   * méthode garde ces écritures séparées afin qu'un visa de ligne ne propage pas
+   * accidentellement toutes les périodes d'un même utilisateur.
+   */
   private signExceptionalItem(item: ValidationItem, visa: SignatureVisa): ExceptionalOperation {
     const operation = item.payload as ExceptionalOperation;
     const payload: Partial<ExceptionalOperation> = {};
@@ -720,6 +775,13 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
     return updatedOperation;
   }
 
+  /**
+   * Propage un visa global d'astreinte régulière aux interventions de l'agent.
+   *
+   * Cette propagation est limitée à l'utilisateur de l'astreinte et à la période
+   * concernée ; elle évite de viser des interventions d'une autre équipe ou d'une
+   * autre période.
+   */
   private updateRegularInterventionVisas(period: RegularOnCallPeriod, visa: SignatureVisa): void {
     const interventions = this.regularInterventions.filter(
       (intervention) =>
@@ -795,6 +857,13 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
     return { userId: "", email: "" };
   }
 
+  /**
+   * Construit le visa sauvegardé en base.
+   *
+   * Le profil peut fournir une image, un dessin ou un nom. Si une ancienne
+   * signature image n'est plus exploitable, on bascule sur le nom pour conserver
+   * une signature lisible dans les exports.
+   */
   private buildVisa(item: ValidationItem): SignatureVisa {
     const signer = this.visaSignerForItem(item);
     let mode = signer.profile?.signatureMode || "name";
@@ -834,6 +903,13 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
     return /^data:image\/(?:png|jpeg|jpg|gif|webp);base64,/i.test(value);
   }
 
+  /**
+   * Détermine le signataire métier du visa.
+   *
+   * Un administrateur peut signer à la place d'un autre utilisateur : le visa
+   * enregistré doit alors porter l'identité de l'utilisateur représenté par la
+   * ligne, pas celle de l'administrateur qui a cliqué.
+   */
   private visaSignerForItem(item: ValidationItem): { uid: string; name: string; email: string; profile: AppUser | null } {
     const reference = this.visaSignerReference(item);
     const profile = this.findUser(reference.userId, reference.email);
@@ -895,6 +971,12 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
     };
   }
 
+  /**
+   * Vérifie qu'une signature existante peut être supprimée ou remplacée.
+   *
+   * La comparaison combine uid et email pour rester robuste avec les visas créés
+   * avant que tous les profils disposent d'un identifiant applicatif stable.
+   */
   private canActOnVisa(item: ValidationItem, visa: SignatureVisa): boolean {
     if (!visa.signed) {
       return false;

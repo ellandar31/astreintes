@@ -7,9 +7,24 @@ import {
 } from "./rh-export.models";
 import { escapeHtml, formatRange, toDateKey } from "./rh-export-utils";
 
+/**
+ * Moteur de calcul des lignes d'indemnisation RH.
+ *
+ * Cette classe concentre les règles calendaires afin que les exports et l'écran
+ * de contrôle RH produisent les mêmes montants. Elle ne connaît pas Firebase ni
+ * Angular : elle travaille sur un contexte déjà chargé, ce qui la rend testable
+ * et limite les divergences entre UI et documents générés.
+ */
 export class RhExportCalculationLibrary {
   constructor(private readonly context: RhExportContext) {}
 
+  /**
+   * Calcule les heures d'astreinte à indemniser.
+   *
+   * Règle métier : les jours ouvrés ne comptent que de 00h à 08h et de 18h à
+   * 24h, tandis que les samedis, dimanches et jours fériés comptent sur toute la
+   * période réellement couverte.
+   */
   onCallCompensationRows(operation: ExportOperation): OnCallCompensationRow[] {
     return operation.actualUsers.flatMap((user) => {
       const { weekSegments, weekendHolidaySegments } = this.onCallSegmentsByCalendarRules(user.startDate, user.endDate);
@@ -39,6 +54,13 @@ export class RhExportCalculationLibrary {
     });
   }
 
+  /**
+   * Calcule les interventions et travaux en appliquant les tranches RH.
+   *
+   * Le paramètre isWork bascule entre coefficient d'intervention et coefficient
+   * de travaux, mais conserve le même découpage horaire pour faciliter les
+   * contrôles entre Word, PDF, Excel et écran RH.
+   */
   interventionCompensationRows(operation: ExportOperation, isWork: boolean): InterventionCompensationRow[] {
     return operation.interventions.flatMap((intervention) =>
       this.applyInterventionRounding(
@@ -65,6 +87,12 @@ export class RhExportCalculationLibrary {
     );
   }
 
+  /**
+   * Produit le détail lisible d'un découpage.
+   *
+   * Ce texte sert au contrôle RH et à l'Excel : il explique pourquoi une plage a
+   * été retenue, pas seulement combien d'heures ont été totalisées.
+   */
   segmentDetails(segments: CalculationSegment[]): string {
     if (!segments.length) {
       return "Aucun segment retenu";
@@ -78,10 +106,18 @@ export class RhExportCalculationLibrary {
       .join("\n");
   }
 
+  /** Variante HTML du détail, destinée aux exports qui ne peuvent pas afficher des retours ligne texte. */
   segmentDetailsHtml(segments: CalculationSegment[]): string {
     return escapeHtml(this.segmentDetails(segments)).replaceAll("\n", "<br />");
   }
 
+  /**
+   * Découpe une astreinte selon les règles calendaires officielles de l'application.
+   *
+   * On parcourt jour par jour pour gérer correctement les périodes longues qui
+   * commencent en semaine, englobent un week-end ou un jour férié, puis finissent
+   * en semaine.
+   */
   private onCallSegmentsByCalendarRules(startValue: string, endValue: string): { weekSegments: CalculationSegment[]; weekendHolidaySegments: CalculationSegment[] } {
     if (!startValue || !endValue) {
       return { weekSegments: [], weekendHolidaySegments: [] };
@@ -109,6 +145,12 @@ export class RhExportCalculationLibrary {
     return { weekSegments, weekendHolidaySegments };
   }
 
+  /**
+   * Ajoute uniquement l'intersection entre la période saisie et une plage éligible.
+   *
+   * Ce clipping évite de compter les heures ouvrées qui entourent une astreinte
+   * et conserve le détail métier attaché au segment retenu.
+   */
   private pushClippedSegment(segments: CalculationSegment[], periodStart: Date, periodEnd: Date, segmentStart: Date, segmentEnd: Date, detail: string): void {
     const start = new Date(Math.max(periodStart.getTime(), segmentStart.getTime()));
     const end = new Date(Math.min(periodEnd.getTime(), segmentEnd.getTime()));
@@ -125,6 +167,12 @@ export class RhExportCalculationLibrary {
     });
   }
 
+  /**
+   * Applique une règle de tranche RH aux interventions.
+   *
+   * Le pas de 15 minutes donne un détail suffisamment fin pour les contrôles,
+   * puis l'arrondi métier est appliqué dans applyInterventionRounding.
+   */
   private segmentsForPeriodRule(startValue: string, endValue: string, ruleId: string): CalculationSegment[] {
     return this.splitHourSegmentsByPredicate(startValue, endValue, (date) => {
       const hour = date.getHours() + date.getMinutes() / 60;
@@ -179,6 +227,13 @@ export class RhExportCalculationLibrary {
     return this.roundHours(segments.reduce((total, segment) => total + segment.hours, 0));
   }
 
+  /**
+   * Arrondit l'intervention complète à l'heure supérieure.
+   *
+   * L'écart d'arrondi est porté par la dernière tranche réellement comptabilisée
+   * afin que le total corresponde au bulletin tout en gardant un découpage
+   * contrôlable.
+   */
   private applyInterventionRounding(rows: InterventionCompensationRow[], startValue: string, endValue: string): InterventionCompensationRow[] {
     if (!rows.length) {
       return rows;

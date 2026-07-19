@@ -28,6 +28,14 @@ import {
 import { InterventionModalComponent } from "./intervention-modal.component";
 import { OperationModalComponent } from "./operation-modal.component";
 
+/**
+ * Liste et orchestration des opérations exceptionnelles.
+ *
+ * Le composant gère l'état de navigation des modales, mais les opérations sont
+ * sauvegardées via NgRx. Les dates prévisionnelles et réelles sont portées par
+ * utilisateur pour permettre plusieurs passages d'un même agent sur des périodes
+ * non recouvrantes.
+ */
 @Component({
   selector: "app-exceptional-operations",
   standalone: true,
@@ -144,6 +152,13 @@ export class ExceptionalOperationsComponent implements OnDestroy {
     this.modalMode = "edit";
   }
 
+  /**
+   * Ouvre la modale d'intervention depuis la liste ou depuis la modale opération.
+   *
+   * Le flag returnToOperationModal préserve le parcours utilisateur : après
+   * création/modification d'une intervention, on revient à l'opération consultée
+   * au lieu de fermer tout le contexte.
+   */
   openInterventionModal(
     operation: ExceptionalOperation,
     intervention?: ExceptionalIntervention,
@@ -194,6 +209,13 @@ export class ExceptionalOperationsComponent implements OnDestroy {
     this.closeModal();
   }
 
+  /**
+   * Sauvegarde l'opération en recalculant ses bornes globales à partir des
+   * périodes par utilisateur.
+   *
+   * Les champs globaux restent dans le modèle pour les tableaux et exports, mais
+   * la source de vérité métier est désormais la liste des participants datés.
+   */
   saveOperation(form: ExceptionalOperationForm): void {
     if (this.selectedOperation && this.isSentToRh(this.selectedOperation)) {
       return;
@@ -236,6 +258,13 @@ export class ExceptionalOperationsComponent implements OnDestroy {
     this.store.dispatch(ExceptionalActions.operationDeleteRequested({ operationId: operation.id }));
   }
 
+  /**
+   * Enregistre une intervention exceptionnelle.
+   *
+   * Règle métier : l'intervention doit être comprise dans une période réelle du
+   * même utilisateur. On évite ainsi d'indemniser une intervention sans astreinte
+   * réelle associée.
+   */
   saveIntervention(form: ExceptionalInterventionForm): void {
     if (!this.selectedOperation) {
       return;
@@ -400,6 +429,7 @@ export class ExceptionalOperationsComponent implements OnDestroy {
     return createEmptyVisa();
   }
 
+  /** Valide les bornes de l'intervention contre les périodes réelles de l'opération. */
   private validateIntervention(form: ExceptionalInterventionForm, operation: ExceptionalOperation): string {
     if (form.endDate <= form.startDate) {
       return this.labels.exceptional.errors.interventionEndAfterStart;
@@ -423,6 +453,13 @@ export class ExceptionalOperationsComponent implements OnDestroy {
     return Boolean(userId && userId === selectedId) || Boolean(email && selectedEmail && email === selectedEmail);
   }
 
+  /**
+   * Normalise les anciennes opérations.
+   *
+   * Certaines opérations ont été créées avant les dates par utilisateur ; les
+   * dates globales servent alors de fallback pour maintenir l'affichage et les
+   * exports sans migration bloquante.
+   */
   private normalizeOperation(operation: ExceptionalOperation): ExceptionalOperation {
     const plannedUsers = this.normalizeParticipants(operation.plannedUsers || [], operation.startDate, operation.forecastEndDate || operation.startDate);
     const actualUsers = this.normalizeParticipants(
@@ -444,6 +481,7 @@ export class ExceptionalOperationsComponent implements OnDestroy {
     };
   }
 
+  /** Applique les fallbacks de dates et garantit qu'un visa existe sur chaque ligne participant. */
   private normalizeParticipants(
     participants: OperationParticipant[],
     fallbackStartDate: string,

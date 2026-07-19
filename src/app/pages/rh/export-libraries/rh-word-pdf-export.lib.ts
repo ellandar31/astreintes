@@ -8,7 +8,22 @@ type PdfDocument = InstanceType<typeof import("jspdf").jsPDF>;
 
 const DOCUMENT_LABELS = APP_LABELS.rhDocuments;
 
+/**
+ * Génère les documents RH Word-compatible et PDF.
+ *
+ * Les deux formats s'appuient sur le même ExportOperation pour garantir que les
+ * périodes, visas et interventions affichés correspondent aux contrôles RH. Le
+ * Word est produit en HTML compatible Word, tandis que le PDF est dessiné avec
+ * jsPDF pour éviter l'ouverture d'une page d'impression intermédiaire.
+ */
 export class RhWordPdfExportLibrary {
+  /**
+   * Construit le document Word-compatible.
+   *
+   * Le paramètre templateId est conservé pour permettre des variantes futures,
+   * même si la mise en page actuelle partage la même structure entre types
+   * d'astreintes et travaux.
+   */
   buildWordHtml(template: WordExportTemplate, operations: ExportOperation[], templateId: ExportTemplateId, context: RhExportContext): string {
     return `
       <!doctype html>
@@ -44,6 +59,12 @@ export class RhWordPdfExportLibrary {
     `;
   }
 
+  /**
+   * Construit le PDF côté client.
+   *
+   * L'import dynamique évite de charger jsPDF tant que l'utilisateur ne demande
+   * pas explicitement un PDF, ce qui limite le poids initial de l'application.
+   */
   async buildPdfBlob(template: WordExportTemplate, operations: ExportOperation[]): Promise<Blob> {
     const { jsPDF } = await import("jspdf");
     const doc = new jsPDF({ unit: "pt", format: "a4" });
@@ -59,6 +80,12 @@ export class RhWordPdfExportLibrary {
     return doc.output("blob");
   }
 
+  /**
+   * Rend une opération complète dans le document.
+   *
+   * Les visas globaux sont répétés après les tableaux principaux parce que le
+   * document RH peut être imprimé ou découpé par section lors des contrôles.
+   */
   private operationHtml(operation: ExportOperation, templateId: ExportTemplateId, context: RhExportContext): string {
     return `
       <section class="operation">
@@ -128,6 +155,12 @@ export class RhWordPdfExportLibrary {
     `;
   }
 
+  /**
+   * Rend un visa en conservant la mise en page.
+   *
+   * Les signatures dessinées ou importées sont retaillées volontairement : sans
+   * dimensions fixes, Word agrandit parfois l'image et casse les tableaux.
+   */
   private visaHtml(visa: SignatureVisa | undefined, variant: "line" | "global"): string {
     if (!visa?.signed) {
       return "";
@@ -150,6 +183,13 @@ export class RhWordPdfExportLibrary {
     return `<tr><td>${escapeHtml(row.userName)}${comment}</td><td>${formatDate(row.startDate)}</td><td>${formatTime(row.startDate)}</td><td>${formatDate(row.endDate)}</td><td>${formatTime(row.endDate)}</td><td>${row.wasOnSite ? APP_LABELS.common.icons.close : ""}</td><td>${this.visaHtml(row.visa, "line")}</td></tr>`;
   }
 
+  /**
+   * Dessine le PDF directement avec jsPDF.
+   *
+   * Le PDF n'utilise pas le HTML Word : les moteurs de rendu n'ont pas les mêmes
+   * comportements de tableaux et de redimensionnement d'images, donc la mise en
+   * page PDF est contrôlée explicitement.
+   */
   private operationPdf(doc: PdfDocument, template: WordExportTemplate, operation: ExportOperation): void {
     const margin = 36;
     const pageWidth = doc.internal.pageSize.getWidth();
@@ -239,6 +279,12 @@ export class RhWordPdfExportLibrary {
     return y + 58;
   }
 
+  /**
+   * Table générique PDF avec pagination minimale.
+   *
+   * Les hauteurs sont calculées à partir du contenu pour éviter les signatures
+   * rognées et les textes qui débordent en fin de page.
+   */
   private pdfTable(doc: PdfDocument, headers: string[], rows: PdfTableCell[][], widths: number[], y: number): number {
     const margin = 36;
     const rowPadding = 5;
@@ -291,6 +337,12 @@ export class RhWordPdfExportLibrary {
     return y + 8;
   }
 
+  /**
+   * Dessine un visa PDF.
+   *
+   * Si l'image stockée est invalide, on retombe sur le nom du signataire afin que
+   * le document reste exploitable au lieu d'échouer entièrement.
+   */
   private pdfVisa(doc: PdfDocument, visa: SignatureVisa | undefined, x: number, y: number, width: number, variant: "line" | "global", align: "left" | "right" = "left"): void {
     if (!visa?.signed) {
       return;

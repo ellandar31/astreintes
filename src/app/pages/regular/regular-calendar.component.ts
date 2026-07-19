@@ -32,6 +32,14 @@ interface CalendarDay {
   isCurrentMonth: boolean;
 }
 
+/**
+ * Planning mensuel des astreintes régulières.
+ *
+ * Le composant garde l'ergonomie calendrier en local mais délègue les données
+ * partagées au store NgRx. Les règles critiques sont le non-recouvrement des
+ * astreintes d'un même utilisateur et l'obligation de rattacher chaque
+ * intervention à une période d'astreinte existante.
+ */
 @Component({
   selector: "app-regular-calendar",
   standalone: true,
@@ -201,6 +209,12 @@ export class RegularCalendarComponent implements OnDestroy {
     this.isInterventionModalOpen = true;
   }
 
+  /**
+   * Prépare l'ajout d'une intervention depuis une astreinte ouverte.
+   *
+   * L'intervention hérite de l'utilisateur et de la période pour réduire les
+   * erreurs de saisie, mais elle reste validée au moment de l'enregistrement.
+   */
   openInterventionForCurrentPeriod(): void {
     const currentPeriod = this.periods.find((period) => period.id === this.editingPeriodId);
 
@@ -249,6 +263,13 @@ export class RegularCalendarComponent implements OnDestroy {
     this.interventionError = "";
   }
 
+  /**
+   * Enregistre une période d'astreinte régulière.
+   *
+   * Une période envoyée aux RH devient consultable uniquement : la correction
+   * doit passer par l'annulation explicite de l'envoi RH afin de garder une trace
+   * claire du cycle de paie.
+   */
   savePeriod(form: RegularOnCallPeriodForm): void {
     if (!this.selectedTeamId) {
       return;
@@ -277,6 +298,13 @@ export class RegularCalendarComponent implements OnDestroy {
     this.closePeriodModal();
   }
 
+  /**
+   * Enregistre une intervention régulière en contrôlant son rattachement métier.
+   *
+   * Une intervention ne peut pas exister seule : elle doit être entièrement
+   * comprise dans une période d'astreinte du même utilisateur, sinon le calcul RH
+   * et les visas deviendraient ambigus.
+   */
   saveIntervention(form: RegularInterventionForm): void {
     this.interventionError = "";
 
@@ -327,6 +355,7 @@ export class RegularCalendarComponent implements OnDestroy {
     }));
   }
 
+  /** Supprime l'astreinte et ses interventions rattachées pour éviter des interventions orphelines. */
   deletePeriod(): void {
     if (!this.editingPeriodId) {
       return;
@@ -449,6 +478,12 @@ export class RegularCalendarComponent implements OnDestroy {
     return this.periods.find((period) => period.id === intervention.periodId);
   }
 
+  /**
+   * Valide les contraintes de planning agent.
+   *
+   * Le non-recouvrement s'applique toutes équipes confondues : un agent ne peut
+   * pas être d'astreinte en parallèle dans deux équipes différentes.
+   */
   private validatePeriod(form: RegularOnCallPeriodForm): string {
     if (form.endDate <= form.startDate) {
       return this.labels.regular.errors.periodEndAfterStart;

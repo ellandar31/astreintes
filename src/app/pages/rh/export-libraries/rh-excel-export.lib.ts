@@ -5,7 +5,20 @@ import { escapeHtml, formatRange } from "./rh-export-utils";
 
 const DOCUMENT_LABELS = APP_LABELS.rhDocuments;
 
+/**
+ * Génère un fichier Excel HTML destiné au contrôle détaillé des indemnités.
+ *
+ * L'objectif de cet export n'est pas la présentation officielle mais la
+ * traçabilité : chaque ligne expose la règle, le détail du découpage et le
+ * coefficient appliqué pour faciliter la vérification du bulletin.
+ */
 export class RhExcelExportLibrary {
+  /**
+   * Produit un classeur HTML simple ouvert par Excel.
+   *
+   * Le même moteur de calcul que le Word/PDF est utilisé pour éviter qu'un agent
+   * obtienne un total différent selon le format exporté.
+   */
   buildExcelHtml(templateId: ExportTemplateId, operation: ExportOperation, context: RhExportContext): string {
     const isWork = templateId === "exceptionalWork";
     const calculator = new RhExportCalculationLibrary(context);
