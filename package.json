@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "scripts": {
     "dev": "ng serve",
-    "start": "ng serve",
+    "start:4300": "ng serve --port 4300",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "npm run test:all",
@@ -15,7 +15,11 @@
     "test:rh-word-pdf": "tsc -p tsconfig.rh-export-tests.json && node out-tsc/rh-export-tests/pages/rh/export-libraries/rh-word-pdf-export.lib.spec.js",
     "test:rh-exports": "npm run test:rh-calculations && npm run test:rh-interventions && npm run test:rh-excel && npm run test:rh-word-pdf",
     "test:jest": "jest --runInBand",
-    "test:jest:coverage": "jest --coverage --runInBand"
+    "test:jest:coverage": "jest --coverage --runInBand",
+    "docker:build": "docker compose build",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "docker:restart": "docker compose up -d --build"
   },
   "dependencies": {
     "@angular/animations": "19.2.25",
@@ -45,6 +49,7 @@
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.7.0",
     "jest-preset-angular": "^14.6.2",
+    "supabase": "^2.109.1",
     "ts-jest": "^29.4.11",
     "typescript": "~5.8.3"
   }
