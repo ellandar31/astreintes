@@ -1,0 +1,7 @@
+services:
+  astreintes:
+    build: .
+    container_name: astreintes-app
+    ports:
+      - "8080:80"
+    restart: unless-stopped
