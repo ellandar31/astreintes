@@ -105,7 +105,7 @@
             [autocomplete]="isCreatingAccount ? 'new-password' : 'current-password'"
             [feedback]="isCreatingAccount"
             [toggleMask]="true"
-            minlength="6"
+            [minlength]="6"
             name="password"
             [(ngModel)]="password"
             [placeholder]="labels.app.auth.passwordPlaceholder"
