@@ -200,10 +200,11 @@ npm install
 
 Configuration Supabase :
 
-1. créer un projet Supabase ;
-2. exécuter le script SQL `supabase/app_documents.sql` dans l'éditeur SQL Supabase ;
-3. renseigner `url` et `anonKey` dans `src/app/store/supabase.config.ts` ;
-4. activer les fournisseurs d'authentification Email et Google dans Supabase Auth.
+1. en local, lancer `npx supabase start` ;
+2. appliquer la migration avec `npx supabase db reset` si la base doit être recréée ;
+3. la migration applicative est dans `supabase/migrations/20260726090000_app_documents.sql` ;
+4. renseigner `url` et `anonKey` dans `src/app/store/supabase.config.ts` pour changer de projet ;
+5. activer l'authentification Email dans Supabase Auth.
 
 Lancement de l'application :
 

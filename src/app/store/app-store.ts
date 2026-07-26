@@ -316,21 +316,6 @@ export const appStore = {
       return data;
     },
 
-    async signInWithGoogle(): Promise<unknown> {
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: window.location.origin,
-        },
-      });
-
-      if (error) {
-        throw error;
-      }
-
-      return data;
-    },
-
     async signOut(): Promise<void> {
       const { error } = await supabase.auth.signOut();
 

@@ -130,15 +130,6 @@
 
       <div class="auth-secondary-actions">
         <p-button
-          icon="pi pi-google"
-          [disabled]="isSubmitting()"
-          [label]="labels.app.auth.google"
-          severity="secondary"
-          [outlined]="true"
-          (onClick)="loginWithGoogle()"
-        ></p-button>
-
-        <p-button
           [label]="isCreatingAccount ? labels.app.auth.existingAccount : labels.app.auth.createEmailAccount"
           [link]="true"
           (onClick)="toggleAccountMode()"

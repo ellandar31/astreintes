@@ -41,6 +41,13 @@ execute function public.set_app_documents_updated_at();
 
 alter table public.app_documents enable row level security;
 
+-- RLS policies decide which rows can be accessed, but PostgREST also needs
+-- explicit SQL privileges on the table for the API roles. Without these grants,
+-- authenticated users receive PostgreSQL 42501 before RLS is even evaluated.
+grant usage on schema public to anon, authenticated;
+grant select, insert, update, delete on public.app_documents to authenticated;
+grant select on public.app_documents to anon;
+
 drop policy if exists "Authenticated users can read app documents" on public.app_documents;
 drop policy if exists "Authenticated users can insert app documents" on public.app_documents;
 drop policy if exists "Authenticated users can update app documents" on public.app_documents;

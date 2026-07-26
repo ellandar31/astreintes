@@ -215,7 +215,6 @@ select:focus {
 .primary-button,
 .secondary-button,
 .danger-button,
-.google-button,
 .text-button,
 .icon-button,
 .tab {
@@ -243,13 +242,6 @@ select:focus {
   color: var(--app-color-danger);
   font-weight: 800;
   padding: 0 var(--app-space-xl);
-}
-
-.google-button {
-  background: var(--app-color-surface);
-  border: var(--app-border-width) solid var(--app-color-border-strong);
-  color: var(--app-color-heading);
-  font-weight: 800;
 }
 
 .text-button {

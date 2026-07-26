@@ -21,7 +21,6 @@ export const APP_LABELS = {
       createAccount: "Créer le compte",
       login: "Se connecter",
       logout: "Déconnexion",
-      google: "Continuer avec Google",
       existingAccount: "J'ai déjà un compte",
       createEmailAccount: "Créer un compte email",
       invalidForm: "Renseignez une adresse email valide et un mot de passe d'au moins 6 caractères.",

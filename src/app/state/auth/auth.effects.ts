@@ -64,18 +64,6 @@ export class AuthEffects {
     ),
   );
 
-  readonly googleLogin$ = createEffect(() =>
-    this.actions$.pipe(
-      ofType(AuthActions.googleLoginRequested),
-      exhaustMap(() =>
-        from(appStore.auth.signInWithGoogle()).pipe(
-          map(() => AuthActions.operationCompleted()),
-          catchError(() => of(AuthActions.loginFailed({ error: "Connexion Google impossible pour le moment." }))),
-        ),
-      ),
-    ),
-  );
-
   readonly logout$ = createEffect(() =>
     this.actions$.pipe(
       ofType(AuthActions.logoutRequested),

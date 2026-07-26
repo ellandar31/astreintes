@@ -115,10 +115,6 @@ export class AppComponent {
     );
   }
 
-  loginWithGoogle(): void {
-    this.store.dispatch(AuthActions.googleLoginRequested());
-  }
-
   logout(): void {
     this.store.dispatch(AuthActions.logoutRequested());
   }
