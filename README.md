@@ -146,9 +146,9 @@ L'application permet de gérer :
 
 # Technologies
 
-- Angular 19
-- Firebase Authentication
-- Cloud Firestore
+- Angular 20
+- Supabase Authentication
+- Supabase Postgres / Realtime
 - TypeScript
 
 ---
@@ -197,6 +197,13 @@ Installation des dépendances :
 ```bash
 npm install
 ```
+
+Configuration Supabase :
+
+1. créer un projet Supabase ;
+2. exécuter le script SQL `supabase/app_documents.sql` dans l'éditeur SQL Supabase ;
+3. renseigner `url` et `anonKey` dans `src/app/store/supabase.config.ts` ;
+4. activer les fournisseurs d'authentification Email et Google dans Supabase Auth.
 
 Lancement de l'application :
 

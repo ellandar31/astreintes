@@ -7,9 +7,9 @@ import { AuthActions } from "./auth.actions";
 
 @Injectable()
 /**
- * Boundary between Firebase Authentication and the application state.
+ * Boundary between Authentication provider and the application state.
  *
- * Firebase only proves identity; the business role, display data and last login
+ * Auth provider only proves identity; the business role, display data and last login
  * are stored in the application users collection so administration screens,
  * validation rights and exports can all rely on the same user record.
  */
@@ -18,7 +18,7 @@ export class AuthEffects {
   private readonly store = inject(Store);
 
   // The auth listener is intentionally registered once from NgRx: components only
-  // react to sessionChanged actions and never subscribe directly to Firebase Auth.
+  // react to sessionChanged actions and never subscribe directly to Auth provider.
   readonly startSessionWatch$ = createEffect(
     () =>
       this.actions$.pipe(
@@ -48,7 +48,7 @@ export class AuthEffects {
     ),
   );
 
-  // Login requests are exhaust-mapped to avoid concurrent Firebase popups or
+  // Login requests are exhaust-mapped to avoid concurrent provider redirects or
   // duplicated account creations when the user double-clicks the login button.
   readonly emailLogin$ = createEffect(() =>
     this.actions$.pipe(
@@ -105,7 +105,7 @@ export class AuthEffects {
       lastLoginAt: appStore.data.serverTimestamp(),
     };
 
-    // La session Firebase et les droits applicatifs sont séparés.
+    // La session d'authentification et les droits applicatifs sont séparés.
     // On garantit ici qu'un utilisateur authentifié existe aussi dans la base métier.
     if (savedUser) {
       await appStore.data.setDocument(userReference, userPayload, { merge: true });

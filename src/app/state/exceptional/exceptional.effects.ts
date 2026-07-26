@@ -16,7 +16,7 @@ import { ExceptionalActions } from "./exceptional.actions";
 export class ExceptionalEffects {
   private readonly actions$ = inject(Actions);
 
-  // Keeps Firebase access for exceptional operations outside presentation components.
+  // Keeps persistence access for exceptional operations outside presentation components.
   readonly watchExceptional$ = createEffect(() =>
     this.actions$.pipe(
       ofType(ExceptionalActions.watchStarted),

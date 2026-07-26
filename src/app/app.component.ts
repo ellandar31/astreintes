@@ -75,7 +75,7 @@ export class AppComponent {
   readonly user = this.store.selectSignal(selectAuthUser);
 
   constructor() {
-    // La surveillance Firebase devient une action NgRx pour éviter que le shell
+    // La surveillance d'authentification devient une action NgRx pour éviter que le shell
     // porte directement la logique de session et de synchronisation utilisateur.
     this.store.dispatch(AuthActions.sessionWatchStarted());
   }

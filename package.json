@@ -34,7 +34,7 @@
     "@ngrx/effects": "20.1.0",
     "@ngrx/store": "20.1.0",
     "@primeuix/themes": "^3.0.0",
-    "firebase": "^11.2.0",
+    "@supabase/supabase-js": "^2.110.8",
     "jspdf": "^4.2.1",
     "primeicons": "^8.0.0",
     "primeng": "20.4.0",

@@ -44,13 +44,13 @@ const defaultTemplates: RhExportTemplateSetting[] = [
  * The settings screens configure data reused by other modules: teams feed the
  * regular calendar, public holidays affect compensation rules, and RH templates
  * drive exports. Keeping these reads/writes in effects prevents components from
- * coupling themselves to the current Firestore layout.
+ * coupling themselves to the current persistence layout.
  */
 export class SettingsEffects {
   private readonly actions$ = inject(Actions);
 
   // Users are sourced from the application collection, not directly from
-  // Firebase Auth, because roles and display names are business data.
+  // Auth provider, because roles and display names are business data.
   readonly watchUsers$ = createEffect(() =>
     this.actions$.pipe(
       ofType(SettingsActions.usersWatchStarted),
@@ -269,7 +269,7 @@ export class SettingsEffects {
   );
 
   /**
-   * Wraps Firestore collection listeners as NgRx actions.
+   * Wraps collection listeners as NgRx actions.
    *
    * The helper deliberately keeps subscription lifecycle management inside the
    * effect while avoiding deeply nested callbacks in each watch effect. Each
@@ -293,7 +293,7 @@ export class SettingsEffects {
 
   /**
    * Wraps singleton settings documents with the same action/error contract used
-   * by collection watches. Document settings are optional because a new Firebase
+   * by collection watches. Document settings are optional because a new 
    * project starts without RH configuration documents.
    */
   private observeSettingsDocument<T>(

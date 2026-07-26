@@ -11,7 +11,7 @@ import { ProfileActions } from "./profile.actions";
  * Maintains the current user's editable profile and signature preferences.
  *
  * Signature data is part of the user document because visas must be rendered in
- * validation screens and RH exports without reopening Firebase Auth-specific
+ * validation screens and RH exports without reopening provider-specific auth
  * APIs. The effect also keeps the Auth user display name aligned after save.
  */
 export class ProfileEffects {
@@ -40,7 +40,7 @@ export class ProfileEffects {
     ),
   );
 
-  // concatMap serializes profile saves: updating Firebase Auth and the Firestore
+  // concatMap serializes profile saves: updating Auth provider and the persisted
   // user document must stay ordered to keep the header, profile modal and visa
   // labels consistent immediately after the save.
   readonly saveProfile$ = createEffect(() =>
@@ -79,8 +79,8 @@ export class ProfileEffects {
   /**
    * Persists profile fields used by both the application shell and exports.
    *
-   * The display name is pushed to Firebase Auth for provider-level consistency,
-   * while signature preferences stay in Firestore where validation/export
+   * The display name is pushed to Auth provider for provider-level consistency,
+   * while signature preferences stay in application data where validation/export
    * features can read them through the central store.
    */
   private async saveProfile(

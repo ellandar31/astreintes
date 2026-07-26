@@ -18,13 +18,13 @@ import { RegularActions } from "./regular.actions";
  *
  * The feature combines several business references (teams, users, holidays) with
  * periods and their interventions. Components dispatch intent actions; this
- * effect owns the Firestore layout, including interventions stored below their
+ * effect owns the persistence layout, including interventions stored below their
  * parent period.
  */
 export class RegularEffects {
   private readonly actions$ = inject(Actions);
 
-  // Centralizes Firebase subscriptions for the Regular feature so UI components remain persistence-agnostic.
+  // Centralizes persistence subscriptions for the Regular feature so UI components remain persistence-agnostic.
   readonly watchRegular$ = createEffect(() =>
     this.actions$.pipe(
       ofType(RegularActions.watchStarted),
@@ -69,7 +69,7 @@ export class RegularEffects {
   );
 
   // Interventions belong to exactly one period. When an edit changes the parent
-  // period, Firestore cannot move a document between subcollections, so the
+  // period, the generic document store cannot move a document between parents, so the
   // helper recreates it under the new period and removes the previous copy.
   readonly saveIntervention$ = createEffect(() =>
     this.actions$.pipe(
