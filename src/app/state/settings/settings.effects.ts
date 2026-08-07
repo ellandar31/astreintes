@@ -36,6 +36,7 @@ const defaultTemplates: RhExportTemplateSetting[] = [
   { id: "exceptionalOnCall", label: "Astreintes exceptionnelles", fileName: "" },
   { id: "exceptionalWork", label: "Travaux exceptionnels", fileName: "" },
 ];
+const defaultGenerationApiUrl = "http://localhost:3000/v1/documents/generate";
 
 @Injectable()
 /**
@@ -124,18 +125,13 @@ export class SettingsEffects {
       ),
     ),
   );
-  // Templates are stored as configuration even when the current implementation
-  // generates documents in code; this keeps the UI ready for future template use.
+  // RH document settings split the endpoint from template payloads. Firestore
+  // documents are capped in size, while designer templates can contain embedded
+  // images; one document per template avoids brittle saves as models grow.
   readonly watchRhTemplates$ = createEffect(() =>
     this.actions$.pipe(
       ofType(SettingsActions.rhTemplatesWatchStarted),
-      switchMap(() =>
-        this.observeSettingsDocument<Record<string, unknown>>(
-          appStore.paths.rhExportTemplates(),
-          (data) => SettingsActions.rhTemplatesChanged({ templates: this.templatesFromStore(data) }),
-          (error) => this.failure("rhTemplates", this.errorMessage(error, "Erreur pendant la configuration des modèles Word RH.")),
-        ).pipe(takeUntil(this.actions$.pipe(ofType(SettingsActions.rhTemplatesWatchStopped)))),
-      ),
+      switchMap(() => this.observeRhTemplateSettings().pipe(takeUntil(this.actions$.pipe(ofType(SettingsActions.rhTemplatesWatchStopped))))),
     ),
   );
   // Role updates are serialized to avoid racing administrative changes from
@@ -259,8 +255,8 @@ export class SettingsEffects {
   readonly saveRhTemplates$ = createEffect(() =>
     this.actions$.pipe(
       ofType(SettingsActions.rhTemplatesSaveRequested),
-      concatMap(({ templates }) =>
-        from(appStore.data.setDocument(appStore.paths.rhExportTemplates(), { templates, updatedAt: new Date().toISOString() })).pipe(
+      concatMap(({ generationApiUrl, templates }) =>
+        from(this.saveRhTemplateSettings(generationApiUrl, templates)).pipe(
           map(() => this.success("rhTemplates", "Modèles Word RH enregistrés.")),
           catchError((error) => of(this.failure("rhTemplates", this.errorMessage(error, "Erreur pendant l'enregistrement des modèles Word RH.")))),
         ),
@@ -313,6 +309,64 @@ export class SettingsEffects {
   }
 
   /**
+   * Rebuilds the RH document configuration from two Firestore sources.
+   *
+   * The endpoint is lightweight singleton configuration. The template JSONs are
+   * stored in `items` to keep each payload below Firestore's document limit and
+   * to make partial template updates possible later.
+   */
+  private observeRhTemplateSettings(): Observable<Action> {
+    return new Observable<Action>((subscriber) => {
+      let generationApiUrl = defaultGenerationApiUrl;
+      let templates = defaultTemplates;
+      const emitChange = () => subscriber.next(SettingsActions.rhTemplatesChanged({ generationApiUrl, templates }));
+
+      const unsubscribeConfig = appStore.data.observeDocument<Record<string, unknown>>(
+        appStore.paths.rhExportTemplates(),
+        (data) => {
+          generationApiUrl = this.generationApiUrlFromStore(data);
+          emitChange();
+        },
+        (error) => subscriber.next(this.failure("rhTemplates", this.errorMessage(error, "Erreur pendant la configuration des modèles Word RH."))),
+      );
+
+      const unsubscribeTemplates = appStore.data.observeCollection<Record<string, unknown>>(
+        appStore.paths.rhExportTemplateItems(),
+        (documents) => {
+          templates = this.templatesFromDocuments(documents);
+          emitChange();
+        },
+        (error) => subscriber.next(this.failure("rhTemplates", this.errorMessage(error, "Erreur pendant la configuration des modèles Word RH."))),
+      );
+
+      return () => {
+        unsubscribeConfig();
+        unsubscribeTemplates();
+      };
+    });
+  }
+
+  /**
+   * Saves template payloads separately from global configuration.
+   *
+   * Keeping a historical `templates` metadata field on the parent document would
+   * reintroduce Firestore size pressure, so the parent only stores lightweight
+   * settings and each item owns its model JSON.
+   */
+  private async saveRhTemplateSettings(generationApiUrl: string, templates: RhExportTemplateSetting[]): Promise<void> {
+    const updatedAt = new Date().toISOString();
+    await appStore.data.setDocument(appStore.paths.rhExportTemplates(), { generationApiUrl, updatedAt });
+    await Promise.all(
+      templates.map((template) =>
+        appStore.data.setDocument(appStore.paths.rhExportTemplate(template.id), {
+          ...this.templatePayload(template),
+          updatedAt,
+        }),
+      ),
+    );
+  }
+
+  /**
    * Fetches official French public holidays for the selected zone/year.
    *
    * The result is normalized immediately so the rest of the application never
@@ -355,9 +409,76 @@ export class SettingsEffects {
   }
 
   private templatesFromStore(data: Record<string, unknown> | undefined): RhExportTemplateSetting[] {
-    const savedTemplates = Array.isArray(data?.["templates"]) ? (data["templates"] as Partial<RhExportTemplateSetting>[]) : [];
+    const savedTemplates = Array.isArray(data?.["templates"]) ? (data["templates"] as Record<string, unknown>[]) : [];
 
-    return this.mergeRows(defaultTemplates, savedTemplates);
+    return this.mergeRows(defaultTemplates, savedTemplates.map((template) => this.templateFromStore(template)));
+  }
+
+  private templatesFromDocuments(documents: StoreDocument<Record<string, unknown>>[]): RhExportTemplateSetting[] {
+    return this.mergeRows(
+      defaultTemplates,
+      documents.map((document) => this.templateFromStore({ ...document.data, id: document.id })),
+    );
+  }
+
+  /**
+   * Rehydrates template JSONs saved as strings.
+   *
+   * Firestore accepts arrays, but not arrays nested directly inside another
+   * array. Document-generation models are outside our control and may contain
+   * exactly that shape, so we persist them as JSON text and only parse them back
+   * inside the application boundary.
+   */
+  private templateFromStore(data: Record<string, unknown>): Partial<RhExportTemplateSetting> {
+    return {
+      id: this.templateIdFromStore(data["id"]),
+      label: asSafeString(data["label"]),
+      fileName: asSafeString(data["fileName"]),
+      templateFileName: asSafeString(data["templateFileName"]),
+      dataModelFileName: asSafeString(data["dataModelFileName"]),
+      generationTemplate: this.jsonPayloadFromStore(data["generationTemplateJson"]) ?? data["generationTemplate"],
+      dataModel: this.jsonPayloadFromStore(data["dataModelJson"]) ?? data["dataModel"],
+    };
+  }
+
+  /**
+   * Serializes external template definitions before writing to Firestore.
+   *
+   * The JSON string is intentionally preferred over the parsed object: it avoids
+   * Firestore nested-array constraints and preserves the uploaded model exactly
+   * as expected by the document-generation service.
+   */
+  private templatePayload(template: RhExportTemplateSetting): Record<string, unknown> {
+    return {
+      id: template.id,
+      label: template.label,
+      fileName: template.fileName || "",
+      templateFileName: template.templateFileName || "",
+      dataModelFileName: template.dataModelFileName || "",
+      ...(template.generationTemplate ? { generationTemplateJson: JSON.stringify(template.generationTemplate) } : {}),
+      ...(template.dataModel ? { dataModelJson: JSON.stringify(template.dataModel) } : {}),
+    };
+  }
+
+  private jsonPayloadFromStore(value: unknown): unknown | undefined {
+    if (typeof value !== "string" || !value.trim()) {
+      return undefined;
+    }
+
+    try {
+      return JSON.parse(value);
+    } catch {
+      return undefined;
+    }
+  }
+
+  private templateIdFromStore(value: unknown): RhExportTemplateSetting["id"] | undefined {
+    return value === "regular" || value === "exceptionalOnCall" || value === "exceptionalWork" ? value : undefined;
+  }
+
+  private generationApiUrlFromStore(data: Record<string, unknown> | undefined): string {
+    const value = asSafeString(data?.["generationApiUrl"]);
+    return value || defaultGenerationApiUrl;
   }
 
   private mergeRows<T extends { id: string }>(defaults: T[], savedRows: Partial<T>[]): T[] {

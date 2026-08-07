@@ -34,7 +34,7 @@
           <td>{{ operation.interventions.length }}</td>
           <td>
             <div class="action-buttons">
-              <button pButton class="p-button-sm" [disabled]="!templateFor('regular').fileName" (click)="exportOperation('regular', operation)" type="button">
+              <button pButton class="p-button-sm" [disabled]="!isGenerationTemplateReady(templateFor('regular'))" (click)="exportOperation('regular', operation)" type="button">
                 <span class="pi pi-file-word" aria-hidden="true"></span>
                 <span>{{ labels.common.actions.exportWord }}</span>
               </button>
@@ -45,6 +45,10 @@
               <button pButton class="p-button-sm p-button-outlined p-button-secondary" (click)="exportExcelOperation('regular', operation)" type="button">
                 <span class="pi pi-file-excel" aria-hidden="true"></span>
                 <span>{{ labels.common.actions.exportExcel }}</span>
+              </button>
+              <button pButton class="p-button-sm p-button-outlined p-button-secondary" (click)="exportJsonOperation('regular', operation)" type="button">
+                <span class="pi pi-code" aria-hidden="true"></span>
+                <span>{{ labels.common.actions.exportJson }}</span>
               </button>
               @if (operation.sentToRhAt) {
                 <button pButton class="p-button-sm p-button-outlined p-button-danger" (click)="unmarkSentToRh(operation)" type="button">
@@ -94,7 +98,7 @@
           <td>{{ operation.interventions.length }}</td>
           <td>
             <div class="action-buttons">
-              <button pButton class="p-button-sm" [disabled]="!templateFor('exceptionalOnCall').fileName" (click)="exportOperation('exceptionalOnCall', operation)" type="button">
+              <button pButton class="p-button-sm" [disabled]="!isGenerationTemplateReady(templateFor('exceptionalOnCall'))" (click)="exportOperation('exceptionalOnCall', operation)" type="button">
                 <span class="pi pi-file-word" aria-hidden="true"></span>
                 <span>{{ labels.common.actions.exportWord }}</span>
               </button>
@@ -105,6 +109,10 @@
               <button pButton class="p-button-sm p-button-outlined p-button-secondary" (click)="exportExcelOperation('exceptionalOnCall', operation)" type="button">
                 <span class="pi pi-file-excel" aria-hidden="true"></span>
                 <span>{{ labels.common.actions.exportExcel }}</span>
+              </button>
+              <button pButton class="p-button-sm p-button-outlined p-button-secondary" (click)="exportJsonOperation('exceptionalOnCall', operation)" type="button">
+                <span class="pi pi-code" aria-hidden="true"></span>
+                <span>{{ labels.common.actions.exportJson }}</span>
               </button>
               @if (operation.sentToRhAt) {
                 <button pButton class="p-button-sm p-button-outlined p-button-danger" (click)="unmarkSentToRh(operation)" type="button">
@@ -154,7 +162,7 @@
           <td>{{ operation.interventions.length }}</td>
           <td>
             <div class="action-buttons">
-              <button pButton class="p-button-sm" [disabled]="!templateFor('exceptionalWork').fileName" (click)="exportOperation('exceptionalWork', operation)" type="button">
+              <button pButton class="p-button-sm" [disabled]="!isGenerationTemplateReady(templateFor('exceptionalWork'))" (click)="exportOperation('exceptionalWork', operation)" type="button">
                 <span class="pi pi-file-word" aria-hidden="true"></span>
                 <span>{{ labels.common.actions.exportWord }}</span>
               </button>
@@ -165,6 +173,10 @@
               <button pButton class="p-button-sm p-button-outlined p-button-secondary" (click)="exportExcelOperation('exceptionalWork', operation)" type="button">
                 <span class="pi pi-file-excel" aria-hidden="true"></span>
                 <span>{{ labels.common.actions.exportExcel }}</span>
+              </button>
+              <button pButton class="p-button-sm p-button-outlined p-button-secondary" (click)="exportJsonOperation('exceptionalWork', operation)" type="button">
+                <span class="pi pi-code" aria-hidden="true"></span>
+                <span>{{ labels.common.actions.exportJson }}</span>
               </button>
               @if (operation.sentToRhAt) {
                 <button pButton class="p-button-sm p-button-outlined p-button-danger" (click)="unmarkSentToRh(operation)" type="button">

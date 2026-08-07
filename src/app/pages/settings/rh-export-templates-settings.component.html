@@ -6,18 +6,30 @@
     </div>
   </div>
 
+  <label class="field">
+    <span>{{ labels.settings.rhTemplates.generationApiUrl }}</span>
+    <input pInputText [(ngModel)]="generationApiUrl" type="url" />
+  </label>
+
   <div class="template-grid">
     @for (template of templates; track template.id) {
       <p-card styleClass="template-item">
         <div>
           <h4>{{ template.label }}</h4>
-          <p>{{ template.fileName || labels.common.messages.noFileReferenced }}</p>
+          <p>{{ template.templateFileName || labels.common.messages.noTemplateReferenced }}</p>
+          <p>{{ template.dataModelFileName || labels.common.messages.noDataModelReferenced }}</p>
         </div>
 
         <label class="file-button">
-          <i class="pi pi-file-word" aria-hidden="true"></i>
-          {{ labels.settings.rhTemplates.chooseWord }}
-          <input accept=".doc,.docx" (change)="setTemplateFile(template, $event)" type="file" />
+          <i class="pi pi-file" aria-hidden="true"></i>
+          {{ labels.settings.rhTemplates.chooseTemplate }}
+          <input accept=".json,application/json" (change)="setTemplateFile(template, $event)" type="file" />
+        </label>
+
+        <label class="file-button">
+          <i class="pi pi-database" aria-hidden="true"></i>
+          {{ labels.settings.rhTemplates.chooseDataModel }}
+          <input accept=".json,application/json" (change)="setDataModelFile(template, $event)" type="file" />
         </label>
       </p-card>
     }

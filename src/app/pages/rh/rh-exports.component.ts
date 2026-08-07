@@ -18,8 +18,9 @@ import {
   selectRegularPublicHolidays,
 } from "../../state/regular/regular.selectors";
 import { SettingsActions } from "../../state/settings/settings.actions";
-import { selectSettingsRhCompensation, selectSettingsRhTemplates } from "../../state/settings/settings.selectors";
+import { selectSettingsRhCompensation, selectSettingsRhGenerationApiUrl, selectSettingsRhTemplates } from "../../state/settings/settings.selectors";
 import { RhExceptionalOperation, RhRegularPeriod } from "./rh.models";
+import { GenerationDocumentClient } from "./export-libraries/generation-document-client.lib";
 import { RhExcelExportLibrary } from "./export-libraries/rh-excel-export.lib";
 import {
   ExportOperation,
@@ -30,11 +31,13 @@ import {
   WordExportTemplate,
 } from "./export-libraries/rh-export.models";
 import { formatRange } from "./export-libraries/rh-export-utils";
+import { RhJsonExportLibrary } from "./export-libraries/rh-json-export.lib";
 import { RhWordPdfExportLibrary } from "./export-libraries/rh-word-pdf-export.lib";
 
 interface RegularInterventionExport {
   id: string;
   periodId: string;
+  userId?: string;
   userName: string;
   userEmail: string;
   startDate: string;
@@ -78,12 +81,15 @@ export class RhExportsComponent implements OnDestroy {
 
   private readonly wordPdfExportLibrary = new RhWordPdfExportLibrary();
   private readonly excelExportLibrary = new RhExcelExportLibrary();
+  private readonly generationDocumentClient = new GenerationDocumentClient();
+  private readonly jsonExportLibrary = new RhJsonExportLibrary();
   private readonly store = inject(Store);
   private readonly exceptionalOperationsSignal = this.store.selectSignal(selectExceptionalOperations);
   private readonly regularInterventionsSignal = this.store.selectSignal(selectRegularInterventions);
   private readonly regularPeriodsSignal = this.store.selectSignal(selectRegularPeriods);
   private readonly publicHolidaysSignal = this.store.selectSignal(selectRegularPublicHolidays);
   private readonly rhCompensationSignal = this.store.selectSignal(selectSettingsRhCompensation);
+  private readonly rhGenerationApiUrlSignal = this.store.selectSignal(selectSettingsRhGenerationApiUrl);
   private readonly rhTemplatesSignal = this.store.selectSignal(selectSettingsRhTemplates);
 
   constructor() {
@@ -98,6 +104,10 @@ export class RhExportsComponent implements OnDestroy {
       this.templates.forEach((template) => {
         const savedTemplate = savedTemplates.find((item) => item.id === template.id);
         template.fileName = savedTemplate?.fileName || "";
+        template.templateFileName = savedTemplate?.templateFileName || "";
+        template.dataModelFileName = savedTemplate?.dataModelFileName || "";
+        template.generationTemplate = savedTemplate?.generationTemplate;
+        template.dataModel = savedTemplate?.dataModel;
       });
     });
 
@@ -136,21 +146,32 @@ export class RhExportsComponent implements OnDestroy {
     this.store.dispatch(ExceptionalActions.watchStopped());
   }
 
-  exportOperation(templateId: ExportTemplateId, operation: ExportOperation): void {
+  async exportOperation(templateId: ExportTemplateId, operation: ExportOperation): Promise<void> {
     this.exportMessage = "";
     const template = this.templateFor(templateId);
 
-    if (!template.fileName) {
-      this.exportMessage = this.labels.rh.exports.errors.missingTemplate;
+    if (!this.isGenerationTemplateReady(template)) {
+      this.exportMessage = this.labels.rh.exports.errors.missingTemplateData;
       return;
     }
 
-    this.downloadFile(
-      `${this.slug(operation.title)}_${this.selectedMonth}.doc`,
-      "application/msword;charset=utf-8",
-      this.wordPdfExportLibrary.buildWordHtml(template, [operation], templateId, this.exportContext()),
-    );
-    this.exportMessage = this.formatMessage(this.labels.rh.exports.messages.wordGenerated, operation.title);
+    try {
+      const fileName = `${this.slug(operation.title)}_${this.selectedMonth}.docx`;
+      const blob = await this.generationDocumentClient.generateDocx({
+        apiUrl: this.rhGenerationApiUrlSignal(),
+        data: this.jsonExportLibrary.buildPayload(templateId, operation) as unknown as Record<string, unknown>,
+        dataModel: template.dataModel,
+        fileName,
+        locale: "fr-FR",
+        template: template.generationTemplate,
+      });
+
+      this.downloadBlob(fileName, blob);
+      this.exportMessage = this.formatMessage(this.labels.rh.exports.messages.wordGenerated, operation.title);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      this.exportMessage = this.labels.rh.exports.errors.generationFailed.replace("{message}", message);
+    }
   }
 
   exportExcelOperation(templateId: ExportTemplateId, operation: ExportOperation): void {
@@ -161,6 +182,16 @@ export class RhExportsComponent implements OnDestroy {
       this.excelExportLibrary.buildExcelHtml(templateId, operation, this.exportContext()),
     );
     this.exportMessage = this.formatMessage(this.labels.rh.exports.messages.excelGenerated, operation.title);
+  }
+
+  exportJsonOperation(templateId: ExportTemplateId, operation: ExportOperation): void {
+    this.exportMessage = "";
+    this.downloadFile(
+      `${this.slug(operation.title)}_${this.selectedMonth}.json`,
+      "application/json;charset=utf-8",
+      this.jsonExportLibrary.buildJson(templateId, operation),
+    );
+    this.exportMessage = this.formatMessage(this.labels.rh.exports.messages.jsonGenerated, operation.title);
   }
 
   async exportPdfOperation(templateId: ExportTemplateId, operation: ExportOperation): Promise<void> {
@@ -203,6 +234,10 @@ export class RhExportsComponent implements OnDestroy {
     return this.templates.find((template) => template.id === templateId) || this.templates[0];
   }
 
+  isGenerationTemplateReady(template: WordExportTemplate): boolean {
+    return Boolean(this.rhGenerationApiUrlSignal() && template.generationTemplate && template.dataModel);
+  }
+
   formatRange(startValue: string, endValue: string): string {
     return formatRange(startValue, endValue);
   }
@@ -236,9 +271,10 @@ export class RhExportsComponent implements OnDestroy {
             forecastEndDate: period.endDate,
             actualStartDate: period.startDate,
             actualEndDate: period.endDate,
-            plannedUsers: [{ name: period.userName || period.userEmail, startDate: period.startDate, endDate: period.endDate, visa: period.agentVisa || createEmptyVisa() }],
-            actualUsers: [{ name: period.userName || period.userEmail, startDate: period.startDate, endDate: period.endDate, visa: period.agentVisa || createEmptyVisa() }],
+            plannedUsers: [{ name: period.userName || period.userEmail, startDate: period.startDate, endDate: period.endDate, visa: period.agentVisa || createEmptyVisa(), userId: period.userId }],
+            actualUsers: [{ name: period.userName || period.userEmail, startDate: period.startDate, endDate: period.endDate, visa: period.agentVisa || createEmptyVisa(), userId: period.userId }],
             interventions: interventions.map((intervention) => ({
+              userId: intervention.userId,
               userName: intervention.userName || intervention.userEmail,
               startDate: intervention.startDate,
               endDate: intervention.endDate,
@@ -284,14 +320,17 @@ export class RhExportsComponent implements OnDestroy {
             startDate: user.startDate || forecastStart,
             endDate: user.endDate || forecastEnd,
             visa: user.visa || createEmptyVisa(),
+            userId: user.userId,
           })),
           actualUsers: (operation.actualUsers || []).map((user) => ({
             name: user.displayName || user.email,
             startDate: user.startDate || actualStart,
             endDate: user.endDate || actualEnd,
             visa: user.visa || createEmptyVisa(),
+            userId: user.userId,
           })),
           interventions: (operation.interventions || []).map((intervention) => ({
+            userId: intervention.userId,
             userName: intervention.userName || intervention.userEmail,
             startDate: intervention.startDate || intervention.date || "",
             endDate: intervention.endDate || "",
