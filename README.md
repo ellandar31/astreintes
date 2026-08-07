@@ -226,6 +226,106 @@ ng build
 
 ---
 
+# Déploiement
+
+Le frontend Angular est une application statique servie par Nginx dans l'image
+Docker du projet. Supabase reste un service séparé : soit un projet Supabase
+hébergé, soit une instance Supabase lancée ou self-hostée avec Docker.
+
+## Préparer Supabase
+
+### Option recommandée : Supabase hébergé
+
+1. Créer un projet Supabase.
+2. Activer l'authentification Email dans Supabase Auth.
+3. Exécuter la migration SQL :
+
+```bash
+npx supabase link --project-ref <project-ref>
+npx supabase db push
+```
+
+La migration applicative se trouve dans :
+
+```text
+supabase/migrations/20260726090000_app_documents.sql
+```
+
+4. Récupérer l'URL du projet et la clé `anon public` dans Supabase :
+   `Project settings > API`.
+5. Renseigner ces valeurs dans :
+
+```text
+src/app/store/supabase.config.ts
+```
+
+### Option locale / self-host Docker
+
+Pour lancer Supabase localement :
+
+```bash
+npx supabase start
+```
+
+Pour recréer la base locale et réappliquer les migrations :
+
+```bash
+npx supabase db reset
+```
+
+URLs locales utiles :
+
+- API Supabase : `http://127.0.0.1:54321`
+- Studio Supabase : `http://127.0.0.1:54323`
+- Mailpit : `http://127.0.0.1:54324`
+
+Sur Windows, le service Analytics Supabase est désactivé dans
+`supabase/config.toml`, car il nécessite une configuration Docker particulière.
+Ce service n'est pas nécessaire pour l'application.
+
+## Construire et lancer l'application avec Docker
+
+Avant de construire l'image, vérifier que `src/app/store/supabase.config.ts`
+pointe vers le bon projet Supabase. Cette configuration est intégrée au bundle
+Angular au moment du build.
+
+Construction :
+
+```bash
+docker compose build
+```
+
+Lancement :
+
+```bash
+docker compose up -d
+```
+
+Application :
+
+```text
+http://localhost:8080
+```
+
+Arrêt :
+
+```bash
+docker compose down
+```
+
+## Points de contrôle avant mise en production
+
+- `npm ci`
+- `npm test`
+- `npm run build`
+- `npm audit --omit=dev`
+- migrations Supabase appliquées
+- authentification Email activée
+- URL et clé `anon public` Supabase renseignées dans le build Angular
+- sauvegarde/restauration de la base Supabase validée
+
+---
+
 # Feuille de route
 
 Les évolutions prévues sont notamment :
