@@ -10,6 +10,17 @@
   grid-template-columns: repeat(auto-fit, minmax(13.75rem, 1fr));
 }
 
+.field {
+  display: grid;
+  gap: var(--app-space-sm);
+  max-width: 44rem;
+}
+
+.field span {
+  color: var(--app-color-heading);
+  font-weight: 800;
+}
+
 .template-item {
   display: block;
 }

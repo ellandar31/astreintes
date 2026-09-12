@@ -22,6 +22,7 @@ export interface SettingsState {
   holidays: PublicHoliday[];
   message: SettingsOperationMessage | null;
   rhCompensation: RhCompensationSettings | null;
+  rhGenerationApiUrl: string;
   rhTemplates: RhExportTemplateSetting[];
   teams: Team[];
   users: ManagedUser[];
@@ -34,6 +35,7 @@ export const initialSettingsState: SettingsState = {
   holidays: [],
   message: null,
   rhCompensation: null,
+  rhGenerationApiUrl: "",
   rhTemplates: [],
   teams: [],
   users: [],
@@ -68,8 +70,9 @@ export const settingsReducer = createReducer(
     ...state,
     rhCompensation: settings,
   })),
-  on(SettingsActions.rhTemplatesChanged, (state, { templates }): SettingsState => ({
+  on(SettingsActions.rhTemplatesChanged, (state, { generationApiUrl, templates }): SettingsState => ({
     ...state,
+    rhGenerationApiUrl: generationApiUrl,
     rhTemplates: templates,
   })),
   on(

@@ -11,4 +11,5 @@ export const selectSettingsIsLoadingOfficialHolidays = createSelector(selectSett
 export const selectSettingsIsSaving = createSelector(selectSettingsState, (state) => state.isSaving);
 export const selectSettingsMessage = createSelector(selectSettingsState, (state) => state.message);
 export const selectSettingsRhCompensation = createSelector(selectSettingsState, (state) => state.rhCompensation);
+export const selectSettingsRhGenerationApiUrl = createSelector(selectSettingsState, (state) => state.rhGenerationApiUrl);
 export const selectSettingsRhTemplates = createSelector(selectSettingsState, (state) => state.rhTemplates);

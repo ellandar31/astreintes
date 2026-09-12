@@ -349,6 +349,16 @@ export const appStore = {
     publicHolidays: () => collectionReference("settings.publicHolidays"),
     publicHoliday: (holidayId: string) => documentReference("settings.publicHolidays", holidayId),
     rhExportTemplates: () => documentReference("settings", "rhExportTemplates"),
+    rhExportTemplateItems: () =>
+      collectionReference("settings.rhExportTemplates", {
+        parentCollectionName: "settings",
+        parentId: "rhExportTemplates",
+      }),
+    rhExportTemplate: (templateId: string) =>
+      documentReference("settings.rhExportTemplates", templateId, {
+        parentCollectionName: "settings",
+        parentId: "rhExportTemplates",
+      }),
     rhCompensationRules: () => documentReference("settings", "rhCompensationRules"),
     regularOnCallPeriods: () => collectionReference("regularOnCallPeriods"),
     regularOnCallPeriod: (periodId: string) => documentReference("regularOnCallPeriods", periodId),

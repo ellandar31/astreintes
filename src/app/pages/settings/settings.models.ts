@@ -55,4 +55,8 @@ export interface RhExportTemplateSetting {
   id: "regular" | "exceptionalOnCall" | "exceptionalWork";
   label: string;
   fileName: string;
+  templateFileName?: string;
+  dataModelFileName?: string;
+  generationTemplate?: unknown;
+  dataModel?: unknown;
 }

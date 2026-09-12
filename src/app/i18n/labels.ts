@@ -21,6 +21,7 @@ export const APP_LABELS = {
       createAccount: "Créer le compte",
       login: "Se connecter",
       logout: "Déconnexion",
+      google: "Continuer avec Google",
       existingAccount: "J'ai déjà un compte",
       createEmailAccount: "Créer un compte email",
       invalidForm: "Renseignez une adresse email valide et un mot de passe d'au moins 6 caractères.",
@@ -38,6 +39,7 @@ export const APP_LABELS = {
       deleteMyVisa: "Supprimer mon visa",
       edit: "Modifier",
       exportExcel: "Excel",
+      exportJson: "JSON",
       exportPdf: "PDF",
       exportWord: "Word",
       filter: "Filtrer",
@@ -88,6 +90,8 @@ export const APP_LABELS = {
     },
     messages: {
       noFileReferenced: "Aucun fichier référencé",
+      noDataModelReferenced: "Aucun modèle de données référencé",
+      noTemplateReferenced: "Aucun template documentaire référencé",
       rhSentAt: "Envoyé aux RH le",
     },
     modal: {
@@ -277,10 +281,13 @@ export const APP_LABELS = {
         regular: "Aucune astreinte régulière sur la période.",
       },
       errors: {
+        generationFailed: "Erreur pendant la génération documentaire : {message}",
         missingTemplate: "Aucun modèle Word n'est configuré pour cet export dans les paramètres RH.",
+        missingTemplateData: "Le template documentaire et le modèle de données doivent être configurés dans les paramètres RH.",
       },
       messages: {
         excelGenerated: "Export Excel généré pour {title}.",
+        jsonGenerated: "Export JSON généré pour {title}.",
         pdfGenerated: "Export PDF généré pour {title}.",
         rhSent: "{title} marqué comme envoyé aux RH.",
         rhUnsent: "Envoi RH supprimé pour {title}.",
@@ -393,9 +400,13 @@ export const APP_LABELS = {
     },
     rhTemplates: {
       save: "Enregistrer les modèles",
-      title: "Modèles Word d'export",
+      title: "Modèles documentaires d'export",
       chooseWord: "Choisir un Word",
+      chooseDataModel: "Choisir definition-modele.json",
+      chooseTemplate: "Choisir template-documentaire.json",
       eyebrow: "Paramétrage RH",
+      generationApiUrl: "URL de l'API generationDoc",
+      invalidJson: "Le fichier sélectionné n'est pas un JSON valide.",
     },
     teams: {
       memberCount: "membre(s)",

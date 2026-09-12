@@ -6,6 +6,10 @@ export interface WordExportTemplate {
   id: ExportTemplateId;
   label: string;
   fileName: string;
+  templateFileName?: string;
+  dataModelFileName?: string;
+  generationTemplate?: unknown;
+  dataModel?: unknown;
 }
 
 export interface OnCallCompensationRule {
@@ -40,9 +44,10 @@ export interface ExportOperation {
   forecastEndDate: string;
   actualStartDate: string;
   actualEndDate: string;
-  plannedUsers: Array<{ name: string; startDate: string; endDate: string; visa: SignatureVisa }>;
-  actualUsers: Array<{ name: string; startDate: string; endDate: string; visa: SignatureVisa }>;
+  plannedUsers: Array<{ name: string; startDate: string; endDate: string; visa: SignatureVisa; userId?: string }>;
+  actualUsers: Array<{ name: string; startDate: string; endDate: string; visa: SignatureVisa; userId?: string }>;
   interventions: Array<{
+    userId?: string;
     userName: string;
     startDate: string;
     endDate: string;

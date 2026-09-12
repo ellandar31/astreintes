@@ -11,7 +11,7 @@ import { escapeHtml, formatRange, toDateKey } from "./rh-export-utils";
  * Moteur de calcul des lignes d'indemnisation RH.
  *
  * Cette classe concentre les règles calendaires afin que les exports et l'écran
- * de contrôle RH produisent les mêmes montants. Elle ne connaît pas le provider ni
+ * de contrôle RH produisent les mêmes montants. Elle ne connaît pas Firebase ni
  * Angular : elle travaille sur un contexte déjà chargé, ce qui la rend testable
  * et limite les divergences entre UI et documents générés.
  */
