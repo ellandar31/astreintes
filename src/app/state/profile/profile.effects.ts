@@ -1,6 +1,7 @@
 import { Injectable, inject } from "@angular/core";
 import { Actions, createEffect, ofType } from "@ngrx/effects";
 import { Observable, catchError, concatMap, from, mergeMap, of, switchMap, takeUntil } from "rxjs";
+import { asSafeString } from "../../shared/value-normalizers";
 import { SignatureProfile } from "../../shared/visa.models";
 import { appStore, StoreAuthUser } from "../../store/app-store";
 import { AuthActions } from "../auth/auth.actions";
@@ -24,7 +25,7 @@ export class ProfileEffects {
       ofType(ProfileActions.watchStarted),
       switchMap(({ user }) =>
         new Observable<ReturnType<typeof ProfileActions.profileChanged | typeof ProfileActions.profileLoadFailed>>((subscriber) => {
-          const unsubscribe = appStore.data.observeDocument<SignatureProfile>(
+          const unsubscribe = appStore.data.observeDocument<Record<string, unknown>>(
             appStore.paths.user(user.uid),
             (data) => {
               subscriber.next(ProfileActions.profileChanged({ profile: this.profileFromStore(data, user) }));
@@ -66,14 +67,18 @@ export class ProfileEffects {
    * workflow usable with a simple typed name until the user uploads or draws a
    * signature.
    */
-  private profileFromStore(data: SignatureProfile | undefined, user: StoreAuthUser): SignatureProfile {
+  private profileFromStore(data: Record<string, unknown> | undefined, user: StoreAuthUser): SignatureProfile {
     return {
-      displayName: data?.displayName || user.displayName || "",
-      signatureMode: data?.signatureMode || "name",
-      signatureName: data?.signatureName || user.displayName || user.email || "",
-      signatureImage: data?.signatureImage || "",
-      signatureDrawing: data?.signatureDrawing || "",
+      displayName: asSafeString(data?.["displayName"], user.displayName || ""),
+      signatureMode: this.signatureModeFromStore(data?.["signatureMode"]),
+      signatureName: asSafeString(data?.["signatureName"], user.displayName || user.email || ""),
+      signatureImage: asSafeString(data?.["signatureImage"]),
+      signatureDrawing: asSafeString(data?.["signatureDrawing"]),
     };
+  }
+
+  private signatureModeFromStore(value: unknown): SignatureProfile["signatureMode"] {
+    return value === "image" || value === "draw" || value === "name" ? value : "name";
   }
 
   /**

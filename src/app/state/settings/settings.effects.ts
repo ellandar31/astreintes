@@ -56,11 +56,11 @@ export class SettingsEffects {
     this.actions$.pipe(
       ofType(SettingsActions.usersWatchStarted),
       switchMap(() =>
-        this.observeSettingsCollection<ManagedUser>(
+        this.observeSettingsCollection<Record<string, unknown>>(
           appStore.paths.users(),
           (documents) => {
             const users = documents
-              .map((document) => ({ ...document.data, id: document.id }) as ManagedUser)
+              .map((document) => this.userFromStore(document.id, document.data))
               .sort((first, second) => first.email.localeCompare(second.email));
 
             return SettingsActions.usersChanged({ users });
@@ -97,11 +97,11 @@ export class SettingsEffects {
     this.actions$.pipe(
       ofType(SettingsActions.holidaysWatchStarted),
       switchMap(() =>
-        this.observeSettingsCollection<PublicHoliday>(
+        this.observeSettingsCollection<Record<string, unknown>>(
           appStore.paths.publicHolidays(),
           (documents) => {
             const holidays = documents
-              .map((document) => ({ ...document.data, id: document.id }) as PublicHoliday)
+              .map((document) => this.holidayFromStore(document.id, document.data))
               .sort((first, second) => first.date.localeCompare(second.date));
 
             return SettingsActions.holidaysChanged({ holidays });
@@ -385,6 +385,46 @@ export class SettingsEffects {
     return Object.entries(data)
       .map(([date, label]) => this.toHoliday(zone, date, label, "api.gouv.fr"))
       .sort((first, second) => first.date.localeCompare(second.date));
+  }
+
+  // User documents may come from Firebase history or Supabase JSONB rows.
+  // Normalization keeps the settings UI independent from provider-specific
+  // payload details and prevents one malformed optional field from hiding the
+  // whole user list.
+  private userFromStore(id: string, data: Record<string, unknown>): ManagedUser {
+    return {
+      id,
+      uid: asSafeString(data["uid"], id),
+      email: asSafeString(data["email"]),
+      displayName: asSafeString(data["displayName"]),
+      role: this.userRoleFromStore(data["role"]),
+      lastLoginAt: data["lastLoginAt"],
+    };
+  }
+
+  /**
+   * Keeps role handling defensive during provider migrations.
+   *
+   * Historical Firebase rows and new Supabase JSONB rows can expose numbers as
+   * either numeric or string values depending on the import path. Unknown values
+   * are deliberately downgraded to the standard user role instead of breaking the
+   * full settings table.
+   */
+  private userRoleFromStore(value: unknown): UserRole {
+    const role = Number(value);
+    return role === 0 || role === 2 || role === 3 ? role : 1;
+  }
+
+  private holidayFromStore(id: string, data: Record<string, unknown>): PublicHoliday {
+    const source = data["source"] === "manual" ? "manual" : "api.gouv.fr";
+
+    return {
+      id,
+      date: asSafeString(data["date"]),
+      label: asSafeString(data["label"]),
+      zone: asSafeString(data["zone"]),
+      source,
+    };
   }
 
   // Legacy teams may contain members saved as strings or objects. Normalization

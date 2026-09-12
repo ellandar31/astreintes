@@ -1,7 +1,15 @@
 import { Injectable, inject } from "@angular/core";
 import { Actions, createEffect, ofType } from "@ngrx/effects";
 import { Observable, catchError, concatMap, from, map, merge, of, switchMap, takeUntil } from "rxjs";
-import { ExceptionalOperation, SelectableUser } from "../../pages/exceptionnel/exceptional.models";
+import {
+  ExceptionalIntervention,
+  ExceptionalOperation,
+  ExceptionalOperationType,
+  OperationParticipant,
+  SelectableUser,
+} from "../../pages/exceptionnel/exceptional.models";
+import { asSafeString } from "../../shared/value-normalizers";
+import { SignatureVisa, createEmptyVisa } from "../../shared/visa.models";
 import { appStore } from "../../store/app-store";
 import { ExceptionalActions } from "./exceptional.actions";
 
@@ -142,11 +150,11 @@ export class ExceptionalEffects {
   // grouping remain component responsibilities once the store has the snapshot.
   private observeOperations(): Observable<ReturnType<typeof ExceptionalActions.operationsChanged | typeof ExceptionalActions.loadFailed>> {
     return new Observable((subscriber) => {
-      const unsubscribe = appStore.data.observeCollection<ExceptionalOperation>(
+      const unsubscribe = appStore.data.observeCollection<Record<string, unknown>>(
         appStore.paths.exceptionalOperations(),
         (documents) => {
           const operations = documents
-            .map((document) => ({ ...document.data, id: document.id }) as ExceptionalOperation)
+            .map((document) => this.operationFromStore(document.id, document.data))
             .sort((first, second) => (first.startDate || "").localeCompare(second.startDate || ""));
 
           subscriber.next(ExceptionalActions.operationsChanged({ operations }));
@@ -161,11 +169,11 @@ export class ExceptionalEffects {
 
   private observeUsers(): Observable<ReturnType<typeof ExceptionalActions.usersChanged | typeof ExceptionalActions.loadFailed>> {
     return new Observable((subscriber) => {
-      const unsubscribe = appStore.data.observeCollection<SelectableUser>(
+      const unsubscribe = appStore.data.observeCollection<Record<string, unknown>>(
         appStore.paths.users(),
         (documents) => {
           const users = documents
-            .map((document) => ({ ...document.data, id: document.id }) as SelectableUser)
+            .map((document) => this.userFromStore(document.id, document.data))
             .filter((user) => Boolean(user.email))
             .sort((first, second) => this.userLabel(first).localeCompare(this.userLabel(second)));
 
@@ -181,6 +189,132 @@ export class ExceptionalEffects {
 
   private userLabel(user: SelectableUser): string {
     return user.displayName ? `${user.displayName} (${user.email})` : user.email;
+  }
+
+  /**
+   * Converts persisted JSONB/Firebase-like payloads into a complete operation aggregate.
+   *
+   * Exceptional operations are consumed by several screens at once: edition,
+   * validation and RH exports. A missing array or visa must therefore become an
+   * empty business value here instead of surfacing later as a rendering failure.
+   */
+  private operationFromStore(id: string, data: Record<string, unknown>): ExceptionalOperation {
+    return {
+      id,
+      type: this.operationTypeFromStore(data["type"]),
+      initiatorName: asSafeString(data["initiatorName"]),
+      initiatorUid: asSafeString(data["initiatorUid"]),
+      operationManagerName: asSafeString(data["operationManagerName"]),
+      operationManagerUid: asSafeString(data["operationManagerUid"]),
+      title: asSafeString(data["title"]),
+      startDate: asSafeString(data["startDate"]),
+      forecastEndDate: asSafeString(data["forecastEndDate"]),
+      actualStartDate: asSafeString(data["actualStartDate"]),
+      actualEndDate: asSafeString(data["actualEndDate"]),
+      plannedUsers: this.participantsFromStore(data["plannedUsers"]),
+      actualUsers: this.participantsFromStore(data["actualUsers"]),
+      visas: this.operationVisasFromStore(data["visas"]),
+      interventions: this.interventionsFromStore(data["interventions"]),
+      sentToRhAt: asSafeString(data["sentToRhAt"]) || undefined,
+    };
+  }
+
+  private operationTypeFromStore(value: unknown): ExceptionalOperationType {
+    return value === "travaux" ? "travaux" : "astreinte";
+  }
+
+  private participantsFromStore(value: unknown): OperationParticipant[] {
+    if (!Array.isArray(value)) {
+      return [];
+    }
+
+    return value.map((item) => this.participantFromStore(this.asRecord(item)));
+  }
+
+  private participantFromStore(data: Record<string, unknown>): OperationParticipant {
+    return {
+      userId: asSafeString(data["userId"]),
+      displayName: asSafeString(data["displayName"]),
+      email: asSafeString(data["email"]),
+      startDate: asSafeString(data["startDate"]),
+      endDate: asSafeString(data["endDate"]),
+      visa: this.visaFromStore(data["visa"]),
+    };
+  }
+
+  private interventionsFromStore(value: unknown): ExceptionalIntervention[] {
+    if (!Array.isArray(value)) {
+      return [];
+    }
+
+    return value.map((item) => this.interventionFromStore(this.asRecord(item)));
+  }
+
+  private interventionFromStore(data: Record<string, unknown>): ExceptionalIntervention {
+    return {
+      date: asSafeString(data["date"]) || undefined,
+      startDate: asSafeString(data["startDate"]),
+      endDate: asSafeString(data["endDate"]),
+      userId: asSafeString(data["userId"]),
+      userName: asSafeString(data["userName"]),
+      userEmail: asSafeString(data["userEmail"]),
+      wasOnSite: data["wasOnSite"] === true,
+      agentVisa: this.visaFromStore(data["agentVisa"]),
+      label: asSafeString(data["label"]),
+      comment: asSafeString(data["comment"]),
+    };
+  }
+
+  private operationVisasFromStore(value: unknown): ExceptionalOperation["visas"] {
+    const data = this.asRecord(value);
+
+    return {
+      initiatorGlobal: this.optionalVisaFromStore(data["initiatorGlobal"]),
+      directorGlobal: this.optionalVisaFromStore(data["directorGlobal"]),
+      plannedInitiator: this.visaFromStore(data["plannedInitiator"]),
+      plannedDirector: this.visaFromStore(data["plannedDirector"]),
+      actualInitiator: this.visaFromStore(data["actualInitiator"]),
+      actualDirector: this.visaFromStore(data["actualDirector"]),
+    };
+  }
+
+  private optionalVisaFromStore(value: unknown): SignatureVisa | undefined {
+    return this.isRecord(value) ? this.visaFromStore(value) : undefined;
+  }
+
+  private visaFromStore(value: unknown): SignatureVisa {
+    const data = this.asRecord(value);
+
+    return {
+      ...createEmptyVisa(),
+      signed: data["signed"] === true,
+      signedAt: asSafeString(data["signedAt"]),
+      signedByName: asSafeString(data["signedByName"]),
+      signedByUid: asSafeString(data["signedByUid"]),
+      signatureMode: this.signatureModeFromStore(data["signatureMode"]),
+      signatureValue: asSafeString(data["signatureValue"]) || undefined,
+    };
+  }
+
+  private signatureModeFromStore(value: unknown): SignatureVisa["signatureMode"] {
+    return value === "image" || value === "draw" || value === "name" ? value : undefined;
+  }
+
+  private userFromStore(id: string, data: Record<string, unknown>): SelectableUser {
+    return {
+      id,
+      uid: asSafeString(data["uid"], id),
+      displayName: asSafeString(data["displayName"]),
+      email: asSafeString(data["email"]),
+    };
+  }
+
+  private asRecord(value: unknown): Record<string, unknown> {
+    return this.isRecord(value) ? value : {};
+  }
+
+  private isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === "object" && value !== null && !Array.isArray(value);
   }
 
   private toErrorMessage(error: unknown, fallback: string): string {
