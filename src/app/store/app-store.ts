@@ -99,8 +99,35 @@ function collectionReference(collectionName: string, parent?: Pick<StoreCollecti
   };
 }
 
+/**
+ * Generates ids without assuming a secure browser context.
+ *
+ * The self-hosted deployment can run over plain HTTP through Tailscale while
+ * TLS is being configured. In that context some browsers expose neither
+ * crypto.randomUUID nor the full Web Crypto API, so realtime subscriptions and
+ * document creation must not depend exclusively on randomUUID.
+ */
 function generatedDocumentId(): string {
-  return crypto.randomUUID();
+  const browserCrypto = globalThis.crypto;
+
+  if (typeof browserCrypto?.randomUUID === "function") {
+    return browserCrypto.randomUUID();
+  }
+
+  if (typeof browserCrypto?.getRandomValues === "function") {
+    const bytes = browserCrypto.getRandomValues(new Uint8Array(16));
+    bytes[6] = (bytes[6] & 0x0f) | 0x40;
+    bytes[8] = (bytes[8] & 0x3f) | 0x80;
+
+    return [...bytes]
+      .map((byte, index) => {
+        const value = byte.toString(16).padStart(2, "0");
+        return index === 4 || index === 6 || index === 8 || index === 10 ? `-${value}` : value;
+      })
+      .join("");
+  }
+
+  return `id-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`;
 }
 
 function isDeleteFieldMarker(value: unknown): boolean {
@@ -144,7 +171,7 @@ class SupabaseDocumentStore {
     void this.fetchCollection<T>(reference).then(next).catch(error);
 
     const channel = this.client
-      .channel(`collection:${reference.collectionName}:${reference.parentId ?? "root"}:${crypto.randomUUID()}`)
+      .channel(`collection:${reference.collectionName}:${reference.parentId ?? "root"}:${generatedDocumentId()}`)
       .on(
         "postgres_changes",
         {
@@ -170,7 +197,7 @@ class SupabaseDocumentStore {
     void this.getDocument<T>(reference).then(next).catch(error);
 
     const channel = this.client
-      .channel(`document:${reference.collectionName}:${reference.documentId}:${crypto.randomUUID()}`)
+      .channel(`document:${reference.collectionName}:${reference.documentId}:${generatedDocumentId()}`)
       .on(
         "postgres_changes",
         {
