@@ -285,10 +285,16 @@ Ce service n'est pas nécessaire pour l'application.
 
 ## Construire et lancer l'application avec Docker
 
-L'image Docker sert le frontend Angular avec Nginx. La configuration Supabase
-est injectée au démarrage du conteneur par les variables d'environnement
-`SUPABASE_URL` et `SUPABASE_ANON_KEY`, ce qui permet de modifier la cible depuis
-Portainer sans reconstruire le bundle Angular.
+L'image Docker sert le frontend Angular avec Nginx. Le même conteneur joue aussi
+le rôle de gateway Supabase : les appels navigateur partent vers `/supabase`,
+puis Nginx les relaie vers l'API Supabase interne. Cette approche permet
+d'exposer une seule URL publique, notamment avec Tailscale Funnel, sans publier
+directement Supabase.
+
+La configuration est injectée au démarrage du conteneur par les variables
+d'environnement `SUPABASE_INTERNAL_URL`, `SUPABASE_PUBLIC_URL` et
+`SUPABASE_ANON_KEY`, ce qui permet de modifier la cible depuis Portainer sans
+reconstruire le bundle Angular.
 
 Construction :
 
@@ -316,20 +322,30 @@ contenu de `compose.yaml`.
 Variables d'environnement à renseigner dans la stack :
 
 ```text
-SUPABASE_URL=https://<adresse-supabase-accessible-par-le-navigateur>
+SUPABASE_INTERNAL_URL=http://host.docker.internal:8000
+SUPABASE_PUBLIC_URL=
 SUPABASE_ANON_KEY=<cle-anon-public-supabase>
 ```
 
-Si Supabase est hébergé sur le miniPC et accessible via Tailscale, `SUPABASE_URL`
-doit utiliser l'adresse Tailscale ou le nom MagicDNS du miniPC, par exemple :
+`SUPABASE_INTERNAL_URL` est l'adresse utilisée par Nginx depuis le conteneur
+`astreintes`. Si Supabase est publié sur le port `8000` du miniPC, la valeur
+recommandée est :
 
 ```text
-SUPABASE_URL=http://<nom-miniPC-tailnet>:54321
+SUPABASE_INTERNAL_URL=http://host.docker.internal:8000
 ```
 
-Attention : `http://127.0.0.1:54321` ne convient pas pour les utilisateurs
-distants, car cette adresse pointerait vers leur propre machine et non vers le
-miniPC.
+`SUPABASE_PUBLIC_URL` est optionnelle. Si elle est vide, l'application utilise
+automatiquement l'origine courante avec le préfixe `/supabase`, par exemple :
+
+```text
+https://<nom-funnel-tailnet>/supabase
+```
+
+Avec Tailscale Funnel, il faut donc exposer uniquement le conteneur applicatif
+et garder Supabase derrière la gateway. Attention : `http://127.0.0.1:54321` ne
+convient pas pour les utilisateurs distants, car cette adresse pointerait vers
+leur propre machine et non vers le miniPC.
 
 Arrêt :
 
