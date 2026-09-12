@@ -285,9 +285,10 @@ Ce service n'est pas nécessaire pour l'application.
 
 ## Construire et lancer l'application avec Docker
 
-Avant de construire l'image, vérifier que `src/app/store/supabase.config.ts`
-pointe vers le bon projet Supabase. Cette configuration est intégrée au bundle
-Angular au moment du build.
+L'image Docker sert le frontend Angular avec Nginx. La configuration Supabase
+est injectée au démarrage du conteneur par les variables d'environnement
+`SUPABASE_URL` et `SUPABASE_ANON_KEY`, ce qui permet de modifier la cible depuis
+Portainer sans reconstruire le bundle Angular.
 
 Construction :
 
@@ -307,6 +308,29 @@ Application :
 http://localhost:8080
 ```
 
+## Déploiement avec Portainer
+
+Dans Portainer, créer une nouvelle stack depuis le repository Git ou coller le
+contenu de `compose.yaml`.
+
+Variables d'environnement à renseigner dans la stack :
+
+```text
+SUPABASE_URL=https://<adresse-supabase-accessible-par-le-navigateur>
+SUPABASE_ANON_KEY=<cle-anon-public-supabase>
+```
+
+Si Supabase est hébergé sur le miniPC et accessible via Tailscale, `SUPABASE_URL`
+doit utiliser l'adresse Tailscale ou le nom MagicDNS du miniPC, par exemple :
+
+```text
+SUPABASE_URL=http://<nom-miniPC-tailnet>:54321
+```
+
+Attention : `http://127.0.0.1:54321` ne convient pas pour les utilisateurs
+distants, car cette adresse pointerait vers leur propre machine et non vers le
+miniPC.
+
 Arrêt :
 
 ```bash
@@ -321,7 +345,7 @@ docker compose down
 - `npm audit --omit=dev`
 - migrations Supabase appliquées
 - authentification Email activée
-- URL et clé `anon public` Supabase renseignées dans le build Angular
+- URL et clé `anon public` Supabase renseignées dans les variables Docker
 - sauvegarde/restauration de la base Supabase validée
 
 ---
