@@ -364,6 +364,12 @@ docker compose down
 - URL et clé `anon public` Supabase renseignées dans les variables Docker
 - sauvegarde/restauration de la base Supabase validée
 
+## Schéma de données
+
+Le schéma relationnel cible est documenté dans
+[`docs/database-schema.md`](docs/database-schema.md). La table `app_documents`
+reste disponible comme pont de migration depuis l'ancien stockage document.
+
 ---
 
 # Feuille de route
