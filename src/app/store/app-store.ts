@@ -40,6 +40,7 @@ export interface StoreError {
 
 type StorePayload = Record<string, unknown>;
 type SetDocumentOptions = { merge?: boolean };
+type RefreshCallback = () => Promise<void>;
 
 const appDocumentsTable = "app_documents";
 const deleteFieldMarker = Symbol("delete-field");
@@ -161,6 +162,9 @@ function toError(error: unknown): Error {
 }
 
 class SupabaseDocumentStore {
+  private readonly collectionRefreshers = new Map<string, Set<RefreshCallback>>();
+  private readonly documentRefreshers = new Map<string, Set<RefreshCallback>>();
+
   constructor(private readonly client: SupabaseClient) {}
 
   observeCollection<T>(
@@ -168,7 +172,16 @@ class SupabaseDocumentStore {
     next: (documents: StoreDocument<T>[]) => void,
     error?: (error: unknown) => void,
   ): StoreUnsubscribe {
-    void this.fetchCollection<T>(reference).then(next).catch(error);
+    const refresh = async () => {
+      try {
+        next(await this.fetchCollection<T>(reference));
+      } catch (refreshError) {
+        error?.(refreshError);
+      }
+    };
+    const unsubscribeRefresh = this.registerCollectionRefresher(reference, refresh);
+
+    refresh();
 
     const channel = this.client
       .channel(`collection:${reference.collectionName}:${reference.parentId ?? "root"}:${generatedDocumentId()}`)
@@ -185,6 +198,7 @@ class SupabaseDocumentStore {
       .subscribe();
 
     return () => {
+      unsubscribeRefresh();
       void this.client.removeChannel(channel);
     };
   }
@@ -194,7 +208,16 @@ class SupabaseDocumentStore {
     next: (data: T | undefined) => void,
     error?: (error: unknown) => void,
   ): StoreUnsubscribe {
-    void this.getDocument<T>(reference).then(next).catch(error);
+    const refresh = async () => {
+      try {
+        next(await this.getDocument<T>(reference));
+      } catch (refreshError) {
+        error?.(refreshError);
+      }
+    };
+    const unsubscribeRefresh = this.registerDocumentRefresher(reference, refresh);
+
+    refresh();
 
     const channel = this.client
       .channel(`document:${reference.collectionName}:${reference.documentId}:${generatedDocumentId()}`)
@@ -211,6 +234,7 @@ class SupabaseDocumentStore {
       .subscribe();
 
     return () => {
+      unsubscribeRefresh();
       void this.client.removeChannel(channel);
     };
   }
@@ -247,6 +271,8 @@ class SupabaseDocumentStore {
     if (error) {
       throw error;
     }
+
+    await this.refreshAfterWrite(reference);
   }
 
   async updateDocument(reference: StoreDocumentReference, data: StorePayload): Promise<void> {
@@ -265,6 +291,8 @@ class SupabaseDocumentStore {
     if (error) {
       throw error;
     }
+
+    await this.refreshAfterWrite(reference);
   }
 
   async deleteDocument(reference: StoreDocumentReference): Promise<void> {
@@ -277,6 +305,8 @@ class SupabaseDocumentStore {
     if (error) {
       throw error;
     }
+
+    await this.refreshAfterWrite(reference);
   }
 
   serverTimestamp(): string {
@@ -309,6 +339,63 @@ class SupabaseDocumentStore {
       .select("data")
       .eq("collection_name", reference.collectionName)
       .eq("document_id", reference.documentId);
+  }
+
+  private registerCollectionRefresher(reference: StoreCollection, refresh: RefreshCallback): StoreUnsubscribe {
+    return this.registerRefresher(this.collectionRefreshers, this.collectionKey(reference), refresh);
+  }
+
+  private registerDocumentRefresher(reference: StoreDocumentReference, refresh: RefreshCallback): StoreUnsubscribe {
+    return this.registerRefresher(this.documentRefreshers, this.documentKey(reference), refresh);
+  }
+
+  private registerRefresher(registry: Map<string, Set<RefreshCallback>>, key: string, refresh: RefreshCallback): StoreUnsubscribe {
+    const refreshers = registry.get(key) ?? new Set<RefreshCallback>();
+    refreshers.add(refresh);
+    registry.set(key, refreshers);
+
+    return () => {
+      refreshers.delete(refresh);
+
+      if (!refreshers.size) {
+        registry.delete(key);
+      }
+    };
+  }
+
+  /**
+   * Refreshes local NgRx subscriptions after writes.
+   *
+   * Supabase Realtime may be unavailable or delayed behind a reverse proxy,
+   * especially for the first self-hosted deployments. A write-side refresh keeps
+   * the initiating screen consistent immediately while the realtime channel
+   * remains useful for external changes from other sessions.
+   */
+  private async refreshAfterWrite(reference: StoreDocumentReference): Promise<void> {
+    await this.runRefreshers([
+      this.documentKey(reference),
+      this.collectionKey(reference),
+      this.collectionKey({ collectionName: reference.collectionName }),
+    ]);
+  }
+
+  private async runRefreshers(keys: string[]): Promise<void> {
+    const uniqueRefreshers = new Set<RefreshCallback>();
+
+    keys.forEach((key) => {
+      this.documentRefreshers.get(key)?.forEach((refresh) => uniqueRefreshers.add(refresh));
+      this.collectionRefreshers.get(key)?.forEach((refresh) => uniqueRefreshers.add(refresh));
+    });
+
+    await Promise.all([...uniqueRefreshers].map((refresh) => refresh()));
+  }
+
+  private collectionKey(reference: StoreCollection): string {
+    return `${reference.collectionName}:${reference.parentId ?? ""}`;
+  }
+
+  private documentKey(reference: StoreDocumentReference): string {
+    return `${reference.collectionName}:${reference.documentId}`;
   }
 }
 
