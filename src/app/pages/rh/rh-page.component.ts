@@ -21,6 +21,7 @@ export class RhPageComponent {
   readonly labels = APP_LABELS;
   readonly sections: Array<{ id: RhSection; label: string }> = [
     { id: "exports", label: APP_LABELS.rh.menu.exports },
+    { id: "periodExports", label: APP_LABELS.rh.menu.periodExports },
     { id: "controls", label: APP_LABELS.rh.menu.controls },
   ];
 

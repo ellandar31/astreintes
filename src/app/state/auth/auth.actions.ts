@@ -10,7 +10,6 @@ export const AuthActions = createActionGroup({
     "Email Login Requested": props<{ email: string; password: string; createAccount: boolean }>(),
     "Email Login Form Invalid": props<{ error: string }>(),
     "Error Cleared": emptyProps(),
-    "Google Login Requested": emptyProps(),
     "Login Failed": props<{ error: string }>(),
     "Logout Requested": emptyProps(),
     "Logout Failed": props<{ error: string }>(),

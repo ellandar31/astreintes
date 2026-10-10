@@ -39,6 +39,31 @@ function operation(partial: Partial<ExportOperation>): ExportOperation {
 }
 
 describe("RhExportCalculationLibrary", () => {
+  it.each([
+    ["2026-10-01T22:41:00", "2026-10-01T23:00:00", "Semaine"],
+    ["2026-10-03T22:41:00", "2026-10-03T23:00:00", "Samedi / Dimanche / Jour férié"],
+  ])("conserve une courte astreinte sans intervention arrondie à zéro (%s)", (startDate, endDate, label) => {
+    const rows = new RhExportCalculationLibrary(context).onCallCompensationRows(operation({
+      actualUsers: [{ name: "Agent", startDate, endDate, visa: createEmptyVisa() }],
+      interventions: [],
+    }));
+    expect(rows).toEqual([expect.objectContaining({ name: "Agent", label, hours: 0 })]);
+    expect(rows[0].segments).toHaveLength(1);
+    expect(rows[0].segments[0].hours).toBe(0.32);
+  });
+
+  it("ne crée pas de ligne pour une période vide ou hors plage indemnisable", () => {
+    const calculator = new RhExportCalculationLibrary(context);
+    for (const [startDate, endDate] of [
+      ["2026-10-01T12:00:00", "2026-10-01T12:19:00"],
+      ["2026-10-01T22:41:00", "2026-10-01T22:41:00"],
+    ]) {
+      expect(calculator.onCallCompensationRows(operation({
+        actualUsers: [{ name: "Agent", startDate, endDate, visa: createEmptyVisa() }],
+      }))).toEqual([]);
+    }
+  });
+
   it("compte une astreinte de semaine uniquement sur les plages non ouvrées", () => {
     const rows = new RhExportCalculationLibrary(context).onCallCompensationRows(
       operation({
@@ -104,5 +129,18 @@ describe("RhExportCalculationLibrary", () => {
         { startDate: "2026-07-06T18:00:00.000Z", endDate: "2026-07-06T20:00:00.000Z", hours: 2, detail: "<soirée>" },
       ]),
     ).toContain("&lt;soirée&gt;");
+  });
+
+  it("calcule les travaux sur les participants réels, sans interventions ni prévisionnel", () => {
+    const rows = new RhExportCalculationLibrary(context).interventionCompensationRows(operation({
+      plannedUsers: [{ name: "Prévu", startDate: "2026-07-06T18:00", endDate: "2026-07-06T20:00", visa: createEmptyVisa() }],
+      actualUsers: [{ name: "Réel", startDate: "2026-07-06T20:30", endDate: "2026-07-06T21:30", visa: createEmptyVisa() }],
+      interventions: [],
+    }), true);
+    expect(rows).toEqual([
+      expect.objectContaining({ userName: "Réel", hours: 0.5, coefficient: 10 }),
+      expect.objectContaining({ userName: "Réel", hours: 0.5, coefficient: 20 }),
+    ]);
+    expect(new RhExportCalculationLibrary(context).interventionCompensationRows(operation({}), true)).toEqual([]);
   });
 });

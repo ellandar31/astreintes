@@ -11,7 +11,7 @@ import { escapeHtml, formatRange, toDateKey } from "./rh-export-utils";
  * Moteur de calcul des lignes d'indemnisation RH.
  *
  * Cette classe concentre les règles calendaires afin que les exports et l'écran
- * de contrôle RH produisent les mêmes montants. Elle ne connaît pas Firebase ni
+ * de contrôle RH produisent les mêmes montants. Elle ne connaît pas la base ni
  * Angular : elle travaille sur un contexte déjà chargé, ce qui la rend testable
  * et limite les divergences entre UI et documents générés.
  */
@@ -50,19 +50,24 @@ export class RhExportCalculationLibrary {
           coefficient: weekendRule?.coefficient || 0,
           segments: weekendHolidaySegments,
         },
-      ].filter((row) => row.hours > 0);
+      // A retained period must remain auditable even when rounding produces
+      // zero payable hours. Only categories without eligible segments disappear.
+      ].filter((row) => row.segments.length > 0);
     });
   }
 
   /**
    * Calcule les interventions et travaux en appliquant les tranches RH.
    *
-   * Le paramètre isWork bascule entre coefficient d'intervention et coefficient
-   * de travaux, mais conserve le même découpage horaire pour faciliter les
-   * contrôles entre Word, PDF, Excel et écran RH.
+   * Les travaux sont calculés sur les périodes réelles des participants, sans
+   * interventions. Le même découpage horaire est utilisé avec le coefficient
+   * travaux pour garder les exports et le contrôle RH cohérents.
    */
   interventionCompensationRows(operation: ExportOperation, isWork: boolean): InterventionCompensationRow[] {
-    return operation.interventions.flatMap((intervention) =>
+    const periods = isWork
+      ? operation.actualUsers.map(user => ({ userName: user.name, startDate: user.startDate, endDate: user.endDate, comment: "" }))
+      : operation.interventions;
+    return periods.flatMap((intervention) =>
       this.applyInterventionRounding(
         this.context.periodCompensationRules
         .map((rule) => {

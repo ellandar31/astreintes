@@ -4,7 +4,6 @@ import { FormsModule } from "@angular/forms";
 import { ButtonModule } from "primeng/button";
 import { InputTextModule } from "primeng/inputtext";
 import { TableModule } from "primeng/table";
-import { TagModule } from "primeng/tag";
 import { Store } from "@ngrx/store";
 import { APP_LABELS } from "../../i18n/labels";
 import { createEmptyVisa } from "../../shared/visa.models";
@@ -43,17 +42,19 @@ import { OperationModalComponent } from "./operation-modal.component";
 @Component({
   selector: "app-exceptional-operations",
   standalone: true,
-  imports: [ButtonModule, CommonModule, FormsModule, InputTextModule, InterventionModalComponent, OperationModalComponent, TableModule, TagModule],
+  imports: [ButtonModule, CommonModule, FormsModule, InputTextModule, InterventionModalComponent, OperationModalComponent, TableModule],
   templateUrl: "./exceptional-operations.component.html",
   styleUrl: "./exceptional-operations.component.css",
 })
 export class ExceptionalOperationsComponent implements OnDestroy {
   @Input({ required: true }) user: StoreAuthUser | null = null;
+  /** Each navigation branch owns a fresh view; shared data still belongs to NgRx. */
+  @Input({ required: true }) operationType: ExceptionalOperationType = "astreinte";
   readonly labels = APP_LABELS;
+  readonly trackOperation = (_index: number, operation: ExceptionalOperation): string => operation.id;
 
   activeFilterField: FilterField = null;
-  filters: Record<SortField, string> = {
-    type: "",
+  filters: Record<Exclude<SortField, "type">, string> = {
     initiatorName: "",
     title: "",
     startDate: "",
@@ -117,9 +118,9 @@ export class ExceptionalOperationsComponent implements OnDestroy {
 
   get filteredOperations(): ExceptionalOperation[] {
     return this.operations
+      .filter(operation => operation.type === this.operationType)
       .filter((operation) => {
         return (
-          this.matchesFilter(operation.type, this.filters.type) &&
           this.matchesFilter(operation.initiatorName, this.filters.initiatorName) &&
           this.matchesFilter(operation.title, this.filters.title) &&
           this.matchesFilter(this.formatDate(operation.startDate), this.filters.startDate)
@@ -128,13 +129,15 @@ export class ExceptionalOperationsComponent implements OnDestroy {
       .sort((first, second) => this.compareOperations(first, second));
   }
 
-  openCreateModal(type: ExceptionalOperationType): void {
+  openCreateModal(): void {
+    const type = this.operationType;
     this.selectedOperation = null;
     this.operationForm = this.createEmptyOperationForm(type);
     this.modalMode = type === "astreinte" ? "create-astreinte" : "create-travaux";
   }
 
   openEditModal(operation: ExceptionalOperation): void {
+    if (operation.type !== this.operationType) return;
     this.selectedOperation = operation;
     this.operationForm = {
       type: operation.type,
@@ -169,7 +172,7 @@ export class ExceptionalOperationsComponent implements OnDestroy {
     index?: number,
     returnToOperationModal = false,
   ): void {
-    if (this.isSentToRh(operation)) {
+    if (this.operationType !== "astreinte" || operation.type !== "astreinte" || this.isSentToRh(operation)) {
       return;
     }
 
@@ -221,6 +224,7 @@ export class ExceptionalOperationsComponent implements OnDestroy {
    * la source de vérité métier est désormais la liste des participants datés.
    */
   saveOperation(form: ExceptionalOperationForm): void {
+    if (form.type !== this.operationType) return;
     if (this.selectedOperation && this.isSentToRh(this.selectedOperation)) {
       return;
     }
@@ -255,7 +259,7 @@ export class ExceptionalOperationsComponent implements OnDestroy {
   }
 
   deleteOperation(operation: ExceptionalOperation): void {
-    if (this.isSentToRh(operation)) {
+    if (operation.type !== this.operationType || this.isSentToRh(operation)) {
       return;
     }
 
@@ -270,7 +274,7 @@ export class ExceptionalOperationsComponent implements OnDestroy {
    * réelle associée.
    */
   saveIntervention(form: ExceptionalInterventionForm): void {
-    if (!this.selectedOperation) {
+    if (!this.selectedOperation || this.selectedOperation.type !== "astreinte") {
       return;
     }
 
@@ -325,7 +329,7 @@ export class ExceptionalOperationsComponent implements OnDestroy {
   deleteIntervention(operation: ExceptionalOperation, index: number): void {
     const currentOperation = this.operations.find((item) => item.id === operation.id) || operation;
 
-    if (this.isSentToRh(currentOperation)) {
+    if (currentOperation.type !== "astreinte" || this.isSentToRh(currentOperation)) {
       return;
     }
 

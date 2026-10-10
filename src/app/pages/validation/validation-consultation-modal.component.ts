@@ -16,8 +16,12 @@ import { ValidationItem, VisaProgressItem } from "./validation.models";
 })
 export class ValidationConsultationModalComponent {
   readonly labels = APP_LABELS;
+  /** Preserve action buttons when the parent recomputes visa progression. */
+  readonly trackProgressItem = (_index: number, progress: VisaProgressItem): string => progress.id;
   @Input({ required: true }) item: ValidationItem | null = null;
   @Input() canDelete = false;
+  @Input() canSign = false;
+  @Input() canSignItem: (item: ValidationItem) => boolean = () => false;
   @Input() canDeleteItem: (item: ValidationItem) => boolean = () => false;
   @Input() progressItems: VisaProgressItem[] = [];
   @Output() closed = new EventEmitter<void>();
@@ -31,7 +35,7 @@ export class ValidationConsultationModalComponent {
   }
 
   signVisa(): void {
-    if (this.item) {
+    if (this.item && this.canSign) {
       this.signed.emit(this.item);
     }
   }
@@ -43,7 +47,7 @@ export class ValidationConsultationModalComponent {
   }
 
   signProgressVisa(progress: VisaProgressItem): void {
-    if (progress.actionItem) {
+    if (progress.actionItem && this.canSignItem(progress.actionItem)) {
       this.signed.emit(progress.actionItem);
     }
   }

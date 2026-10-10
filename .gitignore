@@ -13,8 +13,5 @@ yarn-error.log*
 *.log
 audit.json
 audit-production.json
-supabase/.temp/*
-.gitignore
-.gitignore
-supabase/.branches/_current_branch
-.gitignore
+proxy.local.json
+save

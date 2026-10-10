@@ -54,8 +54,10 @@
 
     @if (activeTab === "regular") {
       <app-regular-calendar></app-regular-calendar>
-    } @else if (activeTab === "exceptional") {
-      <app-exceptional-operations [user]="user()"></app-exceptional-operations>
+    } @else if (activeTab === "exceptionalOnCall") {
+      <app-exceptional-operations [user]="user()" operationType="astreinte"></app-exceptional-operations>
+    } @else if (activeTab === "exceptionalWork") {
+      <app-exceptional-operations [user]="user()" operationType="travaux"></app-exceptional-operations>
     } @else if (activeTab === "validation") {
       <app-validation-page [user]="user()"></app-validation-page>
     } @else if (activeTab === "rh") {
@@ -129,15 +131,6 @@
       </form>
 
       <div class="auth-secondary-actions">
-        <p-button
-          icon="pi pi-google"
-          [disabled]="isSubmitting()"
-          [label]="labels.app.auth.google"
-          severity="secondary"
-          [outlined]="true"
-          (onClick)="loginWithGoogle()"
-        ></p-button>
-
         <p-button
           [label]="isCreatingAccount ? labels.app.auth.existingAccount : labels.app.auth.createEmailAccount"
           [link]="true"

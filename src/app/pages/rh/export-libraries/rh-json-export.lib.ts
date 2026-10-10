@@ -1,5 +1,6 @@
 import { SignatureVisa } from "../../../shared/visa.models";
 import { ExportOperation, ExportTemplateId } from "./rh-export.models";
+import { formatDate, formatTime } from "./rh-export-utils";
 
 interface JsonVisa {
   signed?: boolean;
@@ -67,10 +68,11 @@ export class RhJsonExportLibrary {
   /**
    * Sérialise une opération dans la forme JSON du modèle cible.
    *
-   * Les travaux exceptionnels n'ont pas de bloc `actual` dans le modèle fourni :
-   * ils exportent les informations globales, le prévisionnel et les
-   * interventions. Les astreintes régulières et exceptionnelles exportent aussi
-   * le réel.
+   * Les travaux supplémentaires n'ont pas de bloc `actual` dans le modèle fourni :
+   * ils exportent les informations globales, le prévisionnel et les périodes
+   * réelles sous la clé historique `interventions`. Cette clé est un contrat du
+   * modèle documentaire, pas une entité de travaux en base. Les astreintes
+   * régulières et exceptionnelles exportent aussi le bloc réel.
    */
   buildJson(templateId: ExportTemplateId, operation: ExportOperation): string {
     return JSON.stringify(this.buildPayload(templateId, operation), null, 2);
@@ -79,6 +81,12 @@ export class RhJsonExportLibrary {
   buildPayload(templateId: ExportTemplateId, operation: ExportOperation): JsonExportPayload {
     const includeActual = templateId !== "exceptionalWork";
     const visaShape: VisaShape = templateId === "exceptionalWork" ? "complete" : "signatureOnly";
+    // Keep the supplied Word-model contract while using actual work participants as the source.
+    const documentPeriods = templateId === "exceptionalWork"
+      ? operation.actualUsers.map(user => ({
+          userName: user.name, startDate: user.startDate, endDate: user.endDate, wasOnSite: false, visa: user.visa,
+        }))
+      : operation.interventions;
 
     return {
       exceptionalOperations: {
@@ -105,7 +113,7 @@ export class RhJsonExportLibrary {
               },
             }
           : {}),
-        interventions: operation.interventions.map((intervention) => ({
+        interventions: documentPeriods.map((intervention) => ({
           startDate: this.datePart(intervention.startDate),
           endDate: this.datePart(intervention.endDate),
           startTime: this.timePart(intervention.startDate),
@@ -116,6 +124,38 @@ export class RhJsonExportLibrary {
         })),
       },
     };
+  }
+
+  /**
+   * Only the document renderer receives display dates: the downloadable JSON
+   * keeps ISO values so external consumers can still parse and sort them.
+   * The renderer preserves these already formatted temporal strings.
+   */
+  buildDocumentPayload(templateId: ExportTemplateId, operation: ExportOperation): JsonExportPayload {
+    const payload = this.buildPayload(templateId, operation);
+    const document = payload.exceptionalOperations;
+    const dateTime = (value: string): string => value ? `${formatDate(value)} ${formatTime(value)}` : "";
+    const formatVisa = (visa: JsonVisa): void => {
+      if (visa.signedAt) visa.signedAt = dateTime(visa.signedAt);
+    };
+    document.global.forecastStartDate = dateTime(document.global.forecastStartDate);
+    document.global.forecastEndDate = dateTime(document.global.forecastEndDate);
+    [document.global.initiatorGlobal, document.global.directorGlobal,
+      document.forecast.plannedDirector, document.forecast.plannedInitiator].forEach(formatVisa);
+    if (document.actual) {
+      [document.actual.actualDirector, document.actual.actualInitiator].forEach(formatVisa);
+    }
+    for (const participant of [...document.forecast.plannedUsers, ...(document.actual?.actualUsers ?? [])]) {
+      if (participant.startDate) participant.startDate = formatDate(participant.startDate);
+      if (participant.endDate) participant.endDate = formatDate(participant.endDate);
+      formatVisa(participant.visa);
+    }
+    for (const intervention of document.interventions) {
+      intervention.startDate = formatDate(intervention.startDate);
+      intervention.endDate = formatDate(intervention.endDate);
+      formatVisa(intervention.agentVisa);
+    }
+    return payload;
   }
 
   private participant(

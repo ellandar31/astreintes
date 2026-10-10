@@ -2,6 +2,12 @@ services:
   astreintes:
     build: .
     container_name: astreintes-app
+    environment:
+      SUPABASE_INTERNAL_URL: ${SUPABASE_INTERNAL_URL:-http://host.docker.internal:8000}
+      SUPABASE_PUBLIC_URL: ${SUPABASE_PUBLIC_URL:-}
+      SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY:-}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
-      - "8080:80"
+      - "8180:80"
     restart: unless-stopped

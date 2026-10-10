@@ -10,6 +10,7 @@ import { TagModule } from "primeng/tag";
 import { Store } from "@ngrx/store";
 import { APP_LABELS } from "../../i18n/labels";
 import { SignatureVisa, createEmptyVisa } from "../../shared/visa.models";
+import { clearExceptionalDirectorVisas, exceptionalReadyForDirector, regularReadyForDirector } from "../../shared/visa-workflow";
 import { ExceptionalActions } from "../../state/exceptional/exceptional.actions";
 import {
   selectExceptionalError,
@@ -59,6 +60,9 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
   users: AppUser[] = [];
   validationMessage = "";
   readonly canDeleteVisaForModal = (item: ValidationItem): boolean => this.canDeleteVisa(item);
+  readonly canSignVisaForModal = (item: ValidationItem): boolean => this.canSignVisa(item);
+  // PrimeNG must reuse rows: getters rebuild their objects during pointer events.
+  readonly trackValidationItem = (_index: number, item: ValidationItem): string => item.id;
 
   private readonly store = inject(Store);
   private readonly exceptionalError = this.store.selectSignal(selectExceptionalError);
@@ -83,14 +87,17 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
 
     effect(() => {
       this.regularPeriods = this.regularPeriodsSignal();
+      this.refreshSelectedItem();
     });
 
     effect(() => {
       this.regularInterventions = this.regularInterventionsSignal();
+      this.refreshSelectedItem();
     });
 
     effect(() => {
       this.exceptionalOperations = this.exceptionalOperationsSignal();
+      this.refreshSelectedItem();
     });
 
     effect(() => {
@@ -378,7 +385,7 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
         actionItem: {
           id: `exceptional-planned-${operation.id}-${participant.userId}-${index}`,
           kind: "exceptional-participant-planned" as const,
-          category: this.labels.validation.categories.exceptionalPlanned,
+          category: this.operationCategories(operation).planned,
           title: operation.title,
           userLabel: participant.displayName || participant.email,
           startDate: participant.startDate || operation.startDate,
@@ -398,7 +405,7 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
         actionItem: {
           id: `exceptional-actual-${operation.id}-${participant.userId}-${index}`,
           kind: "exceptional-participant-actual" as const,
-          category: this.labels.validation.categories.exceptionalActual,
+          category: this.operationCategories(operation).actual,
           title: operation.title,
           userLabel: participant.displayName || participant.email,
           startDate: participant.startDate || operation.actualStartDate || operation.startDate,
@@ -439,6 +446,22 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
     this.selectedItem = null;
   }
 
+  /** Keep the consultation attached to its own aggregate, not the last signed child. */
+  private refreshSelectedItem(): void {
+    const selected = this.selectedItem;
+    if (!selected) return;
+    const payload = selected.kind === "regular-intervention-agent"
+      ? this.regularInterventions.find(item => item.id === selected.payload.id)
+      : selected.kind.startsWith("regular-period-")
+        ? this.regularPeriods.find(item => item.id === selected.payload.id)
+        : this.exceptionalOperations.find(item => item.id === selected.payload.id);
+    if (!payload) return;
+    this.selectedItem = { ...selected, payload };
+    const refreshed = this.validationItems.find(item => item.id === selected.id)
+      || this.selectedItemVisaProgress.find(item => item.actionItem?.id === selected.id)?.actionItem;
+    if (refreshed) this.selectedItem = refreshed;
+  }
+
   /**
    * Signe l'élément sélectionné selon son type métier.
    *
@@ -447,12 +470,11 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
    * pour éviter une validation partielle invisible côté RH.
    */
   signItem(item: ValidationItem): void {
-    if (!this.user) {
+    if (!this.user || !this.canSignVisa(item)) {
       return;
     }
 
     const visa = this.buildVisa(item);
-    let updatedPayload: ValidationItem["payload"];
 
     if (item.kind === "regular-period-agent" || item.kind === "regular-period-director") {
       const field = item.kind === "regular-period-agent" ? "agentVisa" : "directorVisa";
@@ -470,7 +492,6 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
       this.regularPeriods = this.regularPeriods.map((currentPeriod) =>
         currentPeriod.id === updatedPeriod.id ? updatedPeriod : currentPeriod,
       );
-      updatedPayload = updatedPeriod;
 
       if (item.kind === "regular-period-agent" && item.isGlobalAction) {
         this.updateRegularInterventionVisas(updatedPeriod, visa);
@@ -490,22 +511,11 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
       this.regularInterventions = this.regularInterventions.map((currentIntervention) =>
         currentIntervention.id === updatedIntervention.id ? updatedIntervention : currentIntervention,
       );
-      updatedPayload = updatedIntervention;
     } else {
-      updatedPayload = this.signExceptionalItem(item, visa);
+      this.signExceptionalItem(item, visa);
     }
 
-    this.selectedItem =
-      this.selectedItem && this.selectedItem.id !== item.id
-        ? {
-            ...this.selectedItem,
-            payload: updatedPayload,
-          }
-        : {
-            ...item,
-            visa,
-            payload: updatedPayload,
-          };
+    this.refreshSelectedItem();
     this.validationMessage = this.labels.validation.messages.saved;
   }
 
@@ -530,7 +540,6 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
     }
 
     const emptyVisa = createEmptyVisa();
-    let updatedPayload: ValidationItem["payload"];
 
     if (item.kind === "regular-period-agent" || item.kind === "regular-period-director") {
       const field = item.kind === "regular-period-agent" ? "agentVisa" : "directorVisa";
@@ -538,6 +547,7 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
       const updatedPeriod = {
         ...period,
         [field]: emptyVisa,
+        directorVisa: emptyVisa,
       };
 
       this.store.dispatch(RegularActions.periodVisaUpdateRequested({
@@ -548,7 +558,6 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
       this.regularPeriods = this.regularPeriods.map((currentPeriod) =>
         currentPeriod.id === updatedPeriod.id ? updatedPeriod : currentPeriod,
       );
-      updatedPayload = updatedPeriod;
 
       if (item.kind === "regular-period-agent" && item.isGlobalAction) {
         this.updateRegularInterventionVisas(updatedPeriod, emptyVisa);
@@ -568,32 +577,45 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
       this.regularInterventions = this.regularInterventions.map((currentIntervention) =>
         currentIntervention.id === updatedIntervention.id ? updatedIntervention : currentIntervention,
       );
-      updatedPayload = updatedIntervention;
+      this.regularPeriods = this.regularPeriods.map(period => period.id === intervention.periodId ? { ...period, directorVisa: createEmptyVisa() } : period);
     } else {
-      updatedPayload = this.signExceptionalItem(item, emptyVisa);
+      this.signExceptionalItem(item, emptyVisa);
     }
 
-    this.selectedItem =
-      this.selectedItem && this.selectedItem.id !== item.id
-        ? {
-            ...this.selectedItem,
-            payload: updatedPayload,
-          }
-        : {
-            ...item,
-            visa: emptyVisa,
-            payload: updatedPayload,
-          };
+    this.refreshSelectedItem();
     this.validationMessage = this.labels.validation.messages.deleted;
   }
 
   /** Expose au template la règle d'autorisation de suppression sans dupliquer la logique métier. */
   canDeleteVisa(item: ValidationItem): boolean {
+    if (this.isItemSentToRh(item)) return false;
     if (item.kind === "exceptional-operation-agent") {
       return this.exceptionalItemVisas(item).some((visa) => this.canActOnVisa(item, visa));
     }
 
     return this.canActOnVisa(item, item.visa);
+  }
+
+  /** The modal and direct actions enforce the same final-approval prerequisites. */
+  canSignVisa(item: ValidationItem): boolean {
+    if (item.visa.signed || this.isItemSentToRh(item)) return false;
+    if (item.kind === "regular-period-director") {
+      const period = this.regularPeriods.find(period => period.id === item.payload.id);
+      return Boolean(period && this.isRegularPeriodReadyForDirector(period));
+    }
+    if (item.kind === "exceptional-operation-director") {
+      const operation = this.exceptionalOperations.find(operation => operation.id === item.payload.id);
+      return Boolean(operation && this.isExceptionalOperationReadyForDirector(operation));
+    }
+    return true;
+  }
+
+  private isItemSentToRh(item: ValidationItem): boolean {
+    if (item.kind === "regular-intervention-agent") {
+      const intervention = item.payload as RegularIntervention;
+      return Boolean(this.regularPeriods.find(period => period.id === intervention.periodId)?.sentToRhAt);
+    }
+    return Boolean((item.payload as RegularOnCallPeriod | ExceptionalOperation).sentToRhAt);
   }
 
   userLabel(user: AppUser): string {
@@ -629,7 +651,7 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
     return {
       id: `${kind}-${operation.id}`,
       kind,
-      category: isDirector ? this.labels.validation.categories.exceptionalDirectorVisa : this.labels.validation.categories.exceptionalInitiatorVisa,
+      category: isDirector ? this.operationCategories(operation).directorVisa : this.operationCategories(operation).initiatorVisa,
       title: operation.title,
       userLabel: isDirector ? this.labels.validation.roles.director : operation.initiatorName,
       startDate: operation.startDate,
@@ -639,12 +661,16 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
     };
   }
 
+  /** Keep the business family explicit in both approval queues and consultation details. */
+  private operationCategories(operation: ExceptionalOperation) {
+    return operation.type === "astreinte"
+      ? this.labels.validation.categories.exceptionalOnCall
+      : this.labels.validation.categories.exceptionalWork;
+  }
+
   /**
-   * Fusionne les engagements agent d'une opération en une seule ligne de travail.
-   *
-   * Même si l'opération contient plusieurs périodes prévisionnelles/réelles pour
-   * le même utilisateur, la liste principale ne doit afficher qu'une opération ;
-   * le détail conserve les périodes ligne par ligne.
+   * Fusionne les engagements agent en une ligne par opération et utilisateur ;
+   * la consultation conserve chaque période prévisionnelle et réelle.
    */
   private exceptionalOperationAgentItem(operation: ExceptionalOperation, selectedId: string, selectedEmail: string): ValidationItem | null {
     const participants = [
@@ -672,7 +698,7 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
     return {
       id: `exceptional-operation-agent-${operation.id}-${selectedId || selectedEmail}`,
       kind: "exceptional-operation-agent",
-      category: this.labels.validation.categories.exceptionalOperation,
+      category: this.operationCategories(operation).operation,
       title: operation.title,
       userLabel: firstParticipant.displayName || firstParticipant.email,
       startDate: startDates[0] || operation.startDate,
@@ -693,7 +719,7 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
   private isRegularPeriodReadyForDirector(period: RegularOnCallPeriod): boolean {
     const interventions = this.regularInterventions.filter((intervention) => intervention.periodId === period.id);
 
-    return this.isVisaSigned(period.agentVisa) && interventions.every((intervention) => this.isVisaSigned(intervention.agentVisa));
+    return regularReadyForDirector(period, interventions);
   }
 
   /**
@@ -702,18 +728,7 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
    * avoir signé avant qu'elle apparaisse dans la file directeur.
    */
   private isExceptionalOperationReadyForDirector(operation: ExceptionalOperation): boolean {
-    const initiatorVisa = operation.visas?.initiatorGlobal || operation.visas?.actualInitiator;
-    const participantVisas = [
-      ...(operation.plannedUsers || []).map((participant) => participant.visa),
-      ...(operation.actualUsers || []).map((participant) => participant.visa),
-      ...(operation.interventions || []).map((intervention) => intervention.agentVisa),
-    ];
-
-    return this.isVisaSigned(initiatorVisa) && participantVisas.every((visa) => this.isVisaSigned(visa));
-  }
-
-  private isVisaSigned(visa: SignatureVisa | undefined): boolean {
-    return Boolean(visa?.signed);
+    return exceptionalReadyForDirector(operation);
   }
 
   /**
@@ -764,6 +779,10 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
 
     if (item.kind === "exceptional-operation-agent" && item.isGlobalAction) {
       this.applyExceptionalInterventionVisa(item, operation, payload, visa);
+    }
+
+    if (!visa.signed) {
+      payload.visas = clearExceptionalDirectorVisas(payload.visas ?? operation.visas);
     }
 
     this.store.dispatch(ExceptionalActions.operationPatchRequested({
@@ -923,7 +942,7 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
     const fallbackEmail = reference.email || profile?.email || this.user?.email || "";
 
     return {
-      uid: reference.userId || profile?.uid || profile?.id || this.user?.uid || "",
+      uid: profile?.uid || reference.userId || profile?.id || this.user?.uid || "",
       name: profile?.signatureName || profile?.displayName || fallbackName,
       email: fallbackEmail,
       profile: profile || null,

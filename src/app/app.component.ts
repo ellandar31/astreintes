@@ -28,7 +28,8 @@ import {
 
 const tabs = [
   { id: "regular", label: APP_LABELS.app.tabs.regular },
-  { id: "exceptional", label: APP_LABELS.app.tabs.exceptional },
+  { id: "exceptionalOnCall", label: APP_LABELS.app.tabs.exceptionalOnCall },
+  { id: "exceptionalWork", label: APP_LABELS.app.tabs.exceptionalWork },
   { id: "validation", label: APP_LABELS.app.tabs.validation },
   { id: "rh", label: APP_LABELS.app.tabs.rh },
 ] as const;
@@ -75,7 +76,7 @@ export class AppComponent {
   readonly user = this.store.selectSignal(selectAuthUser);
 
   constructor() {
-    // La surveillance Firebase devient une action NgRx pour éviter que le shell
+    // La surveillance d'authentification devient une action NgRx pour éviter que le shell
     // porte directement la logique de session et de synchronisation utilisateur.
     this.store.dispatch(AuthActions.sessionWatchStarted());
   }
@@ -113,10 +114,6 @@ export class AppComponent {
         createAccount: this.isCreatingAccount,
       }),
     );
-  }
-
-  loginWithGoogle(): void {
-    this.store.dispatch(AuthActions.googleLoginRequested());
   }
 
   logout(): void {

@@ -1,7 +1,9 @@
 import { Injectable, inject } from "@angular/core";
 import { Actions, createEffect, ofType } from "@ngrx/effects";
 import { Observable, catchError, concatMap, from, map, merge, of, switchMap, takeUntil } from "rxjs";
-import { ExceptionalOperation, SelectableUser } from "../../pages/exceptionnel/exceptional.models";
+import {
+  SelectableUser,
+} from "../../pages/exceptionnel/exceptional.models";
 import { appStore } from "../../store/app-store";
 import { ExceptionalActions } from "./exceptional.actions";
 
@@ -16,7 +18,7 @@ import { ExceptionalActions } from "./exceptional.actions";
 export class ExceptionalEffects {
   private readonly actions$ = inject(Actions);
 
-  // Keeps Firebase access for exceptional operations outside presentation components.
+  // Keeps persistence access for exceptional operations outside presentation components.
   readonly watchExceptional$ = createEffect(() =>
     this.actions$.pipe(
       ofType(ExceptionalActions.watchStarted),
@@ -29,24 +31,13 @@ export class ExceptionalEffects {
     ),
   );
 
-  // setDocument with merge is used on edits so partial modal payloads can update
-  // an aggregate without dropping visas or RH metadata that may have changed via
-  // validation screens.
+  // The domain API merges partial edits with the current operation so validation
+  // signatures and RH metadata are preserved when a modal omits those fields.
   readonly saveOperation$ = createEffect(() =>
     this.actions$.pipe(
       ofType(ExceptionalActions.operationSaveRequested),
       concatMap(({ operationId, payload }) => {
-        const request = operationId
-          ? appStore.data.setDocument(
-              appStore.paths.exceptionalOperation(operationId),
-              { ...payload, updatedAt: appStore.data.serverTimestamp() },
-              { merge: true },
-            )
-          : appStore.data.addDocument(appStore.paths.exceptionalOperations(), {
-              ...payload,
-              createdAt: appStore.data.serverTimestamp(),
-              updatedAt: appStore.data.serverTimestamp(),
-            });
+        const request = appStore.exceptional.saveOperation(operationId ?? undefined, payload);
 
         return from(request).pipe(
           map(() => ExceptionalActions.operationSucceeded()),
@@ -62,7 +53,7 @@ export class ExceptionalEffects {
     this.actions$.pipe(
       ofType(ExceptionalActions.operationDeleteRequested),
       concatMap(({ operationId }) =>
-        from(appStore.data.deleteDocument(appStore.paths.exceptionalOperation(operationId))).pipe(
+        from(appStore.exceptional.deleteOperation(operationId)).pipe(
           map(() => ExceptionalActions.operationSucceeded()),
           catchError((error) =>
             of(ExceptionalActions.operationFailed({ message: this.toErrorMessage(error, "Impossible de supprimer l'opération.") })),
@@ -77,11 +68,7 @@ export class ExceptionalEffects {
       ofType(ExceptionalActions.operationPatchRequested),
       concatMap(({ operationId, payload }) =>
         from(
-          appStore.data.setDocument(
-            appStore.paths.exceptionalOperation(operationId),
-            { ...payload, updatedAt: appStore.data.serverTimestamp() },
-            { merge: true },
-          ),
+          appStore.exceptional.saveOperation(operationId, payload),
         ).pipe(
           map(() => ExceptionalActions.operationSucceeded()),
           catchError((error) =>
@@ -100,14 +87,7 @@ export class ExceptionalEffects {
       ofType(ExceptionalActions.interventionsSaveRequested),
       concatMap(({ operationId, interventions }) =>
         from(
-          appStore.data.setDocument(
-            appStore.paths.exceptionalOperation(operationId),
-            {
-              interventions,
-              updatedAt: appStore.data.serverTimestamp(),
-            },
-            { merge: true },
-          ),
+          appStore.exceptional.saveOperation(operationId, { interventions }),
         ).pipe(
           map(() => ExceptionalActions.operationSucceeded()),
           catchError((error) =>
@@ -118,15 +98,15 @@ export class ExceptionalEffects {
     ),
   );
 
-  // RH send status is a business lock. The timestamp is server-side so exports,
-  // validation and control screens share a trusted ordering.
+  // RH send status is a business lock. All callers share the same timestamp
+  // format; NULL is the explicit cancellation path through the domain API.
   readonly updateOperationRhSent$ = createEffect(() =>
     this.actions$.pipe(
       ofType(ExceptionalActions.operationRhSentUpdateRequested),
       concatMap(({ operationId, sent }) =>
         from(
-          appStore.data.updateDocument(appStore.paths.exceptionalOperation(operationId), {
-            sentToRhAt: sent ? appStore.data.serverTimestamp() : appStore.data.deleteField(),
+          appStore.exceptional.saveOperation(operationId, {
+            sentToRhAt: sent ? appStore.now() : null,
           }),
         ).pipe(
           map(() => ExceptionalActions.operationSucceeded()),
@@ -142,11 +122,9 @@ export class ExceptionalEffects {
   // grouping remain component responsibilities once the store has the snapshot.
   private observeOperations(): Observable<ReturnType<typeof ExceptionalActions.operationsChanged | typeof ExceptionalActions.loadFailed>> {
     return new Observable((subscriber) => {
-      const unsubscribe = appStore.data.observeCollection<ExceptionalOperation>(
-        appStore.paths.exceptionalOperations(),
+      const unsubscribe = appStore.exceptional.watchOperations(
         (documents) => {
           const operations = documents
-            .map((document) => ({ ...document.data, id: document.id }) as ExceptionalOperation)
             .sort((first, second) => (first.startDate || "").localeCompare(second.startDate || ""));
 
           subscriber.next(ExceptionalActions.operationsChanged({ operations }));
@@ -161,11 +139,9 @@ export class ExceptionalEffects {
 
   private observeUsers(): Observable<ReturnType<typeof ExceptionalActions.usersChanged | typeof ExceptionalActions.loadFailed>> {
     return new Observable((subscriber) => {
-      const unsubscribe = appStore.data.observeCollection<SelectableUser>(
-        appStore.paths.users(),
+      const unsubscribe = appStore.users.watch(
         (documents) => {
           const users = documents
-            .map((document) => ({ ...document.data, id: document.id }) as SelectableUser)
             .filter((user) => Boolean(user.email))
             .sort((first, second) => this.userLabel(first).localeCompare(this.userLabel(second)));
 

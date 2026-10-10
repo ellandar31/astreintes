@@ -1,19 +1,20 @@
 export const APP_LABELS = {
   app: {
     eyebrow: "Astreintes et travaux",
-    title: "Suivi des astreintes",
+    title: "Suivi des astreintes et travaux supplémentaires",
     loading: "Chargement",
     userActions: "Actions utilisateur",
     sections: "Sections de l'application",
     tabs: {
-      regular: "Régulier",
-      exceptional: "Exceptionnel",
+      regular: "Astreintes régulieres",
+      exceptionalOnCall: "Astreintes exceptionnelles",
+      exceptionalWork: "Travaux supplémentaires",
       validation: "Validation",
       rh: "RH",
     },
     auth: {
       title: "Connexion",
-      subtitle: "Accédez au suivi des astreintes avec votre compte.",
+      subtitle: "Accédez au suivi des astreintes et travaux supplémentaires avec votre compte.",
       email: "Email",
       emailPlaceholder: "nom@entreprise.fr",
       password: "Mot de passe",
@@ -128,14 +129,16 @@ export const APP_LABELS = {
   },
   exceptional: {
     actions: {
-      addExceptionalOnCall: "Astreinte exceptionnelle",
-      addExceptionalWork: "Travail exceptionnel",
+      addExceptionalOnCall: "Ajouter une astreinte exceptionnelle",
+      addExceptionalWork: "Ajouter un travail supplémentaire",
       addIntervention: "Ajouter une intervention",
       initializeActualFromPlanned: "Initialiser depuis le prévisionnel",
     },
     empty: {
       noIntervention: "Aucune intervention.",
       noOperation: "Aucune opération exceptionnelle.",
+      noOnCall: "Aucune astreinte exceptionnelle.",
+      noWork: "Aucun travail supplémentaire.",
       noUser: "Aucun utilisateur",
     },
     errors: {
@@ -171,9 +174,9 @@ export const APP_LABELS = {
     title: "Opérations exceptionnelles",
     types: {
       astreinte: "Astreinte exceptionnelle",
-      travaux: "Travail exceptionnel",
+      travaux: "Travail supplémentaire",
       exceptionalOnCallPlural: "Astreintes Exceptionnelles",
-      exceptionalWorkPlural: "Travaux Exceptionnels",
+      exceptionalWorkPlural: "Travaux Supplémentaires",
     },
     eyebrow: "Exceptionnel",
   },
@@ -242,7 +245,7 @@ export const APP_LABELS = {
       monthNavigation: "Navigation mensuelle",
     },
     title: "Planning d'astreinte",
-    eyebrow: "Régulier",
+    eyebrow: "Astreintes régulieres",
     weekDays: ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"],
   },
   rh: {
@@ -256,7 +259,7 @@ export const APP_LABELS = {
       title: "Détail des coefficients envoyés aux RH",
       types: {
         exceptionalOnCall: "Astreintes Exceptionnelles",
-        exceptionalWork: "Travaux Exceptionnels",
+        exceptionalWork: "Travaux Supplémentaires",
         intervention: "Intervention",
         onCall: "Astreinte",
         regularOnCall: "Astreinte régulière",
@@ -298,12 +301,13 @@ export const APP_LABELS = {
         exceptionalWork: "Travaux supplémentaires",
         regular: "Astreintes régulières",
       },
-      title: "Exports Word par astreinte",
+      title: "Exports par opération",
       eyebrow: "Exports RH",
     },
     menu: {
-      controls: "Contrôles des données",
-      exports: "Exports des données",
+      periodExports: "Export Excel par période d'envoi RH",
+      controls: "Contrôles par utilisateur/mois",
+      exports: "Exports par opération",
     },
     rules: {
       night: "Nuit (21h-7h)",
@@ -316,6 +320,23 @@ export const APP_LABELS = {
     },
   },
   rhDocuments: {
+    periodExport: {
+      title: "Export des opérations envoyées aux RH",
+      start: "Envoi RH à partir du",
+      end: "Envoi RH jusqu'au",
+      download: "Exporter la période en Excel",
+      count: "Opérations retenues",
+      invalidPeriod: "Renseignez une période valide : la fin doit être supérieure ou égale au début.",
+      empty: "Aucune opération envoyée aux RH sur cette période.",
+      success: "Export Excel de la période généré.",
+      failure: "Impossible de générer l'export Excel de la période.",
+      director: "Directeur signataire",
+      rhSent: "Date d'envoi RH",
+      operation: "Opération",
+      category: "Nature de la ligne",
+      sheets: { regular: "Astreintes régulières", exceptionalOnCall: "Astreintes exceptionnelles", exceptionalWork: "Travaux supplémentaires" },
+    },
+    weekdayTrigrams: ["dim", "lun", "mar", "mer", "jeu", "ven", "sam"],
     authorization: "Autorisation",
     checkedSiteHint: "* Cocher la case si intervention avec déplacement.",
     field: "Champ",
@@ -452,11 +473,20 @@ export const APP_LABELS = {
   },
   validation: {
     categories: {
-      exceptionalActual: "Opération exceptionnelle - réel",
-      exceptionalDirectorVisa: "Opération exceptionnelle - visa directeur",
-      exceptionalInitiatorVisa: "Opération exceptionnelle - visa initiateur",
-      exceptionalOperation: "Opération exceptionnelle",
-      exceptionalPlanned: "Opération exceptionnelle - prévisionnel",
+      exceptionalOnCall: {
+        actual: "Astreinte exceptionnelle - réel",
+        directorVisa: "Astreinte exceptionnelle - visa directeur",
+        initiatorVisa: "Astreinte exceptionnelle - visa initiateur",
+        operation: "Astreinte exceptionnelle",
+        planned: "Astreinte exceptionnelle - prévisionnel",
+      },
+      exceptionalWork: {
+        actual: "Travail supplémentaire - réel",
+        directorVisa: "Travail supplémentaire - visa directeur",
+        initiatorVisa: "Travail supplémentaire - visa initiateur",
+        operation: "Travail supplémentaire",
+        planned: "Travail supplémentaire - prévisionnel",
+      },
       regularOnCall: "Astreinte régulière",
       regularOnCallDirectorVisa: "Astreinte régulière - visa directeur",
     },
@@ -472,6 +502,8 @@ export const APP_LABELS = {
     },
     messages: {
       deleted: "Visa supprimé.",
+      directorPrerequisites: "Tous les autres visas doivent être présents avant le visa du directeur.",
+      rhPrerequisites: "L'envoi aux RH nécessite tous les visas, y compris celui du directeur.",
       saved: "Visa enregistré.",
     },
     roles: {

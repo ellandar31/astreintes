@@ -1,0 +1,29 @@
+name: Validate Supabase Application
+
+on:
+  push:
+    branches: [main, docker]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Run unit and export tests
+        run: npm test
+      - name: Build Angular application
+        run: npm run build

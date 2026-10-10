@@ -1,21 +1,5 @@
-export type VisaSignatureMode = "name" | "image" | "draw";
-
-export interface SignatureProfile {
-  displayName?: string;
-  signatureMode?: VisaSignatureMode;
-  signatureName?: string;
-  signatureImage?: string;
-  signatureDrawing?: string;
-}
-
-export interface SignatureVisa {
-  signed: boolean;
-  signedAt: string;
-  signedByName: string;
-  signedByUid: string;
-  signatureMode?: VisaSignatureMode;
-  signatureValue?: string;
-}
+import { SignatureVisa } from "../types/signature.models";
+export type { VisaSignatureMode, SignatureProfile, SignatureVisa } from "../types/signature.models";
 
 export function createEmptyVisa(): SignatureVisa {
   return {

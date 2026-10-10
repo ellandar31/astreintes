@@ -18,7 +18,7 @@ export const initialAuthState: AuthState = {
 
 export const authReducer = createReducer(
   initialAuthState,
-  on(AuthActions.emailLoginRequested, AuthActions.googleLoginRequested, (state): AuthState => ({
+  on(AuthActions.emailLoginRequested, (state): AuthState => ({
     ...state,
     error: "",
     isSubmitting: true,

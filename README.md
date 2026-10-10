@@ -16,6 +16,18 @@ L'objectif est de couvrir l'ensemble du cycle de vie des astreintes :
 
 # Fonctionnalités
 
+## Architecture et types
+
+L'état partagé est géré par NgRx. Les effects utilisent une API de persistance
+typée par domaine ; les repositories Supabase renvoient directement les objets
+métier, sans conversion intermédiaire en documents.
+
+- [Architecture de persistance](src/app/store/relational/README.md)
+- [Catalogue des types et règles de maintenance](docs/type-catalog.md)
+- [Séparation SQL des astreintes et travaux supplémentaires](docs/exceptional-database-split.md)
+- Point d'import centralisé : `src/app/types/index.ts`.
+- Mise à jour du catalogue : `npm run docs:types`.
+
 ## Gestion des astreintes
 
 L'application permet de gérer :
@@ -146,9 +158,9 @@ L'application permet de gérer :
 
 # Technologies
 
-- Angular 19
-- Firebase Authentication
-- Cloud Firestore
+- Angular 20
+- Supabase Authentication
+- Supabase Postgres / Realtime
 - TypeScript
 
 ---
@@ -198,6 +210,14 @@ Installation des dépendances :
 npm install
 ```
 
+Configuration Supabase :
+
+1. en local, lancer `npx supabase start` ;
+2. appliquer la migration avec `npx supabase db reset` si la base doit être recréée ;
+3. la migration applicative est dans `supabase/migrations/20260726090000_app_documents.sql` ;
+4. renseigner `url` et `anonKey` dans `src/app/store/supabase.config.ts` pour changer de projet ;
+5. activer l'authentification Email dans Supabase Auth.
+
 Lancement de l'application :
 
 ```bash
@@ -218,6 +238,168 @@ ng build
 
 ---
 
+# Déploiement
+
+Le frontend Angular est une application statique servie par Nginx dans l'image
+Docker du projet. Supabase reste un service séparé : soit un projet Supabase
+hébergé, soit une instance Supabase lancée ou self-hostée avec Docker.
+
+## Préparer Supabase
+
+### Option recommandée : Supabase hébergé
+
+1. Créer un projet Supabase.
+2. Activer l'authentification Email dans Supabase Auth.
+3. Exécuter la migration SQL :
+
+```bash
+npx supabase link --project-ref <project-ref>
+npx supabase db push
+```
+
+La migration applicative se trouve dans :
+
+```text
+supabase/migrations/20260726090000_app_documents.sql
+```
+
+4. Récupérer l'URL du projet et la clé `anon public` dans Supabase :
+   `Project settings > API`.
+5. Renseigner ces valeurs dans :
+
+```text
+src/app/store/supabase.config.ts
+```
+
+### Option locale / self-host Docker
+
+Pour lancer Supabase localement :
+
+```bash
+npx supabase start
+```
+
+Pour recréer la base locale et réappliquer les migrations :
+
+```bash
+npx supabase db reset
+```
+
+URLs locales utiles :
+
+- API Supabase : `http://127.0.0.1:54321`
+- Studio Supabase : `http://127.0.0.1:54323`
+- Mailpit : `http://127.0.0.1:54324`
+
+Sur Windows, le service Analytics Supabase est désactivé dans
+`supabase/config.toml`, car il nécessite une configuration Docker particulière.
+Ce service n'est pas nécessaire pour l'application.
+
+## Construire et lancer l'application avec Docker
+
+L'image Docker sert le frontend Angular avec Nginx. Le même conteneur joue aussi
+le rôle de gateway Supabase : les appels navigateur partent vers `/supabase`,
+puis Nginx les relaie vers l'API Supabase interne. Cette approche permet
+d'exposer une seule URL publique, notamment avec Tailscale Funnel, sans publier
+directement Supabase.
+
+La configuration est injectée au démarrage du conteneur par les variables
+d'environnement `SUPABASE_INTERNAL_URL`, `SUPABASE_PUBLIC_URL` et
+`SUPABASE_ANON_KEY`, ce qui permet de modifier la cible depuis Portainer sans
+reconstruire le bundle Angular.
+
+Construction :
+
+```bash
+docker compose build
+```
+
+Lancement :
+
+```bash
+docker compose up -d
+```
+
+Application :
+
+```text
+http://localhost:8080
+```
+
+## Déploiement avec Portainer
+
+Dans Portainer, créer une nouvelle stack depuis le repository Git ou coller le
+contenu de `compose.yaml`.
+
+Variables d'environnement à renseigner dans la stack :
+
+```text
+SUPABASE_INTERNAL_URL=http://host.docker.internal:8000
+SUPABASE_PUBLIC_URL=
+SUPABASE_ANON_KEY=<cle-anon-public-supabase>
+```
+
+`SUPABASE_INTERNAL_URL` est l'adresse utilisée par Nginx depuis le conteneur
+`astreintes`. Si Supabase est publié sur le port `8000` du miniPC, la valeur
+recommandée est :
+
+```text
+SUPABASE_INTERNAL_URL=http://host.docker.internal:8000
+```
+
+`SUPABASE_PUBLIC_URL` est optionnelle. Si elle est vide, l'application utilise
+automatiquement l'origine courante avec le préfixe `/supabase`, par exemple :
+
+```text
+https://<nom-funnel-tailnet>/supabase
+```
+
+Avec Tailscale Funnel, il faut donc exposer uniquement le conteneur applicatif
+et garder Supabase derrière la gateway. Attention : `http://127.0.0.1:54321` ne
+convient pas pour les utilisateurs distants, car cette adresse pointerait vers
+leur propre machine et non vers le miniPC.
+
+Arrêt :
+
+```bash
+docker compose down
+```
+
+## Points de contrôle avant mise en production
+
+- `npm ci`
+- `npm test`
+- `npm run build`
+- `npm audit --omit=dev`
+- migrations Supabase appliquées
+- authentification Email activée
+- URL et clé `anon public` Supabase renseignées dans les variables Docker
+- sauvegarde/restauration de la base Supabase validée
+
+## Schéma de données
+
+Le schéma relationnel cible est documenté dans
+[`docs/database-schema.md`](docs/database-schema.md). La table `app_documents`
+reste disponible comme pont de migration depuis l'ancien stockage document.
+
+---
+
+## Export Excel par période RH
+
+Le menu RH « Export Excel par période d'envoi RH » filtre les opérations sur leur
+date d'envoi aux RH, et non sur leurs dates d'exécution. Les dates de début et de
+fin sont incluses, selon le calendrier local utilisé dans l'application.
+
+Le fichier `.xlsx` contient trois onglets : astreintes régulières, astreintes
+exceptionnelles et travaux supplémentaires. Chaque ligne reprend l'utilisateur,
+l'opération, le directeur signataire, la date d'envoi RH, les périodes et le
+détail du calcul. Les opérations non envoyées sont exclues ; une opération sans
+heures indemnisables reste visible avec un total nul. Le moteur de calcul est
+commun à l'export individuel et à l'export groupé. ExcelJS est chargé uniquement
+au moment de la génération, avec une version exacte dans le lockfile.
+
+Tests dédiés : `npm run test:rh-period-excel` (également inclus dans `npm test`).
+
 # Feuille de route
 
 Les évolutions prévues sont notamment :
@@ -229,4 +411,4 @@ Les évolutions prévues sont notamment :
 
 # Licence
 
-Projet personnel développé dans le cadre de la gestion des astreintes et des travaux exceptionnels.
+Projet personnel développé dans le cadre de la gestion des astreintes et des travaux supplémentaires.
