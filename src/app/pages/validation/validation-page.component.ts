@@ -661,13 +661,6 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
     };
   }
 
-  /**
-   * Fusionne les engagements agent d'une opération en une seule ligne de travail.
-   *
-   * Même si l'opération contient plusieurs périodes prévisionnelles/réelles pour
-   * le même utilisateur, la liste principale ne doit afficher qu'une opération ;
-   * le détail conserve les périodes ligne par ligne.
-   */
   /** Keep the business family explicit in both approval queues and consultation details. */
   private operationCategories(operation: ExceptionalOperation) {
     return operation.type === "astreinte"
@@ -675,6 +668,10 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
       : this.labels.validation.categories.exceptionalWork;
   }
 
+  /**
+   * Fusionne les engagements agent en une ligne par opération et utilisateur ;
+   * la consultation conserve chaque période prévisionnelle et réelle.
+   */
   private exceptionalOperationAgentItem(operation: ExceptionalOperation, selectedId: string, selectedEmail: string): ValidationItem | null {
     const participants = [
       ...(operation.plannedUsers || []),

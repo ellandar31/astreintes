@@ -17,6 +17,35 @@ const intervention: RegularIntervention = {
 };
 
 describe("Validation consultation", () => {
+  it.each([
+    ["astreinte", "Astreinte exceptionnelle"],
+    ["travaux", "Travail supplémentaire"],
+  ] as const)("uses the %s family label in every approval category", (type, label) => {
+    const fixture = createPage();
+    const component = fixture.componentInstance;
+    const visa = { ...createEmptyVisa(), signed: true };
+    const participant = { userId: "7", displayName: "Agent", email: period.userEmail,
+      startDate: period.startDate, endDate: period.endDate, visa };
+    component.selectedUserId = "7";
+    component.profile = { id: "7", email: period.userEmail, displayName: "Agent", role: 0 };
+    component.exceptionalOperations = [{
+      id: `${type}:11`, type, title: "Test", initiatorUid: "7", initiatorName: "Agent",
+      operationManagerUid: "7", operationManagerName: "Agent", startDate: period.startDate,
+      forecastEndDate: period.endDate, actualStartDate: period.startDate, actualEndDate: period.endDate,
+      plannedUsers: [participant], actualUsers: [participant], interventions: [],
+      visas: { initiatorGlobal: visa, directorGlobal: visa },
+    }];
+    const items = component.validationItems.filter(item => item.payload.id === `${type}:11`);
+    expect(items.map(item => item.category)).toEqual(expect.arrayContaining([
+      label, `${label} - visa initiateur`, `${label} - visa directeur`,
+    ]));
+    component.openItem(items.find(item => item.kind === "exceptional-operation-agent")!);
+    const categories = component.selectedItemVisaProgress.map(item => item.actionItem?.category);
+    expect(categories).toEqual(expect.arrayContaining([`${label} - prévisionnel`, `${label} - réel`,
+      `${label} - visa initiateur`, `${label} - visa directeur`]));
+    expect([...items.map(item => item.category), ...categories].join(" ")).not.toContain("Opération exceptionnelle");
+  });
+
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [ValidationPageComponent],
