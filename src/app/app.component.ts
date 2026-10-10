@@ -1,5 +1,5 @@
 import { CommonModule } from "@angular/common";
-import { Component, inject } from "@angular/core";
+import { Component, effect, inject } from "@angular/core";
 import { FormsModule, NgForm } from "@angular/forms";
 import { Store } from "@ngrx/store";
 import { ButtonModule } from "primeng/button";
@@ -18,6 +18,7 @@ import { SettingsPageComponent } from "./pages/settings/settings-page.component"
 import { ValidationPageComponent } from "./pages/validation/validation-page.component";
 import { ModalComponent } from "./shared/modal.component";
 import { AuthActions } from "./state/auth/auth.actions";
+import { selectCanOpenSettings } from "./state/settings/settings.selectors";
 import {
   selectAuthError,
   selectAuthUser,
@@ -74,11 +75,17 @@ export class AppComponent {
   readonly isSubmitting = this.store.selectSignal(selectIsSubmitting);
   readonly loadingSession = this.store.selectSignal(selectLoadingSession);
   readonly user = this.store.selectSignal(selectAuthUser);
+  readonly canOpenSettings = this.store.selectSignal(selectCanOpenSettings);
 
   constructor() {
     // La surveillance d'authentification devient une action NgRx pour éviter que le shell
     // porte directement la logique de session et de synchronisation utilisateur.
     this.store.dispatch(AuthActions.sessionWatchStarted());
+    effect(() => {
+      if (!this.canOpenSettings() && this.modalView === "settings") {
+        this.closeModal();
+      }
+    });
   }
 
   selectTab(tabId: TabId): void {
@@ -90,6 +97,7 @@ export class AppComponent {
   }
 
   showSettings(): void {
+    if (!this.canOpenSettings()) return;
     this.modalView = "settings";
   }
 

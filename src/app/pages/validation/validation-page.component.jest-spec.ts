@@ -179,4 +179,75 @@ describe("Validation consultation", () => {
     expect(component.selectedItem?.visa.signed).toBe(true);
     expect(component.selectedItemVisaProgress.find(row => row.actionItem?.kind === "exceptional-participant-planned")?.visa).toEqual(signed);
   });
+
+  it.each([0, 1, 2, 3] as const)("contrôle les lignes régulières propres et étrangères pour le profil %s", role => {
+    const fixture = createPage();
+    const component = fixture.componentInstance;
+    component.profile = { ...component.profile!, role };
+    const own = component.validationItems.find(item => item.kind === 'regular-period-agent')!;
+    const foreign = { ...own, payload: { ...period, userId: '8' } };
+    expect(component.canSignVisa(own)).toBe(true);
+    expect(component.canSignVisa(foreign)).toBe(role === 0 || role === 3);
+    if (role === 1 || role === 2) {
+      const dispatch = jest.spyOn(TestBed.inject(MockStore), 'dispatch').mockClear();
+      component.signItem(foreign);
+      expect(dispatch).not.toHaveBeenCalled();
+    }
+  });
+
+  it.each(['astreinte', 'travaux'] as const)("applique la délégation par initiateur aux participants %s", type => {
+    const fixture = createPage();
+    const component = fixture.componentInstance;
+    const visa = createEmptyVisa();
+    const participant = { userId: '8', displayName: 'Autre agent', email: 'other@example.test',
+      startDate: period.startDate, endDate: period.endDate, visa };
+    const operation: ExceptionalOperation = {
+      id: `${type}:11`, type, title: 'Test', initiatorUid: '7', initiatorName: 'Agent',
+      operationManagerUid: '', operationManagerName: '', startDate: period.startDate,
+      forecastEndDate: period.endDate, actualStartDate: period.startDate, actualEndDate: period.endDate,
+      plannedUsers: [participant], actualUsers: [participant], interventions: [],
+      visas: { plannedInitiator: visa, plannedDirector: visa, actualInitiator: visa, actualDirector: visa },
+    };
+    component.exceptionalOperations = [operation];
+    component.selectedUserId = "8";
+    component.profile = { ...component.profile!, role: 0 };
+    component.openItem(component.validationItems.find(item => item.kind === 'exceptional-operation-agent')!);
+    const planned = component.selectedItemVisaProgress.find(row => row.actionItem?.kind === 'exceptional-participant-planned')!.actionItem!;
+    for (const role of [0, 1, 2, 3] as const) {
+      component.profile = { ...component.profile!, role };
+      expect(component.canSignVisa(planned)).toBe(role !== 1);
+      const foreign = { ...planned, payload: { ...operation, initiatorUid: '9' } };
+      expect(component.canSignVisa(foreign)).toBe(role === 0 || role === 3);
+    }
+    component.profile = { ...component.profile!, role: 2 };
+    const dispatch = jest.spyOn(TestBed.inject(MockStore), 'dispatch').mockClear();
+    component.signItem(planned);
+    expect(dispatch).toHaveBeenCalledWith(expect.objectContaining({ payload: expect.objectContaining({
+      plannedUsers: [expect.objectContaining({ visa: expect.objectContaining({ signedByUid: 'auth-id', signedByName: 'Agent' }) })],
+    }) }));
+  });
+
+  it("réserve l'approbation directeur aux administrateurs et directeurs même lorsque les prérequis sont satisfaits", () => {
+    const component = createPage().componentInstance;
+    const signed = { ...createEmptyVisa(), signed: true };
+    component.regularPeriods = [{ ...period, agentVisa: signed }];
+    component.regularInterventions = [{ ...intervention, agentVisa: signed }];
+    component.openItem(component.validationItems[0]);
+    const director = component.selectedItemVisaProgress.find(row => row.actionItem?.kind === 'regular-period-director')!.actionItem!;
+    for (const role of [0, 1, 2, 3] as const) {
+      component.profile = { ...component.profile!, role };
+      expect(component.canSignVisa(director)).toBe(role === 0 || role === 3);
+    }
+  });
+
+  it("autorise l'administrateur à retirer tout visa et refuse la signature sans profil", () => {
+    const component = createPage().componentInstance;
+    const own = component.validationItems[0];
+    const signed = { ...own, visa: { ...createEmptyVisa(), signed: true, signedByUid: 'other-auth' } };
+    component.profile = { ...component.profile!, role: 0 };
+    expect(component.canDeleteVisa(signed)).toBe(true);
+    component.profile = null;
+    expect(component.canSignVisa(own)).toBe(false);
+    expect(component.canDeleteVisa(signed)).toBe(false);
+  });
 });

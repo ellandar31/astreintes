@@ -90,6 +90,8 @@ export const APP_LABELS = {
       zone: "Zone",
     },
     messages: {
+      participantDeletionDenied: "Suppression des participants non autorisée.",
+      interventionDeletionDenied: "Suppression des interventions non autorisée.",
       noFileReferenced: "Aucun fichier référencé",
       noDataModelReferenced: "Aucun modèle de données référencé",
       noTemplateReferenced: "Aucun template documentaire référencé",

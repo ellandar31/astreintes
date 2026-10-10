@@ -4,6 +4,29 @@
       <p class="eyebrow">{{ labels.rh.controls.eyebrow }}</p>
       <h2 id="rh-controls-title">{{ labels.rh.controls.title }}</h2>
     </div>
+    @if (canSelectUser) {
+      <label class="user-filter" for="rh-controls-selected-user">
+        {{ labels.common.users.user }}
+        <p-select
+          inputId="rh-controls-selected-user"
+          [options]="users"
+          [ngModel]="selectedUserId"
+          (ngModelChange)="selectUser($event)"
+          name="selectedUser"
+          optionLabel="email"
+          optionValue="id"
+          appendTo="body"
+          [placeholder]="labels.common.users.select"
+        >
+          <ng-template pTemplate="selectedItem" let-item>
+            {{ item ? userLabel(item) : labels.common.users.select }}
+          </ng-template>
+          <ng-template pTemplate="item" let-item>
+            {{ userLabel(item) }}
+          </ng-template>
+        </p-select>
+      </label>
+    }
   </header>
 
   <div class="user-sections">

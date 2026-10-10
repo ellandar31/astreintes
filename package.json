@@ -3,6 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "scripts": {
+    "test:db-user-roles": "node scripts/test-user-roles.cjs",
     "test:db-exceptional-split": "node scripts/test-exceptional-split.cjs",
     "docs:types": "node scripts/generate-type-catalog.cjs",
     "dev": "ng serve",

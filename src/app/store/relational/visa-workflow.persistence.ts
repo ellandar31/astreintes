@@ -27,7 +27,7 @@ export class VisaWorkflowPersistence {
     }
     if (!ready && merged.directorVisa?.signed) merged.directorVisa = createEmptyVisa();
     if (merged.sentToRhAt && !regularReadyForRh(merged, interventions)) throw new Error(APP_LABELS.validation.messages.rhPrerequisites);
-    return this.regular.saveRegularPeriod(id, merged);
+    return this.regular.saveRegularPeriod(id, merged, current);
   }
 
   /** New unsigned interventions invalidate approval too; clearing RH remains the correction path. */
@@ -44,7 +44,7 @@ export class VisaWorkflowPersistence {
       if (!period) throw new Error(`Astreinte introuvable : ${periodId}`);
       if (period.sentToRhAt) throw new Error(APP_LABELS.validation.messages.rhPrerequisites);
       if (period.directorVisa?.signed) {
-        await this.regular.saveRegularPeriod(periodId, { ...period, directorVisa: createEmptyVisa() });
+        await this.regular.saveRegularPeriod(periodId, { ...period, directorVisa: createEmptyVisa() }, period);
       }
     }
     return this.regular.saveRegularIntervention(id, periodId, merged);

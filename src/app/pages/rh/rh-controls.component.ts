@@ -1,3 +1,5 @@
+import { FormsModule } from "@angular/forms";
+import { SelectModule } from "primeng/select";
 import { CommonModule } from "@angular/common";
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges, effect, inject } from "@angular/core";
 import { ButtonModule } from "primeng/button";
@@ -74,7 +76,7 @@ interface RhMonthControlSection {
 @Component({
   selector: "app-rh-controls",
   standalone: true,
-  imports: [ButtonModule, CardModule, CommonModule, RhControlDetailModalComponent, TableModule],
+  imports: [ButtonModule, CardModule, CommonModule, FormsModule, SelectModule, RhControlDetailModalComponent, TableModule],
   templateUrl: "./rh-controls.component.html",
   styleUrl: "./rh-controls.component.css",
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -84,6 +86,7 @@ export class RhControlsComponent implements OnChanges, OnDestroy, OnInit {
   readonly labels = APP_LABELS;
 
   users: RhUser[] = [];
+  selectedUserId = "";
   regularPeriods: RhRegularPeriod[] = [];
   regularInterventions: RhRegularIntervention[] = [];
   publicHolidays: RhPublicHoliday[] = [];
@@ -181,7 +184,7 @@ export class RhControlsComponent implements OnChanges, OnDestroy, OnInit {
     return this.users.find((user) => this.isCurrentUser(user));
   }
 
-  private get visibleUsers(): RhUser[] {
+  private get accessibleUsers(): RhUser[] {
     const profile = this.currentProfile;
 
     if (!profile) {
@@ -195,6 +198,26 @@ export class RhControlsComponent implements OnChanges, OnDestroy, OnInit {
     return this.users;
   }
 
+  /** Le choix du profil contrôlé est autorisé pour les administrateurs, initiateurs et directeurs. */
+  get canSelectUser(): boolean {
+    return this.currentProfile?.role === 0 || this.currentProfile?.role === 2 || this.currentProfile?.role === 3;
+  }
+
+  private get visibleUsers(): RhUser[] {
+    const users = this.accessibleUsers;
+    if (!this.canSelectUser) return users;
+    return users.filter(user => user.id === this.selectedUserId);
+  }
+
+  /** Changer de personne ferme le détail précédent et recalcule seulement sa vue mensuelle. */
+  selectUser(userId: string): void {
+    if (!this.canSelectUser || !this.users.some(user => user.id === userId)) return;
+    this.selectedUserId = userId;
+    this.selectedDetailItem = null;
+    this.expandedUserId = null;
+    this.expandedMonthSectionKey = null;
+    this.rebuildControlSections();
+  }
   toggleMonthSection(userId: string, monthKey: string): void {
     const sectionKey = this.monthSectionKey(userId, monthKey);
     this.expandedMonthSectionKey = this.expandedMonthSectionKey === sectionKey ? null : sectionKey;
@@ -249,6 +272,10 @@ export class RhControlsComponent implements OnChanges, OnDestroy, OnInit {
    * amorti sur les mises à jour de données.
    */
   private rebuildControlSections(): void {
+    // Les listes arrivent de manière asynchrone : sélectionner une clé SQL disponible.
+    if (!this.users.some(user => user.id === this.selectedUserId)) {
+      this.selectedUserId = this.currentProfile?.id || this.accessibleUsers[0]?.id || "";
+    }
     const visibleUsers = this.visibleUsers;
     const calculator = new RhExportCalculationLibrary(this.exportContext());
     const regularInterventionsByPeriod = this.regularInterventionsByPeriod();
@@ -286,7 +313,7 @@ export class RhControlsComponent implements OnChanges, OnDestroy, OnInit {
           monthSections,
         };
       })
-      .filter((section) => section.itemCount > 0 || this.isCurrentUser(section.user));
+      .filter((section) => section.itemCount > 0 || this.isCurrentUser(section.user) || (this.canSelectUser && section.user.id === this.selectedUserId));
 
     this.syncSelectedDetailItem();
     this.ensureDefaultExpandedState();
@@ -324,6 +351,8 @@ export class RhControlsComponent implements OnChanges, OnDestroy, OnInit {
   ): RhControlDetailItem[] {
     return this.regularPeriods
       .filter((period) => Boolean(period.sentToRhAt))
+      // Les astreintes régulières sans initiateur restent personnelles pour le profil initiateur.
+      .filter(period => this.currentProfile?.role !== 2 || period.userId === this.currentProfile.id)
       .filter((period) => this.matchesUser(period.userId, period.userEmail, user))
       .map((period) => {
         const operation = this.regularExportOperation(period, regularInterventionsByPeriod.get(period.id) || []);
@@ -348,6 +377,18 @@ export class RhControlsComponent implements OnChanges, OnDestroy, OnInit {
   }
 
   /**
+   * Choisir une autre personne ne doit jamais élargir le périmètre de l'initiateur.
+   * La participation prévisionnelle ou réelle suffit, même sans intervention.
+   */
+  private canControlExceptionalOperation(operation: RhExceptionalOperation): boolean {
+    const profile = this.currentProfile;
+    if (profile?.role !== 2) return true;
+    return operation.initiatorUid === profile.id
+      || Boolean(operation.plannedUsers?.some(participant => participant.userId === profile.id))
+      || Boolean(operation.actualUsers?.some(participant => participant.userId === profile.id));
+  }
+
+  /**
    * Extrait uniquement la part d'une opération exceptionnelle qui concerne l'utilisateur.
    *
    * Une opération peut concerner plusieurs agents sur des périodes différentes ;
@@ -356,6 +397,7 @@ export class RhControlsComponent implements OnChanges, OnDestroy, OnInit {
   private exceptionalControlItems(user: RhUser, calculator: RhExportCalculationLibrary): RhControlDetailItem[] {
     return this.exceptionalOperations
       .filter((operation) => Boolean(operation.sentToRhAt))
+      .filter(operation => this.canControlExceptionalOperation(operation))
       .map((operation) => this.exceptionalExportOperationForUser(operation, user))
       .filter((operation): operation is ExportOperation => Boolean(operation))
       .map((operation) => {
@@ -577,7 +619,7 @@ export class RhControlsComponent implements OnChanges, OnDestroy, OnInit {
 
     this.selectedDetailItem =
       this.userSections.flatMap((section) => section.monthSections.flatMap((monthSection) => monthSection.items))
-        .find((item) => item.id === this.selectedDetailItem?.id) || this.selectedDetailItem;
+        .find((item) => item.id === this.selectedDetailItem?.id) || null;
   }
 
   private monthSectionKey(userId: string, monthKey: string): string {

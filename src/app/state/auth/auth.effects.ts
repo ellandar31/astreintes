@@ -1,9 +1,10 @@
 import { Injectable, inject } from "@angular/core";
 import { Actions, createEffect, ofType } from "@ngrx/effects";
 import { Store } from "@ngrx/store";
-import { EMPTY, catchError, exhaustMap, from, map, of, tap } from "rxjs";
+import { EMPTY, Observable, catchError, exhaustMap, from, map, of, switchMap, tap } from "rxjs";
 import { appStore, StoreAuthUser } from "../../store/app-store";
 import { AuthActions } from "./auth.actions";
+import { SettingsActions } from "../settings/settings.actions";
 
 @Injectable()
 /**
@@ -16,6 +17,23 @@ import { AuthActions } from "./auth.actions";
 export class AuthEffects {
   private readonly actions$ = inject(Actions);
   private readonly store = inject(Store);
+
+  /** Session permissions cannot depend on which page currently watches the user directory. */
+  readonly watchSessionUsers$ = createEffect(() => this.actions$.pipe(
+    ofType(AuthActions.sessionChanged, AuthActions.logoutRequested),
+    switchMap(action => new Observable<ReturnType<typeof SettingsActions.usersChanged>>(subscriber => {
+      // Clear cached permissions on session switches and failures, rather than retaining a former role.
+      subscriber.next(SettingsActions.usersChanged({ users: [] }));
+      if (!("user" in action) || !action.user) {
+        subscriber.complete();
+        return;
+      }
+      return appStore.users.watch(
+        users => subscriber.next(SettingsActions.usersChanged({ users })),
+        () => subscriber.next(SettingsActions.usersChanged({ users: [] })),
+      );
+    })),
+  ));
 
   // The auth listener is intentionally registered once from NgRx: components only
   // react to sessionChanged actions and never subscribe directly to Auth provider.

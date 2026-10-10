@@ -5,13 +5,15 @@
       <h2 id="exceptional-title">{{ operationType === 'astreinte' ? labels.app.tabs.exceptionalOnCall : labels.app.tabs.exceptionalWork }}</h2>
     </div>
 
-    <div class="create-actions">
-      <p-button
-        [icon]="operationType === 'astreinte' ? 'pi pi-calendar-plus' : 'pi pi-briefcase'"
-        [label]="operationType === 'astreinte' ? labels.exceptional.actions.addExceptionalOnCall : labels.exceptional.actions.addExceptionalWork"
-        (onClick)="openCreateModal()"
-      ></p-button>
-    </div>
+    @if (canCreateOperations()) {
+      <div class="create-actions">
+        <p-button
+          [icon]="operationType === 'astreinte' ? 'pi pi-calendar-plus' : 'pi pi-briefcase'"
+          [label]="operationType === 'astreinte' ? labels.exceptional.actions.addExceptionalOnCall : labels.exceptional.actions.addExceptionalWork"
+          (onClick)="openCreateModal()"
+        ></p-button>
+      </div>
+    }
   </header>
 
   <p-table [value]="filteredOperations" [rowTrackBy]="trackOperation" styleClass="exceptional-table" [tableStyle]="{ 'min-width': '50rem' }">
@@ -61,7 +63,7 @@
         <td>{{ formatDate(operation.startDate) }}</td>
         <td>
           <div class="table-actions">
-            @if (isSentToRh(operation)) {
+            @if (isSentToRh(operation) || !canEditOperation(operation)) {
               <p-button
                 icon="pi pi-eye"
                 severity="secondary"
@@ -115,12 +117,15 @@
   </p-table>
 </section>
 
-@if (modalMode === "create-astreinte" || modalMode === "create-travaux" || modalMode === "edit") {
+@if (modalMode === "edit" || ((modalMode === "create-astreinte" || modalMode === "create-travaux") && canCreateOperations())) {
   <app-operation-modal
     [form]="operationForm"
     [isLocked]="isSentToRh(selectedOperation)"
+    [planningReadOnly]="selectedOperation ? !canEditOperation(selectedOperation) : !canCreateOperations()"
+    [canManageIntervention]="canManageIntervention"
     [operation]="selectedOperation"
     [users]="users"
+    [initiatorUsers]="initiatorUsers()"
     (addIntervention)="openInterventionModal($event, undefined, undefined, true)"
     (closed)="closeModal()"
     (deleteIntervention)="deleteIntervention($event.operation, $event.index)"
@@ -134,7 +139,7 @@
     [error]="interventionError"
     [form]="interventionForm"
     [operation]="selectedOperation"
-    [users]="users"
+    [users]="interventionUsers"
     (closed)="closeInterventionModal()"
     (saved)="saveIntervention($event)"
   ></app-intervention-modal>

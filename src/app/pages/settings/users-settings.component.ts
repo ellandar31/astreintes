@@ -8,7 +8,7 @@ import { TableModule } from "primeng/table";
 import { TagModule } from "primeng/tag";
 import { APP_LABELS } from "../../i18n/labels";
 import { SettingsActions } from "../../state/settings/settings.actions";
-import { selectSettingsMessage, selectSettingsUsers } from "../../state/settings/settings.selectors";
+import { selectCanManageUsers, selectSettingsMessage, selectSettingsUsers } from "../../state/settings/settings.selectors";
 import { ManagedUser, UserRole } from "./settings.models";
 
 @Component({
@@ -35,6 +35,7 @@ export class UsersSettingsComponent implements OnDestroy {
   private lastHandledMessage: number | null = null;
 
   readonly users = this.store.selectSignal(selectSettingsUsers);
+  readonly canManageUsers = this.store.selectSignal(selectCanManageUsers);
 
   constructor() {
     this.store.dispatch(SettingsActions.usersWatchStarted());
@@ -62,10 +63,12 @@ export class UsersSettingsComponent implements OnDestroy {
   }
 
   updateUserRole(user: ManagedUser, role: UserRole): void {
+    if (!this.canManageUsers()) return;
     this.store.dispatch(SettingsActions.userRoleUpdateRequested({ role, userId: user.id }));
   }
 
   deleteUser(user: ManagedUser): void {
+    if (!this.canManageUsers()) return;
     this.store.dispatch(SettingsActions.userDeleteRequested({ userId: user.id }));
   }
 

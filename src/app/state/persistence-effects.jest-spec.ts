@@ -47,6 +47,26 @@ describe("NgRx effects using typed domain APIs", () => {
   });
   afterEach(() => { actions.complete(); TestBed.resetTestingModule(); });
 
+  it("loads permissions at login without settings navigation and clears them on logout or load failure", () => {
+    const stop = jest.fn();
+    let fail: ((error: unknown) => void) | undefined;
+    jest.mocked(appStore.users.watch).mockImplementation((next, error) => {
+      next([user]); fail = error; return stop;
+    });
+    const received: Action[] = [];
+    const subscription = TestBed.inject(AuthEffects).watchSessionUsers$.subscribe(action => received.push(action));
+    actions.next(AuthActions.sessionChanged({ user: sessionUser }));
+    expect(received).toEqual([SettingsActions.usersChanged({ users: [] }), SettingsActions.usersChanged({ users: [user] })]);
+    fail?.(new Error("Unavailable"));
+    expect(received.at(-1)).toEqual(SettingsActions.usersChanged({ users: [] }));
+    actions.next(SettingsActions.usersWatchStopped());
+    expect(stop).not.toHaveBeenCalled();
+    actions.next(AuthActions.logoutRequested());
+    expect(stop).toHaveBeenCalledTimes(1);
+    expect(received.at(-1)).toEqual(SettingsActions.usersChanged({ users: [] }));
+    subscription.unsubscribe();
+  });
+
   it("publishes typed periods directly and stops all watches on navigation", () => {
     const stop = jest.fn();
     const period: RegularOnCallPeriod = { id: "11", teamId: "2", userId: "7", userName: "Agent", userEmail: user.email, startDate: "2026-10-10T18:00", endDate: "2026-10-11T08:00" };

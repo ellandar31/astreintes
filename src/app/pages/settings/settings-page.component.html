@@ -7,7 +7,7 @@
       </div>
     </ng-template>
 
-    @for (section of sections; track section.id) {
+    @for (section of sections(); track section.id) {
       <p-button
         [label]="section.label"
         [severity]="activeSection === section.id ? 'primary' : 'secondary'"

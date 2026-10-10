@@ -601,7 +601,7 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
 
   /** The modal and direct actions enforce the same final-approval prerequisites. */
   canSignVisa(item: ValidationItem): boolean {
-    if (item.visa.signed || this.isItemSentToRh(item)) return false;
+    if (!this.canApplyVisa(item) || item.visa.signed || this.isItemSentToRh(item)) return false;
     if (item.kind === "regular-period-director") {
       const period = this.regularPeriods.find(period => period.id === item.payload.id);
       return Boolean(period && this.isRegularPeriodReadyForDirector(period));
@@ -613,6 +613,27 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
     return true;
   }
 
+  /**
+   * Les droits de visa sont indépendants du filtrage : une ligne visible dans
+   * le détail ne donne pas le droit de signer pour son titulaire. Les identités
+   * SQL du profil et de l'initiateur déterminent les délégations autorisées.
+   */
+  private canApplyVisa(item: ValidationItem): boolean {
+    if (!this.user || !this.profile) return false;
+    const role = this.profile.role;
+    if (role === 0 || role === 3) return true;
+    if (role !== 1 && role !== 2) return false;
+    // Une ligne directeur représente une approbation, sans titulaire agent.
+    if (item.kind === "regular-period-director" || item.kind === "exceptional-operation-director") return false;
+    const reference = this.visaSignerReference(item);
+    if (reference.userId === this.profile.id || Boolean(this.profile.uid && reference.userId === this.profile.uid)) return true;
+    if (role !== 2 || this.isRegularPayload(item.payload)) return false;
+    const operation = item.payload as ExceptionalOperation;
+    const isParticipantLine = item.kind === "exceptional-operation-agent"
+      || item.kind === "exceptional-participant-planned" || item.kind === "exceptional-participant-actual"
+      || item.kind === "exceptional-intervention-agent";
+    return isParticipantLine && operation.initiatorUid === this.profile.id;
+  }
   private isItemSentToRh(item: ValidationItem): boolean {
     if (item.kind === "regular-intervention-agent") {
       const intervention = item.payload as RegularIntervention;
@@ -784,7 +805,7 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
       this.applyExceptionalInterventionVisa(item, operation, payload, visa);
     }
 
-    if (!visa.signed) {
+    if (!this.canApplyVisa(item) || !visa.signed) {
       payload.visas = clearExceptionalDirectorVisas(payload.visas ?? operation.visas);
     }
 
@@ -939,6 +960,14 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
    * ligne, pas celle de l'administrateur qui a cliqué.
    */
   private visaSignerForItem(item: ValidationItem): { uid: string; name: string; email: string; profile: AppUser | null } {
+    if (!this.isAdmin) {
+      return {
+        uid: this.user?.uid || "",
+        name: this.profile?.signatureName || this.profile?.displayName || this.user?.displayName || this.user?.email || "",
+        email: this.user?.email || "",
+        profile: this.profile,
+      };
+    }
     const reference = this.visaSignerReference(item);
     const profile = this.findUser(reference.userId, reference.email);
     const fallbackName = reference.name || profile?.signatureName || profile?.displayName || profile?.email || this.user?.displayName || this.user?.email || "";
@@ -1002,17 +1031,16 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
   /**
    * Vérifie qu'une signature existante peut être supprimée ou remplacée.
    *
-   * La comparaison combine uid et email pour rester robuste avec les visas créés
-   * avant que tous les profils disposent d'un identifiant applicatif stable.
+   * Les administrateurs peuvent retirer tout visa. Les autres profils doivent
+   * être autorisés sur la ligne et être les signataires du visa enregistré.
    */
   private canActOnVisa(item: ValidationItem, visa: SignatureVisa): boolean {
-    if (!visa.signed) {
+    if (!this.canApplyVisa(item) || !visa.signed) {
       return false;
     }
 
-    const signer = this.visaSignerForItem(item);
-
-    return visa.signedByUid === signer.uid || visa.signedByUid === this.user?.uid;
+    if (this.isAdmin) return true;
+    return visa.signedByUid === this.user?.uid;
   }
 
   private findUser(userId: string, email: string): AppUser | undefined {

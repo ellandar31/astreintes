@@ -7,6 +7,7 @@ import { createEmptyVisa } from "../../shared/visa.models";
 import { Store } from "@ngrx/store";
 import { APP_LABELS } from "../../i18n/labels";
 import { RegularActions } from "../../state/regular/regular.actions";
+import { selectCanCreateOperations, selectCanEditPlanning, selectCurrentApplicationUser } from "../../state/settings/settings.selectors";
 import {
   selectRegularError,
   selectRegularInterventions,
@@ -70,6 +71,17 @@ export class RegularCalendarComponent implements OnDestroy {
   users: RegularUser[] = [];
 
   private readonly store = inject(Store);
+  readonly canCreateOperations = this.store.selectSignal(selectCanCreateOperations);
+  readonly canEditPlanning = this.store.selectSignal(selectCanEditPlanning);
+  private readonly currentProfile = this.store.selectSignal(selectCurrentApplicationUser);
+
+  /** The same owner check gates row actions and direct handler calls. */
+  readonly canManageIntervention = (intervention: { userId: string }): boolean =>
+    this.canEditPlanning() || Boolean(this.currentProfile()?.role === 1 && this.currentProfile()?.id === intervention.userId);
+
+  get interventionUsers(): RegularUser[] {
+    return this.sortedUsers.filter(user => this.canManageIntervention({ userId: user.id }));
+  }
   private readonly regularError = this.store.selectSignal(selectRegularError);
   private readonly regularInterventions = this.store.selectSignal(selectRegularInterventions);
   private readonly regularPeriods = this.store.selectSignal(selectRegularPeriods);
@@ -79,6 +91,12 @@ export class RegularCalendarComponent implements OnDestroy {
 
   constructor() {
     this.store.dispatch(RegularActions.watchStarted());
+
+    effect(() => {
+      if (!this.canCreateOperations() && this.isPeriodModalOpen && !this.editingPeriodId) {
+        this.closePeriodModal();
+      }
+    });
 
     effect(() => {
       this.teams = this.regularTeams();
@@ -181,6 +199,7 @@ export class RegularCalendarComponent implements OnDestroy {
   }
 
   openPeriodModal(): void {
+    if (!this.canCreateOperations()) return;
     this.editingPeriodId = null;
     this.periodForm = this.createEmptyPeriodForm();
     this.isPeriodModalOpen = true;
@@ -225,6 +244,7 @@ export class RegularCalendarComponent implements OnDestroy {
       return;
     }
 
+    if (!this.canManageIntervention(currentPeriod)) return;
     if (this.isPeriodSentToRh(currentPeriod)) {
       this.interventionError = this.labels.regular.errors.lockedPeriod;
       return;
@@ -238,6 +258,7 @@ export class RegularCalendarComponent implements OnDestroy {
   }
 
   openEditInterventionModal(intervention: RegularIntervention): void {
+    if (!this.canManageIntervention(intervention)) return;
     const parentPeriod = this.periodForIntervention(intervention);
 
     if (this.isPeriodSentToRh(parentPeriod)) {
@@ -273,12 +294,12 @@ export class RegularCalendarComponent implements OnDestroy {
    * claire du cycle de paie.
    */
   savePeriod(form: RegularOnCallPeriodForm): void {
+    if (this.editingPeriodId ? !this.canEditPlanning() : !this.canCreateOperations()) return;
     if (!this.selectedTeamId) {
       return;
     }
 
     const currentPeriod = this.editingPeriodId ? this.periods.find((period) => period.id === this.editingPeriodId) : null;
-
     if (this.isPeriodSentToRh(currentPeriod)) {
       return;
     }
@@ -308,6 +329,9 @@ export class RegularCalendarComponent implements OnDestroy {
    * et les visas deviendraient ambigus.
    */
   saveIntervention(form: RegularInterventionForm): void {
+    if (!this.canManageIntervention(form)) return;
+    if (this.editingInterventionId && !this.interventions.some(item =>
+      item.id === this.editingInterventionId && this.canManageIntervention(item))) return;
     this.interventionError = "";
 
     if (form.endDate <= form.startDate) {
@@ -341,6 +365,7 @@ export class RegularCalendarComponent implements OnDestroy {
   }
 
   deleteIntervention(intervention: RegularIntervention): void {
+    if (!this.canManageIntervention(intervention)) return;
     if (this.isPeriodSentToRh(this.periodForIntervention(intervention))) {
       return;
     }
@@ -359,12 +384,12 @@ export class RegularCalendarComponent implements OnDestroy {
 
   /** Supprime l'astreinte et ses interventions rattachées pour éviter des interventions orphelines. */
   deletePeriod(): void {
+    if (!this.canEditPlanning()) return;
     if (!this.editingPeriodId) {
       return;
     }
 
     const currentPeriod = this.periods.find((period) => period.id === this.editingPeriodId);
-
     if (this.isPeriodSentToRh(currentPeriod)) {
       return;
     }

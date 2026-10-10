@@ -1,3 +1,4 @@
+@if (canExport()) {
 @if (periodMode) {
   <p-card styleClass="rh-panel" aria-labelledby="rh-period-title">
     <header class="rh-panel-header">
@@ -202,4 +203,6 @@
     <p-message severity="success" [text]="exportMessage"></p-message>
   }
 </p-card>
+}
+
 }

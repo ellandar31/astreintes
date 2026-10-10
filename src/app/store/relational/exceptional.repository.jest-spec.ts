@@ -2,16 +2,17 @@ import { SupabaseClient } from "@supabase/supabase-js";
 import { ExceptionalRepository } from "./exceptional.repository";
 import { UsersRepository } from "./users.repository";
 import { VisasRepository } from "./visas.repository";
-import { ExceptionalOperationType, JsonRecord } from "../../types";
+import { ExceptionalOperation, ExceptionalOperationType, JsonRecord } from "../../types";
+import { createEmptyVisa } from "../../shared/visa.models";
 import { tablesForExceptionalType, parseExceptionalId } from "./exceptional-tables";
 
 /** Records table/foreign-key routing without implementing PostgreSQL constraints in mocks. */
-function routedClient(existingTable?: string, failure?: Error) {
+function routedClient(existingTable?: string, failure?: Error, rows: Record<string, JsonRecord[]> = {}) {
   const calls: Array<{ table: string; method: string; value?: unknown }> = [];
   const client = {
     from: (table: string) => {
       calls.push({ table, method: "from" });
-      const query = Object.assign(Promise.resolve({ data: [], error: failure }), {
+      const query = Object.assign(Promise.resolve({ data: rows[table] ?? [], error: failure }), {
         select: () => query,
         eq: (column: string, value: unknown) => { calls.push({ table, method: column, value }); return query; },
         in: () => query,
@@ -33,6 +34,73 @@ function routedClient(existingTable?: string, failure?: Error) {
 }
 
 describe("Separate exceptional persistence families", () => {
+  function existingOperation(): ExceptionalOperation {
+    const visa = createEmptyVisa();
+    const participant = { id: '21', userId: '7', displayName: 'Agent', email: 'agent@test.fr',
+      startDate: '2026-10-10T18:00', endDate: '2026-10-11T08:00', visa };
+    const intervention = { id: '11', userId: '7', userName: 'Agent', userEmail: 'agent@test.fr',
+      startDate: '2026-10-10T19:00', endDate: '2026-10-10T20:00',
+      wasOnSite: false, label: '', comment: '', agentVisa: visa };
+    return { id: 'astreinte:100', type: 'astreinte', title: 'Existing', initiatorUid: '7', initiatorName: 'Agent',
+      operationManagerUid: '7', operationManagerName: 'Agent', startDate: participant.startDate,
+      forecastEndDate: participant.endDate, actualStartDate: participant.startDate, actualEndDate: participant.endDate,
+      plannedUsers: [participant], actualUsers: [participant],
+      interventions: [intervention, { ...intervention, id: '12', userId: '8' }],
+      visas: { plannedInitiator: visa, plannedDirector: visa, actualInitiator: visa, actualDirector: visa } };
+  }
+
+  it("updates only the changed intervention without replacing participants or foreign interventions", async () => {
+    const current = existingOperation();
+    const { repository, calls } = routedClient(undefined, undefined, {
+      exceptional_on_call_interventions: [{ id: 11 }, { id: 12 }],
+    });
+    jest.spyOn(repository, 'fetchExceptionalOperation').mockResolvedValue(current);
+    await repository.saveExceptionalOperation(current.id, { ...current, interventions: [
+      { ...current.interventions[0], comment: 'Own correction' }, current.interventions[1],
+    ] });
+    expect(calls.filter(call => call.table === 'exceptional_on_call_interventions' && call.method === 'update')).toHaveLength(1);
+    expect(calls.filter(call => call.table === 'exceptional_on_call_interventions' && call.method === 'id')).toEqual([
+      { table: 'exceptional_on_call_interventions', method: 'id', value: 11 },
+    ]);
+    expect(calls.some(call => call.method === 'delete' || call.method === 'insert')).toBe(false);
+    expect(calls.some(call => call.table === 'exceptional_on_call_participants')).toBe(false);
+  });
+
+  it("signs an existing participant without rewriting its dates", async () => {
+    const current = existingOperation();
+    const { repository, calls, visas } = routedClient();
+    jest.spyOn(repository, 'fetchExceptionalOperation').mockResolvedValue(current);
+    await repository.saveExceptionalOperation(current.id, { ...current,
+      actualUsers: [{ ...current.actualUsers[0], visa: { ...createEmptyVisa(), signed: true } }] });
+    expect(calls.some(call => call.table === 'exceptional_on_call_participants')).toBe(false);
+    expect(visas.upsertVisa).toHaveBeenCalledWith('participant_id', 21, 'exceptional_participant_agent',
+      expect.objectContaining({ signed: true }), 'exceptional_on_call_visas');
+  });
+
+  it("does not remove visas when RLS silently rejects an intervention deletion", async () => {
+    const current = existingOperation();
+    const calls: string[] = [];
+    const query = (result: JsonRecord[]) => {
+      const value = Object.assign(Promise.resolve({ data: result, error: null }), {
+        select: () => value, eq: () => value, in: () => value,
+        delete: () => { calls.push('delete'); return query([]); },
+      });
+      return value;
+    };
+    const client = { from: () => query([{ id: 11 }, { id: 12 }]) } as unknown as SupabaseClient;
+    const users = new UsersRepository(client);
+    jest.spyOn(users, 'resolveAppUserId').mockResolvedValue(7);
+    const visas = new VisasRepository(client, users);
+    const deleteVisas = jest.spyOn(visas, 'deleteVisas').mockResolvedValue();
+    const repository = new ExceptionalRepository(client, users, visas);
+    jest.spyOn(repository, 'fetchExceptionalOperation').mockResolvedValue(current);
+    await expect(repository.saveExceptionalOperation(current.id, {
+      ...current, interventions: [current.interventions[0]],
+    })).rejects.toThrow('non autorisée');
+    expect(calls).toEqual(['delete']);
+    expect(deleteVisas).not.toHaveBeenCalled();
+  });
+
   it("waits for every sibling write after a participant visa fails", async () => {
     const { repository, visas } = routedClient();
     const failure = new Error("Visa rejected");

@@ -20,12 +20,14 @@
         ></p-select>
       </label>
 
-      <p-button
-        icon="pi pi-calendar-plus"
-        [disabled]="!selectedTeamId"
-        [label]="labels.regular.actions.addOnCallPeriod"
-        (onClick)="openPeriodModal()"
-      ></p-button>
+      @if (canCreateOperations()) {
+        <p-button
+          icon="pi pi-calendar-plus"
+          [disabled]="!selectedTeamId"
+          [label]="labels.regular.actions.addOnCallPeriod"
+          (onClick)="openPeriodModal()"
+        ></p-button>
+      }
       <p-button
         icon="pi pi-clock"
         severity="secondary"
@@ -98,12 +100,15 @@
   </div>
 </section>
 
-@if (isPeriodModalOpen) {
+@if (isPeriodModalOpen && (editingPeriodId || canCreateOperations())) {
   <app-regular-period-modal
     [form]="periodForm"
     [interventions]="editingPeriodInterventions"
     [isEditing]="!!editingPeriodId"
     [isLocked]="isPeriodSentToRh(editingPeriod)"
+    [planningReadOnly]="!canEditPlanning()"
+    [canManageIntervention]="canManageIntervention"
+    [canAddIntervention]="!!editingPeriod && canManageIntervention(editingPeriod)"
     [sentToRhAt]="editingPeriod?.sentToRhAt"
     [users]="selectedTeamUsers"
     (closed)="closePeriodModal()"
@@ -120,7 +125,7 @@
     [error]="interventionError"
     [form]="interventionForm"
     [isEditing]="!!editingInterventionId"
-    [users]="sortedUsers"
+    [users]="interventionUsers"
     (closed)="closeInterventionModal()"
     (saved)="saveIntervention($event)"
   ></app-regular-intervention-modal>

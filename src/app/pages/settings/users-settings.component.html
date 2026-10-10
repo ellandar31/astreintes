@@ -30,6 +30,7 @@
         <td>
           <p-select
             [options]="roles"
+            [disabled]="!canManageUsers()"
             [ngModel]="user.role"
             (onChange)="updateUserRole(user, roleValue($event.value))"
             optionLabel="label"
@@ -48,6 +49,7 @@
         <td>
           <p-button
             icon="pi pi-trash"
+            [disabled]="!canManageUsers()"
             severity="danger"
             [rounded]="true"
             [text]="true"

@@ -9,6 +9,8 @@ export type ModalMode = "create-astreinte" | "create-travaux" | "edit" | "interv
 export type FilterField = SortField | null;
 
 export interface OperationParticipant {
+  /** SQL target used to update a visa without replacing the planning row. */
+  id?: string;
   userId: string;
   displayName: string;
   email: string;
@@ -20,6 +22,8 @@ export interface OperationParticipant {
 export type SelectableUser = Pick<ManagedUser, "id" | "uid" | "displayName" | "email">;
 
 export interface ExceptionalIntervention {
+  /** Persisted identity keeps edits from rebuilding another agent's intervention. */
+  id?: string;
   date?: string;
   startDate: string;
   endDate: string;

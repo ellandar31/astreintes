@@ -28,6 +28,10 @@ export class RegularPeriodModalComponent {
   @Input() interventions: RegularIntervention[] = [];
   @Input() isEditing = false;
   @Input() isLocked = false;
+  /** Planning permission is independent from the RH lock: own interventions remain editable. */
+  @Input() planningReadOnly = false;
+  @Input() canAddIntervention = true;
+  @Input() canManageIntervention: (intervention: RegularIntervention) => boolean = () => true;
   @Input() sentToRhAt?: unknown;
   @Input({ required: true }) users: RegularUser[] = [];
   @Output() closed = new EventEmitter<void>();
@@ -50,7 +54,7 @@ export class RegularPeriodModalComponent {
   }
 
   save(form: NgForm): void {
-    if (this.isLocked) {
+    if (this.isLocked || this.planningReadOnly) {
       return;
     }
 
@@ -75,7 +79,7 @@ export class RegularPeriodModalComponent {
   }
 
   deletePeriod(): void {
-    if (this.isLocked) {
+    if (this.isLocked || this.planningReadOnly) {
       return;
     }
 
@@ -83,7 +87,7 @@ export class RegularPeriodModalComponent {
   }
 
   deleteIntervention(intervention: RegularIntervention): void {
-    if (this.isLocked) {
+    if (this.isLocked || !this.canManageIntervention(intervention)) {
       return;
     }
 
@@ -91,7 +95,7 @@ export class RegularPeriodModalComponent {
   }
 
   addIntervention(): void {
-    if (this.isLocked) {
+    if (this.isLocked || !this.canAddIntervention) {
       return;
     }
 
@@ -99,7 +103,7 @@ export class RegularPeriodModalComponent {
   }
 
   editIntervention(intervention: RegularIntervention): void {
-    if (this.isLocked) {
+    if (this.isLocked || !this.canManageIntervention(intervention)) {
       return;
     }
 

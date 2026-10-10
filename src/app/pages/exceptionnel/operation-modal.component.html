@@ -5,7 +5,7 @@
         {{ labels.common.fields.initiator }}
         <p-select
           inputId="operation-initiator"
-          [options]="users"
+          [options]="initiatorUsers"
           name="initiatorUid"
           [ngModel]="form.initiatorUid"
           (ngModelChange)="selectInitiator($event)"
@@ -14,7 +14,7 @@
           [placeholder]="labels.common.users.select"
           appendTo="body"
           styleClass="user-select"
-          [disabled]="isLocked"
+          [disabled]="isLocked || planningReadOnly"
           required
         >
           <ng-template pTemplate="selectedItem" let-user>
@@ -28,12 +28,12 @@
 
       <label for="operation-manager-name">
         {{ labels.exceptional.fields.operationManager }}
-        <input id="operation-manager-name" pInputText name="operationManagerName" [(ngModel)]="form.operationManagerName" [disabled]="isLocked" required />
+        <input id="operation-manager-name" pInputText name="operationManagerName" [(ngModel)]="form.operationManagerName" [disabled]="isLocked || planningReadOnly" required />
       </label>
 
       <label for="operation-title">
         {{ labels.exceptional.fields.operationTitle }}
-        <input id="operation-title" pInputText name="title" [(ngModel)]="form.title" [disabled]="isLocked" required />
+        <input id="operation-title" pInputText name="title" [(ngModel)]="form.title" [disabled]="isLocked || planningReadOnly" required />
       </label>
     </section>
 
@@ -44,7 +44,7 @@
         <div class="users-box">
           <h3>{{ labels.exceptional.fields.plannedUsers }}</h3>
 
-          @if (!isLocked) {
+          @if (!isLocked && !planningReadOnly) {
             <div class="inline-form">
               <label for="operation-planned-user">
                 {{ labels.common.fields.user }}
@@ -94,7 +94,7 @@
                     pInputText
                     [name]="'plannedStartDate' + participantIndex"
                     [(ngModel)]="participant.startDate"
-                    [disabled]="isLocked"
+                    [disabled]="isLocked || planningReadOnly"
                     required
                     type="datetime-local"
                   />
@@ -107,13 +107,13 @@
                     pInputText
                     [name]="'plannedEndDate' + participantIndex"
                     [(ngModel)]="participant.endDate"
-                    [disabled]="isLocked"
+                    [disabled]="isLocked || planningReadOnly"
                     required
                     type="datetime-local"
                   />
                 </label>
 
-                @if (!isLocked) {
+                @if (!isLocked && !planningReadOnly) {
                   <p-button
                     icon="pi pi-times"
                     severity="danger"
@@ -137,7 +137,7 @@
         <div class="users-box">
           <div class="users-box-heading">
             <h3>{{ labels.exceptional.fields.actualUsers }}</h3>
-            @if (!isLocked) {
+            @if (!isLocked && !planningReadOnly) {
               <p-button
                 severity="secondary"
                 [outlined]="true"
@@ -149,7 +149,7 @@
             }
           </div>
 
-          @if (!isLocked) {
+          @if (!isLocked && !planningReadOnly) {
             <div class="inline-form">
               <label for="operation-actual-user">
                 {{ labels.common.fields.user }}
@@ -199,7 +199,7 @@
                     pInputText
                     [name]="'actualStartDate' + participantIndex"
                     [(ngModel)]="participant.startDate"
-                    [disabled]="isLocked"
+                    [disabled]="isLocked || planningReadOnly"
                     required
                     type="datetime-local"
                   />
@@ -212,13 +212,13 @@
                     pInputText
                     [name]="'actualEndDate' + participantIndex"
                     [(ngModel)]="participant.endDate"
-                    [disabled]="isLocked"
+                    [disabled]="isLocked || planningReadOnly"
                     required
                     type="datetime-local"
                   />
                 </label>
 
-                @if (!isLocked) {
+                @if (!isLocked && !planningReadOnly) {
                   <p-button
                     icon="pi pi-times"
                     severity="danger"
@@ -279,6 +279,7 @@
               @if (!isLocked) {
                 <td>
                   <div class="table-actions">
+                    @if (canManageIntervention(intervention)) {
                     <p-button
                       icon="pi pi-pencil"
                       severity="secondary"
@@ -297,6 +298,7 @@
                       [title]="labels.common.actions.delete"
                       [attr.aria-label]="labels.common.actions.delete"
                     ></p-button>
+                  }
                   </div>
                 </td>
               }
@@ -320,7 +322,7 @@
           <i class="pi pi-lock" aria-hidden="true"></i>
           <span>{{ labels.common.messages.rhSentAt }} <strong>{{ formatDateTime(operation?.sentToRhAt) }}</strong></span>
         </div>
-      } @else {
+      } @else if (!planningReadOnly) {
         <p-button icon="pi pi-save" [disabled]="operationNgForm.invalid" type="submit" [label]="labels.common.actions.save"></p-button>
       }
     </div>

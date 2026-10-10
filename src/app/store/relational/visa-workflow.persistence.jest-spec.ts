@@ -32,13 +32,13 @@ describe("Persisted approval prerequisites", () => {
   it("revokes the regular director when the period agent visa is removed", async () => {
     const { regular, workflow } = setup();
     await workflow.savePeriod(period.id, { agentVisa: createEmptyVisa() });
-    expect(regular.saveRegularPeriod).toHaveBeenCalledWith(period.id, expect.objectContaining({ agentVisa: createEmptyVisa(), directorVisa: createEmptyVisa() }));
+    expect(regular.saveRegularPeriod).toHaveBeenCalledWith(period.id, expect.objectContaining({ agentVisa: createEmptyVisa(), directorVisa: createEmptyVisa() }), period);
   });
 
   it("revokes the regular director before removing an intervention visa", async () => {
     const { regular, workflow } = setup();
     await workflow.saveIntervention(intervention.id, period.id, { agentVisa: createEmptyVisa() });
-    expect(regular.saveRegularPeriod).toHaveBeenCalledWith(period.id, expect.objectContaining({ directorVisa: createEmptyVisa() }));
+    expect(regular.saveRegularPeriod).toHaveBeenCalledWith(period.id, expect.objectContaining({ directorVisa: createEmptyVisa() }), period);
     expect(regular.saveRegularPeriod.mock.invocationCallOrder[0]).toBeLessThan(regular.saveRegularIntervention.mock.invocationCallOrder[0]);
   });
 
@@ -100,21 +100,21 @@ describe("Persisted approval prerequisites", () => {
   it.each([{ startDate: "2026-10-10T18:00" }, { endDate: "2026-10-11T08:00" }, { userId: "9" }])("persists unsigned period visas after an edit %j", async update => {
     const { regular, workflow } = setup();
     await workflow.savePeriod(period.id, { ...update, agentVisa: signed, directorVisa: signed });
-    expect(regular.saveRegularPeriod).toHaveBeenCalledWith(period.id, expect.objectContaining({ agentVisa: createEmptyVisa(), directorVisa: createEmptyVisa() }));
+    expect(regular.saveRegularPeriod).toHaveBeenCalledWith(period.id, expect.objectContaining({ agentVisa: createEmptyVisa(), directorVisa: createEmptyVisa() }), period);
   });
 
   it("clears both intervention and director approvals when intervention hours change", async () => {
     const { regular, workflow } = setup();
     await workflow.saveIntervention(intervention.id, period.id, { startDate: "2026-10-10T19:00", agentVisa: signed });
     expect(regular.saveRegularIntervention).toHaveBeenCalledWith(intervention.id, period.id, expect.objectContaining({ agentVisa: createEmptyVisa() }));
-    expect(regular.saveRegularPeriod).toHaveBeenCalledWith(period.id, expect.objectContaining({ directorVisa: createEmptyVisa() }));
+    expect(regular.saveRegularPeriod).toHaveBeenCalledWith(period.id, expect.objectContaining({ directorVisa: createEmptyVisa() }), period);
   });
 
   it("does not retain a signed visa passed to a new intervention", async () => {
     const { regular, workflow } = setup();
     await workflow.saveIntervention(undefined, period.id, { ...intervention, agentVisa: signed });
     expect(regular.saveRegularIntervention).toHaveBeenCalledWith(undefined, period.id, expect.objectContaining({ agentVisa: createEmptyVisa() }));
-    expect(regular.saveRegularPeriod).toHaveBeenCalledWith(period.id, expect.objectContaining({ directorVisa: createEmptyVisa() }));
+    expect(regular.saveRegularPeriod).toHaveBeenCalledWith(period.id, expect.objectContaining({ directorVisa: createEmptyVisa() }), period);
   });
 
   it.each(["astreinte", "travaux"] as const)("persists revalidation for %s participant edits despite old snapshots in the form", async type => {
@@ -130,7 +130,7 @@ describe("Persisted approval prerequisites", () => {
   it("preserves signature-only updates and unchanged period edits", async () => {
     const { regular, exceptional, workflow } = setup();
     await workflow.savePeriod(period.id, { userId: period.userId, startDate: period.startDate, endDate: period.endDate });
-    expect(regular.saveRegularPeriod).toHaveBeenCalledWith(period.id, period);
+    expect(regular.saveRegularPeriod).toHaveBeenCalledWith(period.id, period, period);
     await workflow.saveOperation(operation.id, { title: "New title" });
     expect(exceptional.saveExceptionalOperation).toHaveBeenCalledWith(operation.id, expect.objectContaining({ visas: operation.visas, plannedUsers: operation.plannedUsers }));
   });

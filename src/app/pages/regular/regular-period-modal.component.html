@@ -7,7 +7,7 @@
           inputId="regular-period-user"
           [options]="users"
           name="regularUser"
-          [disabled]="isLocked"
+          [disabled]="isLocked || planningReadOnly"
           [ngModel]="form.userId"
           (ngModelChange)="selectUser($event)"
           optionLabel="email"
@@ -37,7 +37,7 @@
             (ngModelChange)="updateStartDate($event)"
             required
             type="datetime-local"
-            [disabled]="isLocked"
+            [disabled]="isLocked || planningReadOnly"
           />
         } @else {
           <input
@@ -48,7 +48,7 @@
             (ngModelChange)="updateStartDate($event)"
             required
             type="date"
-            [disabled]="isLocked"
+            [disabled]="isLocked || planningReadOnly"
           />
         }
       </label>
@@ -64,7 +64,7 @@
             (ngModelChange)="updateEndDate($event)"
             required
             type="datetime-local"
-            [disabled]="isLocked"
+            [disabled]="isLocked || planningReadOnly"
           />
         } @else {
           <input
@@ -75,7 +75,7 @@
             (ngModelChange)="updateEndDate($event)"
             required
             type="date"
-            [disabled]="isLocked"
+            [disabled]="isLocked || planningReadOnly"
           />
         }
       </label>
@@ -88,7 +88,7 @@
             <p class="panel-kicker">{{ labels.regular.sections.interventions }}</p>
             <h3 id="regular-period-interventions-title">{{ labels.regular.sections.attachedInterventions }}</h3>
           </div>
-          @if (!isLocked) {
+          @if (!isLocked && canAddIntervention) {
             <p-button
               icon="pi pi-plus"
               severity="secondary"
@@ -121,6 +121,7 @@
               @if (!isLocked) {
                 <td>
                   <div class="action-cell">
+                    @if (canManageIntervention(intervention)) {
                     <p-button
                       icon="pi pi-pencil"
                       severity="secondary"
@@ -135,6 +136,7 @@
                       [text]="true"
                       (onClick)="deleteIntervention(intervention)"
                     ></p-button>
+                  }
                   </div>
                 </td>
               }
@@ -149,14 +151,14 @@
       </section>
     }
 
-    @if (!isLocked) {
+    @if (!isLocked && !planningReadOnly) {
       <div class="form-actions">
         <p-button icon="pi pi-save" [disabled]="periodNgForm.invalid" type="submit" [label]="labels.common.actions.save"></p-button>
         @if (isEditing) {
           <p-button icon="pi pi-trash" severity="danger" [outlined]="true" (onClick)="deletePeriod()" [label]="labels.common.actions.delete"></p-button>
         }
       </div>
-    } @else {
+    } @else if (isLocked) {
       <div class="rh-sent-message" role="alert">
         <i class="pi pi-lock" aria-hidden="true"></i>
         <span>

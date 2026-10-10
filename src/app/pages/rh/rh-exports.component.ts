@@ -19,7 +19,7 @@ import {
   selectRegularPublicHolidays,
 } from "../../state/regular/regular.selectors";
 import { SettingsActions } from "../../state/settings/settings.actions";
-import { selectSettingsRhCompensation, selectSettingsRhGenerationApiUrl, selectSettingsRhTemplates } from "../../state/settings/settings.selectors";
+import { selectCanExportRh, selectSettingsRhCompensation, selectSettingsRhGenerationApiUrl, selectSettingsRhTemplates } from "../../state/settings/settings.selectors";
 import { RhExceptionalOperation, RhRegularPeriod } from "./rh.models";
 import { GenerationDocumentClient } from "./export-libraries/generation-document-client.lib";
 import { RhExcelExportLibrary } from "./export-libraries/rh-excel-export.lib";
@@ -93,6 +93,7 @@ export class RhExportsComponent implements OnDestroy {
   private readonly generationDocumentClient = new GenerationDocumentClient();
   private readonly jsonExportLibrary = new RhJsonExportLibrary();
   private readonly store = inject(Store);
+  readonly canExport = this.store.selectSignal(selectCanExportRh);
   private readonly exceptionalOperationsSignal = this.store.selectSignal(selectExceptionalOperations);
   private readonly regularInterventionsSignal = this.store.selectSignal(selectRegularInterventions);
   private readonly regularPeriodsSignal = this.store.selectSignal(selectRegularPeriods);
@@ -156,6 +157,7 @@ export class RhExportsComponent implements OnDestroy {
   }
 
   async exportOperation(templateId: ExportTemplateId, operation: ExportOperation): Promise<void> {
+    if (!this.canExport()) return;
     this.exportMessage = "";
     const template = this.templateFor(templateId);
 
@@ -184,6 +186,7 @@ export class RhExportsComponent implements OnDestroy {
   }
 
   exportExcelOperation(templateId: ExportTemplateId, operation: ExportOperation): void {
+    if (!this.canExport()) return;
     this.exportMessage = "";
     this.downloadFile(
       `${this.slug(operation.title)}_${this.selectedMonth}.xls`,
@@ -194,6 +197,7 @@ export class RhExportsComponent implements OnDestroy {
   }
 
   exportJsonOperation(templateId: ExportTemplateId, operation: ExportOperation): void {
+    if (!this.canExport()) return;
     this.exportMessage = "";
     this.downloadFile(
       `${this.slug(operation.title)}_${this.selectedMonth}.json`,
@@ -204,6 +208,7 @@ export class RhExportsComponent implements OnDestroy {
   }
 
   async exportPdfOperation(templateId: ExportTemplateId, operation: ExportOperation): Promise<void> {
+    if (!this.canExport()) return;
     this.exportMessage = "";
     const template = this.templateFor(templateId);
 
@@ -220,6 +225,7 @@ export class RhExportsComponent implements OnDestroy {
   }
 
   markSentToRh(operation: ExportOperation): void {
+    if (!this.canExport()) return;
     this.exportMessage = "";
 
     if (!this.canSendToRh(operation)) {
@@ -234,6 +240,7 @@ export class RhExportsComponent implements OnDestroy {
 
   /** Check live source objects, not an export snapshot captured before a visa removal. */
   canSendToRh(operation: ExportOperation): boolean {
+    if (!this.canExport()) return false;
     if (operation.sourceCollection === "exceptionalOperations") {
       const source = this.exceptionalOperations.find(item => item.id === operation.sourceId);
       return Boolean(source && !source.sentToRhAt && exceptionalReadyForRh(source));
@@ -244,6 +251,7 @@ export class RhExportsComponent implements OnDestroy {
   }
 
   unmarkSentToRh(operation: ExportOperation): void {
+    if (!this.canExport()) return;
     this.exportMessage = "";
 
     this.dispatchRhSentUpdate(operation, false);
@@ -276,6 +284,7 @@ export class RhExportsComponent implements OnDestroy {
 
   /** Capture bounds and data before the asynchronous download; always release the busy state. */
   async exportExcelPeriod(): Promise<void> {
+    if (!this.canExport()) return;
     if (this.exportingPeriod) return;
     this.exportMessage = "";
     if (!this.validExportPeriod) { this.exportMessage = this.periodLabels.invalidPeriod; return; }
@@ -454,6 +463,8 @@ export class RhExportsComponent implements OnDestroy {
   }
 
   private downloadBlob(fileName: string, blob: Blob): void {
+    // Revérifier les droits après une génération asynchrone avant le téléchargement.
+    if (!this.canExport()) return;
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;

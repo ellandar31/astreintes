@@ -19,14 +19,16 @@
           [pTooltip]="labels.common.modal.profile + ' - ' + displayName()"
           (onClick)="showProfile()"
         ></p-button>
-        <p-button
-          icon="pi pi-cog"
-          [label]="labels.common.modal.settings"
-          severity="secondary"
-          [outlined]="true"
-          [pTooltip]="labels.common.modal.settings"
-          (onClick)="showSettings()"
-        ></p-button>
+        @if (canOpenSettings()) {
+          <p-button
+            icon="pi pi-cog"
+            [label]="labels.common.modal.settings"
+            severity="secondary"
+            [outlined]="true"
+            [pTooltip]="labels.common.modal.settings"
+            (onClick)="showSettings()"
+          ></p-button>
+        }
         <p-button
           icon="pi pi-sign-out"
           severity="danger"
@@ -68,7 +70,7 @@
       <app-modal [title]="labels.common.modal.profile" size="large" (closed)="closeModal()">
         <app-profile-page [user]="user()" (saved)="closeModal()"></app-profile-page>
       </app-modal>
-    } @else if (modalView === "settings") {
+    } @else if (modalView === "settings" && canOpenSettings()) {
       <app-modal [title]="labels.common.modal.settings" size="large" (closed)="closeModal()">
         <app-settings-page></app-settings-page>
       </app-modal>

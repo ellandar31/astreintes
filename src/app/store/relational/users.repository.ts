@@ -4,7 +4,7 @@ import { JsonRecord } from "./store-types";
 import { text, nullableText, idText, numberId, isUuid, deleteById } from "./store-utils";
 
 function userRoleToDb(value: unknown): "admin" | "user" | "initiator" | "director" {
-  const role = Number(value);
+  const role = value;
   if (role === 0) {
     return "admin";
   }
@@ -14,7 +14,10 @@ function userRoleToDb(value: unknown): "admin" | "user" | "initiator" | "directo
   if (role === 3) {
     return "director";
   }
-  return "user";
+  if (role === 1) {
+    return "user";
+  }
+  throw new Error("Invalid application role");
 }
 
 function userRoleFromDb(value: unknown): UserRole {
@@ -77,20 +80,31 @@ export class UsersRepository {
     };
   }
 
-  /** Preserve profile fields omitted by login updates; authentication does not own signature settings. */
+  /** Patch only supplied fields: a profile save must not replay a stale role or identity. SQL enforces who may change them. */
   async saveUser(identifier: string, data: Partial<ApplicationUser>): Promise<string> {
     const existing = await this.fetchUser(identifier);
-    const payload = {
-      auth_user_id: text(data["uid"], existing ? text(existing["uid"]) : identifier),
-      email: text(data["email"], existing ? text(existing["email"]) : ""),
-      display_name: text(data["displayName"], existing ? text(existing["displayName"]) : ""),
-      role: userRoleToDb(data.role ?? existing?.role),
-      signature_mode: text(data["signatureMode"], existing ? text(existing["signatureMode"]) : "name"),
-      signature_name: text(data["signatureName"], existing ? text(existing["signatureName"]) : ""),
-      signature_image: text(data["signatureImage"], existing ? text(existing["signatureImage"]) : ""),
-      signature_drawing: text(data["signatureDrawing"], existing ? text(existing["signatureDrawing"]) : ""),
-      last_login_at: nullableText(data.lastLoginAt ?? existing?.lastLoginAt),
-    };
+    const payload: JsonRecord = {};
+    const fields = {
+      uid: "auth_user_id", email: "email", displayName: "display_name",
+      signatureMode: "signature_mode", signatureName: "signature_name",
+      signatureImage: "signature_image", signatureDrawing: "signature_drawing",
+    } as const;
+    for (const field of Object.keys(fields) as Array<keyof typeof fields>) {
+      if (data[field] !== undefined) {
+        payload[fields[field]] = text(data[field]);
+      }
+    }
+    if (data.role !== undefined) {
+      payload["role"] = userRoleToDb(data.role);
+    }
+    if (data.lastLoginAt !== undefined) {
+      payload["last_login_at"] = nullableText(data.lastLoginAt);
+    }
+    if (!existing) {
+      payload["auth_user_id"] ??= identifier;
+      // The database default is deliberately least-privileged; registration never infers admin from account order.
+      payload["role"] ??= "user";
+    }
     const query = existing
       ? this.client.from("app_users").update(payload).eq("id", Number(existing.id)).select("id").single()
       : this.client.from("app_users").insert(payload).select("id").single();

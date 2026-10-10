@@ -4,6 +4,7 @@ import { DomainObserverService } from "./domain-observer";
 import { UsersRepository } from "./users.repository";
 import { RegularRepository } from "./regular.repository";
 import { ExceptionalRepository } from "./exceptional.repository";
+import { VisasRepository } from "./visas.repository";
 
 import { JsonRecord, RegularOnCallPeriod, ExceptionalOperation } from "../../types";
 import { createEmptyVisa } from "../../shared/visa.models";
@@ -71,10 +72,22 @@ describe("Typed relational persistence", () => {
     await expect(new UsersRepository(relationalClient({}, failure).client).fetchUsers()).rejects.toBe(failure);
   });
 
-  it("preserves role and signatures in partial profile writes", async () => {
+  it("does not replay role, identity or signatures in partial profile writes", async () => {
     const { client, writes } = relationalClient({ app_users: [userRow] });
     await new SupabaseDomainStore(client).users.save(authId, { displayName: "New", lastLoginAt: "2026-09-14T15:00:00Z" });
-    expect(writes[0]).toMatchObject({ table: "app_users", payload: { auth_user_id: authId, display_name: "New", role: "director", signature_image: "saved-image" } });
+    expect(writes[0]).toEqual({ table: "app_users", payload: { display_name: "New", last_login_at: "2026-09-14T15:00:00Z" } });
+  });
+
+  it.each([0, 1, 2, 3] as const)("writes only the explicit role %s for an administrative update", async role => {
+    const { client, writes } = relationalClient({ app_users: [userRow] });
+    await new UsersRepository(client).saveUser("7", { role });
+    expect(writes[0].payload).toEqual({ role: ["admin", "user", "initiator", "director"][role] });
+  });
+
+  it.each([null, "", "0", {}, -1, 4, Number.NaN])("rejects invalid role %p without coercing it to admin", async role => {
+    const { client, writes } = relationalClient({ app_users: [userRow] });
+    await expect(new UsersRepository(client).saveUser("7", { role } as never)).rejects.toThrow("Invalid application role");
+    expect(writes).toEqual([]);
   });
 
   it("creates an application profile from the authentication UUID", async () => {
@@ -153,7 +166,16 @@ describe("Typed relational persistence", () => {
     jest.spyOn(RegularRepository.prototype, "fetchRegularPeriods").mockResolvedValue([period]);
     const save = jest.spyOn(RegularRepository.prototype, "saveRegularPeriod").mockResolvedValue("11");
     await new SupabaseDomainStore(relationalClient().client).regular.updatePeriod("11", { sentToRhAt: null });
-    expect(save).toHaveBeenCalledWith("11", { ...period, sentToRhAt: null });
+    expect(save).toHaveBeenCalledWith("11", { ...period, sentToRhAt: null }, period);
+  });
+
+  it("invalidates a regular visa without rewriting the read-only planning timestamps", async () => {
+    const { client, writes } = relationalClient({ app_users: [userRow] });
+    const users = new UsersRepository(client);
+    const repository = new RegularRepository(client, users, new VisasRepository(client, users));
+    await repository.saveRegularPeriod(period.id, { ...period, directorVisa: createEmptyVisa() }, period);
+    expect(writes.some(write => write.table === 'regular_on_call_periods')).toBe(false);
+    expect(writes.some(write => write.table === 'visas')).toBe(true);
   });
 
   it("merges an exceptional edit without losing participants or signature snapshots", async () => {

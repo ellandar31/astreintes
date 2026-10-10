@@ -1,9 +1,11 @@
 import { CommonModule } from "@angular/common";
-import { Component } from "@angular/core";
+import { Component, computed, effect, inject } from "@angular/core";
+import { Store } from "@ngrx/store";
 import { ButtonModule } from "primeng/button";
 import { CardModule } from "primeng/card";
 import { MessageModule } from "primeng/message";
 import { APP_LABELS } from "../../i18n/labels";
+import { selectCanManageUsers } from "../../state/settings/settings.selectors";
 import { HolidaysSettingsComponent } from "./holidays-settings.component";
 import { RhCompensationSettingsComponent } from "./rh-compensation-settings.component";
 import { RhExportTemplatesSettingsComponent } from "./rh-export-templates-settings.component";
@@ -30,7 +32,9 @@ import { UsersSettingsComponent } from "./users-settings.component";
 })
 export class SettingsPageComponent {
   readonly labels = APP_LABELS;
-  readonly sections: Array<{ id: SettingsSection; label: string }> = [
+  private readonly store = inject(Store);
+  private readonly isAdmin = this.store.selectSignal(selectCanManageUsers);
+  private readonly allSections: Array<{ id: SettingsSection; label: string }> = [
     { id: "users", label: APP_LABELS.settings.menu.users },
     { id: "teams", label: APP_LABELS.settings.menu.teams },
     { id: "holidays", label: APP_LABELS.settings.menu.holidays },
@@ -38,12 +42,30 @@ export class SettingsPageComponent {
     { id: "rhExports", label: APP_LABELS.settings.menu.rhExports },
   ];
 
-  activeSection: SettingsSection = "users";
+  readonly sections = computed(() => this.allSections.filter(section => this.isAdmin() || section.id === "teams"));
+  private requestedSection: SettingsSection = "users";
   settingsError = "";
   settingsSuccess = "";
 
+  constructor() {
+    effect(() => {
+      if (!this.isAdmin()) {
+        this.requestedSection = "teams";
+        this.clearMessages();
+      }
+    });
+  }
+
+  /** Check permissions at render time too: revocation must unmount a privileged page before any subsequent click. */
+  get activeSection(): SettingsSection {
+    return this.isAdmin() ? this.requestedSection : "teams";
+  }
+
   setSection(section: SettingsSection): void {
-    this.activeSection = section;
+    if (!this.sections().some(item => item.id === section)) {
+      return;
+    }
+    this.requestedSection = section;
     this.clearMessages();
   }
 

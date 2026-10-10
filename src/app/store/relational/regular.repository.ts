@@ -38,7 +38,7 @@ export class RegularRepository {
   }
 
   /** Persist the period first so signatures target its generated database ID. */
-  async saveRegularPeriod(identifier: string | undefined, data: RegularPeriodUpdate): Promise<string> {
+  async saveRegularPeriod(identifier: string | undefined, data: RegularPeriodUpdate, current?: RegularOnCallPeriod): Promise<string> {
     const id = numberId(identifier);
     const userId = await this.users.requireAppUserId(text(data["userId"]), "Utilisateur d'astreinte introuvable.");
     const payload = {
@@ -48,10 +48,16 @@ export class RegularRepository {
       ends_at: databaseDateTime(data["endDate"]),
       sent_to_rh_at: nullableText(data["sentToRhAt"]),
     };
-    const query = id
-      ? this.client.from("regular_on_call_periods").update(payload).eq("id", id).select("id").single()
-      : this.client.from("regular_on_call_periods").insert(payload).select("id").single();
-    const { data: savedPeriod, error } = await query;
+    const planningUnchanged = current && current.id === identifier
+      && current.userId === data.userId && current.teamId === data.teamId
+      && current.startDate === data.startDate && current.endDate === data.endDate
+      && current.sentToRhAt === data.sentToRhAt;
+    // Clearing/signing a visa must not rewrite minute-only UI values onto precise SQL timestamps.
+    const { data: savedPeriod, error } = planningUnchanged
+      ? { data: { id }, error: null }
+      : await (id
+        ? this.client.from("regular_on_call_periods").update(payload).eq("id", id).select("id").single()
+        : this.client.from("regular_on_call_periods").insert(payload).select("id").single());
 
     if (error) {
       throw error;

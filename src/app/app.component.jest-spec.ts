@@ -7,14 +7,19 @@ import { AppComponent } from "./app.component";
 import { APP_LABELS } from "./i18n/labels";
 import { ExceptionalOperationsComponent } from "./pages/exceptionnel/exceptional-operations.component";
 import { RegularCalendarComponent } from "./pages/regular/regular-calendar.component";
+import { SettingsPageComponent } from "./pages/settings/settings-page.component";
+import { selectCanCreateOperations, selectCanOpenSettings, selectCanEditPlanning, selectCurrentApplicationUser, selectOperationInitiators } from "./state/settings/settings.selectors";
 import { createEmptyVisa } from "./shared/visa.models";
 import { selectAuthError, selectAuthUser, selectDisplayName, selectIsSubmitting, selectLoadingSession } from "./state/auth/auth.selectors";
 import { ExceptionalActions } from "./state/exceptional/exceptional.actions";
-import { selectExceptionalError, selectExceptionalOperations, selectExceptionalUsers } from "./state/exceptional/exceptional.selectors";
+import { selectExceptionalError, selectVisibleExceptionalOperations, selectExceptionalUsers } from "./state/exceptional/exceptional.selectors";
 import { ExceptionalOperation } from "./types";
 
 @Component({ selector: "app-regular-calendar", standalone: true, template: "" })
 class RegularCalendarStubComponent { }
+
+@Component({ selector: "app-settings-page", standalone: true, template: "" })
+class SettingsPageStubComponent { }
 
 const emptyVisa = createEmptyVisa();
 const onCall: ExceptionalOperation = {
@@ -42,13 +47,45 @@ describe("Separate exceptional navigation", () => {
         { selector: selectLoadingSession, value: false },
         { selector: selectAuthError, value: "" },
         { selector: selectIsSubmitting, value: false },
-        { selector: selectExceptionalOperations, value: [onCall, work] },
+        { selector: selectCanOpenSettings, value: false },
+        { selector: selectCanCreateOperations, value: true },
+        { selector: selectCanEditPlanning, value: true },
+        { selector: selectCurrentApplicationUser, value: { id: "7", uid: "auth-id", role: 2, email: "agent@example.fr", displayName: "Agent" } },
+        { selector: selectOperationInitiators, value: [{ id: "7", role: 2, email: "agent@example.fr", displayName: "Agent" }] },
+        { selector: selectVisibleExceptionalOperations, value: [onCall, work] },
         { selector: selectExceptionalUsers, value: [] },
         { selector: selectExceptionalError, value: "" },
       ] })],
     }).overrideComponent(AppComponent, {
-      remove: { imports: [RegularCalendarComponent] }, add: { imports: [RegularCalendarStubComponent] },
+      remove: { imports: [RegularCalendarComponent, SettingsPageComponent] },
+      add: { imports: [RegularCalendarStubComponent, SettingsPageStubComponent] },
     }).compileComponents();
+  });
+
+  it("hides settings and refuses opening it for ordinary users", () => {
+    const fixture = createShell();
+    expect(fixture.nativeElement.querySelector('.pi-cog')).toBeNull();
+    fixture.componentInstance.showSettings();
+    fixture.detectChanges();
+    expect(fixture.componentInstance.modalView).toBeNull();
+    expect(fixture.nativeElement.querySelector('app-settings-page')).toBeNull();
+  });
+
+  it("shows settings for authorized roles and closes it when permission is revoked", () => {
+    const store = TestBed.inject(MockStore);
+    store.overrideSelector(selectCanOpenSettings, true);
+    store.refreshState();
+    const fixture = createShell();
+    expect(fixture.nativeElement.querySelector('.pi-cog')).not.toBeNull();
+    fixture.componentInstance.showSettings();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('app-settings-page')).not.toBeNull();
+    store.overrideSelector(selectCanOpenSettings, false);
+    store.refreshState();
+    fixture.detectChanges();
+    expect(fixture.componentInstance.modalView).toBeNull();
+    expect(fixture.nativeElement.querySelector('.pi-cog')).toBeNull();
+    expect(fixture.nativeElement.querySelector('app-settings-page')).toBeNull();
   });
 
 

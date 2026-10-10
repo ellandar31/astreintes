@@ -47,8 +47,12 @@ export class OperationModalComponent {
     actualUsers: [],
   };
   @Input() isLocked = false;
+  /** Reading participant dates must not disable an agent's own intervention reporting. */
+  @Input() planningReadOnly = false;
+  @Input() canManageIntervention: (intervention: ExceptionalIntervention) => boolean = () => true;
   @Input() operation: ExceptionalOperation | null = null;
   @Input() users: SelectableUser[] = [];
+  @Input() initiatorUsers: SelectableUser[] = [];
   @Output() addIntervention = new EventEmitter<ExceptionalOperation>();
   @Output() closed = new EventEmitter<void>();
   @Output() deleteIntervention = new EventEmitter<{ operation: ExceptionalOperation; index: number }>();
@@ -74,7 +78,7 @@ export class OperationModalComponent {
    * formulaire, avant persistance dans le store.
    */
   save(form: NgForm): void {
-    if (this.isLocked) {
+    if (this.isLocked || this.planningReadOnly) {
       return;
     }
 
@@ -121,7 +125,8 @@ export class OperationModalComponent {
   }
 
   selectInitiator(userId: string): void {
-    const selectedUser = this.users.find((user) => user.id === userId);
+    const selectedUser = this.initiatorUsers.find((user) => user.id === userId);
+    if (!selectedUser) return;
 
     this.form.initiatorUid = userId;
     this.form.initiatorName = selectedUser?.displayName || selectedUser?.email || "";
@@ -134,6 +139,7 @@ export class OperationModalComponent {
    * recouvrent pas ; c'est indispensable pour les opérations discontinues.
    */
   addParticipant(listName: "plannedUsers" | "actualUsers", userId: string): void {
+    if (this.isLocked || this.planningReadOnly) return;
     const user = this.users.find((item) => item.id === userId);
 
     if (!user) {
@@ -160,6 +166,7 @@ export class OperationModalComponent {
   }
 
   removeParticipant(listName: "plannedUsers" | "actualUsers", index: number): void {
+    if (this.isLocked || this.planningReadOnly) return;
     this.form[listName] = this.form[listName].filter((_, currentIndex) => currentIndex !== index);
   }
 
@@ -169,6 +176,7 @@ export class OperationModalComponent {
    * Cette limite évite d'écraser une saisie réelle déjà corrigée par l'utilisateur.
    */
   initializeActualFromPlanned(): void {
+    if (this.isLocked || this.planningReadOnly) return;
     if (this.form.actualUsers.length || !this.form.plannedUsers.length) {
       return;
     }

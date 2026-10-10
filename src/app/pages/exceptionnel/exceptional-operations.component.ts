@@ -8,9 +8,10 @@ import { Store } from "@ngrx/store";
 import { APP_LABELS } from "../../i18n/labels";
 import { createEmptyVisa } from "../../shared/visa.models";
 import { ExceptionalActions } from "../../state/exceptional/exceptional.actions";
+import { selectCanCreateOperations, selectCurrentApplicationUser, selectOperationInitiators } from "../../state/settings/settings.selectors";
 import {
   selectExceptionalError,
-  selectExceptionalOperations,
+  selectVisibleExceptionalOperations,
   selectExceptionalUsers,
 } from "../../state/exceptional/exceptional.selectors";
 import { StoreAuthUser } from "../../store/app-store";
@@ -81,12 +82,37 @@ export class ExceptionalOperationsComponent implements OnDestroy {
   users: SelectableUser[] = [];
 
   private readonly store = inject(Store);
+  readonly initiatorUsers = this.store.selectSignal(selectOperationInitiators);
+  readonly canCreateOperations = this.store.selectSignal(selectCanCreateOperations);
+
+  private readonly currentProfile = this.store.selectSignal(selectCurrentApplicationUser);
+
+  /** Only the persisted owner may edit an intervention when planning is read-only. */
+  readonly canManageIntervention = (intervention: { userId: string }): boolean =>
+    this.canEditOperation(this.selectedOperation) || Boolean(this.currentProfile() && this.currentProfile()?.id === intervention.userId);
+
+  /** Le droit de modifier dépend de l'initiateur enregistré, pas du formulaire en cours. */
+  canEditOperation(operation: ExceptionalOperation | null): boolean {
+    const profile = this.currentProfile();
+    return Boolean(profile && (profile.role === 0 || profile.role === 3
+      || (profile.role === 2 && operation?.initiatorUid === profile.id)));
+  }
+
+  get interventionUsers(): SelectableUser[] {
+    return this.users.filter(user => this.canManageIntervention({ userId: user.id }));
+  }
   private readonly exceptionalError = this.store.selectSignal(selectExceptionalError);
-  private readonly exceptionalOperations = this.store.selectSignal(selectExceptionalOperations);
+  private readonly exceptionalOperations = this.store.selectSignal(selectVisibleExceptionalOperations);
   private readonly exceptionalUsers = this.store.selectSignal(selectExceptionalUsers);
 
   constructor() {
     this.store.dispatch(ExceptionalActions.watchStarted());
+
+    effect(() => {
+      if (!this.canCreateOperations() && (this.modalMode === "create-astreinte" || this.modalMode === "create-travaux")) {
+        this.closeModal();
+      }
+    });
 
     effect(() => {
       this.operations = this.exceptionalOperations()
@@ -95,7 +121,9 @@ export class ExceptionalOperationsComponent implements OnDestroy {
 
       if (this.selectedOperation) {
         this.selectedOperation =
-          this.operations.find((operation) => operation.id === this.selectedOperation?.id) || this.selectedOperation;
+          this.operations.find((operation) => operation.id === this.selectedOperation?.id) || null;
+        // Fermer le détail si une mise à jour retire la participation de cet utilisateur.
+        if (!this.selectedOperation) this.closeModal();
       }
     });
 
@@ -130,9 +158,12 @@ export class ExceptionalOperationsComponent implements OnDestroy {
   }
 
   openCreateModal(): void {
+    if (!this.canCreateOperations()) return;
     const type = this.operationType;
     this.selectedOperation = null;
     this.operationForm = this.createEmptyOperationForm(type);
+    // Le sélecteur PrimeNG utilise les identifiants SQL, distincts de ceux de la session.
+    this.operationForm.initiatorUid = this.initiatorUsers().find(user => user.id === this.currentProfile()?.id)?.id || "";
     this.modalMode = type === "astreinte" ? "create-astreinte" : "create-travaux";
   }
 
@@ -176,6 +207,7 @@ export class ExceptionalOperationsComponent implements OnDestroy {
       return;
     }
 
+    if (intervention && !this.canEditOperation(operation) && this.currentProfile()?.id !== intervention.userId) return;
     this.selectedOperation = operation;
     this.selectedInterventionIndex = typeof index === "number" ? index : null;
     this.shouldReturnToOperationModal = returnToOperationModal;
@@ -224,6 +256,7 @@ export class ExceptionalOperationsComponent implements OnDestroy {
    * la source de vérité métier est désormais la liste des participants datés.
    */
   saveOperation(form: ExceptionalOperationForm): void {
+    if (this.selectedOperation ? !this.canEditOperation(this.selectedOperation) : !this.canCreateOperations()) return;
     if (form.type !== this.operationType) return;
     if (this.selectedOperation && this.isSentToRh(this.selectedOperation)) {
       return;
@@ -259,6 +292,7 @@ export class ExceptionalOperationsComponent implements OnDestroy {
   }
 
   deleteOperation(operation: ExceptionalOperation): void {
+    if (!this.canEditOperation(operation)) return;
     if (operation.type !== this.operationType || this.isSentToRh(operation)) {
       return;
     }
@@ -274,6 +308,11 @@ export class ExceptionalOperationsComponent implements OnDestroy {
    * réelle associée.
    */
   saveIntervention(form: ExceptionalInterventionForm): void {
+    if (!this.canManageIntervention(form)) return;
+    if (this.selectedInterventionIndex !== null) {
+      const existing = this.selectedOperation?.interventions[this.selectedInterventionIndex];
+      if (!existing || !this.canManageIntervention(existing)) return;
+    }
     if (this.selectedOperation?.type !== "astreinte") {
       return;
     }
@@ -293,6 +332,7 @@ export class ExceptionalOperationsComponent implements OnDestroy {
     }
 
     const interventionPayload = {
+      id: this.selectedInterventionIndex !== null ? this.selectedOperation.interventions[this.selectedInterventionIndex]?.id : undefined,
       startDate: form.startDate,
       date: form.startDate,
       endDate: form.endDate,
@@ -339,6 +379,7 @@ export class ExceptionalOperationsComponent implements OnDestroy {
       return;
     }
 
+    if (!this.canEditOperation(currentOperation) && this.currentProfile()?.id !== interventions[index].userId) return;
     interventions.splice(index, 1);
 
     if (this.selectedOperation?.id === currentOperation.id) {

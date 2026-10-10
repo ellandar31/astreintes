@@ -5,7 +5,9 @@ import { UsersRepository } from "./users.repository";
 import { VisasRepository } from "./visas.repository";
 import { databaseDateTime, dateTimeLocalText } from "./date-time";
 import { createEmptyVisa } from "../../shared/visa.models";
+import { APP_LABELS } from "../../i18n/labels";
 
+import { sameIntervention, sameParticipants } from "./exceptional-child-changes";
 import { ExceptionalTables, exceptionalId, parseExceptionalId, tablesForExceptionalType } from "./exceptional-tables";
 
 /** Operations are aggregates of planned participants, actual participants, interventions and visas; child writes must finish before refresh. */
@@ -86,6 +88,7 @@ export class ExceptionalRepository {
     const identity = identifier ? parseExceptionalId(identifier) : undefined;
     if (identity && identity.type !== data.type) throw new Error("Le type d'une operation existante ne peut pas etre change.");
     const id = identity?.id;
+    const current = identifier ? await this.fetchExceptionalOperation(identifier) : undefined;
     const payload = {
       initiator_user_id: await this.users.resolveAppUserId(text(data["initiatorUid"])),
       operation_manager_user_id: await this.users.resolveAppUserId(text(data["operationManagerUid"])),
@@ -97,17 +100,39 @@ export class ExceptionalRepository {
       actual_ends_at: databaseDateTime(data["actualEndDate"]),
       sent_to_rh_at: nullableText(data["sentToRhAt"]),
     };
-    const query = id
-      ? this.client.from(tables.table).update(payload).eq("id", id).select("id").single()
-      : this.client.from(tables.table).insert(payload).select("id").single();
-    const { data: savedOperation, error } = await query;
+    const planningUnchanged = current && [
+      "initiatorUid", "operationManagerUid", "operationManagerName", "title", "startDate",
+      "forecastEndDate", "actualStartDate", "actualEndDate", "sentToRhAt",
+    ].every(field => current[field as keyof ExceptionalOperation] === data[field as keyof ExceptionalOperationUpdate]);
+    // An intervention/visa change must not rewrite rounded date-picker values onto SQL timestamps.
+    const { data: savedOperation, error } = planningUnchanged
+      ? { data: { id }, error: null }
+      : await (id
+        ? this.client.from(tables.table).update(payload).eq("id", id).select("id").single()
+        : this.client.from(tables.table).insert(payload).select("id").single());
 
     if (error) {
       throw error;
     }
 
     const operationId = Number(savedOperation["id"]);
-    await this.replaceExceptionalChildren(operationId, data, tables);
+    // Do not rewrite planning just because an intervention or a visa changed.
+    for (const [kind, previous, next] of [
+      ["planned", current?.plannedUsers, data.plannedUsers ?? []],
+      ["actual", current?.actualUsers, data.actualUsers ?? []],
+    ] as const) {
+      if (!previous || !sameParticipants(previous, next, false)) {
+        await this.replaceExceptionalParticipants(operationId, kind, next, tables);
+      } else {
+        // Signing a participant approves its existing SQL target; it never recreates dates.
+        await this.finishChildWrites(next.map(async (row, index) => {
+          if (JSON.stringify(row.visa) !== JSON.stringify(previous[index].visa) && previous[index].id) {
+            await this.visas.upsertVisa("participant_id", Number(previous[index].id), "exceptional_participant_agent", row.visa, tables.visas);
+          }
+        }));
+      }
+    }
+    await this.replaceExceptionalInterventions(operationId, data.interventions ?? [], tables, current?.interventions ?? []);
     await this.replaceExceptionalOperationVisas(operationId, data["visas"], tables);
     return exceptionalId(tables.type, operationId);
   }
@@ -143,6 +168,7 @@ export class ExceptionalRepository {
       const key = participantKey(operationId, kind);
       const rows = index.get(key) ?? [];
       rows.push({
+        id: idText(participant["id"]),
         userId: idText(participant["user_id"]),
         displayName: userDisplayName(user),
         email: text(user["email"]),
@@ -153,13 +179,6 @@ export class ExceptionalRepository {
       index.set(key, rows);
       return index;
     }, new Map<string, OperationParticipant[]>());
-  }
-
-  /** These separate requests preserve the existing write order; they are not a database transaction. */
-  private async replaceExceptionalChildren(operationId: number, data: ExceptionalOperationUpdate, tables: ExceptionalTables): Promise<void> {
-    await this.replaceExceptionalParticipants(operationId, "planned", data.plannedUsers ?? [], tables);
-    await this.replaceExceptionalParticipants(operationId, "actual", data.actualUsers ?? [], tables);
-    await this.replaceExceptionalInterventions(operationId, data.interventions ?? [], tables);
   }
 
   /** Child IDs are regenerated on replacement, so visas must be removed then restored against the new targets. */
@@ -175,11 +194,12 @@ export class ExceptionalRepository {
 
     const existingIds = (existing ?? []).map((row) => Number(row["id"]));
     if (existingIds.length) {
-      await this.visas.deleteVisas("participant_id", existingIds, tables.visas);
-      const { error: deleteError } = await this.client.from(tables.participants).delete().in("id", existingIds);
+      const { data: deleted, error: deleteError } = await this.client.from(tables.participants).delete().in("id", existingIds).select("id");
       if (deleteError) {
         throw deleteError;
       }
+      if (deleted?.length !== existingIds.length) throw new Error(APP_LABELS.common.messages.participantDeletionDenied);
+      await this.visas.deleteVisas("participant_id", existingIds, tables.visas);
     }
 
     await this.finishChildWrites(participants.map(participant => this.insertExceptionalParticipant(operationId, kind, participant, tables)));
@@ -204,6 +224,7 @@ export class ExceptionalRepository {
       const user = users.get(Number(intervention["user_id"])) ?? {};
       const rows = index.get(operationId) ?? [];
       rows.push({
+        id: idText(intervention["id"]),
         userId: idText(intervention["user_id"]),
         userName: userDisplayName(user),
         userEmail: text(user["email"]),
@@ -219,8 +240,8 @@ export class ExceptionalRepository {
     }, new Map<number, ExceptionalIntervention[]>());
   }
 
-  /** Preserve signature snapshots when rebuilding intervention rows from an edited operation aggregate. */
-  private async replaceExceptionalInterventions(operationId: number, interventions: ExceptionalIntervention[], tables: ExceptionalTables): Promise<void> {
+  /** Stable IDs allow own-row edits without deleting/recreating other agents' interventions. */
+  private async replaceExceptionalInterventions(operationId: number, interventions: ExceptionalIntervention[], tables: ExceptionalTables, current: ExceptionalIntervention[]): Promise<void> {
     if (!tables.interventions) return;
     const { data: existing, error: fetchError } = await this.client.from(tables.interventions).select("id").eq(tables.parentColumn, operationId);
     if (fetchError) {
@@ -228,15 +249,24 @@ export class ExceptionalRepository {
     }
 
     const existingIds = (existing ?? []).map((row) => Number(row["id"]));
-    if (existingIds.length) {
-      await this.visas.deleteVisas("intervention_id", existingIds, tables.visas);
-      const { error: deleteError } = await this.client.from(tables.interventions).delete().in("id", existingIds);
+    const retainedIds = new Set(interventions.filter(row => row.id).map(row => Number(row.id)));
+    const removedIds = existingIds.filter(id => !retainedIds.has(id));
+    if (removedIds.length) {
+      const { data: deleted, error: deleteError } = await this.client.from(tables.interventions).delete().in("id", removedIds).select("id");
       if (deleteError) {
         throw deleteError;
       }
+      // RLS can filter a DELETE to zero rows without reporting an SQL error.
+      // Never remove visas when their intervention was not actually deleted.
+      if (deleted?.length !== removedIds.length) throw new Error(APP_LABELS.common.messages.interventionDeletionDenied);
+      await this.visas.deleteVisas("intervention_id", removedIds, tables.visas);
     }
 
-    await this.finishChildWrites(interventions.map(intervention => this.insertExceptionalIntervention(operationId, intervention, tables)));
+    const changed = interventions.filter(row => {
+      const previous = current.find(item => item.id === row.id);
+      return !previous || !sameIntervention(previous, row);
+    });
+    await this.finishChildWrites(changed.map(intervention => this.insertExceptionalIntervention(operationId, intervention, tables)));
   }
 
   /** Persist the row before its visa so the signature targets the generated SQL identity. */
@@ -263,19 +293,19 @@ export class ExceptionalRepository {
   private async insertExceptionalIntervention(operationId: number, intervention: ExceptionalIntervention, tables: ExceptionalTables): Promise<void> {
     if (!tables.interventions) return;
     const userId = await this.users.requireAppUserId(text(intervention["userId"]), "Utilisateur d'intervention introuvable.");
-    const { data: inserted, error } = await this.client
-      .from(tables.interventions)
-      .insert({
-        [tables.parentColumn]: operationId,
-        user_id: userId,
-        starts_at: databaseDateTime(intervention["startDate"]),
-        ends_at: databaseDateTime(intervention["endDate"]),
-        was_on_site: intervention["wasOnSite"] === true,
-        label: text(intervention["label"]),
-        comment: text(intervention["comment"]),
-      })
-      .select("id")
-      .single();
+    const payload = {
+      [tables.parentColumn]: operationId,
+      user_id: userId,
+      starts_at: databaseDateTime(intervention["startDate"]),
+      ends_at: databaseDateTime(intervention["endDate"]),
+      was_on_site: intervention["wasOnSite"] === true,
+      label: text(intervention["label"]),
+      comment: text(intervention["comment"]),
+    };
+    const query = intervention.id
+      ? this.client.from(tables.interventions).update(payload).eq("id", Number(intervention.id)).eq(tables.parentColumn, operationId)
+      : this.client.from(tables.interventions).insert(payload);
+    const { data: inserted, error } = await query.select("id").single();
     if (error) {
       throw error;
     }

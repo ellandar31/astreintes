@@ -1,5 +1,7 @@
+import { Store } from "@ngrx/store";
+import { selectCanExportRh } from "../../state/settings/settings.selectors";
 import { CommonModule } from "@angular/common";
-import { Component, Input } from "@angular/core";
+import { Component, Input, computed, effect, inject } from "@angular/core";
 import { ButtonModule } from "primeng/button";
 import { CardModule } from "primeng/card";
 import { APP_LABELS } from "../../i18n/labels";
@@ -25,9 +27,20 @@ export class RhPageComponent {
     { id: "controls", label: APP_LABELS.rh.menu.controls },
   ];
 
+  private readonly store = inject(Store);
+  readonly canExport = this.store.selectSignal(selectCanExportRh);
+  readonly visibleSections = computed(() => this.sections.filter(section => section.id === "controls" || this.canExport()));
   activeSection: RhSection = "exports";
 
+  constructor() {
+    // Une révocation des droits ferme aussi une section export déjà ouverte.
+    effect(() => {
+      if (!this.canExport() && this.activeSection !== "controls") this.activeSection = "controls";
+    });
+  }
+
   setSection(section: RhSection): void {
+    if (section !== "controls" && !this.canExport()) return;
     this.activeSection = section;
   }
 }
