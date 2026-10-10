@@ -99,21 +99,17 @@ sont conservés ; les IDs Angular deviennent `astreinte:ID` et `travaux:ID` pour
 Le type d'une opération existante ne peut pas être changé implicitement par une
 mise à jour ; une telle conversion demanderait une migration explicite des liens.
 
-La première migration `20261010090000_split_exceptional_operations.sql` sépare les
-parents ; la seconde `20261010093000_isolate_exceptional_families.sql` sépare les
-enfants, visas et séquences, puis supprime les tables communes. Chaque migration
-est transactionnelle et vérifie les copies. Les droits existants et verrous RH
-sont conservés. Les écritures/lectures ciblées ne chargent pas l'autre famille ;
-seule la liste combinée agrège les deux familles pour l'interface.
-La troisième migration `20261010100000_remove_work_interventions.sql` retire la
-table d'interventions de travaux et la cible correspondante des visas. Elle refuse
-de s'exécuter tant que ces données ne sont pas vides, sans les supprimer.
-Le repository refuse toute création d'intervention sur des travaux avant les
-écritures ; le calcul RH utilise leurs participants réels.
+Le schéma initial `schema.sql` crée directement les familles séparées, leurs
+participants, visas et séquences. Les lectures et écritures ciblées ne chargent
+pas l'autre famille ; seule la liste combinée agrège les deux familles pour
+l'interface. Le repository refuse toute création d'intervention sur des travaux
+avant les écritures ; le calcul RH utilise leurs participants réels.
 
-Test SQL indépendant : `npm run test:db-exceptional-split`. Docker et le conteneur
-local `supabase_db_astreintes` doivent être disponibles. `SUPABASE_TEST_CONTAINER`
+Test SQL : `npm run test:db-schema`, inclus dans `npm run test:db-tests`.
+Il vérifie l'installation complète, l'isolation des familles et l'absence de
+la table d'interventions de travaux. Docker et le conteneur local
+`supabase_db_astreintes` doivent être disponibles. `SUPABASE_TEST_CONTAINER`
 permet de choisir un autre conteneur. Le test crée puis supprime uniquement une
-base jetable ; il n'applique aucune migration à la base applicative.
+base jetable ; il ne modifie pas la base applicative.
 
 Vérification : `npm run test:jest` et `npm run build`.

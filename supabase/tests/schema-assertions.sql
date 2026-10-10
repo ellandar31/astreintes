@@ -5,8 +5,17 @@ INSERT INTO public.app_users(auth_user_id, email, role)
 VALUES ('00000000-0000-4000-8000-000000000006', 'rh@example.test', 'rh');
 
 DO $$ BEGIN
-  IF (SELECT count(*) FROM pg_catalog.pg_tables WHERE schemaname = 'public') <> 19 THEN
+  IF (SELECT count(*) FROM pg_catalog.pg_tables WHERE schemaname = 'public') <> 17 THEN
     RAISE EXCEPTION 'Unexpected domain tables';
+  END IF;
+  -- Removed document exports must not reintroduce their obsolete configuration.
+  IF to_regclass('public.rh_export_settings') IS NOT NULL
+     OR to_regclass('public.rh_export_templates') IS NOT NULL THEN
+    RAISE EXCEPTION 'Obsolete document export tables';
+  END IF;
+  -- Work compensation comes from actual participants, never a separate intervention table.
+  IF to_regclass('public.exceptional_work_interventions') IS NOT NULL THEN
+    RAISE EXCEPTION 'Unexpected work intervention table';
   END IF;
   IF EXISTS (SELECT 1 FROM pg_catalog.pg_tables WHERE schemaname = 'public' AND NOT rowsecurity) THEN
     RAISE EXCEPTION 'Domain table without RLS';

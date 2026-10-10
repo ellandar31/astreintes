@@ -3,23 +3,30 @@
   "private": true,
   "version": "0.1.0",
   "scripts": {
-    "test:db-schema": "node scripts/test-schema.cjs",
-    "test:db-user-roles": "node scripts/test-user-roles.cjs",
-    "test:db-exceptional-split": "node scripts/test-exceptional-split.cjs",
     "docs:types": "node scripts/generate-type-catalog.cjs",
     "dev": "ng serve",
     "start:4300": "ng serve --port 4300",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
+
     "test": "npm run test:all",
-    "test:all": "npm run test:jest && npm run test:rh-exports",
+    "test:all": "npm run test:db-tests && npm run test:jest && npm run test:rh-exports",
+
+    "test:db-tests" : "npm run test:db-schema && npm run test:db-user-roles",
+    "test:db-schema": "node scripts/test-schema.cjs",
+    "test:db-user-roles": "node scripts/test-user-roles.cjs",
+    
+    
+    "test:rh-exports": "npm run test:rh-calculations && npm run test:rh-interventions && npm run test:rh-excel && npm run test:rh-period-excel",
     "test:rh-calculations": "tsc -p tsconfig.rh-export-tests.json && node out-tsc/rh-export-tests/pages/rh/export-libraries/rh-export-calculations.spec.js",
     "test:rh-interventions": "tsc -p tsconfig.rh-export-tests.json && node out-tsc/rh-export-tests/pages/rh/export-libraries/rh-intervention-calculations.spec.js",
     "test:rh-excel": "jest --runInBand --runTestsByPath src/app/pages/rh/export-libraries/rh-excel-export.lib.jest-spec.ts",
     "test:rh-period-excel": "jest --runInBand --runTestsByPath src/app/pages/rh/export-libraries/rh-period-excel-export.lib.jest-spec.ts src/app/pages/rh/rh-period-exports.component.jest-spec.ts",
-    "test:rh-exports": "npm run test:rh-calculations && npm run test:rh-interventions && npm run test:rh-excel && npm run test:rh-period-excel",
+    
+    
     "test:jest": "jest --runInBand",
     "test:jest:coverage": "jest --coverage --runInBand",
+
     "docker:build": "docker compose build",
     "docker:up": "docker compose up -d",
     "docker:down": "docker compose down",
