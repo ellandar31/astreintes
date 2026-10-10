@@ -18,7 +18,7 @@ l'application préfixe leurs identifiants avec `astreinte:` ou `travaux:`.
 | --- | --- |
 | Utilisateurs et équipes | `app_users`, `teams`, `team_members` |
 | Calendrier | `schedule_rules`, `public_holidays` |
-| Paramétrage RH | `rh_on_call_compensation_rules`, `rh_period_compensation_rules`, `rh_export_settings`, `rh_export_templates` |
+| Paramétrage RH | `rh_on_call_compensation_rules`, `rh_period_compensation_rules` |
 | Astreintes régulières | `regular_on_call_periods`, `regular_interventions`, `visas` |
 | Astreintes exceptionnelles | `exceptional_on_calls`, `exceptional_on_call_participants`, `exceptional_on_call_interventions`, `exceptional_on_call_visas` |
 | Travaux supplémentaires | `exceptional_works`, `exceptional_work_participants`, `exceptional_work_visas` |
