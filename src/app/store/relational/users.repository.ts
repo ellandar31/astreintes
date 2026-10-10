@@ -1,0 +1,160 @@
+import { ApplicationUser, UserRole } from "../../types";
+import { SupabaseClient } from "@supabase/supabase-js";
+import { JsonRecord } from "./store-types";
+import { text, nullableText, idText, numberId, isUuid, deleteById } from "./store-utils";
+
+function userRoleToDb(value: unknown): "admin" | "user" | "initiator" | "director" {
+  const role = Number(value);
+  if (role === 0) {
+    return "admin";
+  }
+  if (role === 2) {
+    return "initiator";
+  }
+  if (role === 3) {
+    return "director";
+  }
+  return "user";
+}
+
+function userRoleFromDb(value: unknown): UserRole {
+  if (value === "admin") {
+    return 0;
+  }
+  if (value === "initiator") {
+    return 2;
+  }
+  if (value === "director") {
+    return 3;
+  }
+  return 1;
+}
+
+/** Application identities stay distinct from Supabase authentication UUIDs; joins use numeric application IDs. */
+export class UsersRepository {
+  constructor(private readonly client: SupabaseClient) { }
+
+  /** Expose application IDs to selectors and keep auth UUIDs in the uid field for session matching. */
+  async fetchUsers(): Promise<ApplicationUser[]> {
+    const { data, error } = await this.client.from("app_users").select("*");
+    if (error) {
+      throw error;
+    }
+
+    return (data ?? []).map((row) => this.userFromRow(row));
+  }
+
+  /** Accept all identity formats still used by authentication effects and domain forms. */
+  async fetchUser(identifier: string): Promise<ApplicationUser | undefined> {
+    const id = numberId(identifier);
+    let query = this.client.from("app_users").select("*").limit(1);
+    query = id ? query.eq("id", id) : query.eq(isUuid(identifier) ? "auth_user_id" : "email", identifier);
+    const { data, error } = await query.maybeSingle();
+
+    if (error) {
+      throw error;
+    }
+
+    return data ? this.userFromRow(data) : undefined;
+  }
+
+  private userFromRow(row: JsonRecord): ApplicationUser {
+    const id = idText(row["id"]);
+    const authUserId = text(row["auth_user_id"]);
+
+    return {
+      id,
+      uid: authUserId,
+      email: text(row["email"]),
+      displayName: text(row["display_name"]),
+      role: userRoleFromDb(row["role"]),
+      signatureMode: row["signature_mode"] === "image" || row["signature_mode"] === "draw" ? row["signature_mode"] : "name",
+      signatureName: text(row["signature_name"]),
+      signatureImage: text(row["signature_image"]),
+      signatureDrawing: text(row["signature_drawing"]),
+      lastLoginAt: text(row["last_login_at"]),
+    };
+  }
+
+  /** Preserve profile fields omitted by login updates; authentication does not own signature settings. */
+  async saveUser(identifier: string, data: Partial<ApplicationUser>): Promise<string> {
+    const existing = await this.fetchUser(identifier);
+    const payload = {
+      auth_user_id: text(data["uid"], existing ? text(existing["uid"]) : identifier),
+      email: text(data["email"], existing ? text(existing["email"]) : ""),
+      display_name: text(data["displayName"], existing ? text(existing["displayName"]) : ""),
+      role: userRoleToDb(data.role ?? existing?.role),
+      signature_mode: text(data["signatureMode"], existing ? text(existing["signatureMode"]) : "name"),
+      signature_name: text(data["signatureName"], existing ? text(existing["signatureName"]) : ""),
+      signature_image: text(data["signatureImage"], existing ? text(existing["signatureImage"]) : ""),
+      signature_drawing: text(data["signatureDrawing"], existing ? text(existing["signatureDrawing"]) : ""),
+      last_login_at: nullableText(data.lastLoginAt ?? existing?.lastLoginAt),
+    };
+    const query = existing
+      ? this.client.from("app_users").update(payload).eq("id", Number(existing.id)).select("id").single()
+      : this.client.from("app_users").insert(payload).select("id").single();
+    const { data: savedRow, error } = await query;
+
+    if (error) {
+      throw error;
+    }
+
+    return idText(savedRow["id"]);
+  }
+
+  /** Resolve the application identity before deletion so auth UUID callers target the same profile. */
+  async deleteUser(identifier: string): Promise<void> {
+    const existing = await this.fetchUser(identifier);
+    if (!existing) {
+      return;
+    }
+
+    await deleteById(this.client, "app_users", Number(existing.id));
+  }
+
+  /** Resolve numeric IDs, auth UUIDs or email at the persistence boundary for existing callers. */
+  async resolveAppUserId(identifier: string): Promise<number | null> {
+    if (!identifier) {
+      return null;
+    }
+
+    const id = numberId(identifier);
+    let query = this.client.from("app_users").select("id").limit(1);
+    query = id ? query.eq("id", id) : query.eq(isUuid(identifier) ? "auth_user_id" : "email", identifier);
+    const { data, error } = await query.maybeSingle();
+
+    if (error) {
+      throw error;
+    }
+
+    return data ? Number(data["id"]) : null;
+  }
+
+  /** Reject missing users before writing a mandatory relational foreign key. */
+  async requireAppUserId(identifier: string, message: string): Promise<number> {
+    const userId = await this.resolveAppUserId(identifier);
+    if (!userId) {
+      throw new Error(message);
+    }
+
+    return userId;
+  }
+
+  /** Batch related identities to avoid one user query per period or participant. */
+  async fetchAppUserMap(userIds: number[]): Promise<Map<number, JsonRecord>> {
+    const ids = [...new Set(userIds.filter((userId) => Number.isInteger(userId) && userId > 0))];
+    if (!ids.length) {
+      return new Map();
+    }
+
+    const { data, error } = await this.client.from("app_users").select("id,email,display_name,auth_user_id").in("id", ids);
+    if (error) {
+      throw error;
+    }
+
+    return (data ?? []).reduce((index, user) => {
+      index.set(Number(user["id"]), user);
+      return index;
+    }, new Map<number, JsonRecord>());
+  }
+}

@@ -16,6 +16,17 @@ L'objectif est de couvrir l'ensemble du cycle de vie des astreintes :
 
 # Fonctionnalités
 
+## Architecture et types
+
+L'état partagé est géré par NgRx. Les effects utilisent une API de persistance
+typée par domaine ; les repositories Supabase renvoient directement les objets
+métier, sans conversion intermédiaire en documents.
+
+- [Architecture de persistance](src/app/store/relational/README.md)
+- [Catalogue des types et règles de maintenance](docs/type-catalog.md)
+- Point d'import centralisé : `src/app/types/index.ts`.
+- Mise à jour du catalogue : `npm run docs:types`.
+
 ## Gestion des astreintes
 
 L'application permet de gérer :

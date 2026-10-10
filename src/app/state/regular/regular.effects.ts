@@ -3,13 +3,10 @@ import { Actions, createEffect, ofType } from "@ngrx/effects";
 import { Observable, catchError, concatMap, from, map, merge, of, switchMap, takeUntil } from "rxjs";
 import {
   RegularIntervention,
-  RegularOnCallPeriod,
-  RegularPublicHoliday,
-  RegularTeam,
   RegularUser,
 } from "../../pages/regular/regular.models";
-import { asSafeString } from "../../shared/value-normalizers";
-import { SignatureVisa, createEmptyVisa } from "../../shared/visa.models";
+import { RegularInterventionUpdate } from "../../types";
+import { createEmptyVisa } from "../../shared/visa.models";
 import { appStore } from "../../store/app-store";
 import { RegularActions } from "./regular.actions";
 
@@ -18,9 +15,9 @@ import { RegularActions } from "./regular.actions";
  * Persistence boundary for the regular on-call calendar.
  *
  * The feature combines several business references (teams, users, holidays) with
- * periods and their interventions. Components dispatch intent actions; this
- * effect owns the persistence layout, including interventions stored below their
- * parent period.
+ * periods and their interventions. Components dispatch intent actions;
+ * repositories own persistence joins; effects manage the subscription lifecycle
+ * and translate user intent into typed domain operations.
  */
 export class RegularEffects {
   private readonly actions$ = inject(Actions);
@@ -52,14 +49,10 @@ export class RegularEffects {
           teamId: selectedTeamId,
           agentVisa: existingAgentVisa || createEmptyVisa(),
           directorVisa: existingDirectorVisa || createEmptyVisa(),
-          updatedAt: appStore.data.serverTimestamp(),
         };
         const request = editingPeriodId
-          ? appStore.data.updateDocument(appStore.paths.regularOnCallPeriod(editingPeriodId), payload)
-          : appStore.data.addDocument(appStore.paths.regularOnCallPeriods(), {
-              ...payload,
-              createdAt: appStore.data.serverTimestamp(),
-            });
+          ? appStore.regular.updatePeriod(editingPeriodId, payload)
+          : appStore.regular.savePeriod(undefined, payload);
 
         return from(request).pipe(
           map(() => RegularActions.operationSucceeded()),
@@ -69,9 +62,8 @@ export class RegularEffects {
     ),
   );
 
-  // Interventions belong to exactly one period. When an edit changes the parent
-  // period, the generic document store cannot move a document between parents, so the
-  // helper recreates it under the new period and removes the previous copy.
+  // Moving an intervention retains the existing create-then-delete workflow so
+  // the previous intervention survives if creating the new one fails.
   readonly saveIntervention$ = createEffect(() =>
     this.actions$.pipe(
       ofType(RegularActions.interventionSaveRequested),
@@ -81,11 +73,10 @@ export class RegularEffects {
           comment: form.comment.trim(),
           teamId: parentPeriod.teamId,
           agentVisa: existingIntervention?.agentVisa || createEmptyVisa(),
-          updatedAt: appStore.data.serverTimestamp(),
         };
         const request =
           editingInterventionId && existingIntervention?.periodId === parentPeriod.id
-            ? appStore.data.updateDocument(appStore.paths.regularIntervention(parentPeriod.id, editingInterventionId), payload)
+            ? appStore.regular.updateIntervention(editingInterventionId, parentPeriod.id, payload)
             : this.createOrMoveIntervention(parentPeriod.id, payload, existingIntervention);
 
         return from(request).pipe(
@@ -99,8 +90,8 @@ export class RegularEffects {
   readonly deleteIntervention$ = createEffect(() =>
     this.actions$.pipe(
       ofType(RegularActions.interventionDeleteRequested),
-      concatMap(({ interventionId, periodId }) =>
-        from(appStore.data.deleteDocument(appStore.paths.regularIntervention(periodId, interventionId))).pipe(
+      concatMap(({ interventionId }) =>
+        from(appStore.regular.deleteIntervention(interventionId)).pipe(
           map(() => RegularActions.operationSucceeded()),
           catchError((error) => of(RegularActions.operationFailed({ message: this.toErrorMessage(error, "Impossible de supprimer l'intervention.") }))),
         ),
@@ -115,9 +106,9 @@ export class RegularEffects {
         from(
           Promise.all([
             ...interventions.map((intervention) =>
-              appStore.data.deleteDocument(appStore.paths.regularIntervention(intervention.periodId, intervention.id)),
+              appStore.regular.deleteIntervention(intervention.id),
             ),
-            appStore.data.deleteDocument(appStore.paths.regularOnCallPeriod(periodId)),
+            appStore.regular.deletePeriod(periodId),
           ]),
         ).pipe(
           map(() => RegularActions.operationSucceeded()),
@@ -131,7 +122,7 @@ export class RegularEffects {
     this.actions$.pipe(
       ofType(RegularActions.periodVisaUpdateRequested),
       concatMap(({ field, periodId, visa }) =>
-        from(appStore.data.updateDocument(appStore.paths.regularOnCallPeriod(periodId), { [field]: visa })).pipe(
+        from(appStore.regular.updatePeriod(periodId, { [field]: visa })).pipe(
           map(() => RegularActions.operationSucceeded()),
           catchError((error) => of(RegularActions.operationFailed({ message: this.toErrorMessage(error, "Impossible d'enregistrer le visa.") }))),
         ),
@@ -143,7 +134,7 @@ export class RegularEffects {
     this.actions$.pipe(
       ofType(RegularActions.interventionVisaUpdateRequested),
       concatMap(({ interventionId, periodId, visa }) =>
-        from(appStore.data.updateDocument(appStore.paths.regularIntervention(periodId, interventionId), { agentVisa: visa })).pipe(
+        from(appStore.regular.updateIntervention(interventionId, periodId, { agentVisa: visa })).pipe(
           map(() => RegularActions.operationSucceeded()),
           catchError((error) => of(RegularActions.operationFailed({ message: this.toErrorMessage(error, "Impossible d'enregistrer le visa.") }))),
         ),
@@ -152,7 +143,7 @@ export class RegularEffects {
   );
 
   // A global regular-period visa also signs the user's attached interventions.
-  // The batch action keeps that cross-document business rule in one place.
+  // The batch action keeps that cross-period business rule in one place.
   readonly updateInterventionVisas$ = createEffect(() =>
     this.actions$.pipe(
       ofType(RegularActions.interventionsVisaBatchUpdateRequested),
@@ -160,7 +151,7 @@ export class RegularEffects {
         from(
           Promise.all(
             interventions.map((intervention) =>
-              appStore.data.updateDocument(appStore.paths.regularIntervention(intervention.periodId, intervention.id), { agentVisa: visa }),
+              appStore.regular.updateIntervention(intervention.id, intervention.periodId, { agentVisa: visa }),
             ),
           ),
         ).pipe(
@@ -178,8 +169,8 @@ export class RegularEffects {
       ofType(RegularActions.periodRhSentUpdateRequested),
       concatMap(({ periodId, sent }) =>
         from(
-          appStore.data.updateDocument(appStore.paths.regularOnCallPeriod(periodId), {
-            sentToRhAt: sent ? appStore.data.serverTimestamp() : appStore.data.deleteField(),
+          appStore.regular.updatePeriod(periodId, {
+            sentToRhAt: sent ? appStore.now() : null,
           }),
         ).pipe(
           map(() => RegularActions.operationSucceeded()),
@@ -191,11 +182,9 @@ export class RegularEffects {
 
   private observeTeams(): Observable<ReturnType<typeof RegularActions.teamsChanged | typeof RegularActions.loadFailed>> {
     return new Observable((subscriber) => {
-      const unsubscribe = appStore.data.observeCollection<Record<string, unknown>>(
-        appStore.paths.teams(),
+      const unsubscribe = appStore.teams.watch(
         (documents) => {
           const teams = documents
-            .map((document) => this.teamFromStore(document.id, document.data))
             .sort((first, second) => first.name.localeCompare(second.name));
 
           subscriber.next(RegularActions.teamsChanged({ teams }));
@@ -209,11 +198,9 @@ export class RegularEffects {
 
   private observeUsers(): Observable<ReturnType<typeof RegularActions.usersChanged | typeof RegularActions.loadFailed>> {
     return new Observable((subscriber) => {
-      const unsubscribe = appStore.data.observeCollection<Record<string, unknown>>(
-        appStore.paths.users(),
+      const unsubscribe = appStore.users.watch(
         (documents) => {
           const users = documents
-            .map((document) => this.userFromStore(document.id, document.data))
             .filter((user) => Boolean(user.email))
             .sort((first, second) => this.userLabel(first).localeCompare(this.userLabel(second)));
 
@@ -228,10 +215,9 @@ export class RegularEffects {
 
   private observePeriods(): Observable<ReturnType<typeof RegularActions.periodsChanged | typeof RegularActions.loadFailed>> {
     return new Observable((subscriber) => {
-      const unsubscribe = appStore.data.observeCollection<Record<string, unknown>>(
-        appStore.paths.regularOnCallPeriods(),
+      const unsubscribe = appStore.regular.watchPeriods(
         (documents) => {
-          const periods = documents.map((document) => this.periodFromStore(document.id, document.data));
+          const periods = documents;
           subscriber.next(RegularActions.periodsChanged({ periods }));
         },
         (error) => subscriber.next(RegularActions.loadFailed({ message: this.toErrorMessage(error, "Impossible de charger les astreintes.") })),
@@ -241,14 +227,12 @@ export class RegularEffects {
     });
   }
 
-  // Collection-group reading keeps the UI simple while still storing
-  // interventions under their parent period for rules/security coherence.
+  // Validation needs interventions across periods; the repository preserves periodId foreign keys.
   private observeInterventions(): Observable<ReturnType<typeof RegularActions.interventionsChanged | typeof RegularActions.loadFailed>> {
     return new Observable((subscriber) => {
-      const unsubscribe = appStore.data.observeCollection<Record<string, unknown>>(
-        appStore.paths.regularInterventionsGroup(),
+      const unsubscribe = appStore.regular.watchInterventions(
         (documents) => {
-          const interventions = documents.map((document) => this.interventionFromStore(document.id, document.data, document.parentId));
+          const interventions = documents;
 
           subscriber.next(RegularActions.interventionsChanged({ interventions }));
         },
@@ -261,19 +245,9 @@ export class RegularEffects {
 
   private observePublicHolidays(): Observable<ReturnType<typeof RegularActions.publicHolidaysChanged | typeof RegularActions.loadFailed>> {
     return new Observable((subscriber) => {
-      const unsubscribe = appStore.data.observeCollection<Record<string, unknown>>(
-        appStore.paths.publicHolidays(),
+      const unsubscribe = appStore.holidays.watch(
         (documents) => {
-          const publicHolidays: RegularPublicHoliday[] = documents
-            .map((document) => {
-              const data = document.data;
-              return {
-                id: document.id,
-                date: asSafeString(data["date"]),
-                label: asSafeString(data["label"], "Jour férié"),
-              };
-            })
-            .filter((holiday) => Boolean(holiday.date));
+          const publicHolidays = documents.filter(holiday => Boolean(holiday.date));
 
           subscriber.next(RegularActions.publicHolidaysChanged({ publicHolidays }));
         },
@@ -284,116 +258,23 @@ export class RegularEffects {
     });
   }
 
-  // Regular interventions live below their parent on-call period, so changing dates may require moving the document.
+  // The chosen parent must contain the intervention's dates and user before it is recreated.
   private async createOrMoveIntervention(
     parentPeriodId: string,
-    payload: Record<string, unknown>,
+    payload: RegularInterventionUpdate,
     existingIntervention: RegularIntervention | undefined,
   ): Promise<void> {
-    await appStore.data.addDocument(appStore.paths.regularInterventions(parentPeriodId), {
+    await appStore.regular.saveIntervention(undefined, parentPeriodId, {
       ...payload,
-      createdAt: appStore.data.serverTimestamp(),
     });
 
     if (existingIntervention) {
-      await appStore.data.deleteDocument(appStore.paths.regularIntervention(existingIntervention.periodId, existingIntervention.id));
+      await appStore.regular.deleteIntervention(existingIntervention.id);
     }
   }
 
   private userLabel(user: RegularUser): string {
     return user.displayName ? `${user.displayName} (${user.email})` : user.email;
-  }
-
-  /**
-   * Normalizes teams saved by older Firebase screens and new Supabase JSONB rows.
-   *
-   * Team members are identifiers used to filter regular planning candidates.
-   * Invalid member entries are intentionally discarded so a single legacy object
-   * does not hide the full regular calendar.
-   */
-  private teamFromStore(id: string, data: Record<string, unknown>): RegularTeam {
-    return {
-      id,
-      name: asSafeString(data["name"]),
-      members: this.stringArrayFromStore(data["members"]),
-    };
-  }
-
-  private userFromStore(id: string, data: Record<string, unknown>): RegularUser {
-    return {
-      id,
-      displayName: asSafeString(data["displayName"]),
-      email: asSafeString(data["email"]),
-    };
-  }
-
-  /**
-   * Rebuilds a complete regular on-call period from persisted data.
-   *
-   * Visas and RH send markers lock workflows across validation and exports, so
-   * the effect keeps those optional fields explicit while preserving empty
-   * fallbacks for periods created before visa support existed.
-   */
-  private periodFromStore(id: string, data: Record<string, unknown>): RegularOnCallPeriod {
-    return {
-      id,
-      teamId: asSafeString(data["teamId"]),
-      userId: asSafeString(data["userId"]),
-      userName: asSafeString(data["userName"]),
-      userEmail: asSafeString(data["userEmail"]),
-      startDate: asSafeString(data["startDate"]),
-      endDate: asSafeString(data["endDate"]),
-      agentVisa: this.optionalVisaFromStore(data["agentVisa"]),
-      directorVisa: this.optionalVisaFromStore(data["directorVisa"]),
-      sentToRhAt: asSafeString(data["sentToRhAt"]) || undefined,
-    };
-  }
-
-  private interventionFromStore(id: string, data: Record<string, unknown>, parentId: string): RegularIntervention {
-    return {
-      id,
-      periodId: parentId || asSafeString(data["periodId"]),
-      teamId: asSafeString(data["teamId"]),
-      userId: asSafeString(data["userId"]),
-      userName: asSafeString(data["userName"]),
-      userEmail: asSafeString(data["userEmail"]),
-      startDate: asSafeString(data["startDate"]),
-      endDate: asSafeString(data["endDate"]),
-      comment: asSafeString(data["comment"]),
-      agentVisa: this.optionalVisaFromStore(data["agentVisa"]),
-    };
-  }
-
-  private optionalVisaFromStore(value: unknown): SignatureVisa | undefined {
-    if (!this.isRecord(value)) {
-      return undefined;
-    }
-
-    return {
-      ...createEmptyVisa(),
-      signed: value["signed"] === true,
-      signedAt: asSafeString(value["signedAt"]),
-      signedByName: asSafeString(value["signedByName"]),
-      signedByUid: asSafeString(value["signedByUid"]),
-      signatureMode: this.signatureModeFromStore(value["signatureMode"]),
-      signatureValue: asSafeString(value["signatureValue"]) || undefined,
-    };
-  }
-
-  private signatureModeFromStore(value: unknown): SignatureVisa["signatureMode"] {
-    return value === "image" || value === "draw" || value === "name" ? value : undefined;
-  }
-
-  private stringArrayFromStore(value: unknown): string[] {
-    if (!Array.isArray(value)) {
-      return [];
-    }
-
-    return value.map((item) => asSafeString(item)).filter(Boolean);
-  }
-
-  private isRecord(value: unknown): value is Record<string, unknown> {
-    return typeof value === "object" && value !== null && !Array.isArray(value);
   }
 
   private toErrorMessage(error: unknown, fallback: string): string {

@@ -1,4 +1,5 @@
 import { createActionGroup, emptyProps, props } from "@ngrx/store";
+import { ExceptionalOperationUpdate } from "../../types";
 import {
   ExceptionalIntervention,
   ExceptionalOperation,
@@ -15,11 +16,11 @@ export const ExceptionalActions = createActionGroup({
     "Load Failed": props<{ message: string }>(),
     "Operation Save Requested": props<{
       operationId: string | null;
-      payload: Record<string, unknown>;
+      payload: ExceptionalOperationUpdate;
     }>(),
     "Operation Patch Requested": props<{
       operationId: string;
-      payload: Record<string, unknown>;
+      payload: ExceptionalOperationUpdate;
     }>(),
     "Operation Delete Requested": props<{ operationId: string }>(),
     "Interventions Save Requested": props<{

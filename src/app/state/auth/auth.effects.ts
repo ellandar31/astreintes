@@ -76,33 +76,14 @@ export class AuthEffects {
     ),
   );
 
-  /**
-   * Ensures every authenticated account also has a business user document.
-   *
-   * Existing roles are preserved by merge updates. New users receive the default
-   * role 1 (standard user), leaving administrator/director/initiateur elevation
-   * to the settings workflow.
-   */
+  /** Register the application profile without overwriting its role, signature or edited name on login. */
   private async registerAuthenticatedUser(currentUser: StoreAuthUser): Promise<void> {
-    const userReference = appStore.paths.user(currentUser.uid);
-    const savedUser = await appStore.data.getDocument(userReference);
-    const userPayload = {
+    const savedUser = await appStore.users.get(currentUser.uid);
+    await appStore.users.save(currentUser.uid, {
       uid: currentUser.uid,
       email: currentUser.email || "",
-      displayName: currentUser.displayName || "",
-      lastLoginAt: appStore.data.serverTimestamp(),
-    };
-
-    // La session d'authentification et les droits applicatifs sont séparés.
-    // On garantit ici qu'un utilisateur authentifié existe aussi dans la base métier.
-    if (savedUser) {
-      await appStore.data.setDocument(userReference, userPayload, { merge: true });
-      return;
-    }
-
-    await appStore.data.setDocument(userReference, {
-      ...userPayload,
-      role: 1,
+      lastLoginAt: appStore.now(),
+      ...(!savedUser ? { role: 1, displayName: currentUser.displayName || "" } : {}),
     });
   }
 }

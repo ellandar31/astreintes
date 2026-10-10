@@ -1,7 +1,7 @@
 export const APP_LABELS = {
   app: {
     eyebrow: "Astreintes et travaux",
-    title: "Suivi des astreintes",
+    title: "Suivi des astreintes et travaux supplémentaires",
     loading: "Chargement",
     userActions: "Actions utilisateur",
     sections: "Sections de l'application",
@@ -13,7 +13,7 @@ export const APP_LABELS = {
     },
     auth: {
       title: "Connexion",
-      subtitle: "Accédez au suivi des astreintes avec votre compte.",
+      subtitle: "Accédez au suivi des astreintes et travaux supplémentaires avec votre compte.",
       email: "Email",
       emailPlaceholder: "nom@entreprise.fr",
       password: "Mot de passe",
