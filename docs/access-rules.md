@@ -184,7 +184,15 @@ opération ainsi que l'export Excel par période.
 Les deux rubriques sont masquées aux utilisateurs et initiateurs. Leur ouverture
 directe et les actions de génération sont également refusées. Le marquage et
 l'annulation d'envoi RH dans ces écrans sont réservés aux mêmes profils.
-L'envoi reste soumis aux prérequis de validation.
+L'envoi reste soumis aux prérequis de validation. En base SQL, les transitions
+d'envoi et d'annulation sont réservées aux administrateurs, directeurs et profils
+RH ; elles sont refusées aux initiateurs, même propriétaires, et aux utilisateurs.
+La création d'un dossier déjà envoyé et la suppression d'un dossier envoyé
+suivent la même règle, pour éviter une annulation par suppression puis recréation. Les modifications
+sans changement du statut RH conservent les droits de planning existants.
+
+Les coefficients RH restent lisibles pour les calculs. Leur création, modification
+et suppression sont réservées aux administrateurs par les politiques SQL.
 
 Une révocation de droits ferme la rubrique d'export ouverte. Les droits sont
 revérifiés avant le téléchargement d'un document généré de façon asynchrone.
@@ -320,6 +328,7 @@ Sur le schéma relationnel correspondant à l'application, appliquer dans l'ordr
 5. `supabase/migrations/20261010230000_allow_director_operation_creation.sql`
 6. `supabase/migrations/20261010231000_add_rh_role.sql`
 7. `supabase/migrations/20261010232000_grant_rh_director_permissions.sql`
+8. `supabase/migrations/20261010233000_protect_compensation_and_rh_send.sql`
 
 L'ajout de la valeur d'énumération `rh` doit être validé avant la migration
 qui l'utilise : exécuter les deux dernières migrations séparément, sans les

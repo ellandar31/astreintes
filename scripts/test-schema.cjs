@@ -26,10 +26,15 @@ try {
   // Reuse only the Supabase Auth contract and fixtures, never its reduced domain tables.
   sql(bootstrap.slice(0, bootstrap.indexOf('CREATE TYPE public.user_role')));
   sql(fs.readFileSync(path.join(root, 'schema.sql'), 'utf8'));
+  // The deployed migration must also remain safe when reapplied.
+  const rhProtection = fs.readFileSync(path.join(root, 'supabase/migrations/20261010233000_protect_compensation_and_rh_send.sql'), 'utf8');
+  sql(rhProtection);
+  sql(rhProtection);
   const fixtures = bootstrap.slice(bootstrap.indexOf('INSERT INTO auth.users'), bootstrap.indexOf('ALTER TABLE public.app_users ENABLE'));
   sql(fixtures);
   sql('BEGIN;\n' + fs.readFileSync(path.join(root, 'supabase/tests/user-roles-assertions.sql'), 'utf8') + '\nROLLBACK;');
   sql('BEGIN;\n' + fs.readFileSync(path.join(root, 'supabase/tests/schema-assertions.sql'), 'utf8') + '\nROLLBACK;');
+  sql('BEGIN;\n' + fs.readFileSync(path.join(root, 'supabase/tests/compensation-rh-permissions-assertions.sql'), 'utf8') + '\nROLLBACK;');
   console.log('Fresh schema: installation, profile permissions, family isolation, constraints OK');
 } catch (error) {
   console.error(error.stderr?.toString() || error.message);
