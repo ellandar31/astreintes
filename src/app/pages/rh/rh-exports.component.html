@@ -176,7 +176,6 @@
           <th scope="col">{{ labels.common.fields.intervention }}</th>
           <th scope="col">{{ labels.common.fields.initiator }}</th>
           <th scope="col">{{ labels.common.table.period }}</th>
-          <th scope="col">{{ labels.common.fields.interventions }}</th>
           <th scope="col">{{ labels.common.fields.action }}</th>
         </tr>
       </ng-template>
@@ -185,7 +184,6 @@
           <td>{{ operation.title }}</td>
           <td>{{ operation.initiatorName || labels.common.empty.dash }}</td>
           <td>{{ formatRange(operation.forecastStartDate, operation.forecastEndDate) }}</td>
-          <td>{{ operation.interventions.length }}</td>
           <td>
             <div class="action-buttons">
               <!--<button pButton class="p-button-sm" [disabled]="!isGenerationTemplateReady(templateFor('exceptionalWork'))" (click)="exportOperation('exceptionalWork', operation)" type="button">

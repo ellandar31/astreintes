@@ -43,7 +43,7 @@ export class RhPeriodExcelExportLibrary {
       const headers = [labels.fields.user, periodLabels.operation, periodLabels.director, periodLabels.rhSent,
         labels.fields.initiator, labels.fields.manager, labels.fields.forecastPeriod, labels.fields.actualPeriod,
         periodLabels.category, labels.fields.range, labels.fields.indemnityType, labels.fields.calculationDetail,
-        labels.fields.hours, labels.fields.coefficient, labels.fields.comment];
+        labels.fields.hours, labels.fields.comment];
       sheet.columns = headers.map((header, index) => ({ header, width: [7, 9, 11].includes(index) ? 55 : 26 }));
       for (const operation of selected[type]) {
         const firstRowCount = sheet.rowCount;
@@ -54,12 +54,12 @@ export class RhPeriodExcelExportLibrary {
         if (type !== "exceptionalWork") {
           for (const row of calculator.onCallCompensationRows(operation)) {
             sheet.addRow([row.name, ...common, labels.sections.onCall, formatRange(row.startDate, row.endDate),
-              row.label, calculator.segmentDetails(row.segments), row.hours, row.coefficient, ""]);
+              row.label, calculator.segmentDetails(row.segments), row.hours, ""]);
           }
         }
         for (const row of calculator.interventionCompensationRows(operation, type === "exceptionalWork")) {
           sheet.addRow([row.userName, ...common, type === "exceptionalWork" ? periodLabels.sheets.exceptionalWork : labels.sections.interventionsAndWork,
-            formatRange(row.startDate, row.endDate), row.label, calculator.segmentDetails(row.segments), row.hours, row.coefficient, row.comment]);
+            formatRange(row.startDate, row.endDate), row.label, calculator.segmentDetails(row.segments), row.hours, row.comment]);
         }
         // Sent operations must remain traceable even when no eligible hours exist.
         // Do not invent a participant or substitute forecast hours for actual hours.
