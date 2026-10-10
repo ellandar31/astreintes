@@ -19,9 +19,8 @@ import {
   selectRegularPublicHolidays,
 } from "../../state/regular/regular.selectors";
 import { SettingsActions } from "../../state/settings/settings.actions";
-import { selectCanExportRh, selectSettingsRhCompensation, selectSettingsRhGenerationApiUrl, selectSettingsRhTemplates } from "../../state/settings/settings.selectors";
+import { selectCanExportRh, selectSettingsRhCompensation } from "../../state/settings/settings.selectors";
 import { RhExceptionalOperation, RhRegularPeriod } from "./rh.models";
-import { GenerationDocumentClient } from "./export-libraries/generation-document-client.lib";
 import { RhExcelExportLibrary } from "./export-libraries/rh-excel-export.lib";
 import {
   ExportOperation,
@@ -29,11 +28,8 @@ import {
   OnCallCompensationRule,
   PeriodCompensationRule,
   RhExportContext,
-  WordExportTemplate,
 } from "./export-libraries/rh-export.models";
 import { formatRange } from "./export-libraries/rh-export-utils";
-import { RhJsonExportLibrary } from "./export-libraries/rh-json-export.lib";
-import { RhWordPdfExportLibrary } from "./export-libraries/rh-word-pdf-export.lib";
 import { RhExportPeriod, RhPeriodExportOperations } from "../../types/rh-export.models";
 import { isValidRhExportPeriod, selectRhPeriodOperations, RhPeriodExcelExportLibrary, RH_EXCEL_MIME } from "./export-libraries/rh-period-excel-export.lib";
 
@@ -64,10 +60,10 @@ export class RhExportsComponent implements OnDestroy {
   exportingPeriod = false;
   readonly labels = APP_LABELS;
   readonly trackExportOperation = (_index: number, operation: ExportOperation): string => `${operation.sourceCollection}:${operation.sourceId}`;
-  readonly templates: WordExportTemplate[] = [
-    { id: "regular", label: APP_LABELS.rh.exports.sections.regular, fileName: "" },
-    { id: "exceptionalOnCall", label: APP_LABELS.rh.exports.sections.exceptionalOnCall, fileName: "" },
-    { id: "exceptionalWork", label: APP_LABELS.exceptional.types.travaux, fileName: "" },
+  readonly templates: Array<{ id: ExportTemplateId; label: string }> = [
+    { id: "regular", label: APP_LABELS.rh.exports.sections.regular },
+    { id: "exceptionalOnCall", label: APP_LABELS.rh.exports.sections.exceptionalOnCall },
+    { id: "exceptionalWork", label: APP_LABELS.exceptional.types.travaux },
   ];
 
   selectedMonth = this.toMonthKey(new Date());
@@ -88,10 +84,7 @@ export class RhExportsComponent implements OnDestroy {
     { id: "sunday_holiday_7_21", label: APP_LABELS.rh.rules.sundayHolidayDay, interventionCoefficient: 0, workCoefficient: 0, restCoefficient: 0 },
   ];
 
-  private readonly wordPdfExportLibrary = new RhWordPdfExportLibrary();
   private readonly excelExportLibrary = new RhExcelExportLibrary();
-  private readonly generationDocumentClient = new GenerationDocumentClient();
-  private readonly jsonExportLibrary = new RhJsonExportLibrary();
   private readonly store = inject(Store);
   readonly canExport = this.store.selectSignal(selectCanExportRh);
   private readonly exceptionalOperationsSignal = this.store.selectSignal(selectExceptionalOperations);
@@ -99,27 +92,11 @@ export class RhExportsComponent implements OnDestroy {
   private readonly regularPeriodsSignal = this.store.selectSignal(selectRegularPeriods);
   private readonly publicHolidaysSignal = this.store.selectSignal(selectRegularPublicHolidays);
   private readonly rhCompensationSignal = this.store.selectSignal(selectSettingsRhCompensation);
-  private readonly rhGenerationApiUrlSignal = this.store.selectSignal(selectSettingsRhGenerationApiUrl);
-  private readonly rhTemplatesSignal = this.store.selectSignal(selectSettingsRhTemplates);
 
   constructor() {
     this.store.dispatch(SettingsActions.rhCompensationWatchStarted());
-    this.store.dispatch(SettingsActions.rhTemplatesWatchStarted());
     this.store.dispatch(RegularActions.watchStarted());
     this.store.dispatch(ExceptionalActions.watchStarted());
-
-    effect(() => {
-      const savedTemplates = this.rhTemplatesSignal();
-
-      this.templates.forEach((template) => {
-        const savedTemplate = savedTemplates.find((item) => item.id === template.id);
-        template.fileName = savedTemplate?.fileName || "";
-        template.templateFileName = savedTemplate?.templateFileName || "";
-        template.dataModelFileName = savedTemplate?.dataModelFileName || "";
-        template.generationTemplate = savedTemplate?.generationTemplate;
-        template.dataModel = savedTemplate?.dataModel;
-      });
-    });
 
     effect(() => {
       const settings = this.rhCompensationSignal();
@@ -151,38 +128,8 @@ export class RhExportsComponent implements OnDestroy {
 
   ngOnDestroy(): void {
     this.store.dispatch(SettingsActions.rhCompensationWatchStopped());
-    this.store.dispatch(SettingsActions.rhTemplatesWatchStopped());
     this.store.dispatch(RegularActions.watchStopped());
     this.store.dispatch(ExceptionalActions.watchStopped());
-  }
-
-  async exportOperation(templateId: ExportTemplateId, operation: ExportOperation): Promise<void> {
-    if (!this.canExport()) return;
-    this.exportMessage = "";
-    const template = this.templateFor(templateId);
-
-    if (!this.isGenerationTemplateReady(template)) {
-      this.exportMessage = this.labels.rh.exports.errors.missingTemplateData;
-      return;
-    }
-
-    try {
-      const fileName = `${this.slug(operation.title)}_${this.selectedMonth}.docx`;
-      const blob = await this.generationDocumentClient.generateDocx({
-        apiUrl: this.rhGenerationApiUrlSignal(),
-        data: this.jsonExportLibrary.buildDocumentPayload(templateId, operation) as unknown as Record<string, unknown>,
-        dataModel: template.dataModel,
-        fileName,
-        locale: "fr-FR",
-        template: template.generationTemplate,
-      });
-
-      this.downloadBlob(fileName, blob);
-      this.exportMessage = this.formatMessage(this.labels.rh.exports.messages.wordGenerated, operation.title);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      this.exportMessage = this.labels.rh.exports.errors.generationFailed.replace("{message}", message);
-    }
   }
 
   exportExcelOperation(templateId: ExportTemplateId, operation: ExportOperation): void {
@@ -194,34 +141,6 @@ export class RhExportsComponent implements OnDestroy {
       this.excelExportLibrary.buildExcelHtml(templateId, operation, this.exportContext()),
     );
     this.exportMessage = this.formatMessage(this.labels.rh.exports.messages.excelGenerated, operation.title);
-  }
-
-  exportJsonOperation(templateId: ExportTemplateId, operation: ExportOperation): void {
-    if (!this.canExport()) return;
-    this.exportMessage = "";
-    this.downloadFile(
-      `${this.slug(operation.title)}_${this.selectedMonth}.json`,
-      "application/json;charset=utf-8",
-      this.jsonExportLibrary.buildJson(templateId, operation),
-    );
-    this.exportMessage = this.formatMessage(this.labels.rh.exports.messages.jsonGenerated, operation.title);
-  }
-
-  async exportPdfOperation(templateId: ExportTemplateId, operation: ExportOperation): Promise<void> {
-    if (!this.canExport()) return;
-    this.exportMessage = "";
-    const template = this.templateFor(templateId);
-
-    if (!template.fileName) {
-      this.exportMessage = this.labels.rh.exports.errors.missingTemplate;
-      return;
-    }
-
-    this.downloadBlob(
-      `${this.slug(operation.title)}_${this.selectedMonth}.pdf`,
-      await this.wordPdfExportLibrary.buildPdfBlob(template, [operation]),
-    );
-    this.exportMessage = this.formatMessage(this.labels.rh.exports.messages.pdfGenerated, operation.title);
   }
 
   markSentToRh(operation: ExportOperation): void {
@@ -304,14 +223,6 @@ export class RhExportsComponent implements OnDestroy {
 
   private localDateKey(date: Date): string {
     return `${this.toMonthKey(date)}-${String(date.getDate()).padStart(2, "0")}`;
-  }
-
-  templateFor(templateId: ExportTemplateId): WordExportTemplate {
-    return this.templates.find((template) => template.id === templateId) || this.templates[0];
-  }
-
-  isGenerationTemplateReady(template: WordExportTemplate): boolean {
-    return Boolean(this.rhGenerationApiUrlSignal() && template.generationTemplate && template.dataModel);
   }
 
   formatRange(startValue: string, endValue: string): string {

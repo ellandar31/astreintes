@@ -8,7 +8,6 @@ import { APP_LABELS } from "../../i18n/labels";
 import { selectCanManageUsers } from "../../state/settings/settings.selectors";
 import { HolidaysSettingsComponent } from "./holidays-settings.component";
 import { RhCompensationSettingsComponent } from "./rh-compensation-settings.component";
-import { RhExportTemplatesSettingsComponent } from "./rh-export-templates-settings.component";
 import { SettingsSection } from "./settings.models";
 import { TeamsSettingsComponent } from "./teams-settings.component";
 import { UsersSettingsComponent } from "./users-settings.component";
@@ -23,7 +22,6 @@ import { UsersSettingsComponent } from "./users-settings.component";
     HolidaysSettingsComponent,
     MessageModule,
     RhCompensationSettingsComponent,
-    RhExportTemplatesSettingsComponent,
     TeamsSettingsComponent,
     UsersSettingsComponent,
   ],
@@ -39,7 +37,6 @@ export class SettingsPageComponent {
     { id: "teams", label: APP_LABELS.settings.menu.teams },
     { id: "holidays", label: APP_LABELS.settings.menu.holidays },
     { id: "rhCompensation", label: APP_LABELS.settings.menu.rhCompensation },
-    { id: "rhExports", label: APP_LABELS.settings.menu.rhExports },
   ];
 
   readonly sections = computed(() => this.allSections.filter(section => this.isAdmin() || section.id === "teams"));

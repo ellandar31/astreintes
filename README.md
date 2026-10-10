@@ -140,8 +140,6 @@ Affichage :
 
 L'application permet :
 
-- l'export PDF des fiches RH ;
-- l'export Word des fiches RH ;
 - la préparation des éléments destinés à la paie (Excel).
 
 ---
@@ -416,7 +414,6 @@ Tests dédiés : `npm run test:rh-period-excel` (également inclus dans `npm tes
 Les évolutions prévues sont notamment :
 
 - tableau de bord RH avec compteurs réglementaires ;
-- génération de documents Word personnalisables ;
 
 ---
 

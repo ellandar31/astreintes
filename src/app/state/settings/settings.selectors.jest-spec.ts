@@ -5,8 +5,6 @@ import {
   selectSettingsIsSaving,
   selectSettingsMessage,
   selectSettingsRhCompensation,
-  selectSettingsRhGenerationApiUrl,
-  selectSettingsRhTemplates,
   selectSettingsTeams,
   selectSettingsUsers,
 } from "./settings.selectors";
@@ -19,8 +17,6 @@ const state: SettingsState = {
   isSaving: true,
   message: { completedAt: 1, kind: "success", message: "ok", source: "teams" },
   rhCompensation: { onCall: [], periods: [] },
-  rhGenerationApiUrl: "http://localhost:3000/v1/documents/generate",
-  rhTemplates: [{ fileName: "template.docx", id: "regular", label: "Régulier" }],
   teams: [{ id: "t1", members: ["u1"], name: "Equipe" }],
   users: [{ displayName: "Agent", email: "agent@test.fr", id: "u1", role: 1 }],
 };
@@ -35,7 +31,5 @@ describe("settings selectors", () => {
     expect(selectSettingsIsSaving.projector(state)).toBe(true);
     expect(selectSettingsMessage.projector(state)).toBe(state.message);
     expect(selectSettingsRhCompensation.projector(state)).toBe(state.rhCompensation);
-    expect(selectSettingsRhGenerationApiUrl.projector(state)).toBe(state.rhGenerationApiUrl);
-    expect(selectSettingsRhTemplates.projector(state)).toBe(state.rhTemplates);
   });
 });

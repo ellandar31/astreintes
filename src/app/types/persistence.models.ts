@@ -6,10 +6,6 @@ export type RegularPeriodUpdate = Partial<Omit<RegularOnCallPeriod, "id" | "sent
 export type RegularInterventionUpdate = Partial<Omit<RegularIntervention, "id">>;
 export type ExceptionalOperationUpdate = Partial<Omit<ExceptionalOperation, "id" | "sentToRhAt">> & { sentToRhAt?: string | null };
 
-export interface RhExportConfiguration {
-  generationApiUrl: string;
-}
-
 /** Auth session identity does not carry the application's administrative role. */
 export interface StoreAuthUser {
   displayName: string | null;

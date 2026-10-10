@@ -3,12 +3,11 @@ import {
   ManagedUser,
   PublicHoliday,
   RhCompensationSettings,
-  RhExportTemplateSetting,
   Team,
   UserRole,
 } from "../../pages/settings/settings.models";
 
-export type SettingsMessageSource = "users" | "teams" | "holidays" | "rhCompensation" | "rhTemplates";
+export type SettingsMessageSource = "users" | "teams" | "holidays" | "rhCompensation";
 export type SettingsMessageKind = "success" | "failure";
 
 export const SettingsActions = createActionGroup({
@@ -36,10 +35,6 @@ export const SettingsActions = createActionGroup({
     "Rh Compensation Watch Stopped": emptyProps(),
     "Rh Compensation Changed": props<{ settings: RhCompensationSettings }>(),
     "Rh Compensation Save Requested": props<{ settings: RhCompensationSettings }>(),
-    "Rh Templates Watch Started": emptyProps(),
-    "Rh Templates Watch Stopped": emptyProps(),
-    "Rh Templates Changed": props<{ generationApiUrl: string; templates: RhExportTemplateSetting[] }>(),
-    "Rh Templates Save Requested": props<{ generationApiUrl: string; templates: RhExportTemplateSetting[] }>(),
     "Operation Succeeded": props<{ completedAt: number; message: string; source: SettingsMessageSource }>(),
     "Operation Failed": props<{ completedAt: number; message: string; source: SettingsMessageSource }>(),
   },

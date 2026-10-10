@@ -16,7 +16,7 @@ export class RhExcelExportLibrary {
   /**
    * Produit un classeur HTML simple ouvert par Excel.
    *
-   * Le même moteur de calcul que le Word/PDF est utilisé pour éviter qu'un agent
+   * Le moteur de calcul commun aux exports Excel est utilisé pour éviter qu'un agent
    * obtienne un total différent selon le format exporté.
    */
   buildExcelHtml(templateId: ExportTemplateId, operation: ExportOperation, context: RhExportContext): string {

@@ -2,7 +2,6 @@ import { createReducer, on } from "@ngrx/store";
 import {
   PublicHoliday,
   RhCompensationSettings,
-  RhExportTemplateSetting,
   Team,
   ManagedUser,
 } from "../../pages/settings/settings.models";
@@ -22,8 +21,6 @@ export interface SettingsState {
   holidays: PublicHoliday[];
   message: SettingsOperationMessage | null;
   rhCompensation: RhCompensationSettings | null;
-  rhGenerationApiUrl: string;
-  rhTemplates: RhExportTemplateSetting[];
   teams: Team[];
   users: ManagedUser[];
 }
@@ -35,8 +32,6 @@ export const initialSettingsState: SettingsState = {
   holidays: [],
   message: null,
   rhCompensation: null,
-  rhGenerationApiUrl: "",
-  rhTemplates: [],
   teams: [],
   users: [],
 };
@@ -70,11 +65,6 @@ export const settingsReducer = createReducer(
     ...state,
     rhCompensation: settings,
   })),
-  on(SettingsActions.rhTemplatesChanged, (state, { generationApiUrl, templates }): SettingsState => ({
-    ...state,
-    rhGenerationApiUrl: generationApiUrl,
-    rhTemplates: templates,
-  })),
   on(
     SettingsActions.userRoleUpdateRequested,
     SettingsActions.userDeleteRequested,
@@ -84,7 +74,6 @@ export const settingsReducer = createReducer(
     SettingsActions.manualHolidaySaveRequested,
     SettingsActions.holidayDeleteRequested,
     SettingsActions.rhCompensationSaveRequested,
-    SettingsActions.rhTemplatesSaveRequested,
     (state): SettingsState => ({
       ...state,
       isSaving: true,

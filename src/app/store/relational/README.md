@@ -26,7 +26,7 @@ instantanés de signature. Un changement de profil ne réécrit pas les visas si
 `domain-store.ts` compose les API typées. Une mise à jour partielle conserve les
 champs omis ; `sentToRhAt: null` annule explicitement l'envoi RH. Les écritures
 d'agrégats exceptionnels restent plusieurs requêtes ordonnées, sans transaction
-SQL implicite. Les modèles Word sont enregistrés comme JSON structuré dans JSONB.
+SQL implicite.
 
 `domain-observer.ts` relit les objets complets au chargement, après une écriture
 locale réussie et sur les événements realtime des tables dépendantes. Les jointures

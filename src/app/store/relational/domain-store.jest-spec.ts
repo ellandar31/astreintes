@@ -219,13 +219,6 @@ describe("Typed relational persistence", () => {
     await expect(store.exceptional.saveOperation("astreinte:99", { title: "Missing" })).rejects.toThrow("Operation introuvable");
   });
 
-  it("stores template JSON including nested arrays directly in JSONB", async () => {
-    const { client, writes } = relationalClient();
-    const generationTemplate = { rows: [[{ text: "signature" }]] };
-    await new SupabaseDomainStore(client).rhSettings.saveTemplate({ id: "regular", label: "Regular", fileName: "model.json", generationTemplate });
-    expect(writes[0]).toMatchObject({ table: "rh_export_templates", payload: { code: "regular", generation_template: generationTemplate } });
-    expect(writes[0].payload).not.toHaveProperty("generationTemplateJson");
-  });
 
   it("refreshes joined profile names after local writes and releases channels", async () => {
     const { client, channel, removeChannel } = relationalClient();

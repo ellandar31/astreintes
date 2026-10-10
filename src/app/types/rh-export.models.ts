@@ -1,9 +1,9 @@
 import { SignatureVisa } from "./signature.models";
-import { OnCallCompensationRule, PeriodCompensationRule, RhExportTemplateSetting } from "./settings.models";
+import { OnCallCompensationRule, PeriodCompensationRule } from "./settings.models";
 
 export type { OnCallCompensationRule, PeriodCompensationRule } from "./settings.models";
-export type ExportTemplateId = RhExportTemplateSetting["id"];
-export type WordExportTemplate = RhExportTemplateSetting;
+/** Business categories shared by Excel exports. */
+export type ExportTemplateId = "regular" | "exceptionalOnCall" | "exceptionalWork";
 /** Calendar-date bounds apply to RH submission, not the worked period. */
 export interface RhExportPeriod { startDate: string; endDate: string }
 export type RhPeriodExportOperations = Record<ExportTemplateId, ExportOperation[]>;

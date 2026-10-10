@@ -25,12 +25,12 @@ ils sont inventoriés ci-dessous, mais ne doivent pas devenir des contrats parta
 | --- | --- |
 | [database.models.ts](../src/app/types/database.models.ts) | `JsonRecord`, `RelationalTable` |
 | [exceptional.models.ts](../src/app/types/exceptional.models.ts) | `ExceptionalOperationType`, `SortField`, `SortDirection`, `ModalMode`, `FilterField`, `OperationParticipant`, `SelectableUser`, `ExceptionalIntervention`, `ExceptionalOperation`, `ExceptionalOperationForm`, `ExceptionalInterventionForm` |
-| [persistence.models.ts](../src/app/types/persistence.models.ts) | `RegularPeriodUpdate`, `RegularInterventionUpdate`, `ExceptionalOperationUpdate`, `RhExportConfiguration`, `StoreAuthUser`, `StoreError`, `StoreUnsubscribe`, `DomainObserver` |
+| [persistence.models.ts](../src/app/types/persistence.models.ts) | `RegularPeriodUpdate`, `RegularInterventionUpdate`, `ExceptionalOperationUpdate`, `StoreAuthUser`, `StoreError`, `StoreUnsubscribe`, `DomainObserver` |
 | [regular.models.ts](../src/app/types/regular.models.ts) | `RegularTeam`, `RegularUser`, `RegularOnCallPeriod`, `RegularOnCallPeriodForm`, `RegularIntervention`, `RegularInterventionForm`, `RegularPublicHoliday` |
 | [rh-control-detail.models.ts](../src/app/types/rh-control-detail.models.ts) | `RhControlDetailLine`, `RhControlDetailItem` |
-| [rh-export.models.ts](../src/app/types/rh-export.models.ts) | `ExportTemplateId`, `WordExportTemplate`, `CalculationSegment`, `ExportOperation`, `RhExportContext`, `OnCallCompensationRow`, `InterventionCompensationRow` |
+| [rh-export.models.ts](../src/app/types/rh-export.models.ts) | `ExportTemplateId`, `RhExportPeriod`, `RhPeriodExportOperations`, `CalculationSegment`, `ExportOperation`, `RhExportContext`, `OnCallCompensationRow`, `InterventionCompensationRow` |
 | [rh.models.ts](../src/app/types/rh.models.ts) | `RhSection`, `RhUser`, `RhRegularPeriod`, `RhPublicHoliday`, `RhExceptionalIntervention`, `RhExceptionalOperation`, `RhControlRow` |
-| [settings.models.ts](../src/app/types/settings.models.ts) | `SettingsSection`, `ScheduleDay`, `Team`, `ScheduleRule`, `PublicHoliday`, `OnCallCompensationRule`, `PeriodCompensationRule`, `RhCompensationSettings`, `RhExportTemplateSetting` |
+| [settings.models.ts](../src/app/types/settings.models.ts) | `SettingsSection`, `ScheduleDay`, `Team`, `ScheduleRule`, `PublicHoliday`, `OnCallCompensationRule`, `PeriodCompensationRule`, `RhCompensationSettings` |
 | [signature.models.ts](../src/app/types/signature.models.ts) | `VisaSignatureMode`, `VisaStorageTable`, `VisaTargetColumn`, `VisaScope`, `SignatureProfile`, `SignatureVisa` |
 | [user.models.ts](../src/app/types/user.models.ts) | `UserRole`, `ManagedUser`, `ApplicationUser` |
 | [validation.models.ts](../src/app/types/validation.models.ts) | `ValidationItemKind`, `AppUser`, `ValidationItem`, `VisaProgressItem`, `ValidationSectionId`, `ValidationSection` |
@@ -41,9 +41,6 @@ ils sont inventoriés ci-dessous, mais ne doivent pas devenir des contrats parta
 | --- | --- |
 | [src/app/app.component.ts](../src/app/app.component.ts) | `TabId`, `ModalView` |
 | [src/app/pages/regular/regular-calendar.component.ts](../src/app/pages/regular/regular-calendar.component.ts) | `CalendarDay` |
-| [src/app/pages/rh/export-libraries/generation-document-client.lib.ts](../src/app/pages/rh/export-libraries/generation-document-client.lib.ts) | `GenerationDocumentCommand` |
-| [src/app/pages/rh/export-libraries/rh-json-export.lib.ts](../src/app/pages/rh/export-libraries/rh-json-export.lib.ts) | `JsonVisa`, `JsonParticipant`, `JsonIntervention`, `JsonExportPayload`, `VisaShape` |
-| [src/app/pages/rh/export-libraries/rh-word-pdf-export.lib.ts](../src/app/pages/rh/export-libraries/rh-word-pdf-export.lib.ts) | `PdfTableCell`, `PdfDocument` |
 | [src/app/pages/rh/rh-controls.component.ts](../src/app/pages/rh/rh-controls.component.ts) | `RhRegularIntervention`, `RhUserControlSection`, `RhMonthControlSection` |
 | [src/app/pages/rh/rh-exports.component.ts](../src/app/pages/rh/rh-exports.component.ts) | `RegularInterventionExport` |
 | [src/app/shared/modal.component.ts](../src/app/shared/modal.component.ts) | `ModalSize` |

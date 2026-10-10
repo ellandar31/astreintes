@@ -2,7 +2,7 @@ import { SupabaseClient } from "@supabase/supabase-js";
 import {
   ApplicationUser, DomainObserver, ExceptionalOperation, ExceptionalOperationType, ExceptionalOperationUpdate,
   PublicHoliday, RegularIntervention, RegularInterventionUpdate, RegularOnCallPeriod,
-  RegularPeriodUpdate, RhCompensationSettings, RhExportConfiguration, RhExportTemplateSetting,
+  RegularPeriodUpdate, RhCompensationSettings,
   ScheduleRule, Team,
 } from "../../types";
 import { DomainObserverService } from "./domain-observer";
@@ -103,12 +103,6 @@ export class SupabaseDomainStore {
       compensation: () => rh.fetchRhCompensation(),
       watchCompensation: watch<RhCompensationSettings>(["rh_on_call_compensation_rules", "rh_period_compensation_rules"], () => rh.fetchRhCompensation()),
       saveCompensation: (settings: RhCompensationSettings) => observer.write(["rh_on_call_compensation_rules", "rh_period_compensation_rules"], () => rh.saveRhCompensation(settings)),
-      exportConfiguration: () => rh.fetchRhExportSettings(),
-      watchExportConfiguration: watch<RhExportConfiguration>(["rh_export_settings"], () => rh.fetchRhExportSettings()),
-      saveExportConfiguration: (settings: RhExportConfiguration) => observer.write(["rh_export_settings"], () => rh.saveRhExportSettings(settings)),
-      templates: () => rh.fetchRhExportTemplateItems(),
-      watchTemplates: watch<RhExportTemplateSetting[]>(["rh_export_templates"], () => rh.fetchRhExportTemplateItems()),
-      saveTemplate: (template: RhExportTemplateSetting) => observer.write(["rh_export_templates"], () => rh.saveRhExportTemplateItem(template.id, template)),
     };
   }
 }

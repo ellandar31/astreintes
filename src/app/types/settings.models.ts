@@ -1,4 +1,4 @@
-export type SettingsSection = "teams" | "users" | "schedules" | "holidays" | "rhControls" | "rhCompensation" | "rhExports";
+export type SettingsSection = "teams" | "users" | "schedules" | "holidays" | "rhControls" | "rhCompensation";
 export type ScheduleDay = "Lundi" | "Mardi" | "Mercredi" | "Jeudi" | "Vendredi" | "Samedi" | "Dimanche" | "Jour férié";
 export type { ManagedUser, UserRole } from "./user.models";
 
@@ -40,14 +40,4 @@ export interface PeriodCompensationRule {
 export interface RhCompensationSettings {
   onCall: OnCallCompensationRule[];
   periods: PeriodCompensationRule[];
-}
-
-export interface RhExportTemplateSetting {
-  id: "regular" | "exceptionalOnCall" | "exceptionalWork";
-  label: string;
-  fileName: string;
-  templateFileName?: string;
-  dataModelFileName?: string;
-  generationTemplate?: unknown;
-  dataModel?: unknown;
 }

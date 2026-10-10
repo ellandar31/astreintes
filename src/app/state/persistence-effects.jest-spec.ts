@@ -23,7 +23,6 @@ jest.mock("../store/app-store", () => ({
     teams: { watch: jest.fn() }, holidays: { watch: jest.fn() },
     regular: { watchPeriods: jest.fn(), watchInterventions: jest.fn(), updatePeriod: jest.fn() },
     exceptional: { watchOperations: jest.fn(), saveOperation: jest.fn() },
-    rhSettings: { watchExportConfiguration: jest.fn(), watchTemplates: jest.fn(), saveExportConfiguration: jest.fn(), saveTemplate: jest.fn() },
     errors: { isError: (error: unknown) => error instanceof Error },
   },
 }));
@@ -118,15 +117,6 @@ describe("NgRx effects using typed domain APIs", () => {
     expect(appStore.users.save).toHaveBeenCalledWith(user.uid, expect.objectContaining({ role: 1, displayName: "" }));
   });
 
-  it("saves template definitions as structured JSON with nested arrays", async () => {
-    jest.mocked(appStore.rhSettings.saveExportConfiguration).mockResolvedValue(undefined);
-    jest.mocked(appStore.rhSettings.saveTemplate).mockResolvedValue("regular");
-    const template = { id: "regular" as const, label: "Regular", fileName: "model.json", generationTemplate: { rows: [[{ text: "visa" }]] } };
-    const result = firstValueFrom(TestBed.inject(SettingsEffects).saveRhTemplates$);
-    actions.next(SettingsActions.rhTemplatesSaveRequested({ generationApiUrl: "https://example.fr/generate", templates: [template] }));
-    await result;
-    expect(appStore.rhSettings.saveTemplate).toHaveBeenCalledWith(template);
-  });
 
   it("saves only profile fields while aligning the authentication display name", async () => {
     jest.mocked(appStore.auth.updateProfile).mockResolvedValue(undefined);

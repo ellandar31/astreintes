@@ -3,7 +3,7 @@ import { provideNoopAnimations } from "@angular/platform-browser/animations";
 import { MockStore, provideMockStore } from "@ngrx/store/testing";
 import { selectExceptionalOperations } from "../../state/exceptional/exceptional.selectors";
 import { selectRegularInterventions, selectRegularPeriods, selectRegularPublicHolidays } from "../../state/regular/regular.selectors";
-import { selectCanExportRh, selectSettingsRhCompensation, selectSettingsRhGenerationApiUrl, selectSettingsRhTemplates } from "../../state/settings/settings.selectors";
+import { selectCanExportRh, selectSettingsRhCompensation } from "../../state/settings/settings.selectors";
 import { RhExportsComponent } from "./rh-exports.component";
 import { RhPeriodExcelExportLibrary } from "./export-libraries/rh-period-excel-export.lib";
 import { APP_LABELS } from "../../i18n/labels";
@@ -18,8 +18,6 @@ describe("RH period export UI", () => {
         { selector: selectRegularPublicHolidays, value: [] },
         { selector: selectExceptionalOperations, value: [] },
         { selector: selectSettingsRhCompensation, value: null },
-        { selector: selectSettingsRhGenerationApiUrl, value: "" },
-        { selector: selectSettingsRhTemplates, value: [] },
       ] }),
     ] }).compileComponents();
   });
@@ -91,9 +89,6 @@ describe("RH period export UI", () => {
     const create = jest.spyOn(document, 'createElement');
     const dispatch = jest.spyOn(store, 'dispatch').mockClear();
     page.exportExcelOperation('regular', operation);
-    page.exportJsonOperation('regular', operation);
-    await page.exportOperation('regular', operation);
-    await page.exportPdfOperation('regular', operation);
     await page.exportExcelPeriod();
     page.markSentToRh(operation);
     page.unmarkSentToRh(operation);

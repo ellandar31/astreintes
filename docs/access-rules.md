@@ -178,7 +178,7 @@ bouton est masqué ou désactivé.
 ## 6. Exports RH
 
 Les exports **par opération** et **par période** sont accessibles uniquement
-aux administrateurs et directeurs. Cela couvre Word, PDF, Excel et JSON par
+aux administrateurs et directeurs. Cela couvre les exports Excel par
 opération ainsi que l'export Excel par période.
 
 Les deux rubriques sont masquées aux utilisateurs et initiateurs. Leur ouverture

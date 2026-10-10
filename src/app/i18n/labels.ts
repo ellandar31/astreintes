@@ -32,7 +32,6 @@ export const APP_LABELS = {
     actions: {
       add: "Ajouter",
       cancelRhSend: "Annuler envoi RH",
-      chooseWord: "Choisir un Word",
       close: "Fermer",
       consult: "Consulter",
       create: "Créer",
@@ -40,9 +39,6 @@ export const APP_LABELS = {
       deleteMyVisa: "Supprimer mon visa",
       edit: "Modifier",
       exportExcel: "Excel",
-      exportJson: "JSON",
-      exportPdf: "PDF",
-      exportWord: "Word",
       filter: "Filtrer",
       remove: "Retirer",
       reset: "Réinitialiser",
@@ -86,15 +82,11 @@ export const APP_LABELS = {
       type: "Type",
       user: "Utilisateur",
       visa: "Visa",
-      word: "Word",
       zone: "Zone",
     },
     messages: {
       participantDeletionDenied: "Suppression des participants non autorisée.",
       interventionDeletionDenied: "Suppression des interventions non autorisée.",
-      noFileReferenced: "Aucun fichier référencé",
-      noDataModelReferenced: "Aucun modèle de données référencé",
-      noTemplateReferenced: "Aucun template documentaire référencé",
       rhSentAt: "Envoyé aux RH le",
     },
     modal: {
@@ -286,17 +278,11 @@ export const APP_LABELS = {
         regular: "Aucune astreinte régulière sur la période.",
       },
       errors: {
-        generationFailed: "Erreur pendant la génération documentaire : {message}",
-        missingTemplate: "Aucun modèle Word n'est configuré pour cet export dans les paramètres RH.",
-        missingTemplateData: "Le template documentaire et le modèle de données doivent être configurés dans les paramètres RH.",
       },
       messages: {
         excelGenerated: "Export Excel généré pour {title}.",
-        jsonGenerated: "Export JSON généré pour {title}.",
-        pdfGenerated: "Export PDF généré pour {title}.",
         rhSent: "{title} marqué comme envoyé aux RH.",
         rhUnsent: "Envoi RH supprimé pour {title}.",
-        wordGenerated: "Export Word généré pour {title}.",
       },
       sections: {
         exceptionalOnCall: "Astreintes exceptionnelles",
@@ -405,7 +391,6 @@ export const APP_LABELS = {
       teams: "Gestion des équipes",
       holidays: "Gestion des jours fériés",
       rhCompensation: "Coefficient RH",
-      rhExports: "Modèles Word RH",
     },
     rhCompensation: {
       autoRound: "Arrondi automatiquement à l'heure supérieure.",
@@ -420,16 +405,6 @@ export const APP_LABELS = {
       title: "Configuration des coefficients RH",
       type: "Type d'astreinte",
       eyebrow: "Paramétrage RH",
-    },
-    rhTemplates: {
-      save: "Enregistrer les modèles",
-      title: "Modèles documentaires d'export",
-      chooseWord: "Choisir un Word",
-      chooseDataModel: "Choisir definition-modele.json",
-      chooseTemplate: "Choisir template-documentaire.json",
-      eyebrow: "Paramétrage RH",
-      generationApiUrl: "URL de l'API generationDoc",
-      invalidJson: "Le fichier sélectionné n'est pas un JSON valide.",
     },
     teams: {
       memberCount: "membre(s)",

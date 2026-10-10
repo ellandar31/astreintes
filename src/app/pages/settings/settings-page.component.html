@@ -35,8 +35,6 @@
       <app-holidays-settings (failure)="showError($event)" (success)="showSuccess($event)"></app-holidays-settings>
     } @else if (activeSection === "rhCompensation") {
       <app-rh-compensation-settings (failure)="showError($event)" (success)="showSuccess($event)"></app-rh-compensation-settings>
-    } @else if (activeSection === "rhExports") {
-      <app-rh-export-templates-settings (failure)="showError($event)" (success)="showSuccess($event)"></app-rh-export-templates-settings>
     }
   </p-card>
 </section>

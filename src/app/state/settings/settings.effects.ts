@@ -7,7 +7,6 @@ import {
   PeriodCompensationRule,
   PublicHoliday,
   RhCompensationSettings,
-  RhExportTemplateSetting,
   UserRole,
 } from "../../pages/settings/settings.models";
 import { appStore } from "../../store/app-store";
@@ -29,20 +28,12 @@ const defaultPeriodRows: PeriodCompensationRule[] = [
   { id: "sunday_holiday_7_21", label: "Dimanche/Jours fériés (7h-21h)", interventionCoefficient: 0, workCoefficient: 0, restCoefficient: 0 },
 ];
 
-const defaultTemplates: RhExportTemplateSetting[] = [
-  { id: "regular", label: "Astreintes régulières", fileName: "" },
-  { id: "exceptionalOnCall", label: "Astreintes exceptionnelles", fileName: "" },
-  { id: "exceptionalWork", label: "Travaux supplémentaires", fileName: "" },
-];
-const defaultGenerationApiUrl = "http://localhost:3000/v1/documents/generate";
-
 @Injectable()
 /**
  * Centralizes persistence for all administration settings.
  *
  * The settings screens configure data reused by other modules: teams feed the
- * regular calendar, public holidays affect compensation rules, and RH templates
- * drive exports. Keeping these reads/writes in effects prevents components from
+ * regular calendar, public holidays and RH coefficients drive compensation calculations. Keeping these reads/writes in effects prevents components from
  * coupling themselves to the current persistence layout.
  */
 export class SettingsEffects {
@@ -114,14 +105,6 @@ export class SettingsEffects {
           (error) => this.failure("rhCompensation", this.errorMessage(error, "Erreur pendant la configuration des coefficients RH.")),
         ).pipe(takeUntil(this.actions$.pipe(ofType(SettingsActions.rhCompensationWatchStopped)))),
       ),
-    ),
-  );
-  // Endpoint settings and template JSONB are separate relational resources.
-  // Watching them independently avoids reloading large templates for an endpoint edit.
-  readonly watchRhTemplates$ = createEffect(() =>
-    this.actions$.pipe(
-      ofType(SettingsActions.rhTemplatesWatchStarted),
-      switchMap(() => this.observeRhTemplateSettings().pipe(takeUntil(this.actions$.pipe(ofType(SettingsActions.rhTemplatesWatchStopped))))),
     ),
   );
   // Role updates are serialized to avoid racing administrative changes from
@@ -242,46 +225,9 @@ export class SettingsEffects {
     ),
   );
 
-  readonly saveRhTemplates$ = createEffect(() =>
-    this.actions$.pipe(
-      ofType(SettingsActions.rhTemplatesSaveRequested),
-      concatMap(({ generationApiUrl, templates }) =>
-        from(this.saveRhTemplateSettings(generationApiUrl, templates)).pipe(
-          map(() => this.success("rhTemplates", "Modèles Word RH enregistrés.")),
-          catchError((error) => of(this.failure("rhTemplates", this.errorMessage(error, "Erreur pendant l'enregistrement des modèles Word RH.")))),
-        ),
-      ),
-    ),
-  );
-
   /** Bridge typed repository subscriptions to NgRx; unsubscription belongs to the effect lifecycle. */
   private observeSettings<T>(subscribe: DomainObserver<T>, toAction: (value: T) => Action, toFailure: (error: unknown) => Action): Observable<Action> {
     return new Observable<Action>(subscriber => subscribe(value => subscriber.next(toAction(value)), error => subscriber.next(toFailure(error))));
-  }
-
-  /** Combine independent relational settings while retaining defaults for a new deployment. */
-  private observeRhTemplateSettings(): Observable<Action> {
-    return new Observable<Action>(subscriber => {
-      let generationApiUrl = defaultGenerationApiUrl;
-      let templates = defaultTemplates;
-      const emit = () => subscriber.next(SettingsActions.rhTemplatesChanged({ generationApiUrl, templates }));
-      const fail = (error: unknown) => subscriber.next(this.failure("rhTemplates", this.errorMessage(error, "Erreur pendant la configuration des modèles Word RH.")));
-      const stopConfig = appStore.rhSettings.watchExportConfiguration(settings => {
-        generationApiUrl = settings.generationApiUrl || defaultGenerationApiUrl;
-        emit();
-      }, fail);
-      const stopTemplates = appStore.rhSettings.watchTemplates(saved => {
-        templates = this.mergeRows(defaultTemplates, saved);
-        emit();
-      }, fail);
-      return () => { stopConfig(); stopTemplates(); };
-    });
-  }
-
-  /** JSONB preserves external model payloads without an intermediate text serialization. */
-  private async saveRhTemplateSettings(generationApiUrl: string, templates: RhExportTemplateSetting[]): Promise<void> {
-    await appStore.rhSettings.saveExportConfiguration({ generationApiUrl });
-    await Promise.all(templates.map(template => appStore.rhSettings.saveTemplate(template)));
   }
 
   /**

@@ -431,7 +431,7 @@ export class RhControlsComponent implements OnChanges, OnDestroy, OnInit {
   /**
    * Adapte une période régulière au modèle commun d'export/calcul.
    *
-   * Ce modèle commun est partagé par les exports Word/PDF/Excel et par la page
+   * Ce modèle commun est partagé par les exports Excel et par la page
    * de contrôle afin d'éviter deux interprétations concurrentes des mêmes règles.
    */
   private regularExportOperation(period: RhRegularPeriod, periodInterventions: RhRegularIntervention[]): ExportOperation {

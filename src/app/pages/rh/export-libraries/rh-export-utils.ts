@@ -23,10 +23,6 @@ export function escapeHtml(value: string): string {
     .replaceAll('"', "&quot;");
 }
 
-export function escapeAttribute(value: string): string {
-  return escapeHtml(value).replaceAll("'", "&#39;");
-}
-
 export function toDateKey(date: Date): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
