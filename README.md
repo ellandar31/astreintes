@@ -231,8 +231,8 @@ les dépendances de production. La CI bloque les alertes de niveau modéré ou s
 Configuration Supabase :
 
 1. en local, lancer `npx supabase start` ;
-2. appliquer la migration avec `npx supabase db reset` si la base doit être recréée ;
-3. la migration applicative est dans `supabase/migrations/20260726090000_app_documents.sql` ;
+2. ouvrir le SQL Editor de Supabase Studio sur un projet vide ;
+3. exécuter le contenu de `schema.sql` avec le rôle `postgres` ;
 4. renseigner `url` et `anonKey` dans `src/app/store/supabase.config.ts` pour changer de projet ;
 5. activer l'authentification Email dans Supabase Auth.
 
@@ -268,18 +268,8 @@ hébergé, soit une instance Supabase lancée ou self-hostée avec Docker.
 
 1. Créer un projet Supabase.
 2. Activer l'authentification Email dans Supabase Auth.
-3. Exécuter la migration SQL :
-
-```bash
-npx supabase link --project-ref <project-ref>
-npx supabase db push
-```
-
-La migration applicative se trouve dans :
-
-```text
-supabase/migrations/20260726090000_app_documents.sql
-```
+3. Dans le SQL Editor du projet vide, exécuter le contenu de `schema.sql`
+   avec le rôle `postgres`.
 
 4. Récupérer l'URL du projet et la clé `anon public` dans Supabase :
    `Project settings > API`.
@@ -297,11 +287,8 @@ Pour lancer Supabase localement :
 npx supabase start
 ```
 
-Pour recréer la base locale et réappliquer les migrations :
-
-```bash
-npx supabase db reset
-```
+Pour installer les tables applicatives dans une base vide, ouvrir le SQL Editor
+de Supabase Studio et exécuter `schema.sql` avec le rôle `postgres`.
 
 URLs locales utiles :
 
@@ -395,16 +382,16 @@ docker compose down
 - `npm test`
 - `npm run build`
 - `npm audit --omit=dev`
-- migrations Supabase appliquées
+- schéma `schema.sql` installé
 - authentification Email activée
 - URL et clé `anon public` Supabase renseignées dans les variables Docker
 - sauvegarde/restauration de la base Supabase validée
 
 ## Schéma de données
 
-Le schéma relationnel cible est documenté dans
-[`docs/database-schema.md`](docs/database-schema.md). La table `app_documents`
-reste disponible comme pont de migration depuis l'ancien stockage document.
+Le schéma initial est fourni dans [`schema.sql`](schema.sql) et documenté dans
+[`docs/database-schema.md`](docs/database-schema.md). Il contient toutes les tables,
+contraintes, fonctions et permissions nécessaires à une installation neuve.
 
 ---
 
