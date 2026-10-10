@@ -9,7 +9,7 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
 
-    "test": "npm run test:all",
+    "test": "npm run test:jest && npm run test:rh-exports",
     "test:all": "npm run test:db-tests && npm run test:jest && npm run test:rh-exports",
 
     "test:db-tests" : "npm run test:db-schema && npm run test:db-user-roles",
