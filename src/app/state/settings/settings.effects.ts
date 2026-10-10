@@ -32,7 +32,7 @@ const defaultPeriodRows: PeriodCompensationRule[] = [
 const defaultTemplates: RhExportTemplateSetting[] = [
   { id: "regular", label: "Astreintes régulières", fileName: "" },
   { id: "exceptionalOnCall", label: "Astreintes exceptionnelles", fileName: "" },
-  { id: "exceptionalWork", label: "Travaux exceptionnels", fileName: "" },
+  { id: "exceptionalWork", label: "Travaux supplémentaires", fileName: "" },
 ];
 const defaultGenerationApiUrl = "http://localhost:3000/v1/documents/generate";
 

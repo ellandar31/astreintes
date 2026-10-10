@@ -82,7 +82,7 @@ Chaque module de persistance doit rester sous 500 lignes.
 ## Familles exceptionnelles
 
 `exceptional_on_calls` contient les astreintes exceptionnelles et
-`exceptional_works` les travaux exceptionnels. Le type métier provient de la
+`exceptional_works` les travaux supplémentaires. Le type métier provient de la
 table, plus d'une colonne `operation_type`. `exceptional-tables.ts` centralise
 le routage des écritures et des clés étrangères.
 

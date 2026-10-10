@@ -81,7 +81,7 @@ export class ExceptionalRepository {
     const tables = tablesForExceptionalType(data.type);
     // Work hours are actual participant periods; rejecting here prevents partial parent writes.
     if (tables.type === "travaux" && data.interventions?.length) {
-      throw new Error("Les travaux exceptionnels ne peuvent pas avoir d'interventions.");
+      throw new Error("Les travaux supplémentaires ne peuvent pas avoir d'interventions.");
     }
     const identity = identifier ? parseExceptionalId(identifier) : undefined;
     if (identity && identity.type !== data.type) throw new Error("Le type d'une operation existante ne peut pas etre change.");

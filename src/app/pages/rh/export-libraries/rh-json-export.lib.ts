@@ -67,7 +67,7 @@ export class RhJsonExportLibrary {
   /**
    * Sérialise une opération dans la forme JSON du modèle cible.
    *
-   * Les travaux exceptionnels n'ont pas de bloc `actual` dans le modèle fourni :
+   * Les travaux supplémentaires n'ont pas de bloc `actual` dans le modèle fourni :
    * ils exportent les informations globales, le prévisionnel et les périodes
    * réelles sous la clé historique `interventions`. Cette clé est un contrat du
    * modèle documentaire, pas une entité de travaux en base. Les astreintes

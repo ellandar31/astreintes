@@ -176,7 +176,7 @@ export const APP_LABELS = {
       astreinte: "Astreinte exceptionnelle",
       travaux: "Travail supplémentaire",
       exceptionalOnCallPlural: "Astreintes Exceptionnelles",
-      exceptionalWorkPlural: "Travaux Exceptionnels",
+      exceptionalWorkPlural: "Travaux Supplémentaires",
     },
     eyebrow: "Exceptionnel",
   },
@@ -259,7 +259,7 @@ export const APP_LABELS = {
       title: "Détail des coefficients envoyés aux RH",
       types: {
         exceptionalOnCall: "Astreintes Exceptionnelles",
-        exceptionalWork: "Travaux Exceptionnels",
+        exceptionalWork: "Travaux Supplémentaires",
         intervention: "Intervention",
         onCall: "Astreinte",
         regularOnCall: "Astreinte régulière",

@@ -24,7 +24,7 @@ métier, sans conversion intermédiaire en documents.
 
 - [Architecture de persistance](src/app/store/relational/README.md)
 - [Catalogue des types et règles de maintenance](docs/type-catalog.md)
-- [Séparation SQL des astreintes et travaux exceptionnels](docs/exceptional-database-split.md)
+- [Séparation SQL des astreintes et travaux supplémentaires](docs/exceptional-database-split.md)
 - Point d'import centralisé : `src/app/types/index.ts`.
 - Mise à jour du catalogue : `npm run docs:types`.
 
@@ -395,4 +395,4 @@ Les évolutions prévues sont notamment :
 
 # Licence
 
-Projet personnel développé dans le cadre de la gestion des astreintes et des travaux exceptionnels.
+Projet personnel développé dans le cadre de la gestion des astreintes et des travaux supplémentaires.
