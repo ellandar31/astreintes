@@ -207,8 +207,24 @@ Accueil
 Installation des dépendances :
 
 ```bash
-npm install
+npm ci --ignore-scripts
 ```
+
+## Politique des dépendances
+
+Le fichier `package-lock.json` est versionné et la CI utilise `npm ci --ignore-scripts`
+pour reproduire les versions sans exécuter les scripts des dépendances. Les versions
+Angular, PrimeNG et NgRx sont fixées ; les plages `^` autorisent les mises à jour
+mineures compatibles et les plages `~` limitent les mises à jour aux correctifs.
+Toute mise à jour du lockfile doit être validée par les tests, la couverture et le build.
+
+Le projet utilise `@angular/build` plutôt que le paquet complet de build Angular :
+aucun builder Webpack n'est nécessaire. Cela retire une chaîne de dépendances inutilisées.
+Les `overrides` sont des correctifs de sécurité ciblés, pas des exclusions de l'audit.
+Celui de `@istanbuljs/load-nyc-config` impose `js-yaml` 4.3.2 et retire l'ancienne
+chaîne `argparse` / `sprintf-js` ; sa compatibilité YAML est couverte par un test Jest.
+Lancer `npm audit` pour l'ensemble des dépendances et `npm audit --omit=dev` pour
+les dépendances de production. La CI bloque les alertes de niveau modéré ou supérieur.
 
 Configuration Supabase :
 

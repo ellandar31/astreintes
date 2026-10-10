@@ -27,15 +27,15 @@
     "docker:restart": "docker compose up -d --build"
   },
   "dependencies": {
-    "@angular/animations": "20.3.27",
+    "@angular/animations": "20.3.33",
     "@angular/cdk": "20.2.14",
-    "@angular/common": "20.3.27",
-    "@angular/compiler": "20.3.27",
-    "@angular/core": "20.3.27",
-    "@angular/forms": "20.3.27",
-    "@angular/platform-browser": "20.3.27",
-    "@angular/platform-browser-dynamic": "20.3.27",
-    "@angular/router": "20.3.27",
+    "@angular/common": "20.3.33",
+    "@angular/compiler": "20.3.33",
+    "@angular/core": "20.3.33",
+    "@angular/forms": "20.3.33",
+    "@angular/platform-browser": "20.3.33",
+    "@angular/platform-browser-dynamic": "20.3.33",
+    "@angular/router": "20.3.33",
     "@ngrx/effects": "20.1.0",
     "@ngrx/store": "20.1.0",
     "@primeuix/themes": "^3.0.0",
@@ -49,9 +49,9 @@
     "zone.js": "~0.15.0"
   },
   "devDependencies": {
-    "@angular-devkit/build-angular": "20.3.32",
-    "@angular/cli": "20.3.32",
-    "@angular/compiler-cli": "20.3.27",
+    "@angular/build": "20.3.39",
+    "@angular/cli": "20.3.39",
+    "@angular/compiler-cli": "20.3.33",
     "@types/jest": "^30.0.0",
     "jest": "^30.4.2",
     "jest-environment-jsdom": "^30.4.1",
@@ -62,12 +62,14 @@
   },
   "overrides": {
     "postcss": "8.5.23",
-    "webpack-dev-server": "6.0.0",
     "@hono/node-server": "2.0.12",
     "glob": "13.0.6",
     "minimatch": "10.2.5",
-    "brace-expansion": "5.0.8",
+    "brace-expansion": "5.0.12",
     "test-exclude": "8.0.0",
-    "uuid": "14.0.1"
+    "uuid": "14.0.1",
+    "@istanbuljs/load-nyc-config": {
+      "js-yaml": "4.3.2"
+    }
   }
 }
