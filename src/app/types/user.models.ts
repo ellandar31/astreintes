@@ -1,6 +1,6 @@
 import { VisaSignatureMode } from "./signature.models";
 
-export type UserRole = 0 | 1 | 2 | 3;
+export type UserRole = 0 | 1 | 2 | 3 | 4;
 
 /** Administrative projection; signature fields belong to the full application profile. */
 export interface ManagedUser {

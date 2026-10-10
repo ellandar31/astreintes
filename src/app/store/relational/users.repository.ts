@@ -3,7 +3,7 @@ import { SupabaseClient } from "@supabase/supabase-js";
 import { JsonRecord } from "./store-types";
 import { text, nullableText, idText, numberId, isUuid, deleteById } from "./store-utils";
 
-function userRoleToDb(value: unknown): "admin" | "user" | "initiator" | "director" {
+function userRoleToDb(value: unknown): "admin" | "user" | "initiator" | "director" | "rh" {
   const role = value;
   if (role === 0) {
     return "admin";
@@ -13,6 +13,9 @@ function userRoleToDb(value: unknown): "admin" | "user" | "initiator" | "directo
   }
   if (role === 3) {
     return "director";
+  }
+  if (role === 4) {
+    return "rh";
   }
   if (role === 1) {
     return "user";
@@ -30,6 +33,7 @@ function userRoleFromDb(value: unknown): UserRole {
   if (value === "director") {
     return 3;
   }
+  if (value === "rh") return 4;
   return 1;
 }
 

@@ -1,3 +1,4 @@
+import { hasDirectorRights } from "../../shared/user-role-permissions";
 import { FormsModule } from "@angular/forms";
 import { SelectModule } from "primeng/select";
 import { CommonModule } from "@angular/common";
@@ -198,9 +199,9 @@ export class RhControlsComponent implements OnChanges, OnDestroy, OnInit {
     return this.users;
   }
 
-  /** Le choix du profil contrôlé est autorisé pour les administrateurs, initiateurs et directeurs. */
+  /** Le choix du profil contrôlé est autorisé pour les administrateurs, initiateurs, directeurs et RH. */
   get canSelectUser(): boolean {
-    return this.currentProfile?.role === 0 || this.currentProfile?.role === 2 || this.currentProfile?.role === 3;
+    return this.currentProfile?.role === 0 || this.currentProfile?.role === 2 || hasDirectorRights(this.currentProfile?.role);
   }
 
   private get visibleUsers(): RhUser[] {

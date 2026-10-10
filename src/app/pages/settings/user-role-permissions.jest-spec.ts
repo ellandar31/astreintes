@@ -14,7 +14,7 @@ const user: ApplicationUser = {
 };
 
 describe("Profile administration permissions", () => {
-  it.each([[0, true], [1, false], [2, true], [3, true]] as const)("planning edit access for role %s is %s", (role, allowed) => {
+  it.each([[0, true], [1, false], [2, true], [3, true], [4, true]] as const)("planning edit access for role %s is %s", (role, allowed) => {
     expect(selectCanEditPlanning.projector({ ...user, role })).toBe(allowed);
   });
   it("fails closed for absent profiles and resolves ownership from the session UUID", () => {
@@ -23,10 +23,10 @@ describe("Profile administration permissions", () => {
     expect(selectCurrentApplicationUser.projector({ uid: 'other' }, [user])).toBeUndefined();
     expect(selectCurrentApplicationUser.projector({ uid: user.uid }, [user])).toBe(user);
   });
-  it.each([[0, true], [1, false], [2, true], [3, true]] as const)("creation access for role %s is %s", (role, allowed) => {
+  it.each([[0, true], [1, false], [2, true], [3, true], [4, true]] as const)("creation access for role %s is %s", (role, allowed) => {
     expect(selectCanCreateOperations.projector({ uid: user.uid }, [{ ...user, role }])).toBe(allowed);
   });
-  it.each([[0, true], [1, false], [2, true], [3, true]] as const)("settings access for role %s is %s", (role, allowed) => {
+  it.each([[0, true], [1, false], [2, true], [3, true], [4, true]] as const)("settings access for role %s is %s", (role, allowed) => {
     expect(selectCanOpenSettings.projector({ uid: user.uid }, [{ ...user, role }])).toBe(allowed);
   });
 
@@ -35,7 +35,7 @@ describe("Profile administration permissions", () => {
     expect(selectCanOpenSettings.projector({ uid: user.uid }, [])).toBe(false);
     expect(selectCanOpenSettings.projector({ uid: "other" }, [{ ...user, role: 0 }])).toBe(false);
   });
-  it.each([1, 2, 3] as UserRole[])("does not grant administration to role %s", role => {
+  it.each([1, 2, 3, 4] as UserRole[])("does not grant administration to role %s", role => {
     expect(selectCanManageUsers.projector({ uid: user.uid }, [{ ...user, role }])).toBe(false);
   });
 
@@ -76,8 +76,8 @@ describe("Profile administration permissions", () => {
 });
 
 it("propose uniquement les administrateurs, initiateurs et directeurs comme initiateurs", () => {
-  const users = ([0, 1, 2, 3] as const).map(role => ({
+  const users = ([0, 1, 2, 3, 4] as const).map(role => ({
     id: String(role), role, email: `role${role}@example.test`, displayName: `Profil ${role}`,
   }));
-  expect(selectOperationInitiators.projector(users).map(user => user.role)).toEqual([0, 2, 3]);
+  expect(selectOperationInitiators.projector(users).map(user => user.role)).toEqual([0, 2, 3, 4]);
 });

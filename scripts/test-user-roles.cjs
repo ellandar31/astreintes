@@ -54,6 +54,13 @@ try {
   sql(initiatorMigration);
   sql(initiatorMigration);
   sql('BEGIN;\n' + fs.readFileSync(path.join(root, 'supabase/tests/exceptional-initiator-assertions.sql'), 'utf8') + '\nROLLBACK;');
+  for (const file of ['20261010231000_add_rh_role.sql', '20261010232000_grant_rh_director_permissions.sql']) {
+    const rhMigration = fs.readFileSync(path.join(root, 'supabase/migrations', file), 'utf8');
+    sql(rhMigration);
+    sql(rhMigration);
+  }
+  sql('BEGIN;\n' + fs.readFileSync(path.join(root, 'supabase/tests/rh-role-assertions.sql'), 'utf8') + '\nROLLBACK;');
+  console.log('RH: director planning rights OK; role assignment remains admin-only');
   console.log('Exceptional initiator: own planning OK, foreign planning denied, own interventions OK');
   console.log('Planning permissions: dates and participants protected; own interventions OK; foreign interventions denied');
   console.log('Operation creation: ordinary users denied on all three parent tables; interventions on saved on-calls OK');

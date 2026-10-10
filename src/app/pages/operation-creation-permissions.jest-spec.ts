@@ -194,7 +194,7 @@ describe("Planning creation permissions", () => {
     expect(dispatch).not.toHaveBeenCalled();
   });
 });
- describe("Accès complet du directeur aux opérations exceptionnelles", () => {
+ describe.each([3, 4] as const)("Accès complet du profil %s aux opérations exceptionnelles", role => {
   it.each(['astreinte', 'travaux'] as const)("autorise la création et la modification de %s d'un autre initiateur", async type => {
     await TestBed.configureTestingModule({
       imports: [ExceptionalOperationsComponent],
@@ -202,7 +202,7 @@ describe("Planning creation permissions", () => {
         auth: initialAuthState, settings: initialSettingsState,
         exceptional: { ...initialExceptionalState, operations: [operation] },
       }, selectors: [{ selector: selectCanCreateOperations, value: true },
-        { selector: selectCurrentApplicationUser, value: { id: '9', uid: 'director-auth', role: 3,
+        { selector: selectCurrentApplicationUser, value: { id: '9', uid: 'director-auth', role,
           email: 'director@example.test', displayName: 'Directeur' } }] })],
     }).compileComponents();
     const fixture = TestBed.createComponent(ExceptionalOperationsComponent);

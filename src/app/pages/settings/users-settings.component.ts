@@ -28,6 +28,7 @@ export class UsersSettingsComponent implements OnDestroy {
     { value: 1, label: APP_LABELS.settings.users.roles.user, description: APP_LABELS.settings.users.roles.userDescription },
     { value: 2, label: APP_LABELS.settings.users.roles.initiator, description: APP_LABELS.settings.users.roles.initiatorDescription },
     { value: 3, label: APP_LABELS.settings.users.roles.director, description: APP_LABELS.settings.users.roles.directorDescription },
+    { value: 4, label: APP_LABELS.settings.users.roles.rh, description: APP_LABELS.settings.users.roles.rhDescription },
   ];
 
   private readonly store = inject(Store);

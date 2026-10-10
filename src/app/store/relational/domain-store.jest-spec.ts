@@ -78,13 +78,13 @@ describe("Typed relational persistence", () => {
     expect(writes[0]).toEqual({ table: "app_users", payload: { display_name: "New", last_login_at: "2026-09-14T15:00:00Z" } });
   });
 
-  it.each([0, 1, 2, 3] as const)("writes only the explicit role %s for an administrative update", async role => {
+  it.each([0, 1, 2, 3, 4] as const)("writes only the explicit role %s for an administrative update", async role => {
     const { client, writes } = relationalClient({ app_users: [userRow] });
     await new UsersRepository(client).saveUser("7", { role });
-    expect(writes[0].payload).toEqual({ role: ["admin", "user", "initiator", "director"][role] });
+    expect(writes[0].payload).toEqual({ role: ["admin", "user", "initiator", "director", "rh"][role] });
   });
 
-  it.each([null, "", "0", {}, -1, 4, Number.NaN])("rejects invalid role %p without coercing it to admin", async role => {
+  it.each([null, "", "0", {}, -1, 5, Number.NaN])("rejects invalid role %p without coercing it to admin", async role => {
     const { client, writes } = relationalClient({ app_users: [userRow] });
     await expect(new UsersRepository(client).saveUser("7", { role } as never)).rejects.toThrow("Invalid application role");
     expect(writes).toEqual([]);
@@ -268,4 +268,9 @@ describe("Typed relational persistence", () => {
     await Promise.resolve();
     expect(next).not.toHaveBeenCalled();
   });
+});
+
+it("maps the RH SQL role to its distinct application profile", async () => {
+  const users = new UsersRepository(relationalClient({ app_users: [{ ...userRow, role: 'rh' }] }).client);
+  expect(await users.fetchUser('7')).toMatchObject({ id: '7', role: 4 });
 });

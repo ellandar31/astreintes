@@ -1,3 +1,4 @@
+import { hasDirectorRights } from "../../shared/user-role-permissions";
 import { CommonModule } from "@angular/common";
 import { Component, Input, OnChanges, OnDestroy, SimpleChanges, effect, inject } from "@angular/core";
 import { FormsModule } from "@angular/forms";
@@ -145,7 +146,7 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
   }
 
   get canViewDirectorSection(): boolean {
-    return this.isAdmin || Number(this.profile?.role) === 3;
+    return this.isAdmin || hasDirectorRights(this.profile?.role);
   }
 
   get selectedUser(): AppUser | undefined {
@@ -621,7 +622,7 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
   private canApplyVisa(item: ValidationItem): boolean {
     if (!this.user || !this.profile) return false;
     const role = this.profile.role;
-    if (role === 0 || role === 3) return true;
+    if (role === 0 || hasDirectorRights(role)) return true;
     if (role !== 1 && role !== 2) return false;
     // Une ligne directeur représente une approbation, sans titulaire agent.
     if (item.kind === "regular-period-director" || item.kind === "exceptional-operation-director") return false;

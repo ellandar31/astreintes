@@ -180,14 +180,14 @@ describe("Validation consultation", () => {
     expect(component.selectedItemVisaProgress.find(row => row.actionItem?.kind === "exceptional-participant-planned")?.visa).toEqual(signed);
   });
 
-  it.each([0, 1, 2, 3] as const)("contrôle les lignes régulières propres et étrangères pour le profil %s", role => {
+  it.each([0, 1, 2, 3, 4] as const)("contrôle les lignes régulières propres et étrangères pour le profil %s", role => {
     const fixture = createPage();
     const component = fixture.componentInstance;
     component.profile = { ...component.profile!, role };
     const own = component.validationItems.find(item => item.kind === 'regular-period-agent')!;
     const foreign = { ...own, payload: { ...period, userId: '8' } };
     expect(component.canSignVisa(own)).toBe(true);
-    expect(component.canSignVisa(foreign)).toBe(role === 0 || role === 3);
+    expect(component.canSignVisa(foreign)).toBe(role === 0 || role === 3 || role === 4);
     if (role === 1 || role === 2) {
       const dispatch = jest.spyOn(TestBed.inject(MockStore), 'dispatch').mockClear();
       component.signItem(foreign);
@@ -213,11 +213,11 @@ describe("Validation consultation", () => {
     component.profile = { ...component.profile!, role: 0 };
     component.openItem(component.validationItems.find(item => item.kind === 'exceptional-operation-agent')!);
     const planned = component.selectedItemVisaProgress.find(row => row.actionItem?.kind === 'exceptional-participant-planned')!.actionItem!;
-    for (const role of [0, 1, 2, 3] as const) {
+    for (const role of [0, 1, 2, 3, 4] as const) {
       component.profile = { ...component.profile!, role };
       expect(component.canSignVisa(planned)).toBe(role !== 1);
       const foreign = { ...planned, payload: { ...operation, initiatorUid: '9' } };
-      expect(component.canSignVisa(foreign)).toBe(role === 0 || role === 3);
+      expect(component.canSignVisa(foreign)).toBe(role === 0 || role === 3 || role === 4);
     }
     component.profile = { ...component.profile!, role: 2 };
     const dispatch = jest.spyOn(TestBed.inject(MockStore), 'dispatch').mockClear();
@@ -234,9 +234,9 @@ describe("Validation consultation", () => {
     component.regularInterventions = [{ ...intervention, agentVisa: signed }];
     component.openItem(component.validationItems[0]);
     const director = component.selectedItemVisaProgress.find(row => row.actionItem?.kind === 'regular-period-director')!.actionItem!;
-    for (const role of [0, 1, 2, 3] as const) {
+    for (const role of [0, 1, 2, 3, 4] as const) {
       component.profile = { ...component.profile!, role };
-      expect(component.canSignVisa(director)).toBe(role === 0 || role === 3);
+      expect(component.canSignVisa(director)).toBe(role === 0 || role === 3 || role === 4);
     }
   });
 

@@ -70,7 +70,7 @@ describe("RH period export UI", () => {
     build.mockRestore();
   });
 
-  it.each([[0, true], [1, false], [2, false], [3, true]] as const)("réserve les exports aux profils admin et directeur : %s", (role, allowed) => {
+  it.each([[0, true], [1, false], [2, false], [3, true], [4, true]] as const)("réserve les exports aux profils admin et directeur : %s", (role, allowed) => {
     expect(selectCanExportRh.projector({ id: '7', email: 'agent@test.fr', displayName: 'Agent', role })).toBe(allowed);
   });
 

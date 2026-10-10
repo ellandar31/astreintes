@@ -451,6 +451,8 @@ export const APP_LABELS = {
         user: "Utilisateur",
         initiator: "Initiateur",
         director: "Directeur",
+        rh: "RH",
+        rhDescription: "Mêmes droits que le directeur, incluant validations, exports et contrôles RH.",
         adminDescription: "Accès complet, incluant les droits utilisateur.",
         userDescription: "Accès standard par défaut.",
         initiatorDescription: "Droits utilisateur inclus, avec capacité d'initier.",

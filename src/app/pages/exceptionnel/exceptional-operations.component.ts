@@ -1,3 +1,4 @@
+import { hasDirectorRights } from "../../shared/user-role-permissions";
 import { CommonModule } from "@angular/common";
 import { Component, Input, OnDestroy, effect, inject } from "@angular/core";
 import { FormsModule } from "@angular/forms";
@@ -94,7 +95,7 @@ export class ExceptionalOperationsComponent implements OnDestroy {
   /** Le droit de modifier dépend de l'initiateur enregistré, pas du formulaire en cours. */
   canEditOperation(operation: ExceptionalOperation | null): boolean {
     const profile = this.currentProfile();
-    return Boolean(profile && (profile.role === 0 || profile.role === 3
+    return Boolean(profile && (profile.role === 0 || hasDirectorRights(profile.role)
       || (profile.role === 2 && operation?.initiatorUid === profile.id)));
   }
 

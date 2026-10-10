@@ -1,3 +1,4 @@
+import { hasDirectorRights } from "../../shared/user-role-permissions";
 import { createFeatureSelector, createSelector } from "@ngrx/store";
 import { selectCurrentApplicationUser } from "../settings/settings.selectors";
 import { ExceptionalState } from "./exceptional.reducer";
@@ -19,7 +20,7 @@ export const selectVisibleExceptionalOperations = createSelector(
   selectCurrentApplicationUser,
   (operations, user) => {
     if (!user) return [];
-    if (user.role === 0 || user.role === 3) return operations;
+    if (user.role === 0 || hasDirectorRights(user.role)) return operations;
 
     return operations.filter(operation =>
       (user.role === 2 && operation.initiatorUid === user.id)
