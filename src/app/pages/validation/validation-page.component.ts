@@ -385,7 +385,7 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
         actionItem: {
           id: `exceptional-planned-${operation.id}-${participant.userId}-${index}`,
           kind: "exceptional-participant-planned" as const,
-          category: this.labels.validation.categories.exceptionalPlanned,
+          category: this.operationCategories(operation).planned,
           title: operation.title,
           userLabel: participant.displayName || participant.email,
           startDate: participant.startDate || operation.startDate,
@@ -405,7 +405,7 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
         actionItem: {
           id: `exceptional-actual-${operation.id}-${participant.userId}-${index}`,
           kind: "exceptional-participant-actual" as const,
-          category: this.labels.validation.categories.exceptionalActual,
+          category: this.operationCategories(operation).actual,
           title: operation.title,
           userLabel: participant.displayName || participant.email,
           startDate: participant.startDate || operation.actualStartDate || operation.startDate,
@@ -651,7 +651,7 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
     return {
       id: `${kind}-${operation.id}`,
       kind,
-      category: isDirector ? this.labels.validation.categories.exceptionalDirectorVisa : this.labels.validation.categories.exceptionalInitiatorVisa,
+      category: isDirector ? this.operationCategories(operation).directorVisa : this.operationCategories(operation).initiatorVisa,
       title: operation.title,
       userLabel: isDirector ? this.labels.validation.roles.director : operation.initiatorName,
       startDate: operation.startDate,
@@ -668,6 +668,13 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
    * le même utilisateur, la liste principale ne doit afficher qu'une opération ;
    * le détail conserve les périodes ligne par ligne.
    */
+  /** Keep the business family explicit in both approval queues and consultation details. */
+  private operationCategories(operation: ExceptionalOperation) {
+    return operation.type === "astreinte"
+      ? this.labels.validation.categories.exceptionalOnCall
+      : this.labels.validation.categories.exceptionalWork;
+  }
+
   private exceptionalOperationAgentItem(operation: ExceptionalOperation, selectedId: string, selectedEmail: string): ValidationItem | null {
     const participants = [
       ...(operation.plannedUsers || []),
@@ -694,7 +701,7 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
     return {
       id: `exceptional-operation-agent-${operation.id}-${selectedId || selectedEmail}`,
       kind: "exceptional-operation-agent",
-      category: this.labels.validation.categories.exceptionalOperation,
+      category: this.operationCategories(operation).operation,
       title: operation.title,
       userLabel: firstParticipant.displayName || firstParticipant.email,
       startDate: startDates[0] || operation.startDate,

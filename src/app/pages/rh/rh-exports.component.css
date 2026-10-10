@@ -2,6 +2,22 @@
   display: block;
 }
 
+.rh-period-fields,
+.rh-period-counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--app-space-xl);
+}
+
+.rh-period-counts {
+  margin: 0;
+}
+
+.rh-period-counts dd {
+  margin: var(--app-space-xs) 0 0;
+  font-weight: 800;
+}
+
 :host ::ng-deep .rh-panel .p-card-body {
   display: grid;
   gap: var(--app-space-2xl);

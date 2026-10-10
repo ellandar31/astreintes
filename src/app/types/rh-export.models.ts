@@ -4,6 +4,9 @@ import { OnCallCompensationRule, PeriodCompensationRule, RhExportTemplateSetting
 export type { OnCallCompensationRule, PeriodCompensationRule } from "./settings.models";
 export type ExportTemplateId = RhExportTemplateSetting["id"];
 export type WordExportTemplate = RhExportTemplateSetting;
+/** Calendar-date bounds apply to RH submission, not the worked period. */
+export interface RhExportPeriod { startDate: string; endDate: string }
+export type RhPeriodExportOperations = Record<ExportTemplateId, ExportOperation[]>;
 
 export interface CalculationSegment {
   startDate: string;

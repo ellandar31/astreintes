@@ -10,3 +10,4 @@ export type * from "./rh.models";
 export type * from "./rh-control-detail.models";
 export type * from "./validation.models";
 export type { ExportTemplateId, WordExportTemplate, CalculationSegment, ExportOperation, RhExportContext, OnCallCompensationRow, InterventionCompensationRow } from "./rh-export.models";
+export type { RhExportPeriod, RhPeriodExportOperations } from "./rh-export.models";

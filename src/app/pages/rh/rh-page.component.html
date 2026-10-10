@@ -18,6 +18,8 @@
       <app-rh-controls [currentUser]="user"></app-rh-controls>
     } @else if (activeSection === "exports") {
       <app-rh-exports></app-rh-exports>
+    } @else if (activeSection === "periodExports") {
+      <app-rh-exports [periodMode]="true"></app-rh-exports>
     }
   </div>
 </section>

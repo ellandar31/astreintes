@@ -1,3 +1,29 @@
+@if (periodMode) {
+  <p-card styleClass="rh-panel" aria-labelledby="rh-period-title">
+    <header class="rh-panel-header">
+      <h2 id="rh-period-title">{{ periodLabels.title }}</h2>
+    </header>
+    <div class="rh-period-fields">
+      <label class="period-control">{{ periodLabels.start }}
+        <input pInputText type="date" name="rhPeriodStart" [(ngModel)]="periodStart" />
+      </label>
+      <label class="period-control">{{ periodLabels.end }}
+        <input pInputText type="date" name="rhPeriodEnd" [(ngModel)]="periodEnd" />
+      </label>
+    </div>
+    <dl class="rh-period-counts">
+      @for (template of templates; track template.id) {
+        <div><dt>{{ periodLabels.sheets[template.id] }}</dt><dd>{{ periodOperationCount(template.id) }}</dd></div>
+      }
+    </dl>
+    @if (!validExportPeriod) {
+      <p-message severity="error">{{ periodLabels.invalidPeriod }}</p-message>
+    }
+    <p-button icon="pi pi-file-excel" [label]="periodLabels.download" [loading]="exportingPeriod"
+      [disabled]="!validExportPeriod || exportingPeriod" (onClick)="exportExcelPeriod()"></p-button>
+    @if (exportMessage) { <p-message severity="info">{{ exportMessage }}</p-message> }
+  </p-card>
+} @else {
 <p-card styleClass="rh-panel" [attr.aria-labelledby]="'rh-exports-title'">
   <header class="rh-panel-header">
     <div>
@@ -205,3 +231,4 @@
     <p-message severity="success" [text]="exportMessage"></p-message>
   }
 </p-card>
+}

@@ -1,5 +1,5 @@
 import { CommonModule } from "@angular/common";
-import { Component, OnDestroy, effect, inject } from "@angular/core";
+import { Component, Input, OnDestroy, effect, inject } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { ButtonModule } from "primeng/button";
 import { CardModule } from "primeng/card";
@@ -34,6 +34,8 @@ import {
 import { formatRange } from "./export-libraries/rh-export-utils";
 import { RhJsonExportLibrary } from "./export-libraries/rh-json-export.lib";
 import { RhWordPdfExportLibrary } from "./export-libraries/rh-word-pdf-export.lib";
+import { RhExportPeriod, RhPeriodExportOperations } from "../../types/rh-export.models";
+import { isValidRhExportPeriod, selectRhPeriodOperations, RhPeriodExcelExportLibrary, RH_EXCEL_MIME } from "./export-libraries/rh-period-excel-export.lib";
 
 interface RegularInterventionExport {
   id: string;
@@ -55,6 +57,11 @@ interface RegularInterventionExport {
   styleUrl: "./rh-exports.component.css",
 })
 export class RhExportsComponent implements OnDestroy {
+  @Input() periodMode = false;
+  readonly periodLabels = APP_LABELS.rhDocuments.periodExport;
+  periodStart = `${this.toMonthKey(new Date())}-01`;
+  periodEnd = this.localDateKey(new Date());
+  exportingPeriod = false;
   readonly labels = APP_LABELS;
   readonly trackExportOperation = (_index: number, operation: ExportOperation): string => `${operation.sourceCollection}:${operation.sourceId}`;
   readonly templates: WordExportTemplate[] = [
@@ -248,6 +255,48 @@ export class RhExportsComponent implements OnDestroy {
     return this.operationsForTemplate(templateId);
   }
 
+  get exportPeriod(): RhExportPeriod {
+    return { startDate: this.periodStart, endDate: this.periodEnd };
+  }
+
+  get validExportPeriod(): boolean { return isValidRhExportPeriod(this.exportPeriod); }
+
+  /** Uses all loaded operations: execution month must not limit submission-based exports. */
+  periodOperations(): RhPeriodExportOperations {
+    return {
+      regular: this.operationsForTemplate("regular", false),
+      exceptionalOnCall: this.operationsForTemplate("exceptionalOnCall", false),
+      exceptionalWork: this.operationsForTemplate("exceptionalWork", false),
+    };
+  }
+
+  periodOperationCount(templateId: ExportTemplateId): number {
+    return selectRhPeriodOperations(this.periodOperations(), this.exportPeriod)[templateId].length;
+  }
+
+  /** Capture bounds and data before the asynchronous download; always release the busy state. */
+  async exportExcelPeriod(): Promise<void> {
+    if (this.exportingPeriod) return;
+    this.exportMessage = "";
+    if (!this.validExportPeriod) { this.exportMessage = this.periodLabels.invalidPeriod; return; }
+    const period = this.exportPeriod;
+    const operations = this.periodOperations();
+    const selected = selectRhPeriodOperations(operations, period);
+    if (!Object.values(selected).some(items => items.length)) { this.exportMessage = this.periodLabels.empty; return; }
+    this.exportingPeriod = true;
+    try {
+      const data = await new RhPeriodExcelExportLibrary().buildWorkbook(operations, period, this.exportContext());
+      this.downloadBlob(`rh_${period.startDate}_${period.endDate}.xlsx`, new Blob([new Uint8Array(data)], { type: RH_EXCEL_MIME }));
+      this.exportMessage = this.periodLabels.success;
+    } catch {
+      this.exportMessage = this.periodLabels.failure;
+    } finally { this.exportingPeriod = false; }
+  }
+
+  private localDateKey(date: Date): string {
+    return `${this.toMonthKey(date)}-${String(date.getDate()).padStart(2, "0")}`;
+  }
+
   templateFor(templateId: ExportTemplateId): WordExportTemplate {
     return this.templates.find((template) => template.id === templateId) || this.templates[0];
   }
@@ -268,10 +317,10 @@ export class RhExportsComponent implements OnDestroy {
     };
   }
 
-  private operationsForTemplate(templateId: ExportTemplateId): ExportOperation[] {
+  private operationsForTemplate(templateId: ExportTemplateId, filterExecutionMonth = true): ExportOperation[] {
     if (templateId === "regular") {
       return this.regularPeriods
-        .filter((period) => this.overlapsSelectedMonth(period.startDate, period.endDate))
+        .filter((period) => !filterExecutionMonth || this.overlapsSelectedMonth(period.startDate, period.endDate))
         .sort((first, second) => first.startDate.localeCompare(second.startDate))
         .map((period) => {
           const interventions = this.regularInterventions
@@ -314,7 +363,7 @@ export class RhExportsComponent implements OnDestroy {
 
     return this.exceptionalOperations
       .filter((operation) => operation.type === operationType)
-      .filter((operation) => this.overlapsSelectedMonth(operation.startDate, operation.forecastEndDate || operation.actualEndDate || operation.startDate))
+      .filter((operation) => !filterExecutionMonth || this.overlapsSelectedMonth(operation.startDate, operation.forecastEndDate || operation.actualEndDate || operation.startDate))
       .sort((first, second) => (first.startDate || "").localeCompare(second.startDate || ""))
       .map((operation) => {
         const forecastStart = operation.startDate || "";

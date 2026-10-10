@@ -24,5 +24,5 @@ module.exports = {
       },
     ],
   },
-  transformIgnorePatterns: ["node_modules/(?!.*\\.mjs$|@angular|@ngrx|rxjs|tslib)"],
+  transformIgnorePatterns: ["node_modules/(?!.*\\.mjs$|@angular|@ngrx|rxjs|tslib|uuid)"],
 };

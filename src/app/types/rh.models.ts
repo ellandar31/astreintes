@@ -1,6 +1,6 @@
 import { SignatureVisa } from "./signature.models";
 
-export type RhSection = "controls" | "exports";
+export type RhSection = "controls" | "exports" | "periodExports";
 
 export interface RhUser {
   id: string;

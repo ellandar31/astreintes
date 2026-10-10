@@ -384,6 +384,22 @@ reste disponible comme pont de migration depuis l'ancien stockage document.
 
 ---
 
+## Export Excel par période RH
+
+Le menu RH « Export Excel par période d'envoi RH » filtre les opérations sur leur
+date d'envoi aux RH, et non sur leurs dates d'exécution. Les dates de début et de
+fin sont incluses, selon le calendrier local utilisé dans l'application.
+
+Le fichier `.xlsx` contient trois onglets : astreintes régulières, astreintes
+exceptionnelles et travaux supplémentaires. Chaque ligne reprend l'utilisateur,
+l'opération, le directeur signataire, la date d'envoi RH, les périodes et le
+détail du calcul. Les opérations non envoyées sont exclues ; une opération sans
+heures indemnisables reste visible avec un total nul. Le moteur de calcul est
+commun à l'export individuel et à l'export groupé. ExcelJS est chargé uniquement
+au moment de la génération, avec une version exacte dans le lockfile.
+
+Tests dédiés : `npm run test:rh-period-excel` (également inclus dans `npm test`).
+
 # Feuille de route
 
 Les évolutions prévues sont notamment :
