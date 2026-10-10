@@ -54,8 +54,10 @@
 
     @if (activeTab === "regular") {
       <app-regular-calendar></app-regular-calendar>
-    } @else if (activeTab === "exceptional") {
-      <app-exceptional-operations [user]="user()"></app-exceptional-operations>
+    } @else if (activeTab === "exceptionalOnCall") {
+      <app-exceptional-operations [user]="user()" operationType="astreinte"></app-exceptional-operations>
+    } @else if (activeTab === "exceptionalWork") {
+      <app-exceptional-operations [user]="user()" operationType="travaux"></app-exceptional-operations>
     } @else if (activeTab === "validation") {
       <app-validation-page [user]="user()"></app-validation-page>
     } @else if (activeTab === "rh") {

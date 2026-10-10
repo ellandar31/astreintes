@@ -28,7 +28,8 @@ import {
 
 const tabs = [
   { id: "regular", label: APP_LABELS.app.tabs.regular },
-  { id: "exceptional", label: APP_LABELS.app.tabs.exceptional },
+  { id: "exceptionalOnCall", label: APP_LABELS.app.tabs.exceptionalOnCall },
+  { id: "exceptionalWork", label: APP_LABELS.app.tabs.exceptionalWork },
   { id: "validation", label: APP_LABELS.app.tabs.validation },
   { id: "rh", label: APP_LABELS.app.tabs.rh },
 ] as const;

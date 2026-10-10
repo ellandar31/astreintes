@@ -6,8 +6,9 @@ export const APP_LABELS = {
     userActions: "Actions utilisateur",
     sections: "Sections de l'application",
     tabs: {
-      regular: "Régulier",
-      exceptional: "Exceptionnel",
+      regular: "Astreintes régulieres",
+      exceptionalOnCall: "Astreintes exceptionnelles",
+      exceptionalWork: "Travaux supplémentaires",
       validation: "Validation",
       rh: "RH",
     },
@@ -128,14 +129,16 @@ export const APP_LABELS = {
   },
   exceptional: {
     actions: {
-      addExceptionalOnCall: "Astreinte exceptionnelle",
-      addExceptionalWork: "Travail exceptionnel",
+      addExceptionalOnCall: "Ajouter une astreinte exceptionnelle",
+      addExceptionalWork: "Ajouter un travail supplémentaire",
       addIntervention: "Ajouter une intervention",
       initializeActualFromPlanned: "Initialiser depuis le prévisionnel",
     },
     empty: {
       noIntervention: "Aucune intervention.",
       noOperation: "Aucune opération exceptionnelle.",
+      noOnCall: "Aucune astreinte exceptionnelle.",
+      noWork: "Aucun travail supplémentaire.",
       noUser: "Aucun utilisateur",
     },
     errors: {
@@ -171,7 +174,7 @@ export const APP_LABELS = {
     title: "Opérations exceptionnelles",
     types: {
       astreinte: "Astreinte exceptionnelle",
-      travaux: "Travail exceptionnel",
+      travaux: "Travail supplémentaire",
       exceptionalOnCallPlural: "Astreintes Exceptionnelles",
       exceptionalWorkPlural: "Travaux Exceptionnels",
     },
@@ -242,7 +245,7 @@ export const APP_LABELS = {
       monthNavigation: "Navigation mensuelle",
     },
     title: "Planning d'astreinte",
-    eyebrow: "Régulier",
+    eyebrow: "Astreintes régulieres",
     weekDays: ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"],
   },
   rh: {
