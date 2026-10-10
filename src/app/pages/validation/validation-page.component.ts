@@ -450,11 +450,14 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
   private refreshSelectedItem(): void {
     const selected = this.selectedItem;
     if (!selected) return;
-    const payload = selected.kind === "regular-intervention-agent"
-      ? this.regularInterventions.find(item => item.id === selected.payload.id)
-      : selected.kind.startsWith("regular-period-")
-        ? this.regularPeriods.find(item => item.id === selected.payload.id)
-        : this.exceptionalOperations.find(item => item.id === selected.payload.id);
+    let payload: ValidationItem["payload"] | undefined;
+    if (selected.kind === "regular-intervention-agent") {
+      payload = this.regularInterventions.find(item => item.id === selected.payload.id);
+    } else if (selected.kind.startsWith("regular-period-")) {
+      payload = this.regularPeriods.find(item => item.id === selected.payload.id);
+    } else {
+      payload = this.exceptionalOperations.find(item => item.id === selected.payload.id);
+    }
     if (!payload) return;
     this.selectedItem = { ...selected, payload };
     const refreshed = this.validationItems.find(item => item.id === selected.id)

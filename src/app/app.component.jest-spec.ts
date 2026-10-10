@@ -25,6 +25,13 @@ const onCall: ExceptionalOperation = {
 };
 const work: ExceptionalOperation = { ...onCall, id: "travaux:1", type: "travaux", title: "Work item" };
 
+function createShell() {
+  const fixture = TestBed.createComponent(AppComponent);
+  fixture.detectChanges();
+  return fixture;
+}
+
+
 describe("Separate exceptional navigation", () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -44,11 +51,6 @@ describe("Separate exceptional navigation", () => {
     }).compileComponents();
   });
 
-  function createShell() {
-    const fixture = TestBed.createComponent(AppComponent);
-    fixture.detectChanges();
-    return fixture;
-  }
 
   it("opens each family from its own tab without mixing rows or creation actions", () => {
     const fixture = createShell();

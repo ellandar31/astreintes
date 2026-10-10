@@ -1,3 +1,4 @@
+import type { Worksheet } from "exceljs";
 import { APP_LABELS } from "../../../i18n/labels";
 import { ExportOperation, ExportTemplateId, RhExportContext, RhExportPeriod, RhPeriodExportOperations } from "../../../types/rh-export.models";
 import { RhExportCalculationLibrary } from "./rh-export-calculations";
@@ -46,31 +47,7 @@ export class RhPeriodExcelExportLibrary {
         labels.fields.hours, labels.fields.comment];
       sheet.columns = headers.map((header, index) => ({ header, width: [7, 9, 11].includes(index) ? 55 : 26 }));
       for (const operation of selected[type]) {
-        const firstRowCount = sheet.rowCount;
-        const common = [operation.title, operation.directorVisa.signed ? operation.directorVisa.signedByName : "",
-          `${formatDate(operation.sentToRhAt!)} ${formatTime(operation.sentToRhAt!)}`, operation.initiatorName,
-          operation.operationManagerName, formatRange(operation.forecastStartDate, operation.forecastEndDate),
-          formatRange(operation.actualStartDate, operation.actualEndDate)];
-        if (type !== "exceptionalWork") {
-          for (const row of calculator.onCallCompensationRows(operation)) {
-            sheet.addRow([row.name, ...common, labels.sections.onCall, formatRange(row.startDate, row.endDate),
-              row.label, calculator.segmentDetails(row.segments), row.hours, ""]);
-          }
-        }
-        for (const row of calculator.interventionCompensationRows(operation, type === "exceptionalWork")) {
-          sheet.addRow([row.userName, ...common, type === "exceptionalWork" ? periodLabels.sheets.exceptionalWork : labels.sections.interventionsAndWork,
-            formatRange(row.startDate, row.endDate), row.label, calculator.segmentDetails(row.segments), row.hours, row.comment]);
-        }
-        // Sent operations must remain traceable even when no eligible hours exist.
-        // Do not invent a participant or substitute forecast hours for actual hours.
-        if (sheet.rowCount === firstRowCount) {
-          const participants = operation.actualUsers.length ? operation.actualUsers : [{ name: APP_LABELS.common.empty.noUser,
-            startDate: operation.actualStartDate, endDate: operation.actualEndDate }];
-          for (const user of participants) {
-            sheet.addRow([user.name, ...common, periodLabels.sheets[type], formatRange(user.startDate, user.endDate),
-              "", calculator.segmentDetails([]), 0, ""]);
-          }
-        }
+        this.appendOperation(sheet, type, operation, calculator);
       }
       sheet.autoFilter = { from: { row: 1, column: 1 }, to: { row: Math.max(1, sheet.rowCount), column: headers.length } };
       sheet.eachRow(row => { row.alignment = { vertical: "top", wrapText: true }; });
@@ -78,5 +55,36 @@ export class RhPeriodExcelExportLibrary {
       sheet.getRow(1).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFD9EAF7" } };
     }
     return new Uint8Array(await workbook.xlsx.writeBuffer());
+  }
+
+  /** Metadata is repeated on every detail row so filtering never loses its approval context. */
+  private appendOperation(sheet: Worksheet, type: ExportTemplateId, operation: ExportOperation, calculator: RhExportCalculationLibrary): void {
+    const firstRowCount = sheet.rowCount;
+    const common = [operation.title, operation.directorVisa.signed ? operation.directorVisa.signedByName : "",
+      `${formatDate(operation.sentToRhAt!)} ${formatTime(operation.sentToRhAt!)}`, operation.initiatorName,
+      operation.operationManagerName, formatRange(operation.forecastStartDate, operation.forecastEndDate),
+      formatRange(operation.actualStartDate, operation.actualEndDate)];
+    if (type !== "exceptionalWork") {
+      for (const row of calculator.onCallCompensationRows(operation)) {
+        sheet.addRow([row.name, ...common, labels.sections.onCall, formatRange(row.startDate, row.endDate),
+          row.label, calculator.segmentDetails(row.segments), row.hours, ""]);
+      }
+    }
+    const category = type === "exceptionalWork" ? periodLabels.sheets.exceptionalWork : labels.sections.interventionsAndWork;
+    for (const row of calculator.interventionCompensationRows(operation, type === "exceptionalWork")) {
+      sheet.addRow([row.userName, ...common, category, formatRange(row.startDate, row.endDate),
+        row.label, calculator.segmentDetails(row.segments), row.hours, row.comment]);
+    }
+    if (sheet.rowCount === firstRowCount) this.appendFallbackRows(sheet, type, operation, common, calculator);
+  }
+
+  /** Keep sent operations traceable without inventing participants or substituting forecast hours. */
+  private appendFallbackRows(sheet: Worksheet, type: ExportTemplateId, operation: ExportOperation, common: string[], calculator: RhExportCalculationLibrary): void {
+    const participants = operation.actualUsers.length ? operation.actualUsers : [{ name: APP_LABELS.common.empty.noUser,
+      startDate: operation.actualStartDate, endDate: operation.actualEndDate }];
+    for (const user of participants) {
+      sheet.addRow([user.name, ...common, periodLabels.sheets[type], formatRange(user.startDate, user.endDate),
+        "", calculator.segmentDetails([]), 0, ""]);
+    }
   }
 }

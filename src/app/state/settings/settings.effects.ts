@@ -56,8 +56,8 @@ export class SettingsEffects {
       switchMap(() =>
         this.observeSettings(appStore.users.watch,
           (documents) => {
-            const users = documents
-              .sort((first, second) => first.email.localeCompare(second.email));
+            const users = [...documents];
+            users.sort((first, second) => first.email.localeCompare(second.email));
 
             return SettingsActions.usersChanged({ users });
           },
@@ -75,8 +75,8 @@ export class SettingsEffects {
       switchMap(() =>
         this.observeSettings(appStore.teams.watch,
           (documents) => {
-            const teams = documents
-              .sort((first, second) => first.name.localeCompare(second.name));
+            const teams = [...documents];
+            teams.sort((first, second) => first.name.localeCompare(second.name));
 
             return SettingsActions.teamsChanged({ teams });
           },
@@ -93,8 +93,8 @@ export class SettingsEffects {
       switchMap(() =>
         this.observeSettings(appStore.holidays.watch,
           (documents) => {
-            const holidays = documents
-              .sort((first, second) => first.date.localeCompare(second.date));
+            const holidays = [...documents];
+            holidays.sort((first, second) => first.date.localeCompare(second.date));
 
             return SettingsActions.holidaysChanged({ holidays });
           },

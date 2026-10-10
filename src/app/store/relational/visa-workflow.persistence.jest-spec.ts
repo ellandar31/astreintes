@@ -14,18 +14,20 @@ const operation: ExceptionalOperation = {
   visas: { initiatorGlobal: signed, directorGlobal: signed, actualInitiator: signed, plannedInitiator: signed, plannedDirector: signed, actualDirector: signed },
 };
 
+function setup(currentPeriod = period, currentOperation = operation) {
+  const regular = {
+    fetchRegularPeriods: jest.fn().mockResolvedValue([currentPeriod]),
+    fetchRegularInterventions: jest.fn().mockResolvedValue([intervention]),
+    saveRegularPeriod: jest.fn().mockResolvedValue(period.id),
+    saveRegularIntervention: jest.fn().mockResolvedValue(intervention.id),
+  };
+  const exceptional = { fetchExceptionalOperation: jest.fn().mockResolvedValue(currentOperation), saveExceptionalOperation: jest.fn().mockResolvedValue(currentOperation.id) };
+  const workflow = new VisaWorkflowPersistence(regular as unknown as RegularRepository, exceptional as unknown as ExceptionalRepository);
+  return { regular, exceptional, workflow };
+}
+
+
 describe("Persisted approval prerequisites", () => {
-  function setup(currentPeriod = period, currentOperation = operation) {
-    const regular = {
-      fetchRegularPeriods: jest.fn().mockResolvedValue([currentPeriod]),
-      fetchRegularInterventions: jest.fn().mockResolvedValue([intervention]),
-      saveRegularPeriod: jest.fn().mockResolvedValue(period.id),
-      saveRegularIntervention: jest.fn().mockResolvedValue(intervention.id),
-    };
-    const exceptional = { fetchExceptionalOperation: jest.fn().mockResolvedValue(currentOperation), saveExceptionalOperation: jest.fn().mockResolvedValue(currentOperation.id) };
-    const workflow = new VisaWorkflowPersistence(regular as unknown as RegularRepository, exceptional as unknown as ExceptionalRepository);
-    return { regular, exceptional, workflow };
-  }
 
   it("revokes the regular director when the period agent visa is removed", async () => {
     const { regular, workflow } = setup();

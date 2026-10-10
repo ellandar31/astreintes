@@ -7,13 +7,15 @@ function deferred<T>() {
   return { promise, resolve };
 }
 
+function setup() {
+  const callbacks: (() => void)[] = [];
+  const channel = { on: jest.fn((_event: string, _filter: unknown, callback: () => void) => { callbacks.push(callback); return channel; }), subscribe: jest.fn(() => channel) };
+  const client = { channel: jest.fn(() => channel), removeChannel: jest.fn() };
+  return { observer: new DomainObserverService(client as unknown as SupabaseClient), callbacks };
+}
+
+
 describe("Aggregate refresh ordering", () => {
-  function setup() {
-    const callbacks: (() => void)[] = [];
-    const channel = { on: jest.fn((_event: string, _filter: unknown, callback: () => void) => { callbacks.push(callback); return channel; }), subscribe: jest.fn(() => channel) };
-    const client = { channel: jest.fn(() => channel), removeChannel: jest.fn() };
-    return { observer: new DomainObserverService(client as unknown as SupabaseClient), callbacks };
-  }
 
   it("ignores a slow older response arriving after a newer snapshot", async () => {
     const { observer, callbacks } = setup();

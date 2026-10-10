@@ -274,7 +274,7 @@ export class ExceptionalOperationsComponent implements OnDestroy {
    * réelle associée.
    */
   saveIntervention(form: ExceptionalInterventionForm): void {
-    if (!this.selectedOperation || this.selectedOperation.type !== "astreinte") {
+    if (this.selectedOperation?.type !== "astreinte") {
       return;
     }
 

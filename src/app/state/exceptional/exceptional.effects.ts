@@ -124,8 +124,8 @@ export class ExceptionalEffects {
     return new Observable((subscriber) => {
       const unsubscribe = appStore.exceptional.watchOperations(
         (documents) => {
-          const operations = documents
-            .sort((first, second) => (first.startDate || "").localeCompare(second.startDate || ""));
+          const operations = [...documents];
+            operations.sort((first, second) => (first.startDate || "").localeCompare(second.startDate || ""));
 
           subscriber.next(ExceptionalActions.operationsChanged({ operations }));
         },

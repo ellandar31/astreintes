@@ -27,8 +27,8 @@ export class DomainObserverService {
       try {
         const value = await load();
         if (active && revision === requestRevision && !tables.some(table => this.writes.has(table))) next(value);
-      } catch (failure) {
-        if (active && revision === requestRevision && !tables.some(table => this.writes.has(table))) error?.(failure);
+      } catch (error_) {
+        if (active && revision === requestRevision && !tables.some(table => this.writes.has(table))) error?.(error_);
       }
     };
     this.listeners.set(refresh, tables);

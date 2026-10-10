@@ -48,7 +48,8 @@ export class UsersRepository {
   async fetchUser(identifier: string): Promise<ApplicationUser | undefined> {
     const id = numberId(identifier);
     let query = this.client.from("app_users").select("*").limit(1);
-    query = id ? query.eq("id", id) : query.eq(isUuid(identifier) ? "auth_user_id" : "email", identifier);
+    const column = isUuid(identifier) ? "auth_user_id" : "email";
+    query = id ? query.eq("id", id) : query.eq(column, identifier);
     const { data, error } = await query.maybeSingle();
 
     if (error) {
@@ -120,7 +121,8 @@ export class UsersRepository {
 
     const id = numberId(identifier);
     let query = this.client.from("app_users").select("id").limit(1);
-    query = id ? query.eq("id", id) : query.eq(isUuid(identifier) ? "auth_user_id" : "email", identifier);
+    const column = isUuid(identifier) ? "auth_user_id" : "email";
+    query = id ? query.eq("id", id) : query.eq(column, identifier);
     const { data, error } = await query.maybeSingle();
 
     if (error) {

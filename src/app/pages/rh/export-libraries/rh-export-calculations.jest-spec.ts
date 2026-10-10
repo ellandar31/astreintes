@@ -49,7 +49,7 @@ describe("RhExportCalculationLibrary", () => {
     }));
     expect(rows).toEqual([expect.objectContaining({ name: "Agent", label, hours: 0 })]);
     expect(rows[0].segments).toHaveLength(1);
-    expect(rows[0].segments[0].hours).toBe(0.32);
+    expect(rows[0].segments[0].hours).toBeCloseTo(0.32, 2);
   });
 
   it("ne crée pas de ligne pour une période vide ou hors plage indemnisable", () => {

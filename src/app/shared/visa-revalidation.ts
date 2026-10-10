@@ -26,7 +26,7 @@ export function revalidateRegularPeriod(current: RegularOnCallPeriod | undefined
 /** A moved/new intervention cannot inherit an approval from its previous period. */
 export function revalidateRegularIntervention(current: RegularIntervention | undefined, periodId: string, update: RegularInterventionUpdate): RegularInterventionUpdate {
   const merged = { ...current, ...update };
-  if (!current || current.periodId !== periodId || current.userId !== merged.userId || !sameRange(current, merged)) {
+  if (current?.periodId !== periodId || current.userId !== merged.userId || !sameRange(current, merged)) {
     merged.agentVisa = createEmptyVisa();
   }
   return merged;

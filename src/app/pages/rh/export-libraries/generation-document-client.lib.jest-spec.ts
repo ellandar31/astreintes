@@ -13,7 +13,7 @@ describe("GenerationDocumentClient", () => {
 
   it("posts the configured contract and returns the DOCX blob", async () => {
     const blob = new Blob(["docx"]);
-    const fetchMock = jest.fn<typeof fetch>().mockResolvedValue({ ok: true, blob: async () => blob } as Response);
+    const fetchMock = jest.fn<typeof fetch>().mockResolvedValue({ ok: true, blob: () => Promise.resolve(blob) } as Response);
     globalThis.fetch = fetchMock;
     expect(await new GenerationDocumentClient().generateDocx(command)).toBe(blob);
     expect(fetchMock).toHaveBeenCalledWith(command.apiUrl, {
@@ -25,14 +25,14 @@ describe("GenerationDocumentClient", () => {
 
   it("exposes structured API errors without returning a document", async () => {
     globalThis.fetch = jest.fn<typeof fetch>().mockResolvedValue({ ok: false, status: 422,
-      json: async () => ({ error: "Validation", details: { field: "title" } }),
+      json: () => Promise.resolve({ error: "Validation", details: { field: "title" } }),
     } as Response);
     await expect(new GenerationDocumentClient().generateDocx(command)).rejects.toThrow('Validation - {"field":"title"}');
   });
 
   it("falls back to HTTP status for non-JSON failures", async () => {
     globalThis.fetch = jest.fn<typeof fetch>().mockResolvedValue({ ok: false, status: 503,
-      json: async () => { throw new SyntaxError("Not JSON"); },
+      json: () => Promise.reject(new SyntaxError("Not JSON")),
     } as unknown as Response);
     await expect(new GenerationDocumentClient().generateDocx(command)).rejects.toThrow("HTTP 503");
   });

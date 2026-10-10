@@ -1,12 +1,7 @@
+/** @jest-environment node */
 import { ExportOperation, RhExportContext, WordExportTemplate } from "./rh-export.models";
 import { RhWordPdfExportLibrary } from "./rh-word-pdf-export.lib";
 import { APP_LABELS } from "../../../i18n/labels";
-
-function expect(condition: boolean, message: string): void {
-  if (!condition) {
-    throw new Error(message);
-  }
-}
 
 const signedVisa = {
   signed: true,
@@ -70,47 +65,43 @@ const context: RhExportContext = {
   ],
 };
 
-const library = new RhWordPdfExportLibrary();
-const wordHtml = library.buildWordHtml(template, [operation], "exceptionalOnCall", context);
-const wordHtmlWithInvalidImageVisa = library.buildWordHtml(
-  template,
-  [
-    {
-      ...operation,
-      initiatorVisa: invalidDrawVisa,
-      directorVisa: invalidDrawVisa,
-      plannedUsers: [{ name: "Agent Texte", startDate: "2026-07-04T07:00:00", endDate: "2026-07-05T10:00:00", visa: invalidDrawVisa }],
-    },
-  ],
-  "exceptionalOnCall",
-  context,
-);
+describe("Word and PDF export", () => {
+  it("preserves document layout and falls back to text for invalid image visas", () => {
+    const library = new RhWordPdfExportLibrary();
+    const wordHtml = library.buildWordHtml(template, [operation], "exceptionalOnCall", context);
+    const wordHtmlWithInvalidImageVisa = library.buildWordHtml(
+      template,
+      [
+        {
+          ...operation,
+          initiatorVisa: invalidDrawVisa,
+          directorVisa: invalidDrawVisa,
+          plannedUsers: [{ name: "Agent Texte", startDate: "2026-07-04T07:00:00", endDate: "2026-07-05T10:00:00", visa: invalidDrawVisa }],
+        },
+      ],
+      "exceptionalOnCall",
+      context,
+    );
 
-expect(wordHtml.includes("Dates prévisionnelles"), "Le Word doit contenir le tableau des dates prévisionnelles.");
-expect(wordHtml.includes("sam 04/07/2026"), "Les dates documentaires doivent comporter le trigramme du jour.");
-expect(wordHtml.includes("ven 10/07/2026"), "Les dates de visa doivent comporter le trigramme du jour.");
-expect(wordHtml.includes("class=\"visa-image\""), "Les signatures image/pad doivent être rendues en image dans le Word.");
-expect(wordHtml.includes("width=\"95\" height=\"26\""), "Les visas de ligne doivent être retaillés pour préserver la mise en page Word.");
-expect(wordHtml.includes("class=\"visa-image global-visa-image\""), "Les visas globaux doivent utiliser la taille dédiée.");
-expect(!wordHtml.includes("Détail des calculs RH"), "Le Word ne doit pas inclure le bloc de détail des calculs RH.");
-const workHtml = library.buildWordHtml(template, [{ ...operation, interventions: [] }], "exceptionalWork", context);
-expect(!workHtml.includes(APP_LABELS.rhDocuments.fields.interventionsDuringOnCall), "Le Word travaux ne doit pas présenter d'interventions.");
-expect(workHtml.includes(APP_LABELS.rhDocuments.fields.actualDates), "Le Word travaux conserve le tableau des participants réels.");
+    expect(wordHtml).toContain("Dates prévisionnelles");
+    expect(wordHtml).toContain("sam 04/07/2026");
+    expect(wordHtml).toContain("ven 10/07/2026");
+    expect(wordHtml).toContain("class=\"visa-image\"");
+    expect(wordHtml).toContain("width=\"95\" height=\"26\"");
+    expect(wordHtml).toContain("class=\"visa-image global-visa-image\"");
+    expect(wordHtml).not.toContain("Détail des calculs RH");
+    const workHtml = library.buildWordHtml(template, [{ ...operation, interventions: [] }], "exceptionalWork", context);
+    expect(workHtml).not.toContain(APP_LABELS.rhDocuments.fields.interventionsDuringOnCall);
+    expect(workHtml).toContain(APP_LABELS.rhDocuments.fields.actualDates);
 
-expect(wordHtmlWithInvalidImageVisa.includes("Visa Texte"), "Un visa image invalide doit etre rendu en texte dans le Word.");
-expect(!wordHtmlWithInvalidImageVisa.includes("src=\"Visa Texte\""), "Un visa image invalide ne doit pas generer une image cassee dans le Word.");
+    expect(wordHtmlWithInvalidImageVisa).toContain("Visa Texte");
+    expect(wordHtmlWithInvalidImageVisa).not.toContain("src=\"Visa Texte\"");
+  });
 
-async function main(): Promise<void> {
-  const pdfBlob = await library.buildPdfBlob(template, [operation]);
-
-  expect(pdfBlob instanceof Blob, "Le PDF doit être généré sous forme de Blob.");
-  expect(pdfBlob.type === "application/pdf", "Le Blob PDF doit utiliser le type application/pdf.");
-  expect(pdfBlob.size > 0, "Le PDF généré ne doit pas être vide.");
-
-  console.log("rh-word-pdf-export.lib: OK");
-}
-
-main().catch((error) => {
-  console.error(error);
-  throw error;
+  it("generates a nonempty PDF Blob without opening a browser window", async () => {
+    const pdfBlob = await new RhWordPdfExportLibrary().buildPdfBlob(template, [operation]);
+    expect(pdfBlob).toBeInstanceOf(Blob);
+    expect(pdfBlob.type).toBe("application/pdf");
+    expect(pdfBlob.size).toBeGreaterThan(0);
+  });
 });

@@ -182,24 +182,7 @@ export class ExceptionalRepository {
       }
     }
 
-    for (const participant of participants) {
-      const userId = await this.users.requireAppUserId(text(participant["userId"]), "Participant d'operation introuvable.");
-      const { data: inserted, error } = await this.client
-        .from(tables.participants)
-        .insert({
-          [tables.parentColumn]: operationId,
-          participant_kind: kind,
-          user_id: userId,
-          starts_at: databaseDateTime(participant["startDate"]),
-          ends_at: databaseDateTime(participant["endDate"]),
-        })
-        .select("id")
-        .single();
-      if (error) {
-        throw error;
-      }
-      await this.visas.upsertVisa("participant_id", Number(inserted["id"]), "exceptional_participant_agent", participant["visa"], tables.visas);
-    }
+    await this.finishChildWrites(participants.map(participant => this.insertExceptionalParticipant(operationId, kind, participant, tables)));
   }
 
   private async fetchExceptionalInterventions(operationIds: number[], tables: ExceptionalTables): Promise<Map<number, ExceptionalIntervention[]>> {
@@ -253,26 +236,57 @@ export class ExceptionalRepository {
       }
     }
 
-    for (const intervention of interventions) {
-      const userId = await this.users.requireAppUserId(text(intervention["userId"]), "Utilisateur d'intervention introuvable.");
-      const { data: inserted, error } = await this.client
-        .from(tables.interventions)
-        .insert({
-          [tables.parentColumn]: operationId,
-          user_id: userId,
-          starts_at: databaseDateTime(intervention["startDate"]),
-          ends_at: databaseDateTime(intervention["endDate"]),
-          was_on_site: intervention["wasOnSite"] === true,
-          label: text(intervention["label"]),
-          comment: text(intervention["comment"]),
-        })
-        .select("id")
-        .single();
-      if (error) {
-        throw error;
-      }
-      await this.visas.upsertVisa("intervention_id", Number(inserted["id"]), "exceptional_intervention_agent", intervention["agentVisa"], tables.visas);
+    await this.finishChildWrites(interventions.map(intervention => this.insertExceptionalIntervention(operationId, intervention, tables)));
+  }
+
+  /** Persist the row before its visa so the signature targets the generated SQL identity. */
+  private async insertExceptionalParticipant(operationId: number, kind: "planned" | "actual", participant: OperationParticipant, tables: ExceptionalTables): Promise<void> {
+    const userId = await this.users.requireAppUserId(text(participant["userId"]), "Participant d'operation introuvable.");
+    const { data: inserted, error } = await this.client
+      .from(tables.participants)
+      .insert({
+        [tables.parentColumn]: operationId,
+        participant_kind: kind,
+        user_id: userId,
+        starts_at: databaseDateTime(participant["startDate"]),
+        ends_at: databaseDateTime(participant["endDate"]),
+      })
+      .select("id")
+      .single();
+    if (error) {
+      throw error;
     }
+    await this.visas.upsertVisa("participant_id", Number(inserted["id"]), "exceptional_participant_agent", participant["visa"], tables.visas);
+  }
+
+  /** Persist the row before its visa so the signature targets the generated SQL identity. */
+  private async insertExceptionalIntervention(operationId: number, intervention: ExceptionalIntervention, tables: ExceptionalTables): Promise<void> {
+    if (!tables.interventions) return;
+    const userId = await this.users.requireAppUserId(text(intervention["userId"]), "Utilisateur d'intervention introuvable.");
+    const { data: inserted, error } = await this.client
+      .from(tables.interventions)
+      .insert({
+        [tables.parentColumn]: operationId,
+        user_id: userId,
+        starts_at: databaseDateTime(intervention["startDate"]),
+        ends_at: databaseDateTime(intervention["endDate"]),
+        was_on_site: intervention["wasOnSite"] === true,
+        label: text(intervention["label"]),
+        comment: text(intervention["comment"]),
+      })
+      .select("id")
+      .single();
+    if (error) {
+      throw error;
+    }
+    await this.visas.upsertVisa("intervention_id", Number(inserted["id"]), "exceptional_intervention_agent", intervention["agentVisa"], tables.visas);
+  }
+
+  /** Independent child writes may overlap, but even failures must settle before observers refresh the aggregate. */
+  private async finishChildWrites(tasks: Promise<void>[]): Promise<void> {
+    const results = await Promise.allSettled(tasks);
+    const failure = results.find(result => result.status === "rejected");
+    if (failure?.status === "rejected") throw failure.reason;
   }
 
   private async replaceExceptionalOperationVisas(operationId: number, value: ExceptionalOperation["visas"] | undefined, tables: ExceptionalTables): Promise<void> {

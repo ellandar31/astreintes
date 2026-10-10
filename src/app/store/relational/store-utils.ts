@@ -1,10 +1,12 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import { JsonRecord, RelationalTable } from "../../types";
 
-/** Subscription names do not require cryptographic IDs, including HTTP development contexts. */
+let subscriptionSequence = 0;
+
+/** A process-local counter suffices for channel names; these are not authentication tokens. */
 export function generatedSubscriptionId(): string {
   if (typeof globalThis.crypto?.randomUUID === "function") return globalThis.crypto.randomUUID();
-  return `watch-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`;
+  return `watch-${Date.now().toString(36)}-${(++subscriptionSequence).toString(36)}`;
 }
 
 export function toError(error: unknown): Error {

@@ -11,17 +11,16 @@ function routedClient(existingTable?: string, failure?: Error) {
   const client = {
     from: (table: string) => {
       calls.push({ table, method: "from" });
-      const query = {
+      const query = Object.assign(Promise.resolve({ data: [], error: failure }), {
         select: () => query,
         eq: (column: string, value: unknown) => { calls.push({ table, method: column, value }); return query; },
         in: () => query,
         insert: (value: JsonRecord) => { calls.push({ table, method: "insert", value }); return query; },
         update: (value: JsonRecord) => { calls.push({ table, method: "update", value }); return query; },
         delete: () => { calls.push({ table, method: "delete" }); return query; },
-        single: async () => ({ data: { id: 100 }, error: failure }),
-        maybeSingle: async () => ({ data: table === existingTable ? { id: 100 } : null, error: failure }),
-        then: (resolve: (value: unknown) => unknown) => Promise.resolve({ data: [], error: failure }).then(resolve),
-      };
+        single: () => Promise.resolve({ data: { id: 100 }, error: failure }),
+        maybeSingle: () => Promise.resolve({ data: table === existingTable ? { id: 100 } : null, error: failure }),
+      });
       return query;
     },
   } as unknown as SupabaseClient;
@@ -34,6 +33,36 @@ function routedClient(existingTable?: string, failure?: Error) {
 }
 
 describe("Separate exceptional persistence families", () => {
+  it("waits for every sibling write after a participant visa fails", async () => {
+    const { repository, visas } = routedClient();
+    const failure = new Error("Visa rejected");
+    let release!: () => void;
+    let started!: () => void;
+    const pending = new Promise<void>(resolve => { release = resolve; });
+    const writesStarted = new Promise<void>(resolve => { started = resolve; });
+    jest.mocked(visas.upsertVisa)
+      .mockRejectedValueOnce(failure)
+      .mockImplementationOnce(() => { started(); return pending; });
+    const participant = { userId: "7", displayName: "Agent", email: "agent@test.fr",
+      startDate: "2026-10-10T18:00", endDate: "2026-10-10T19:00" };
+    let settled = false;
+    const saving = (async () => {
+      try {
+        await repository.saveExceptionalOperation(undefined, {
+          type: "astreinte", plannedUsers: [participant, { ...participant, userId: "8" }],
+        });
+      } finally {
+        settled = true;
+      }
+    })();
+    const rejection = expect(saving).rejects.toBe(failure);
+    await writesStarted;
+    expect(settled).toBe(false);
+    release();
+    await rejection;
+    expect(visas.upsertVisa).toHaveBeenCalledTimes(2);
+  });
+
   it.each<[ExceptionalOperationType, string, string]>([
     ["astreinte", "exceptional_on_calls", "operation_id"],
     ["travaux", "exceptional_works", "operation_id"],

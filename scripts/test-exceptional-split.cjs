@@ -1,13 +1,21 @@
 const { execFileSync } = require('node:child_process');
 const fs = require('node:fs');
 const path = require('node:path');
+const os = require('node:os');
 
 // Never reset the developer's Supabase database: all SQL runs in a disposable database.
 const container = process.env.SUPABASE_TEST_CONTAINER || 'supabase_db_astreintes';
 const database = 'astreintes_exceptional_split_test';
 const root = path.resolve(__dirname, '..');
+// Resolve a trusted installation directly; a local PATH entry must not replace Docker.
+const dockerCandidates = process.platform === 'win32'
+  ? ['C:\\Program Files\\Docker\\Docker\\resources\\bin\\docker.exe',
+    path.join(os.homedir(), 'AppData', 'Local', 'Programs', 'DockerDesktop', 'resources', 'bin', 'docker.exe')]
+  : ['/usr/bin/docker', '/usr/local/bin/docker'];
+const dockerExecutable = dockerCandidates.find(candidate => fs.existsSync(candidate));
+if (!dockerExecutable) throw new Error('Docker executable not found in the supported installation directories.');
 function sql(statement, target = database) {
-  return execFileSync('docker', ['exec', '-i', container, 'psql', '-U', 'postgres', '-d', target, '-v', 'ON_ERROR_STOP=1'], {
+  return execFileSync(dockerExecutable, ['exec', '-i', container, 'psql', '-U', 'postgres', '-d', target, '-v', 'ON_ERROR_STOP=1'], {
     input: statement, encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'],
   });
 }

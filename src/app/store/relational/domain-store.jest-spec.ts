@@ -4,8 +4,7 @@ import { DomainObserverService } from "./domain-observer";
 import { UsersRepository } from "./users.repository";
 import { RegularRepository } from "./regular.repository";
 import { ExceptionalRepository } from "./exceptional.repository";
-import { RhSettingsRepository } from "./rh-settings.repository";
-import { VisasRepository } from "./visas.repository";
+
 import { JsonRecord, RegularOnCallPeriod, ExceptionalOperation } from "../../types";
 import { createEmptyVisa } from "../../shared/visa.models";
 
@@ -18,7 +17,8 @@ function relationalClient(tables: Record<string, JsonRecord[]> = {}, failure?: E
     channel: jest.fn(() => channel), removeChannel,
     from: jest.fn((table: string) => {
       let rows = tables[table] ?? [];
-      const query = {
+      // Evaluate after fluent filters run, using a real Promise instead of a custom thenable.
+      const query = Object.assign(Promise.resolve().then(() => ({ data: rows, error: failure })), {
         select: jest.fn(() => query), limit: jest.fn(() => query), order: jest.fn(() => query),
         eq: jest.fn((key: string, value: unknown) => { rows = rows.filter(row => row[key] === value); return query; }),
         in: jest.fn((key: string, values: unknown[]) => { rows = rows.filter(row => values.includes(row[key])); return query; }),
@@ -29,10 +29,9 @@ function relationalClient(tables: Record<string, JsonRecord[]> = {}, failure?: E
           return query;
         }),
         upsert: jest.fn((payload: JsonRecord) => { writes.push({ table, payload }); rows = [{ ...payload, id: 100 }]; return query; }),
-        single: jest.fn(async () => ({ data: rows[0], error: failure })),
-        maybeSingle: jest.fn(async () => ({ data: rows[0] ?? null, error: failure })),
-        then: (resolve: (result: { data: JsonRecord[]; error?: Error }) => unknown) => Promise.resolve({ data: rows, error: failure }).then(resolve),
-      };
+        single: jest.fn(() => Promise.resolve({ data: rows[0], error: failure })),
+        maybeSingle: jest.fn(() => Promise.resolve({ data: rows[0] ?? null, error: failure })),
+      });
       return query;
     }),
   } as unknown as SupabaseClient;
@@ -229,8 +228,8 @@ describe("Typed relational persistence", () => {
     const observer = new DomainObserverService(client);
     const next = jest.fn();
     let stop = () => undefined as void;
-    await new Promise<void>(resolve => { stop = observer.watch(["app_users"], async () => [], value => { next(value); resolve(); }); });
-    await expect(observer.write(["app_users"], async () => { throw new Error("Rejected"); })).rejects.toThrow("Rejected");
+    await new Promise<void>(resolve => { stop = observer.watch(["app_users"], () => Promise.resolve([]), value => { next(value); resolve(); }); });
+    await expect(observer.write(["app_users"], () => Promise.reject(new Error("Rejected")))).rejects.toThrow("Rejected");
     expect(next).toHaveBeenCalledTimes(1);
     stop();
   });

@@ -41,7 +41,7 @@ export function databaseDateTime(value: unknown): string | null {
   }
   const date = new Date(raw);
   if (Number.isNaN(date.getTime())) {
-    throw new Error("Invalid date-time value.");
+    throw new TypeError("Invalid date-time value.");
   }
   return date.toISOString();
 }

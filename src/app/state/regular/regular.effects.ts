@@ -184,8 +184,8 @@ export class RegularEffects {
     return new Observable((subscriber) => {
       const unsubscribe = appStore.teams.watch(
         (documents) => {
-          const teams = documents
-            .sort((first, second) => first.name.localeCompare(second.name));
+          const teams = [...documents];
+            teams.sort((first, second) => first.name.localeCompare(second.name));
 
           subscriber.next(RegularActions.teamsChanged({ teams }));
         },

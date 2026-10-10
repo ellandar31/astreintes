@@ -16,6 +16,14 @@ const intervention: RegularIntervention = {
   ...period, id: "12", periodId: period.id, comment: "Intervention",
 };
 
+function createPage() {
+  const fixture = TestBed.createComponent(ValidationPageComponent);
+  fixture.componentRef.setInput("user", { uid: "auth-id", email: period.userEmail, displayName: "Agent" });
+  fixture.detectChanges();
+  return fixture;
+}
+
+
 describe("Validation consultation", () => {
   it.each([
     ["astreinte", "Astreinte exceptionnelle"],
@@ -61,12 +69,6 @@ describe("Validation consultation", () => {
     }).compileComponents();
   });
 
-  function createPage() {
-    const fixture = TestBed.createComponent(ValidationPageComponent);
-    fixture.componentRef.setInput("user", { uid: "auth-id", email: period.userEmail, displayName: "Agent" });
-    fixture.detectChanges();
-    return fixture;
-  }
 
   it("renders each consultation term directly inside its description list", () => {
     const fixture = createPage();
