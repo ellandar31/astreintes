@@ -472,6 +472,8 @@ export const APP_LABELS = {
     },
     messages: {
       deleted: "Visa supprimé.",
+      directorPrerequisites: "Tous les autres visas doivent être présents avant le visa du directeur.",
+      rhPrerequisites: "L'envoi aux RH nécessite tous les visas, y compris celui du directeur.",
       saved: "Visa enregistré.",
     },
     roles: {

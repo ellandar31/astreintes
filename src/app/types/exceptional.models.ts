@@ -54,6 +54,7 @@ export interface ExceptionalOperation {
     actualInitiator: SignatureVisa;
     actualDirector: SignatureVisa;
   };
+  /** Only exceptional on-call periods have interventions; work operations keep this array empty. */
   interventions: ExceptionalIntervention[];
   sentToRhAt?: string;
 }

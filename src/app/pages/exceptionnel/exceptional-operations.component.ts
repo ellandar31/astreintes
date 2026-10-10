@@ -169,7 +169,7 @@ export class ExceptionalOperationsComponent implements OnDestroy {
     index?: number,
     returnToOperationModal = false,
   ): void {
-    if (this.isSentToRh(operation)) {
+    if (operation.type !== "astreinte" || this.isSentToRh(operation)) {
       return;
     }
 
@@ -270,7 +270,7 @@ export class ExceptionalOperationsComponent implements OnDestroy {
    * réelle associée.
    */
   saveIntervention(form: ExceptionalInterventionForm): void {
-    if (!this.selectedOperation) {
+    if (!this.selectedOperation || this.selectedOperation.type !== "astreinte") {
       return;
     }
 
@@ -325,7 +325,7 @@ export class ExceptionalOperationsComponent implements OnDestroy {
   deleteIntervention(operation: ExceptionalOperation, index: number): void {
     const currentOperation = this.operations.find((item) => item.id === operation.id) || operation;
 
-    if (this.isSentToRh(currentOperation)) {
+    if (currentOperation.type !== "astreinte" || this.isSentToRh(currentOperation)) {
       return;
     }
 

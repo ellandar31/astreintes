@@ -6,5 +6,8 @@ export type RelationalTable =
   | "rh_on_call_compensation_rules" | "rh_period_compensation_rules"
   | "rh_export_settings" | "rh_export_templates"
   | "regular_on_call_periods" | "regular_interventions"
-  | "exceptional_operations" | "exceptional_operation_participants" | "exceptional_interventions"
+  | "exceptional_on_calls" | "exceptional_works"
+  | "exceptional_on_call_participants" | "exceptional_work_participants"
+  | "exceptional_on_call_interventions"
+  | "exceptional_on_call_visas" | "exceptional_work_visas"
   | "visas";

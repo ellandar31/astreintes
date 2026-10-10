@@ -14,6 +14,7 @@ ils sont inventoriés ci-dessous, mais ne doivent pas devenir des contrats parta
 - Réserver `JsonRecord` aux valeurs non typées à la frontière Supabase/JSONB.
 - Les repositories renvoient directement les objets métier ; aucun type Document n'est nécessaire.
 - Les identifiants applicatifs sont des chaînes côté Angular, numériques côté PostgreSQL ; `uid` porte l'UUID Auth.
+- Les IDs des opérations exceptionnelles sont qualifiés (`astreinte:ID`, `travaux:ID`) : leurs séquences SQL sont indépendantes.
 - Les champs de période utilisent une date/heure locale ; les horodatages de signature/envoi RH conservent leur fuseau.
 - Pour les mises à jour RH, omission = conserver la date ; `null` = annuler l'envoi.
 - Régénérer ce fichier avec `npm run docs:types` après un changement de déclaration.
@@ -30,7 +31,7 @@ ils sont inventoriés ci-dessous, mais ne doivent pas devenir des contrats parta
 | [rh-export.models.ts](../src/app/types/rh-export.models.ts) | `ExportTemplateId`, `WordExportTemplate`, `CalculationSegment`, `ExportOperation`, `RhExportContext`, `OnCallCompensationRow`, `InterventionCompensationRow` |
 | [rh.models.ts](../src/app/types/rh.models.ts) | `RhSection`, `RhUser`, `RhRegularPeriod`, `RhPublicHoliday`, `RhExceptionalIntervention`, `RhExceptionalOperation`, `RhControlRow` |
 | [settings.models.ts](../src/app/types/settings.models.ts) | `SettingsSection`, `ScheduleDay`, `Team`, `ScheduleRule`, `PublicHoliday`, `OnCallCompensationRule`, `PeriodCompensationRule`, `RhCompensationSettings`, `RhExportTemplateSetting` |
-| [signature.models.ts](../src/app/types/signature.models.ts) | `VisaSignatureMode`, `VisaTargetColumn`, `VisaScope`, `SignatureProfile`, `SignatureVisa` |
+| [signature.models.ts](../src/app/types/signature.models.ts) | `VisaSignatureMode`, `VisaStorageTable`, `VisaTargetColumn`, `VisaScope`, `SignatureProfile`, `SignatureVisa` |
 | [user.models.ts](../src/app/types/user.models.ts) | `UserRole`, `ManagedUser`, `ApplicationUser` |
 | [validation.models.ts](../src/app/types/validation.models.ts) | `ValidationItemKind`, `AppUser`, `ValidationItem`, `VisaProgressItem`, `ValidationSectionId`, `ValidationSection` |
 
@@ -55,4 +56,5 @@ ils sont inventoriés ci-dessous, mais ne doivent pas devenir des contrats parta
 | [src/app/state/settings/settings.effects.ts](../src/app/state/settings/settings.effects.ts) | `HolidaySourceResponse` |
 | [src/app/state/settings/settings.reducer.ts](../src/app/state/settings/settings.reducer.ts) | `SettingsOperationMessage`, `SettingsState` |
 | [src/app/store/relational/domain-observer.ts](../src/app/store/relational/domain-observer.ts) | `Refresh` |
+| [src/app/store/relational/exceptional-tables.ts](../src/app/store/relational/exceptional-tables.ts) | `ExceptionalTables` |
 | [src/app/store/supabase.config.ts](../src/app/store/supabase.config.ts) | `RuntimeAppConfig` |

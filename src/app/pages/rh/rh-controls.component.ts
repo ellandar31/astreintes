@@ -361,7 +361,7 @@ export class RhControlsComponent implements OnChanges, OnDestroy, OnInit {
       .map((operation) => {
         const isWork = operation.exportTitle === this.labels.rh.controls.types.exceptionalWork;
         const lines = [
-          ...calculator.onCallCompensationRows(operation).map((row, index) => this.onCallLine(row, calculator, `exceptional-oncall-${index}`)),
+          ...(isWork ? [] : calculator.onCallCompensationRows(operation)).map((row, index) => this.onCallLine(row, calculator, `exceptional-oncall-${index}`)),
           ...calculator.interventionCompensationRows(operation, isWork).map((row, index) =>
             this.interventionLine(
               row,

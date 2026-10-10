@@ -72,6 +72,7 @@ expect(exceptionalPayload.interventions[0].endTime === "09:45:00", "Les interven
 expect(exceptionalPayload.global.initiatorGlobal.signatureValue === "Signature Agent", "Les visas globaux doivent exposer la signature.");
 
 expect(!("actual" in workPayload), "Le modèle travaux exceptionnels ne doit pas exporter de bloc réel.");
+expect(workPayload.interventions[0].userName === "Agent Réel", "La clé documentaire historique doit provenir des participants réels des travaux.");
 expect(workPayload.forecast.plannedUsers[0].startDate === undefined, "Le modèle travaux ne demande pas les dates par utilisateur prévisionnel.");
 expect(workPayload.forecast.plannedUsers[0].visa.signed === true, "Le modèle travaux conserve l'indicateur signed sur les visas agent.");
 expect(workPayload.forecast.plannedDirector.signedByName === "Agent Test", "Le modèle travaux expose le signataire des visas globaux prévisionnels.");

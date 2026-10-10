@@ -32,6 +32,7 @@ const content = [
   "- Réserver `JsonRecord` aux valeurs non typées à la frontière Supabase/JSONB.",
   "- Les repositories renvoient directement les objets métier ; aucun type Document n'est nécessaire.",
   "- Les identifiants applicatifs sont des chaînes côté Angular, numériques côté PostgreSQL ; `uid` porte l'UUID Auth.",
+  "- Les IDs des opérations exceptionnelles sont qualifiés (`astreinte:ID`, `travaux:ID`) : leurs séquences SQL sont indépendantes.",
   "- Les champs de période utilisent une date/heure locale ; les horodatages de signature/envoi RH conservent leur fuseau.",
   "- Pour les mises à jour RH, omission = conserver la date ; `null` = annuler l'envoi.",
   "- Régénérer ce fichier avec `npm run docs:types` après un changement de déclaration.",

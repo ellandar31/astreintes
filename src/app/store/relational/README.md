@@ -33,6 +33,29 @@ locale réussie et sur les événements realtime des tables dépendantes. Les jo
 utilisateurs/visas font partie de ces dépendances. La désinscription libère les
 canaux et empêche la livraison d'une lecture encore en cours.
 
+Pendant une écriture locale, les notifications des tables concernées ne publient
+pas les jointures intermédiaires (suppression puis recréation des participants,
+par exemple). Une relecture complète suit la réussite de l'écriture. Les écritures
+parallèles sont comptées par table et seules les réponses de la dernière demande
+de lecture sont livrées, afin qu'une réponse lente ne restaure pas un ancien visa.
+Cette protection côté client ne remplace pas une transaction SQL pour les autres
+clients connectés.
+
+## Chaîne de validation
+
+`shared/visa-workflow.ts` définit les prérequis communs à la validation et aux
+exports RH : agent et interventions pour le régulier ; initiateur, participants
+prévisionnels/réels et interventions pour l'exceptionnel. Le directeur signe en
+dernier. L'envoi RH nécessite la chaîne complète, directeur compris. Les anciens
+champs de visa initiateur/directeur sont des alias, pas des validations distinctes.
+
+`visa-workflow.persistence.ts` relit les prérequis avant les écritures du store,
+retire le visa directeur si un prérequis manque et refuse les envois incomplets.
+Les écritures locales d'un même agrégat sont sérialisées pour éviter une course
+entre suppression de visa et signature directeur. Il ne s'agit pas d'une garantie
+transactionnelle entre plusieurs clients : les accès SQL directs restent soumis
+aux contraintes et policies déployées sur le serveur.
+
 `date-time.ts` adapte les bornes `timestamptz` en heure locale du navigateur au
 format `YYYY-MM-DDTHH:mm`, puis écrit des instants ISO UTC explicites. Les dates
 calendaires des jours fériés et les horodatages d'audit sont traités séparément.
@@ -40,5 +63,42 @@ calendaires des jours fériés et les horodatages d'audit sont traités séparé
 Les types sont définis dans `src/app/types/` et accessibles via son `index.ts`.
 L'inventaire complet est dans [le catalogue des types](../../../../docs/type-catalog.md).
 Chaque module de persistance doit rester sous 500 lignes.
+
+## Familles exceptionnelles
+
+`exceptional_on_calls` contient les astreintes exceptionnelles et
+`exceptional_works` les travaux exceptionnels. Le type métier provient de la
+table, plus d'une colonne `operation_type`. `exceptional-tables.ts` centralise
+le routage des écritures et des clés étrangères.
+
+Chaque famille possède ses tables `exceptional_on_call_*` / `exceptional_work_*`
+de participants et visas. Seules les astreintes possèdent des interventions.
+Les enfants ont une clé `operation_id`
+vers leur seule table parente. Les visas ont une seule cible : `operation_id`,
+`participant_id` ou, pour les astreintes uniquement, `intervention_id`, avec des clés étrangères propres à leur
+famille. La table historique `visas` ne contient plus que les visas réguliers.
+
+Toutes les tables ont leur propre séquence auto-incrémentée. Les IDs SQL existants
+sont conservés ; les IDs Angular deviennent `astreinte:ID` et `travaux:ID` pour
+éviter toute collision dans les entités NgRx et les listes combinées.
+Le type d'une opération existante ne peut pas être changé implicitement par une
+mise à jour ; une telle conversion demanderait une migration explicite des liens.
+
+La première migration `20261010090000_split_exceptional_operations.sql` sépare les
+parents ; la seconde `20261010093000_isolate_exceptional_families.sql` sépare les
+enfants, visas et séquences, puis supprime les tables communes. Chaque migration
+est transactionnelle et vérifie les copies. Les droits existants et verrous RH
+sont conservés. Les écritures/lectures ciblées ne chargent pas l'autre famille ;
+seule la liste combinée agrège les deux familles pour l'interface.
+La troisième migration `20261010100000_remove_work_interventions.sql` retire la
+table d'interventions de travaux et la cible correspondante des visas. Elle refuse
+de s'exécuter tant que ces données ne sont pas vides, sans les supprimer.
+Le repository refuse toute création d'intervention sur des travaux avant les
+écritures ; le calcul RH utilise leurs participants réels.
+
+Test SQL indépendant : `npm run test:db-exceptional-split`. Docker et le conteneur
+local `supabase_db_astreintes` doivent être disponibles. `SUPABASE_TEST_CONTAINER`
+permet de choisir un autre conteneur. Le test crée puis supprime uniquement une
+base jetable ; il n'applique aucune migration à la base applicative.
 
 Vérification : `npm run test:jest` et `npm run build`.

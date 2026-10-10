@@ -105,4 +105,17 @@ describe("RhExportCalculationLibrary", () => {
       ]),
     ).toContain("&lt;soirée&gt;");
   });
+
+  it("calcule les travaux sur les participants réels, sans interventions ni prévisionnel", () => {
+    const rows = new RhExportCalculationLibrary(context).interventionCompensationRows(operation({
+      plannedUsers: [{ name: "Prévu", startDate: "2026-07-06T18:00", endDate: "2026-07-06T20:00", visa: createEmptyVisa() }],
+      actualUsers: [{ name: "Réel", startDate: "2026-07-06T20:30", endDate: "2026-07-06T21:30", visa: createEmptyVisa() }],
+      interventions: [],
+    }), true);
+    expect(rows).toEqual([
+      expect.objectContaining({ userName: "Réel", hours: 0.5, coefficient: 10 }),
+      expect.objectContaining({ userName: "Réel", hours: 0.5, coefficient: 20 }),
+    ]);
+    expect(new RhExportCalculationLibrary(context).interventionCompensationRows(operation({}), true)).toEqual([]);
+  });
 });

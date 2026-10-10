@@ -22,7 +22,7 @@ export class RhExcelExportLibrary {
   buildExcelHtml(templateId: ExportTemplateId, operation: ExportOperation, context: RhExportContext): string {
     const isWork = templateId === "exceptionalWork";
     const calculator = new RhExportCalculationLibrary(context);
-    const onCallRows = calculator.onCallCompensationRows(operation);
+    const onCallRows = isWork ? [] : calculator.onCallCompensationRows(operation);
     const interventionRows = calculator.interventionCompensationRows(operation, isWork);
 
     return `
@@ -47,7 +47,7 @@ export class RhExcelExportLibrary {
             <tr><th>${DOCUMENT_LABELS.fields.actualPeriod}</th><td colspan="7">${formatRange(operation.actualStartDate, operation.actualEndDate)}</td></tr>
           </table>
           <br />
-          <table>
+          ${!isWork ? `<table>
             <tr><td class="title" colspan="7">${DOCUMENT_LABELS.sections.onCall}</td></tr>
             <tr><th>${DOCUMENT_LABELS.fields.user}</th><th>${DOCUMENT_LABELS.fields.range}</th><th>${DOCUMENT_LABELS.fields.indemnityType}</th><th>${DOCUMENT_LABELS.fields.calculationDetail}</th><th>${DOCUMENT_LABELS.fields.hours}</th><th>${DOCUMENT_LABELS.fields.coefficient}</th></tr>
             ${onCallRows
@@ -55,10 +55,9 @@ export class RhExcelExportLibrary {
                 (row) => `<tr><td>${escapeHtml(row.name)}</td><td>${formatRange(row.startDate, row.endDate)}</td><td>${escapeHtml(row.label)}</td><td>${calculator.segmentDetailsHtml(row.segments)}</td><td>${row.hours}</td><td>${row.coefficient}</td></tr>`,
               )
               .join("")}
-          </table>
-          <br />
+          </table><br />` : ""}
           <table>
-            <tr><td class="title" colspan="9">${DOCUMENT_LABELS.sections.interventionsAndWork}</td></tr>
+            <tr><td class="title" colspan="9">${isWork ? APP_LABELS.rh.controls.types.work : DOCUMENT_LABELS.sections.interventionsAndWork}</td></tr>
             <tr><th>${DOCUMENT_LABELS.fields.user}</th><th>${DOCUMENT_LABELS.fields.range}</th><th>${APP_LABELS.rh.detail.range}</th><th>${DOCUMENT_LABELS.fields.calculationDetail}</th><th>${DOCUMENT_LABELS.fields.hours}</th><th>${DOCUMENT_LABELS.fields.coefficient}</th><th>${DOCUMENT_LABELS.fields.rest}</th><th>${DOCUMENT_LABELS.fields.comment}</th></tr>
             ${interventionRows
               .map(

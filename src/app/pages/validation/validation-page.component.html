@@ -51,7 +51,7 @@
         <section class="validation-section" [attr.aria-label]="section.title">
           <h3>{{ section.title }}</h3>
 
-          <p-table [value]="section.items" styleClass="validation-table" [tableStyle]="{ 'min-width': '48.75rem' }">
+          <p-table [value]="section.items" [rowTrackBy]="trackValidationItem" styleClass="validation-table" [tableStyle]="{ 'min-width': '48.75rem' }">
             <ng-template pTemplate="header">
               <tr>
                 <th scope="col">{{ labels.common.table.type }}</th>
@@ -90,8 +90,9 @@
                       <button
                         pButton
                         type="button"
-                        class="p-button-sm"
-                        (click)="signItem(item)"
+                      class="p-button-sm"
+                      [disabled]="!canSignVisa(item)"
+                      (click)="signItem(item)"
                       >
                         <span class="pi pi-pen-to-square" aria-hidden="true"></span>
                         <span>{{ labels.common.actions.sign }}</span>
@@ -133,6 +134,8 @@
   [progressItems]="selectedItemVisaProgress"
   [canDelete]="selectedItem ? canDeleteVisa(selectedItem) : false"
   [canDeleteItem]="canDeleteVisaForModal"
+  [canSign]="selectedItem ? canSignVisa(selectedItem) : false"
+  [canSignItem]="canSignVisaForModal"
   (closed)="closeItem()"
   (signed)="signItem($event)"
   (deleted)="deleteVisa($event)"

@@ -9,6 +9,7 @@ import { TableModule } from "primeng/table";
 import { Store } from "@ngrx/store";
 import { APP_LABELS } from "../../i18n/labels";
 import { SignatureVisa, createEmptyVisa } from "../../shared/visa.models";
+import { exceptionalReadyForRh, regularReadyForRh } from "../../shared/visa-workflow";
 import { ExceptionalActions } from "../../state/exceptional/exceptional.actions";
 import { selectExceptionalOperations } from "../../state/exceptional/exceptional.selectors";
 import { RegularActions } from "../../state/regular/regular.actions";
@@ -55,6 +56,7 @@ interface RegularInterventionExport {
 })
 export class RhExportsComponent implements OnDestroy {
   readonly labels = APP_LABELS;
+  readonly trackExportOperation = (_index: number, operation: ExportOperation): string => `${operation.sourceCollection}:${operation.sourceId}`;
   readonly templates: WordExportTemplate[] = [
     { id: "regular", label: APP_LABELS.rh.exports.sections.regular, fileName: "" },
     { id: "exceptionalOnCall", label: APP_LABELS.rh.exports.sections.exceptionalOnCall, fileName: "" },
@@ -213,9 +215,25 @@ export class RhExportsComponent implements OnDestroy {
   markSentToRh(operation: ExportOperation): void {
     this.exportMessage = "";
 
+    if (!this.canSendToRh(operation)) {
+      this.exportMessage = this.labels.validation.messages.rhPrerequisites;
+      return;
+    }
+
     this.dispatchRhSentUpdate(operation, true);
 
     this.exportMessage = this.formatMessage(this.labels.rh.exports.messages.rhSent, operation.title);
+  }
+
+  /** Check live source objects, not an export snapshot captured before a visa removal. */
+  canSendToRh(operation: ExportOperation): boolean {
+    if (operation.sourceCollection === "exceptionalOperations") {
+      const source = this.exceptionalOperations.find(item => item.id === operation.sourceId);
+      return Boolean(source && !source.sentToRhAt && exceptionalReadyForRh(source));
+    }
+    const period = this.regularPeriods.find(item => item.id === operation.sourceId);
+    const interventions = this.regularInterventions.filter(item => item.periodId === operation.sourceId);
+    return Boolean(period && !period.sentToRhAt && regularReadyForRh(period, interventions));
   }
 
   unmarkSentToRh(operation: ExportOperation): void {

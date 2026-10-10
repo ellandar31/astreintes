@@ -3,6 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "scripts": {
+    "test:db-exceptional-split": "node scripts/test-exceptional-split.cjs",
     "docs:types": "node scripts/generate-type-catalog.cjs",
     "dev": "ng serve",
     "start:4300": "ng serve --port 4300",

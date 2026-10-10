@@ -24,6 +24,7 @@ métier, sans conversion intermédiaire en documents.
 
 - [Architecture de persistance](src/app/store/relational/README.md)
 - [Catalogue des types et règles de maintenance](docs/type-catalog.md)
+- [Séparation SQL des astreintes et travaux exceptionnels](docs/exceptional-database-split.md)
 - Point d'import centralisé : `src/app/types/index.ts`.
 - Mise à jour du catalogue : `npm run docs:types`.
 

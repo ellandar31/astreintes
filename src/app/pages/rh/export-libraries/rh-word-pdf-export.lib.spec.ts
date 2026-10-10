@@ -1,5 +1,6 @@
 import { ExportOperation, RhExportContext, WordExportTemplate } from "./rh-export.models";
 import { RhWordPdfExportLibrary } from "./rh-word-pdf-export.lib";
+import { APP_LABELS } from "../../../i18n/labels";
 
 function expect(condition: boolean, message: string): void {
   if (!condition) {
@@ -90,6 +91,9 @@ expect(wordHtml.includes("class=\"visa-image\""), "Les signatures image/pad doiv
 expect(wordHtml.includes("width=\"95\" height=\"26\""), "Les visas de ligne doivent être retaillés pour préserver la mise en page Word.");
 expect(wordHtml.includes("class=\"visa-image global-visa-image\""), "Les visas globaux doivent utiliser la taille dédiée.");
 expect(!wordHtml.includes("Détail des calculs RH"), "Le Word ne doit pas inclure le bloc de détail des calculs RH.");
+const workHtml = library.buildWordHtml(template, [{ ...operation, interventions: [] }], "exceptionalWork", context);
+expect(!workHtml.includes(APP_LABELS.rhDocuments.fields.interventionsDuringOnCall), "Le Word travaux ne doit pas présenter d'interventions.");
+expect(workHtml.includes(APP_LABELS.rhDocuments.fields.actualDates), "Le Word travaux conserve le tableau des participants réels.");
 
 expect(wordHtmlWithInvalidImageVisa.includes("Visa Texte"), "Un visa image invalide doit etre rendu en texte dans le Word.");
 expect(!wordHtmlWithInvalidImageVisa.includes("src=\"Visa Texte\""), "Un visa image invalide ne doit pas generer une image cassee dans le Word.");

@@ -2,7 +2,7 @@ import { SupabaseClient } from "@supabase/supabase-js";
 import { JsonRecord } from "./store-types";
 import { text, nullableText, isRecord, visaKey } from "./store-utils";
 import { UsersRepository } from "./users.repository";
-import { SignatureVisa, VisaTargetColumn, VisaScope } from "../../types";
+import { SignatureVisa, VisaTargetColumn, VisaScope, VisaStorageTable } from "../../types";
 
 
 
@@ -11,12 +11,12 @@ export class VisasRepository {
   constructor(private readonly client: SupabaseClient, private readonly users: UsersRepository) { }
 
   /** Batch signatures by target while retaining the signer auth UUID used by validation. */
-  async fetchVisasByTarget(targetColumn: VisaTargetColumn, targetIds: number[]): Promise<Map<string, SignatureVisa>> {
+  async fetchVisasByTarget(targetColumn: VisaTargetColumn, targetIds: number[], table: VisaStorageTable = "visas"): Promise<Map<string, SignatureVisa>> {
     if (!targetIds.length) {
       return new Map();
     }
 
-    const { data, error } = await this.client.from("visas").select("*, signed_by_user:signed_by_user_id(auth_user_id,email,display_name)").in(targetColumn, targetIds);
+    const { data, error } = await this.client.from(table).select("*, signed_by_user:signed_by_user_id(auth_user_id,email,display_name)").in(targetColumn, targetIds);
     if (error) {
       throw error;
     }
@@ -40,7 +40,7 @@ export class VisasRepository {
   }
 
   /** Keep signature content as a snapshot; unsigned visas clear the previous signature fields. */
-  async upsertVisa(targetColumn: VisaTargetColumn, targetId: number, scope: VisaScope, value: SignatureVisa | undefined): Promise<void> {
+  async upsertVisa(targetColumn: VisaTargetColumn, targetId: number, scope: VisaScope, value: SignatureVisa | undefined, table: VisaStorageTable = "visas"): Promise<void> {
     const visa: Partial<SignatureVisa> = value ?? {};
     const signed = visa["signed"] === true;
     const payload: JsonRecord = {
@@ -53,7 +53,7 @@ export class VisasRepository {
       signature_value: signed ? text(visa["signatureValue"]) : "",
     };
     const { data: existing, error: fetchError } = await this.client
-      .from("visas")
+      .from(table)
       .select("id")
       .eq(targetColumn, targetId)
       .eq("scope", scope)
@@ -63,7 +63,7 @@ export class VisasRepository {
       throw fetchError;
     }
 
-    const query = existing ? this.client.from("visas").update(payload).eq("id", Number(existing["id"])) : this.client.from("visas").insert(payload);
+    const query = existing ? this.client.from(table).update(payload).eq("id", Number(existing["id"])) : this.client.from(table).insert(payload);
     const { error } = await query;
 
     if (error) {
@@ -72,12 +72,12 @@ export class VisasRepository {
   }
 
   /** Remove child signatures before replacing their target rows. */
-  async deleteVisas(targetColumn: VisaTargetColumn, targetIds: number[]): Promise<void> {
+  async deleteVisas(targetColumn: VisaTargetColumn, targetIds: number[], table: VisaStorageTable = "visas"): Promise<void> {
     if (!targetIds.length) {
       return;
     }
 
-    const { error } = await this.client.from("visas").delete().in(targetColumn, targetIds);
+    const { error } = await this.client.from(table).delete().in(targetColumn, targetIds);
     if (error) {
       throw error;
     }

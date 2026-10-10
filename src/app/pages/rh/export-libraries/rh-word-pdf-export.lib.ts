@@ -20,9 +20,8 @@ export class RhWordPdfExportLibrary {
   /**
    * Construit le document Word-compatible.
    *
-   * Le paramètre templateId est conservé pour permettre des variantes futures,
-   * même si la mise en page actuelle partage la même structure entre types
-   * d'astreintes et travaux.
+   * Le type de modèle exclut les interventions pour les travaux : leurs périodes
+   * réelles sont déjà présentées dans le tableau des participants.
    */
   buildWordHtml(template: WordExportTemplate, operations: ExportOperation[], templateId: ExportTemplateId, context: RhExportContext): string {
     return `
@@ -103,10 +102,12 @@ export class RhWordPdfExportLibrary {
         <h3>${DOCUMENT_LABELS.fields.actualDates}</h3>
         ${this.peopleTable(operation.actualUsers)}
         ${this.globalVisasHtml(operation)}
-        <p class="muted">${DOCUMENT_LABELS.reminder}</p>
-        <h3>${DOCUMENT_LABELS.fields.interventionsDuringOnCall}</h3>
-        ${this.interventionsTable(operation.interventions)}
-        ${this.globalVisasHtml(operation)}
+        ${templateId !== "exceptionalWork" ? `
+          <p class="muted">${DOCUMENT_LABELS.reminder}</p>
+          <h3>${DOCUMENT_LABELS.fields.interventionsDuringOnCall}</h3>
+          ${this.interventionsTable(operation.interventions)}
+          ${this.globalVisasHtml(operation)}
+        ` : ""}
       </section>
     `;
   }
@@ -223,11 +224,12 @@ export class RhWordPdfExportLibrary {
     y = this.pdfPeopleTable(doc, operation.actualUsers, y);
     y = this.pdfGlobalVisas(doc, operation, y + 4);
 
-    y = this.pdfParagraph(doc, DOCUMENT_LABELS.reminder, y + 4);
-
-    y = this.pdfSectionTitle(doc, DOCUMENT_LABELS.fields.interventionsDuringOnCall, y + 6);
-    y = this.pdfInterventionsTable(doc, operation.interventions, y);
-    this.pdfGlobalVisas(doc, operation, y + 4);
+    if (template.id !== "exceptionalWork") {
+      y = this.pdfParagraph(doc, DOCUMENT_LABELS.reminder, y + 4);
+      y = this.pdfSectionTitle(doc, DOCUMENT_LABELS.fields.interventionsDuringOnCall, y + 6);
+      y = this.pdfInterventionsTable(doc, operation.interventions, y);
+      this.pdfGlobalVisas(doc, operation, y + 4);
+    }
   }
 
   private pdfPeopleTable(doc: PdfDocument, rows: Array<{ name: string; startDate: string; endDate: string; visa: SignatureVisa }>, y: number): number {

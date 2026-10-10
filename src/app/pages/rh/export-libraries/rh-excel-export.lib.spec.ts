@@ -65,3 +65,6 @@ expect(html.includes("<td>48</td>"), "Le samedi et le dimanche complets doivent 
 expect(html.includes("Samedi (7h-21h)"), "Les règles d'intervention doivent être appliquées dans l'export Excel.");
 
 console.log("rh-excel-export.lib: OK");
+const workHtml = new RhExcelExportLibrary().buildExcelHtml("exceptionalWork", { ...operationFixture(), interventions: [] }, contextFixture());
+expect(workHtml.includes("Samedi (7h-21h)"), "L'Excel travaux doit calculer les périodes des participants réels sans interventions.");
+expect(!workHtml.includes("Samedi / dimanche / jour férié : période complète retenue"), "L'Excel travaux ne doit pas calculer d'indemnité d'astreinte.");

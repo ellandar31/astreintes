@@ -57,12 +57,15 @@ export class RhExportCalculationLibrary {
   /**
    * Calcule les interventions et travaux en appliquant les tranches RH.
    *
-   * Le paramètre isWork bascule entre coefficient d'intervention et coefficient
-   * de travaux, mais conserve le même découpage horaire pour faciliter les
-   * contrôles entre Word, PDF, Excel et écran RH.
+   * Les travaux sont calculés sur les périodes réelles des participants, sans
+   * interventions. Le même découpage horaire est utilisé avec le coefficient
+   * travaux pour garder les exports et le contrôle RH cohérents.
    */
   interventionCompensationRows(operation: ExportOperation, isWork: boolean): InterventionCompensationRow[] {
-    return operation.interventions.flatMap((intervention) =>
+    const periods = isWork
+      ? operation.actualUsers.map(user => ({ userName: user.name, startDate: user.startDate, endDate: user.endDate, comment: "" }))
+      : operation.interventions;
+    return periods.flatMap((intervention) =>
       this.applyInterventionRounding(
         this.context.periodCompensationRules
         .map((rule) => {

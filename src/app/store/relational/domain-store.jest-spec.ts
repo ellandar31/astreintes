@@ -47,7 +47,7 @@ const period: RegularOnCallPeriod = {
   startDate: "2026-09-12T18:00", endDate: "2026-09-13T08:00", agentVisa: visa, sentToRhAt: "2026-09-14T15:00:00Z",
 };
 const operation: ExceptionalOperation = {
-  id: "31", type: "travaux", title: "Works", initiatorUid: "7", initiatorName: "Agent", operationManagerUid: "", operationManagerName: "Manager",
+    id: "travaux:31", type: "travaux", title: "Works", initiatorUid: "7", initiatorName: "Agent", operationManagerUid: "", operationManagerName: "Manager",
   startDate: "", forecastEndDate: "", actualStartDate: "", actualEndDate: "",
   plannedUsers: [{ userId: "7", displayName: "Agent", email: userRow.email, startDate: period.startDate, endDate: period.endDate, visa }],
   actualUsers: [], interventions: [],
@@ -102,31 +102,52 @@ describe("Typed relational persistence", () => {
   it("isolates planned, actual and intervention joins per operation and supplies empty visas", async () => {
     const { client } = relationalClient({
       app_users: [userRow],
-      exceptional_operations: [{ id: 31, operation_type: "extra_work", title: "Works", initiator_user_id: 7 }, { id: 32, operation_type: "on_call" }],
-      exceptional_operation_participants: [
+      exceptional_works: [{ id: 31, title: "Works", initiator_user_id: 7 }],
+      exceptional_on_calls: [{ id: 32 }],
+      exceptional_work_participants: [
         { id: 41, operation_id: 31, participant_kind: "planned", user_id: 7, starts_at: "2026-09-12T18:00:00Z" },
         { id: 42, operation_id: 31, participant_kind: "actual", user_id: 7 },
-        { id: 43, operation_id: 32, participant_kind: "planned", user_id: 7 },
       ],
-      exceptional_interventions: [{ id: 51, operation_id: 31, user_id: 7, was_on_site: true }],
-      visas: [{ id: 61, exceptional_participant_id: 41, scope: "exceptional_participant_agent", signed_at: visa.signedAt, signature_value: "snapshot" }],
+      exceptional_on_call_participants: [{ id: 43, operation_id: 32, participant_kind: "planned", user_id: 7 }],
+      exceptional_work_interventions: [{ id: 51, operation_id: 31, user_id: 7, was_on_site: true }],
+      exceptional_work_visas: [{ id: 61, participant_id: 41, scope: "exceptional_participant_agent", signed_at: visa.signedAt, signature_value: "snapshot" }],
     });
     const operations = await new SupabaseDomainStore(client).exceptional.listOperations();
-    expect(operations[0]).toMatchObject({ id: "31", type: "travaux", plannedUsers: [{ displayName: "Agent", visa: { signatureValue: "snapshot" } }], actualUsers: [{ userId: "7" }], interventions: [{ userName: "Agent", wasOnSite: true }] });
-    expect(operations[1]).toMatchObject({ id: "32", type: "astreinte", actualUsers: [], interventions: [], visas: { plannedInitiator: createEmptyVisa() } });
+    expect(operations[0]).toMatchObject({ id: "travaux:31", type: "travaux", plannedUsers: [{ displayName: "Agent", visa: { signatureValue: "snapshot" } }], actualUsers: [{ userId: "7" }], interventions: [] });
+    expect(client.from).not.toHaveBeenCalledWith("exceptional_work_interventions");
+    expect(operations[1]).toMatchObject({ id: "astreinte:32", type: "astreinte", actualUsers: [], interventions: [], visas: { plannedInitiator: createEmptyVisa() } });
     expect(new Date(operations[0].plannedUsers[0].startDate).getTime()).toBe(new Date("2026-09-12T18:00:00Z").getTime());
   });
 
   it.each(["", "   "])("uses email for unnamed participants (%j)", async displayName => {
     const { client } = relationalClient({
       app_users: [{ ...userRow, display_name: displayName }], regular_on_call_periods: [{ id: 11, user_id: 7 }],
-      exceptional_operations: [{ id: 31, initiator_user_id: 7 }],
-      exceptional_operation_participants: [{ id: 41, operation_id: 31, participant_kind: "planned", user_id: 7 }],
+      exceptional_on_calls: [{ id: 31, initiator_user_id: 7 }],
+      exceptional_on_call_participants: [{ id: 41, operation_id: 31, participant_kind: "planned", user_id: 7 }],
     });
     const store = new SupabaseDomainStore(client);
     expect((await store.regular.listPeriods())[0].userName).toBe(userRow.email);
     expect((await store.exceptional.listOperations())[0].plannedUsers[0].displayName).toBe(userRow.email);
     expect((await store.users.get("7"))?.displayName).toBe(displayName);
+  });
+
+  it("isolates matching SQL IDs across parents, children and signatures", async () => {
+    const { client } = relationalClient({
+      app_users: [userRow, { ...userRow, id: 8, display_name: "Other agent" }],
+      exceptional_works: [{ id: 31, title: "Work" }],
+      exceptional_on_calls: [{ id: 31, title: "On call" }],
+      exceptional_work_participants: [{ id: 41, operation_id: 31, participant_kind: "actual", user_id: 7 }],
+      exceptional_on_call_participants: [{ id: 41, operation_id: 31, participant_kind: "actual", user_id: 8 }],
+      exceptional_work_interventions: [{ id: 51, operation_id: 31, user_id: 7 }],
+      exceptional_on_call_interventions: [{ id: 51, operation_id: 31, user_id: 8 }],
+      exceptional_work_visas: [{ participant_id: 41, scope: "exceptional_participant_agent", signature_value: "Work signature" }],
+      exceptional_on_call_visas: [{ participant_id: 41, scope: "exceptional_participant_agent", signature_value: "On-call signature" }],
+    });
+    const operations = await new SupabaseDomainStore(client).exceptional.listOperations();
+    expect(operations).toMatchObject([
+      { id: "travaux:31", actualUsers: [{ displayName: "Agent", visa: { signatureValue: "Work signature" } }], interventions: [] },
+      { id: "astreinte:31", actualUsers: [{ displayName: "Other agent", visa: { signatureValue: "On-call signature" } }], interventions: [{ userName: "Other agent" }] },
+    ]);
   });
 
   it("cancels RH send with NULL while preserving omitted dates and visas", async () => {
@@ -137,16 +158,44 @@ describe("Typed relational persistence", () => {
   });
 
   it("merges an exceptional edit without losing participants or signature snapshots", async () => {
+    jest.spyOn(ExceptionalRepository.prototype, "fetchExceptionalOperation").mockResolvedValue(operation);
+    const save = jest.spyOn(ExceptionalRepository.prototype, "saveExceptionalOperation").mockResolvedValue("travaux:31");
+    await new SupabaseDomainStore(relationalClient().client).exceptional.saveOperation("travaux:31", { title: "Changed" });
+    expect(save).toHaveBeenCalledWith("travaux:31", { ...operation, title: "Changed" });
+  });
+
+  it("preserves the family and participants when cancelling an exceptional RH send", async () => {
+    jest.spyOn(ExceptionalRepository.prototype, "fetchExceptionalOperation").mockResolvedValue(operation);
+    const save = jest.spyOn(ExceptionalRepository.prototype, "saveExceptionalOperation").mockResolvedValue("travaux:31");
+    await new SupabaseDomainStore(relationalClient().client).exceptional.saveOperation("travaux:31", { sentToRhAt: null });
+    expect(save).toHaveBeenCalledWith("travaux:31", { ...operation, sentToRhAt: null });
+  });
+
+  it("rejects implicit transfers between exceptional families", async () => {
+    jest.spyOn(ExceptionalRepository.prototype, "fetchExceptionalOperation").mockResolvedValue(operation);
+    const save = jest.spyOn(ExceptionalRepository.prototype, "saveExceptionalOperation");
+    await expect(new SupabaseDomainStore(relationalClient().client).exceptional.saveOperation("travaux:31", { type: "astreinte" })).rejects.toThrow("type");
+    expect(save).not.toHaveBeenCalled();
+  });
+
+  it("observes both exceptional parent tables for local and remote refreshes", async () => {
+    const { client, channel, removeChannel } = relationalClient();
     jest.spyOn(ExceptionalRepository.prototype, "fetchExceptionalOperations").mockResolvedValue([operation]);
-    const save = jest.spyOn(ExceptionalRepository.prototype, "saveExceptionalOperation").mockResolvedValue("31");
-    await new SupabaseDomainStore(relationalClient().client).exceptional.saveOperation("31", { title: "Changed" });
-    expect(save).toHaveBeenCalledWith("31", { ...operation, title: "Changed" });
+    const store = new SupabaseDomainStore(client);
+    let stop = () => undefined as void;
+    await new Promise<void>(resolve => { stop = store.exceptional.watchOperations(() => resolve()); });
+    expect(channel.on.mock.calls.map(call => call[1].table)).toEqual([
+      "exceptional_on_calls", "exceptional_works", "exceptional_on_call_participants", "exceptional_work_participants",
+      "exceptional_on_call_interventions", "exceptional_on_call_visas", "exceptional_work_visas", "app_users",
+    ]);
+    stop();
+    expect(removeChannel).toHaveBeenCalledTimes(8);
   });
 
   it("rejects missing edited records instead of creating incomplete aggregates", async () => {
     const store = new SupabaseDomainStore(relationalClient().client);
     await expect(store.regular.updatePeriod("99", { sentToRhAt: null })).rejects.toThrow("Astreinte introuvable");
-    await expect(store.exceptional.saveOperation("99", { title: "Missing" })).rejects.toThrow("Operation introuvable");
+    await expect(store.exceptional.saveOperation("astreinte:99", { title: "Missing" })).rejects.toThrow("Operation introuvable");
   });
 
   it("stores template JSON including nested arrays directly in JSONB", async () => {

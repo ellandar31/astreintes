@@ -1,6 +1,6 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import {
-  ApplicationUser, DomainObserver, ExceptionalOperation, ExceptionalOperationUpdate,
+  ApplicationUser, DomainObserver, ExceptionalOperation, ExceptionalOperationType, ExceptionalOperationUpdate,
   PublicHoliday, RegularIntervention, RegularInterventionUpdate, RegularOnCallPeriod,
   RegularPeriodUpdate, RhCompensationSettings, RhExportConfiguration, RhExportTemplateSetting,
   ScheduleRule, Team,
@@ -14,12 +14,16 @@ import { ScheduleRepository } from "./schedule.repository";
 import { TeamsRepository } from "./teams.repository";
 import { UsersRepository } from "./users.repository";
 import { VisasRepository } from "./visas.repository";
+import { VisaWorkflowPersistence } from "./visa-workflow.persistence";
 import { deleteById, numberId } from "./store-utils";
 import { RelationalTable } from "./store-types";
 
 const periodTables: RelationalTable[] = ["regular_on_call_periods", "visas", "app_users"];
 const interventionTables: RelationalTable[] = ["regular_interventions", "visas", "app_users"];
-const operationTables: RelationalTable[] = ["exceptional_operations", "exceptional_operation_participants", "exceptional_interventions", "visas", "app_users"];
+const operationTables: RelationalTable[] = [
+  "exceptional_on_calls", "exceptional_works", "exceptional_on_call_participants", "exceptional_work_participants",
+  "exceptional_on_call_interventions", "exceptional_on_call_visas", "exceptional_work_visas", "app_users",
+];
 
 /**
  * Typed persistence API used by effects. Repositories return business objects
@@ -43,6 +47,7 @@ export class SupabaseDomainStore {
     const holidays = new HolidaysRepository(client);
     const regular = new RegularRepository(client, users, visas);
     const exceptional = new ExceptionalRepository(client, users, visas);
+    const visaWorkflow = new VisaWorkflowPersistence(regular, exceptional);
     const rh = new RhSettingsRepository(client);
     const watch = <T>(tables: RelationalTable[], load: () => Promise<T>): DomainObserver<T> =>
       (next, error) => observer.watch(tables, load, next, error);
@@ -80,32 +85,19 @@ export class SupabaseDomainStore {
       watchPeriods: watch<RegularOnCallPeriod[]>(periodTables, () => regular.fetchRegularPeriods()),
       listInterventions: (periodId?: string) => regular.fetchRegularInterventions(periodId),
       watchInterventions: watch<RegularIntervention[]>(interventionTables, () => regular.fetchRegularInterventions()),
-      savePeriod: (id: string | undefined, update: RegularPeriodUpdate) => observer.write(["regular_on_call_periods", "visas"], () => regular.saveRegularPeriod(id, update)),
-      updatePeriod: (id: string, update: RegularPeriodUpdate) => observer.write(["regular_on_call_periods", "visas"], async () => {
-        const current = (await regular.fetchRegularPeriods()).find(period => period.id === id);
-        if (!current) throw new Error(`Astreinte introuvable : ${id}`);
-        return regular.saveRegularPeriod(id, { ...current, ...update });
-      }),
+      savePeriod: (id: string | undefined, update: RegularPeriodUpdate) => observer.write(["regular_on_call_periods", "visas"], () => visaWorkflow.savePeriod(id, update)),
+      updatePeriod: (id: string, update: RegularPeriodUpdate) => observer.write(["regular_on_call_periods", "visas"], () => visaWorkflow.savePeriod(id, update)),
       deletePeriod: (id: string) => observer.write(["regular_on_call_periods", "regular_interventions", "visas"], () => deleteById(client, "regular_on_call_periods", numberId(id))),
       saveIntervention: (id: string | undefined, periodId: string, update: RegularInterventionUpdate) =>
-        observer.write(["regular_interventions", "visas"], () => regular.saveRegularIntervention(id, periodId, update)),
-      updateIntervention: (id: string, periodId: string, update: RegularInterventionUpdate) => observer.write(["regular_interventions", "visas"], async () => {
-        const current = (await regular.fetchRegularInterventions(periodId)).find(intervention => intervention.id === id);
-        if (!current) throw new Error(`Intervention introuvable : ${id}`);
-        return regular.saveRegularIntervention(id, periodId, { ...current, ...update });
-      }),
+        observer.write(["regular_interventions", "visas"], () => visaWorkflow.saveIntervention(id, periodId, update)),
+      updateIntervention: (id: string, periodId: string, update: RegularInterventionUpdate) => observer.write(["regular_interventions", "visas"], () => visaWorkflow.saveIntervention(id, periodId, update)),
       deleteIntervention: (id: string) => observer.write(["regular_interventions", "visas"], () => deleteById(client, "regular_interventions", numberId(id))),
     };
     this.exceptional = {
-      listOperations: () => exceptional.fetchExceptionalOperations(),
+      listOperations: (type?: ExceptionalOperationType) => exceptional.fetchExceptionalOperations(type),
       watchOperations: watch<ExceptionalOperation[]>(operationTables, () => exceptional.fetchExceptionalOperations()),
-      saveOperation: (id: string | undefined, update: ExceptionalOperationUpdate) => observer.write(operationTables.filter(table => table !== "app_users"), async () => {
-        if (!id) return exceptional.saveExceptionalOperation(undefined, update);
-        const current = (await exceptional.fetchExceptionalOperations()).find(operation => operation.id === id);
-        if (!current) throw new Error(`Operation introuvable : ${id}`);
-        return exceptional.saveExceptionalOperation(id, { ...current, ...update });
-      }),
-      deleteOperation: (id: string) => observer.write(operationTables.filter(table => table !== "app_users"), () => deleteById(client, "exceptional_operations", numberId(id))),
+      saveOperation: (id: string | undefined, update: ExceptionalOperationUpdate) => observer.write(operationTables.filter(table => table !== "app_users"), () => visaWorkflow.saveOperation(id, update)),
+      deleteOperation: (id: string) => observer.write(operationTables.filter(table => table !== "app_users"), () => exceptional.deleteExceptionalOperation(id)),
     };
     this.rhSettings = {
       compensation: () => rh.fetchRhCompensation(),

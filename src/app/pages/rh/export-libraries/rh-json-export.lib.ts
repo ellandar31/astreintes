@@ -68,9 +68,10 @@ export class RhJsonExportLibrary {
    * Sérialise une opération dans la forme JSON du modèle cible.
    *
    * Les travaux exceptionnels n'ont pas de bloc `actual` dans le modèle fourni :
-   * ils exportent les informations globales, le prévisionnel et les
-   * interventions. Les astreintes régulières et exceptionnelles exportent aussi
-   * le réel.
+   * ils exportent les informations globales, le prévisionnel et les périodes
+   * réelles sous la clé historique `interventions`. Cette clé est un contrat du
+   * modèle documentaire, pas une entité de travaux en base. Les astreintes
+   * régulières et exceptionnelles exportent aussi le bloc réel.
    */
   buildJson(templateId: ExportTemplateId, operation: ExportOperation): string {
     return JSON.stringify(this.buildPayload(templateId, operation), null, 2);
@@ -79,6 +80,12 @@ export class RhJsonExportLibrary {
   buildPayload(templateId: ExportTemplateId, operation: ExportOperation): JsonExportPayload {
     const includeActual = templateId !== "exceptionalWork";
     const visaShape: VisaShape = templateId === "exceptionalWork" ? "complete" : "signatureOnly";
+    // Keep the supplied Word-model contract while using actual work participants as the source.
+    const documentPeriods = templateId === "exceptionalWork"
+      ? operation.actualUsers.map(user => ({
+          userName: user.name, startDate: user.startDate, endDate: user.endDate, wasOnSite: false, visa: user.visa,
+        }))
+      : operation.interventions;
 
     return {
       exceptionalOperations: {
@@ -105,7 +112,7 @@ export class RhJsonExportLibrary {
               },
             }
           : {}),
-        interventions: operation.interventions.map((intervention) => ({
+        interventions: documentPeriods.map((intervention) => ({
           startDate: this.datePart(intervention.startDate),
           endDate: this.datePart(intervention.endDate),
           startTime: this.timePart(intervention.startDate),

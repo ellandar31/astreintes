@@ -1,26 +1,35 @@
-import { ExceptionalOperation, OperationParticipant, ExceptionalIntervention, ExceptionalOperationUpdate } from "../../types";
+import { ExceptionalOperation, ExceptionalOperationType, OperationParticipant, ExceptionalIntervention, ExceptionalOperationUpdate } from "../../types";
 import { SupabaseClient } from "@supabase/supabase-js";
-import { text, nullableText, idText, numberId, visaKey, participantKey, userDisplayName } from "./store-utils";
+import { text, nullableText, idText, visaKey, participantKey, userDisplayName, deleteById } from "./store-utils";
 import { UsersRepository } from "./users.repository";
 import { VisasRepository } from "./visas.repository";
 import { databaseDateTime, dateTimeLocalText } from "./date-time";
 import { createEmptyVisa } from "../../shared/visa.models";
 
-function operationTypeToDb(value: unknown): "on_call" | "extra_work" {
-  return value === "travaux" ? "extra_work" : "on_call";
-}
-
-function operationTypeFromDb(value: unknown): "astreinte" | "travaux" {
-  return value === "extra_work" ? "travaux" : "astreinte";
-}
+import { ExceptionalTables, exceptionalId, parseExceptionalId, tablesForExceptionalType } from "./exceptional-tables";
 
 /** Operations are aggregates of planned participants, actual participants, interventions and visas; child writes must finish before refresh. */
 export class ExceptionalRepository {
   constructor(private readonly client: SupabaseClient, private readonly users: UsersRepository, private readonly visas: VisasRepository) { }
 
   /** Load all child collections before exposing an operation to forms and exports. */
-  async fetchExceptionalOperations(): Promise<ExceptionalOperation[]> {
-    const { data: operations, error } = await this.client.from("exceptional_operations").select("*");
+  async fetchExceptionalOperations(type?: ExceptionalOperationType): Promise<ExceptionalOperation[]> {
+    if (type) return this.fetchFamily(type);
+    const [works, onCalls] = await Promise.all([
+      this.fetchFamily("travaux"), this.fetchFamily("astreinte"),
+    ]);
+    return [...works, ...onCalls];
+  }
+
+  /** Partial edits load only their family; access to the other tables is not required. */
+  async fetchExceptionalOperation(identifier: string): Promise<ExceptionalOperation | undefined> {
+    const { type } = parseExceptionalId(identifier);
+    return (await this.fetchFamily(type)).find(operation => operation.id === identifier);
+  }
+
+  private async fetchFamily(type: ExceptionalOperationType): Promise<ExceptionalOperation[]> {
+    const tables = tablesForExceptionalType(type);
+    const { data: operations, error } = await this.client.from(tables.table).select("*");
     if (error) {
       throw error;
     }
@@ -30,9 +39,9 @@ export class ExceptionalRepository {
       (operations ?? []).flatMap((operation) => [Number(operation["initiator_user_id"]), Number(operation["operation_manager_user_id"])]),
     );
     const [participants, interventions, operationVisas] = await Promise.all([
-      this.fetchExceptionalParticipants(operationIds),
-      this.fetchExceptionalInterventions(operationIds),
-      this.visas.fetchVisasByTarget("exceptional_operation_id", operationIds),
+      this.fetchExceptionalParticipants(operationIds, tables),
+      this.fetchExceptionalInterventions(operationIds, tables),
+      this.visas.fetchVisasByTarget(tables.parentColumn, operationIds, tables.visas),
     ]);
 
     return (operations ?? []).map((operation) => {
@@ -40,8 +49,8 @@ export class ExceptionalRepository {
       const manager = users.get(Number(operation["operation_manager_user_id"])) ?? {};
       const operationId = Number(operation["id"]);
       return {
-        id: String(operationId),
-        type: operationTypeFromDb(operation["operation_type"]),
+        id: exceptionalId(type, operationId),
+        type,
         initiatorUid: idText(operation["initiator_user_id"]),
         initiatorName: userDisplayName(initiator),
         operationManagerUid: idText(operation["operation_manager_user_id"]),
@@ -69,9 +78,15 @@ export class ExceptionalRepository {
 
   /** Await child and visa writes so subsequent refreshes see a complete aggregate. */
   async saveExceptionalOperation(identifier: string | undefined, data: ExceptionalOperationUpdate): Promise<string> {
-    const id = numberId(identifier);
+    const tables = tablesForExceptionalType(data.type);
+    // Work hours are actual participant periods; rejecting here prevents partial parent writes.
+    if (tables.type === "travaux" && data.interventions?.length) {
+      throw new Error("Les travaux exceptionnels ne peuvent pas avoir d'interventions.");
+    }
+    const identity = identifier ? parseExceptionalId(identifier) : undefined;
+    if (identity && identity.type !== data.type) throw new Error("Le type d'une operation existante ne peut pas etre change.");
+    const id = identity?.id;
     const payload = {
-      operation_type: operationTypeToDb(data["type"]),
       initiator_user_id: await this.users.resolveAppUserId(text(data["initiatorUid"])),
       operation_manager_user_id: await this.users.resolveAppUserId(text(data["operationManagerUid"])),
       operation_manager_name: text(data["operationManagerName"]),
@@ -83,8 +98,8 @@ export class ExceptionalRepository {
       sent_to_rh_at: nullableText(data["sentToRhAt"]),
     };
     const query = id
-      ? this.client.from("exceptional_operations").update(payload).eq("id", id).select("id").single()
-      : this.client.from("exceptional_operations").insert(payload).select("id").single();
+      ? this.client.from(tables.table).update(payload).eq("id", id).select("id").single()
+      : this.client.from(tables.table).insert(payload).select("id").single();
     const { data: savedOperation, error } = await query;
 
     if (error) {
@@ -92,27 +107,37 @@ export class ExceptionalRepository {
     }
 
     const operationId = Number(savedOperation["id"]);
-    await this.replaceExceptionalChildren(operationId, data);
-    await this.replaceExceptionalOperationVisas(operationId, data["visas"]);
-    return String(operationId);
+    await this.replaceExceptionalChildren(operationId, data, tables);
+    await this.replaceExceptionalOperationVisas(operationId, data["visas"], tables);
+    return exceptionalId(tables.type, operationId);
   }
 
-  private async fetchExceptionalParticipants(operationIds: number[]): Promise<Map<string, OperationParticipant[]>> {
+  /** A qualified ID routes deletion directly; the other family is never queried. */
+  async deleteExceptionalOperation(identifier: string): Promise<void> {
+    const { type, id } = parseExceptionalId(identifier);
+    const tables = tablesForExceptionalType(type);
+    const { data, error } = await this.client.from(tables.table).select("id").eq("id", id).maybeSingle();
+    if (error) throw error;
+    if (!data) throw new Error(`Operation introuvable : ${identifier}`);
+    await deleteById(this.client, tables.table, id);
+  }
+
+  private async fetchExceptionalParticipants(operationIds: number[], tables: ExceptionalTables): Promise<Map<string, OperationParticipant[]>> {
     if (!operationIds.length) {
       return new Map();
     }
 
-    const { data, error } = await this.client.from("exceptional_operation_participants").select("*").in("operation_id", operationIds);
+    const { data, error } = await this.client.from(tables.participants).select("*").in(tables.parentColumn, operationIds);
     if (error) {
       throw error;
     }
 
     const participantIds = (data ?? []).map((participant) => Number(participant["id"]));
     const users = await this.users.fetchAppUserMap((data ?? []).map((participant) => Number(participant["user_id"])));
-    const visas = await this.visas.fetchVisasByTarget("exceptional_participant_id", participantIds);
+    const visas = await this.visas.fetchVisasByTarget("participant_id", participantIds, tables.visas);
 
     return (data ?? []).reduce((index, participant) => {
-      const operationId = Number(participant["operation_id"]);
+      const operationId = Number(participant[tables.parentColumn]);
       const kind = text(participant["participant_kind"]);
       const user = users.get(Number(participant["user_id"])) ?? {};
       const key = participantKey(operationId, kind);
@@ -131,18 +156,18 @@ export class ExceptionalRepository {
   }
 
   /** These separate requests preserve the existing write order; they are not a database transaction. */
-  private async replaceExceptionalChildren(operationId: number, data: ExceptionalOperationUpdate): Promise<void> {
-    await this.replaceExceptionalParticipants(operationId, "planned", data.plannedUsers ?? []);
-    await this.replaceExceptionalParticipants(operationId, "actual", data.actualUsers ?? []);
-    await this.replaceExceptionalInterventions(operationId, data.interventions ?? []);
+  private async replaceExceptionalChildren(operationId: number, data: ExceptionalOperationUpdate, tables: ExceptionalTables): Promise<void> {
+    await this.replaceExceptionalParticipants(operationId, "planned", data.plannedUsers ?? [], tables);
+    await this.replaceExceptionalParticipants(operationId, "actual", data.actualUsers ?? [], tables);
+    await this.replaceExceptionalInterventions(operationId, data.interventions ?? [], tables);
   }
 
   /** Child IDs are regenerated on replacement, so visas must be removed then restored against the new targets. */
-  private async replaceExceptionalParticipants(operationId: number, kind: "planned" | "actual", participants: OperationParticipant[]): Promise<void> {
+  private async replaceExceptionalParticipants(operationId: number, kind: "planned" | "actual", participants: OperationParticipant[], tables: ExceptionalTables): Promise<void> {
     const { data: existing, error: fetchError } = await this.client
-      .from("exceptional_operation_participants")
+      .from(tables.participants)
       .select("id")
-      .eq("operation_id", operationId)
+      .eq(tables.parentColumn, operationId)
       .eq("participant_kind", kind);
     if (fetchError) {
       throw fetchError;
@@ -150,8 +175,8 @@ export class ExceptionalRepository {
 
     const existingIds = (existing ?? []).map((row) => Number(row["id"]));
     if (existingIds.length) {
-      await this.visas.deleteVisas("exceptional_participant_id", existingIds);
-      const { error: deleteError } = await this.client.from("exceptional_operation_participants").delete().in("id", existingIds);
+      await this.visas.deleteVisas("participant_id", existingIds, tables.visas);
+      const { error: deleteError } = await this.client.from(tables.participants).delete().in("id", existingIds);
       if (deleteError) {
         throw deleteError;
       }
@@ -160,9 +185,9 @@ export class ExceptionalRepository {
     for (const participant of participants) {
       const userId = await this.users.requireAppUserId(text(participant["userId"]), "Participant d'operation introuvable.");
       const { data: inserted, error } = await this.client
-        .from("exceptional_operation_participants")
+        .from(tables.participants)
         .insert({
-          operation_id: operationId,
+          [tables.parentColumn]: operationId,
           participant_kind: kind,
           user_id: userId,
           starts_at: databaseDateTime(participant["startDate"]),
@@ -173,26 +198,26 @@ export class ExceptionalRepository {
       if (error) {
         throw error;
       }
-      await this.visas.upsertVisa("exceptional_participant_id", Number(inserted["id"]), "exceptional_participant_agent", participant["visa"]);
+      await this.visas.upsertVisa("participant_id", Number(inserted["id"]), "exceptional_participant_agent", participant["visa"], tables.visas);
     }
   }
 
-  private async fetchExceptionalInterventions(operationIds: number[]): Promise<Map<number, ExceptionalIntervention[]>> {
-    if (!operationIds.length) {
+  private async fetchExceptionalInterventions(operationIds: number[], tables: ExceptionalTables): Promise<Map<number, ExceptionalIntervention[]>> {
+    if (!tables.interventions || !operationIds.length) {
       return new Map();
     }
 
-    const { data, error } = await this.client.from("exceptional_interventions").select("*").in("operation_id", operationIds);
+    const { data, error } = await this.client.from(tables.interventions).select("*").in(tables.parentColumn, operationIds);
     if (error) {
       throw error;
     }
 
     const interventionIds = (data ?? []).map((intervention) => Number(intervention["id"]));
     const users = await this.users.fetchAppUserMap((data ?? []).map((intervention) => Number(intervention["user_id"])));
-    const visas = await this.visas.fetchVisasByTarget("exceptional_intervention_id", interventionIds);
+    const visas = await this.visas.fetchVisasByTarget("intervention_id", interventionIds, tables.visas);
 
     return (data ?? []).reduce((index, intervention) => {
-      const operationId = Number(intervention["operation_id"]);
+      const operationId = Number(intervention[tables.parentColumn]);
       const user = users.get(Number(intervention["user_id"])) ?? {};
       const rows = index.get(operationId) ?? [];
       rows.push({
@@ -212,16 +237,17 @@ export class ExceptionalRepository {
   }
 
   /** Preserve signature snapshots when rebuilding intervention rows from an edited operation aggregate. */
-  private async replaceExceptionalInterventions(operationId: number, interventions: ExceptionalIntervention[]): Promise<void> {
-    const { data: existing, error: fetchError } = await this.client.from("exceptional_interventions").select("id").eq("operation_id", operationId);
+  private async replaceExceptionalInterventions(operationId: number, interventions: ExceptionalIntervention[], tables: ExceptionalTables): Promise<void> {
+    if (!tables.interventions) return;
+    const { data: existing, error: fetchError } = await this.client.from(tables.interventions).select("id").eq(tables.parentColumn, operationId);
     if (fetchError) {
       throw fetchError;
     }
 
     const existingIds = (existing ?? []).map((row) => Number(row["id"]));
     if (existingIds.length) {
-      await this.visas.deleteVisas("exceptional_intervention_id", existingIds);
-      const { error: deleteError } = await this.client.from("exceptional_interventions").delete().in("id", existingIds);
+      await this.visas.deleteVisas("intervention_id", existingIds, tables.visas);
+      const { error: deleteError } = await this.client.from(tables.interventions).delete().in("id", existingIds);
       if (deleteError) {
         throw deleteError;
       }
@@ -230,9 +256,9 @@ export class ExceptionalRepository {
     for (const intervention of interventions) {
       const userId = await this.users.requireAppUserId(text(intervention["userId"]), "Utilisateur d'intervention introuvable.");
       const { data: inserted, error } = await this.client
-        .from("exceptional_interventions")
+        .from(tables.interventions)
         .insert({
-          operation_id: operationId,
+          [tables.parentColumn]: operationId,
           user_id: userId,
           starts_at: databaseDateTime(intervention["startDate"]),
           ends_at: databaseDateTime(intervention["endDate"]),
@@ -245,19 +271,19 @@ export class ExceptionalRepository {
       if (error) {
         throw error;
       }
-      await this.visas.upsertVisa("exceptional_intervention_id", Number(inserted["id"]), "exceptional_intervention_agent", intervention["agentVisa"]);
+      await this.visas.upsertVisa("intervention_id", Number(inserted["id"]), "exceptional_intervention_agent", intervention["agentVisa"], tables.visas);
     }
   }
 
-  private async replaceExceptionalOperationVisas(operationId: number, value: ExceptionalOperation["visas"] | undefined): Promise<void> {
+  private async replaceExceptionalOperationVisas(operationId: number, value: ExceptionalOperation["visas"] | undefined, tables: ExceptionalTables): Promise<void> {
     const visas: Partial<ExceptionalOperation["visas"]> = value ?? {};
     await Promise.all([
-      this.visas.upsertVisa("exceptional_operation_id", operationId, "exceptional_operation_initiator", visas["initiatorGlobal"]),
-      this.visas.upsertVisa("exceptional_operation_id", operationId, "exceptional_operation_director", visas["directorGlobal"]),
-      this.visas.upsertVisa("exceptional_operation_id", operationId, "exceptional_planned_initiator", visas["plannedInitiator"]),
-      this.visas.upsertVisa("exceptional_operation_id", operationId, "exceptional_planned_director", visas["plannedDirector"]),
-      this.visas.upsertVisa("exceptional_operation_id", operationId, "exceptional_actual_initiator", visas["actualInitiator"]),
-      this.visas.upsertVisa("exceptional_operation_id", operationId, "exceptional_actual_director", visas["actualDirector"]),
+      this.visas.upsertVisa(tables.parentColumn, operationId, "exceptional_operation_initiator", visas["initiatorGlobal"], tables.visas),
+      this.visas.upsertVisa(tables.parentColumn, operationId, "exceptional_operation_director", visas["directorGlobal"], tables.visas),
+      this.visas.upsertVisa(tables.parentColumn, operationId, "exceptional_planned_initiator", visas["plannedInitiator"], tables.visas),
+      this.visas.upsertVisa(tables.parentColumn, operationId, "exceptional_planned_director", visas["plannedDirector"], tables.visas),
+      this.visas.upsertVisa(tables.parentColumn, operationId, "exceptional_actual_initiator", visas["actualInitiator"], tables.visas),
+      this.visas.upsertVisa(tables.parentColumn, operationId, "exceptional_actual_director", visas["actualDirector"], tables.visas),
     ]);
   }
 }

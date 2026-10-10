@@ -38,7 +38,7 @@
       <section class="progress-section" aria-labelledby="visa-progress-title">
         <h4 id="visa-progress-title">{{ labels.validation.consultation.progressTitle }}</h4>
 
-        <p-table [value]="progressItems" styleClass="progress-table" [tableStyle]="{ 'min-width': '56.25rem' }">
+        <p-table [value]="progressItems" [rowTrackBy]="trackProgressItem" styleClass="progress-table" [tableStyle]="{ 'min-width': '56.25rem' }">
           <ng-template pTemplate="header">
             <tr>
               <th scope="col">{{ labels.common.table.role }}</th>
@@ -70,6 +70,7 @@
                         pButton
                         type="button"
                         class="p-button-sm"
+                        [disabled]="!canSignItem(progress.actionItem)"
                         (click)="signProgressVisa(progress)"
                       >
                         <span class="pi pi-pen-to-square" aria-hidden="true"></span>
@@ -102,7 +103,7 @@
 
       <div class="modal-actions">
         @if (!item.visa.signed) {
-          <button pButton type="button" (click)="signVisa()">
+          <button pButton type="button" [disabled]="!canSign" (click)="signVisa()">
             <span class="pi pi-pen-to-square" aria-hidden="true"></span>
             <span>{{ labels.common.actions.signMyVisa }}</span>
           </button>

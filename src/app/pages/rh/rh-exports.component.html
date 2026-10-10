@@ -18,7 +18,7 @@
       </div>
     </div>
 
-    <p-table [value]="exportRows('regular')" styleClass="export-table" [tableStyle]="{ 'min-width': '47.5rem' }">
+    <p-table [value]="exportRows('regular')" [rowTrackBy]="trackExportOperation" styleClass="export-table" [tableStyle]="{ 'min-width': '47.5rem' }">
       <ng-template pTemplate="header">
         <tr>
           <th scope="col">{{ labels.rh.controls.types.onCall }}</th>
@@ -56,7 +56,7 @@
                   <span>{{ labels.common.actions.cancelRhSend }}</span>
                 </button>
               } @else {
-                <button pButton class="p-button-sm p-button-outlined p-button-secondary" (click)="markSentToRh(operation)" type="button">
+                <button pButton class="p-button-sm p-button-outlined p-button-secondary" [disabled]="!canSendToRh(operation)" (click)="markSentToRh(operation)" type="button">
                   <span class="pi pi-send" aria-hidden="true"></span>
                   <span>{{ labels.common.actions.rhSend }}</span>
                 </button>
@@ -80,7 +80,7 @@
       </div>
     </div>
 
-    <p-table [value]="exportRows('exceptionalOnCall')" styleClass="export-table" [tableStyle]="{ 'min-width': '53.75rem' }">
+    <p-table [value]="exportRows('exceptionalOnCall')" [rowTrackBy]="trackExportOperation" styleClass="export-table" [tableStyle]="{ 'min-width': '53.75rem' }">
       <ng-template pTemplate="header">
         <tr>
           <th scope="col">{{ labels.rh.controls.types.onCall }}</th>
@@ -120,7 +120,7 @@
                   <span>{{ labels.common.actions.cancelRhSend }}</span>
                 </button>
               } @else {
-                <button pButton class="p-button-sm p-button-outlined p-button-secondary" (click)="markSentToRh(operation)" type="button">
+                <button pButton class="p-button-sm p-button-outlined p-button-secondary" [disabled]="!canSendToRh(operation)" (click)="markSentToRh(operation)" type="button">
                   <span class="pi pi-send" aria-hidden="true"></span>
                   <span>{{ labels.common.actions.rhSend }}</span>
                 </button>
@@ -144,7 +144,7 @@
       </div>
     </div>
 
-    <p-table [value]="exportRows('exceptionalWork')" styleClass="export-table" [tableStyle]="{ 'min-width': '53.75rem' }">
+    <p-table [value]="exportRows('exceptionalWork')" [rowTrackBy]="trackExportOperation" styleClass="export-table" [tableStyle]="{ 'min-width': '53.75rem' }">
       <ng-template pTemplate="header">
         <tr>
           <th scope="col">{{ labels.common.fields.intervention }}</th>
@@ -184,7 +184,7 @@
                   <span>{{ labels.common.actions.cancelRhSend }}</span>
                 </button>
               } @else {
-                <button pButton class="p-button-sm p-button-outlined p-button-secondary" (click)="markSentToRh(operation)" type="button">
+                <button pButton class="p-button-sm p-button-outlined p-button-secondary" [disabled]="!canSendToRh(operation)" (click)="markSentToRh(operation)" type="button">
                   <span class="pi pi-send" aria-hidden="true"></span>
                   <span>{{ labels.common.actions.rhSend }}</span>
                 </button>
