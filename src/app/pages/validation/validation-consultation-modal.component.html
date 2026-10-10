@@ -4,20 +4,20 @@
       <p class="eyebrow">{{ item.category }}</p>
       <h3>{{ item.title }}</h3>
 
-      <dl>
-        <div>
+      <div class="item-metadata">
+        <dl>
           <dt>{{ labels.common.table.person }}</dt>
           <dd>{{ item.userLabel }}</dd>
-        </div>
-        <div>
+        </dl>
+        <dl>
           <dt>{{ labels.common.table.start }}</dt>
           <dd>{{ formatDateTime(item.startDate) }}</dd>
-        </div>
-        <div>
+        </dl>
+        <dl>
           <dt>{{ labels.common.table.end }}</dt>
           <dd>{{ formatDateTime(item.endDate) }}</dd>
-        </div>
-        <div>
+        </dl>
+        <dl>
           <dt>{{ labels.validation.consultation.currentVisa }}</dt>
           <dd>
             @if (item.visa.signed) {
@@ -26,8 +26,8 @@
               {{ labels.common.statuses.notSigned }}
             }
           </dd>
-        </div>
-      </dl>
+        </dl>
+      </div>
 
       @if (item.visa.signatureValue && item.visa.signatureMode !== "name") {
         <img class="visa-preview" [src]="item.visa.signatureValue" alt="Visa" />

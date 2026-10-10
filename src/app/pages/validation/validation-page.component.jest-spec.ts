@@ -68,6 +68,18 @@ describe("Validation consultation", () => {
     return fixture;
   }
 
+  it("renders each consultation term directly inside its description list", () => {
+    const fixture = createPage();
+    fixture.componentInstance.openItem(fixture.componentInstance.validationItems[0]);
+    fixture.detectChanges();
+    const terms = fixture.nativeElement.querySelectorAll(".item-metadata dt") as NodeListOf<HTMLElement>;
+    expect(terms).toHaveLength(4);
+    for (const term of terms) {
+      expect(term.parentElement?.tagName).toBe("DL");
+      expect(term.nextElementSibling?.tagName).toBe("DD");
+    }
+  });
+
   it("keeps the same consultation button through pointer change detection and opens the modal", () => {
     const fixture = createPage();
     const button = fixture.nativeElement.querySelector(".actions button") as HTMLButtonElement;

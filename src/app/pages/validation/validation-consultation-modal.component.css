@@ -8,10 +8,14 @@
   margin: 0;
 }
 
-.item-details dl {
+.item-metadata {
   display: grid;
   gap: var(--app-space-md);
   grid-template-columns: repeat(auto-fit, minmax(13.125rem, 1fr));
+  margin: 0;
+}
+
+.item-metadata dl {
   margin: 0;
 }
 

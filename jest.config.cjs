@@ -16,13 +16,13 @@ module.exports = {
   testEnvironment: "jsdom",
   testMatch: ["<rootDir>/src/**/*.jest-spec.ts"],
   transform: {
-    "^.+\\.(ts|js|mjs|html|svg)$": [
+    [String.raw`^.+\.(ts|js|mjs|html|svg)$`]: [
       "jest-preset-angular",
       {
-        stringifyContentPathRegex: "\\.(html|svg)$",
+        stringifyContentPathRegex: String.raw`\.(html|svg)$`,
         tsconfig: "<rootDir>/tsconfig.jest.json",
       },
     ],
   },
-  transformIgnorePatterns: ["node_modules/(?!.*\\.mjs$|@angular|@ngrx|rxjs|tslib|uuid)"],
+  transformIgnorePatterns: [String.raw`node_modules/(?!.*\.mjs$|@angular|@ngrx|rxjs|tslib|uuid)`],
 };

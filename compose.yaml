@@ -9,5 +9,5 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:
-      - "8180:80"
+      - "8180:8080"
     restart: unless-stopped

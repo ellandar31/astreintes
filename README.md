@@ -308,6 +308,12 @@ d'environnement `SUPABASE_INTERNAL_URL`, `SUPABASE_PUBLIC_URL` et
 `SUPABASE_ANON_KEY`, ce qui permet de modifier la cible depuis Portainer sans
 reconstruire le bundle Angular.
 
+Nginx s'exécute sans privilèges root et écoute sur le port interne `8080`, publié
+sur le port `8180` du serveur (`8180:8080`). Le port externe et l'URL publique
+restent inchangés. L'installation Docker/CI utilise `npm ci --ignore-scripts` ;
+les outils Angular sont vérifiés par la compilation, sans exécuter les scripts
+de cycle de vie des dépendances.
+
 Construction :
 
 ```bash
@@ -323,7 +329,7 @@ docker compose up -d
 Application :
 
 ```text
-http://localhost:8080
+http://localhost:8180
 ```
 
 ## Déploiement avec Portainer

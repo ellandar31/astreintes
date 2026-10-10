@@ -4,3 +4,9 @@ dist
 .github
 .vscode
 .firebase
+.angular
+out-tsc
+coverage
+.env*
+proxy.local.json
+audit*.json
