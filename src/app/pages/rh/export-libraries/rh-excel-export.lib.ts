@@ -48,20 +48,20 @@ export class RhExcelExportLibrary {
           </table>
           <br />
           ${!isWork ? `<table>
-            <tr><td class="title" colspan="7">${DOCUMENT_LABELS.sections.onCall}</td></tr>
-            <tr><th>${DOCUMENT_LABELS.fields.user}</th><th>${DOCUMENT_LABELS.fields.range}</th><th>${DOCUMENT_LABELS.fields.indemnityType}</th><th>${DOCUMENT_LABELS.fields.calculationDetail}</th><th>${DOCUMENT_LABELS.fields.hours}</th><th>${DOCUMENT_LABELS.fields.coefficient}</th></tr>
+            <tr><td class="title" colspan="5">${DOCUMENT_LABELS.sections.onCall}</td></tr>
+            <tr><th>${DOCUMENT_LABELS.fields.user}</th><th>${DOCUMENT_LABELS.fields.range}</th><th>${DOCUMENT_LABELS.fields.indemnityType}</th><th>${DOCUMENT_LABELS.fields.calculationDetail}</th><th>${DOCUMENT_LABELS.fields.hours}</th></tr>
             ${onCallRows
               .map(
-                (row) => `<tr><td>${escapeHtml(row.name)}</td><td>${formatRange(row.startDate, row.endDate)}</td><td>${escapeHtml(row.label)}</td><td>${calculator.segmentDetailsHtml(row.segments)}</td><td>${row.hours}</td><td>${row.coefficient}</td></tr>`,
+                (row) => `<tr><td>${escapeHtml(row.name)}</td><td>${formatRange(row.startDate, row.endDate)}</td><td>${escapeHtml(row.label)}</td><td>${calculator.segmentDetailsHtml(row.segments)}</td><td>${row.hours}</td></tr>`,
               )
               .join("")}
           </table><br />` : ""}
           <table>
-            <tr><td class="title" colspan="9">${isWork ? APP_LABELS.rh.controls.types.work : DOCUMENT_LABELS.sections.interventionsAndWork}</td></tr>
-            <tr><th>${DOCUMENT_LABELS.fields.user}</th><th>${DOCUMENT_LABELS.fields.range}</th><th>${APP_LABELS.rh.detail.range}</th><th>${DOCUMENT_LABELS.fields.calculationDetail}</th><th>${DOCUMENT_LABELS.fields.hours}</th><th>${DOCUMENT_LABELS.fields.coefficient}</th><th>${DOCUMENT_LABELS.fields.rest}</th><th>${DOCUMENT_LABELS.fields.comment}</th></tr>
+            <tr><td class="title" colspan="6">${isWork ? APP_LABELS.rh.controls.types.work : DOCUMENT_LABELS.sections.interventionsAndWork}</td></tr>
+            <tr><th>${DOCUMENT_LABELS.fields.user}</th><th>${DOCUMENT_LABELS.fields.range}</th><th>${APP_LABELS.rh.detail.range}</th><th>${DOCUMENT_LABELS.fields.calculationDetail}</th><th>${DOCUMENT_LABELS.fields.hours}</th><th>${DOCUMENT_LABELS.fields.comment}</th></tr>
             ${interventionRows
               .map(
-                (row) => `<tr><td>${escapeHtml(row.userName)}</td><td>${formatRange(row.startDate, row.endDate)}</td><td>${escapeHtml(row.label)}</td><td>${calculator.segmentDetailsHtml(row.segments)}</td><td>${row.hours}</td><td>${row.coefficient}</td><td>${row.restCoefficient}</td><td>${escapeHtml(row.comment)}</td></tr>`,
+                (row) => `<tr><td>${escapeHtml(row.userName)}</td><td>${formatRange(row.startDate, row.endDate)}</td><td>${escapeHtml(row.label)}</td><td>${calculator.segmentDetailsHtml(row.segments)}</td><td>${row.hours}</td><td>${escapeHtml(row.comment)}</td></tr>`,
               )
               .join("")}
           </table>

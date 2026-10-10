@@ -80,4 +80,16 @@ expect(workPayload.forecast.plannedDirector.signedByName === "Agent Test", "Le m
 expect(json.includes("\"exceptionalOperations\""), "Le JSON sérialisé doit contenir la racine du modèle.");
 expect(json.includes("\n  "), "Le JSON doit être indenté pour faciliter le contrôle.");
 
+for (const templateId of ["regular", "exceptionalOnCall", "exceptionalWork"] as const) {
+  const document = library.buildDocumentPayload(templateId, operation).exceptionalOperations;
+  expect(document.global.forecastStartDate === "sam 04/07/2026 07:00", "Le Word doit préfixer les dates globales avec le trigramme.");
+  expect(document.global.directorGlobal.signedAt === "ven 10/07/2026 20:46", "Le Word doit préfixer les dates des visas.");
+  expect(document.forecast.plannedUsers[0].visa.signedAt === "ven 10/07/2026 20:46", "Les visas des participants doivent être formatés.");
+  expect(document.interventions[0].startDate === "sam 04/07/2026", "Les périodes documentaires doivent contenir le jour.");
+  if (document.actual) {
+    expect(document.actual.actualUsers[0].endDate === "dim 05/07/2026", "Les dates réelles doivent contenir le jour.");
+  }
+}
+expect(operation.directorVisa.signedAt === signedVisa.signedAt, "Le formatage documentaire ne doit pas modifier les données source.");
+expect(library.buildPayload("regular", operation).exceptionalOperations.global.forecastStartDate === "2026-07-04T07:00:00", "Le contrat JSON doit conserver les dates ISO.");
 console.log("rh-json-export.lib: OK");

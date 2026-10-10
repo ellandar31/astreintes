@@ -301,7 +301,7 @@ export const APP_LABELS = {
         exceptionalWork: "Travaux supplémentaires",
         regular: "Astreintes régulières",
       },
-      title: "Exports Word par astreinte",
+      title: "Exports par opération",
       eyebrow: "Exports RH",
     },
     menu: {
@@ -319,6 +319,7 @@ export const APP_LABELS = {
     },
   },
   rhDocuments: {
+    weekdayTrigrams: ["dim", "lun", "mar", "mer", "jeu", "ven", "sam"],
     authorization: "Autorisation",
     checkedSiteHint: "* Cocher la case si intervention avec déplacement.",
     field: "Champ",

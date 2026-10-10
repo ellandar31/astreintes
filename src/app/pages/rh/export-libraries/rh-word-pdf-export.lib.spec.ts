@@ -87,6 +87,8 @@ const wordHtmlWithInvalidImageVisa = library.buildWordHtml(
 );
 
 expect(wordHtml.includes("Dates prévisionnelles"), "Le Word doit contenir le tableau des dates prévisionnelles.");
+expect(wordHtml.includes("sam 04/07/2026"), "Les dates documentaires doivent comporter le trigramme du jour.");
+expect(wordHtml.includes("ven 10/07/2026"), "Les dates de visa doivent comporter le trigramme du jour.");
 expect(wordHtml.includes("class=\"visa-image\""), "Les signatures image/pad doivent être rendues en image dans le Word.");
 expect(wordHtml.includes("width=\"95\" height=\"26\""), "Les visas de ligne doivent être retaillés pour préserver la mise en page Word.");
 expect(wordHtml.includes("class=\"visa-image global-visa-image\""), "Les visas globaux doivent utiliser la taille dédiée.");

@@ -161,7 +161,7 @@ export class RhExportsComponent implements OnDestroy {
       const fileName = `${this.slug(operation.title)}_${this.selectedMonth}.docx`;
       const blob = await this.generationDocumentClient.generateDocx({
         apiUrl: this.rhGenerationApiUrlSignal(),
-        data: this.jsonExportLibrary.buildPayload(templateId, operation) as unknown as Record<string, unknown>,
+        data: this.jsonExportLibrary.buildDocumentPayload(templateId, operation) as unknown as Record<string, unknown>,
         dataModel: template.dataModel,
         fileName,
         locale: "fr-FR",

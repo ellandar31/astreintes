@@ -1,5 +1,10 @@
+import { APP_LABELS } from "../../../i18n/labels";
+
+/** Uses the same local day as the displayed date, including timestamps with an offset. */
 export function formatDate(value: string): string {
-  return value ? new Intl.DateTimeFormat("fr-FR").format(new Date(value)) : "";
+  if (!value) return "";
+  const date = new Date(value);
+  return `${APP_LABELS.rhDocuments.weekdayTrigrams[date.getDay()]} ${new Intl.DateTimeFormat("fr-FR").format(date)}`;
 }
 
 export function formatTime(value: string): string {

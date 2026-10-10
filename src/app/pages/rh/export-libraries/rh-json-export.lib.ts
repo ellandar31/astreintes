@@ -1,5 +1,6 @@
 import { SignatureVisa } from "../../../shared/visa.models";
 import { ExportOperation, ExportTemplateId } from "./rh-export.models";
+import { formatDate, formatTime } from "./rh-export-utils";
 
 interface JsonVisa {
   signed?: boolean;
@@ -123,6 +124,38 @@ export class RhJsonExportLibrary {
         })),
       },
     };
+  }
+
+  /**
+   * Only the document renderer receives display dates: the downloadable JSON
+   * keeps ISO values so external consumers can still parse and sort them.
+   * The renderer preserves these already formatted temporal strings.
+   */
+  buildDocumentPayload(templateId: ExportTemplateId, operation: ExportOperation): JsonExportPayload {
+    const payload = this.buildPayload(templateId, operation);
+    const document = payload.exceptionalOperations;
+    const dateTime = (value: string): string => value ? `${formatDate(value)} ${formatTime(value)}` : "";
+    const formatVisa = (visa: JsonVisa): void => {
+      if (visa.signedAt) visa.signedAt = dateTime(visa.signedAt);
+    };
+    document.global.forecastStartDate = dateTime(document.global.forecastStartDate);
+    document.global.forecastEndDate = dateTime(document.global.forecastEndDate);
+    [document.global.initiatorGlobal, document.global.directorGlobal,
+      document.forecast.plannedDirector, document.forecast.plannedInitiator].forEach(formatVisa);
+    if (document.actual) {
+      [document.actual.actualDirector, document.actual.actualInitiator].forEach(formatVisa);
+    }
+    for (const participant of [...document.forecast.plannedUsers, ...(document.actual?.actualUsers ?? [])]) {
+      if (participant.startDate) participant.startDate = formatDate(participant.startDate);
+      if (participant.endDate) participant.endDate = formatDate(participant.endDate);
+      formatVisa(participant.visa);
+    }
+    for (const intervention of document.interventions) {
+      intervention.startDate = formatDate(intervention.startDate);
+      intervention.endDate = formatDate(intervention.endDate);
+      formatVisa(intervention.agentVisa);
+    }
+    return payload;
   }
 
   private participant(

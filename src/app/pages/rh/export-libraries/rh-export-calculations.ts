@@ -50,7 +50,9 @@ export class RhExportCalculationLibrary {
           coefficient: weekendRule?.coefficient || 0,
           segments: weekendHolidaySegments,
         },
-      ].filter((row) => row.hours > 0);
+      // A retained period must remain auditable even when rounding produces
+      // zero payable hours. Only categories without eligible segments disappear.
+      ].filter((row) => row.segments.length > 0);
     });
   }
 
