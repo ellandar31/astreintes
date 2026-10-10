@@ -38,8 +38,8 @@ export class RegularEffects {
     ),
   );
 
-  // Existing visas are preserved when editing a period. Dates/users may change,
-  // but a signed period must not silently lose its audit trail.
+  // Send the existing snapshots; persistence compares saved dates/assignees and
+  // revokes approvals only when their business target actually changed.
   readonly savePeriod$ = createEffect(() =>
     this.actions$.pipe(
       ofType(RegularActions.periodSaveRequested),

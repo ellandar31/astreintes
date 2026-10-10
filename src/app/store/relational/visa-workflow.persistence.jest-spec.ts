@@ -94,4 +94,48 @@ describe("Persisted approval prerequisites", () => {
     await rejected;
     expect(regular.saveRegularPeriod).toHaveBeenCalledTimes(1);
   });
+
+  it.each([{ startDate: "2026-10-10T18:00" }, { endDate: "2026-10-11T08:00" }, { userId: "9" }])("persists unsigned period visas after an edit %j", async update => {
+    const { regular, workflow } = setup();
+    await workflow.savePeriod(period.id, { ...update, agentVisa: signed, directorVisa: signed });
+    expect(regular.saveRegularPeriod).toHaveBeenCalledWith(period.id, expect.objectContaining({ agentVisa: createEmptyVisa(), directorVisa: createEmptyVisa() }));
+  });
+
+  it("clears both intervention and director approvals when intervention hours change", async () => {
+    const { regular, workflow } = setup();
+    await workflow.saveIntervention(intervention.id, period.id, { startDate: "2026-10-10T19:00", agentVisa: signed });
+    expect(regular.saveRegularIntervention).toHaveBeenCalledWith(intervention.id, period.id, expect.objectContaining({ agentVisa: createEmptyVisa() }));
+    expect(regular.saveRegularPeriod).toHaveBeenCalledWith(period.id, expect.objectContaining({ directorVisa: createEmptyVisa() }));
+  });
+
+  it("does not retain a signed visa passed to a new intervention", async () => {
+    const { regular, workflow } = setup();
+    await workflow.saveIntervention(undefined, period.id, { ...intervention, agentVisa: signed });
+    expect(regular.saveRegularIntervention).toHaveBeenCalledWith(undefined, period.id, expect.objectContaining({ agentVisa: createEmptyVisa() }));
+    expect(regular.saveRegularPeriod).toHaveBeenCalledWith(period.id, expect.objectContaining({ directorVisa: createEmptyVisa() }));
+  });
+
+  it.each(["astreinte", "travaux"] as const)("persists revalidation for %s participant edits despite old snapshots in the form", async type => {
+    const current = { ...operation, id: `${type}:11`, type };
+    const { exceptional, workflow } = setup(period, current);
+    await workflow.saveOperation(current.id, { plannedUsers: [{ ...current.plannedUsers[0], userId: "9" }], visas: current.visas });
+    expect(exceptional.saveExceptionalOperation).toHaveBeenCalledWith(current.id, expect.objectContaining({
+      plannedUsers: [expect.objectContaining({ userId: "9", visa: createEmptyVisa() })],
+      visas: expect.objectContaining({ initiatorGlobal: createEmptyVisa(), directorGlobal: createEmptyVisa(), actualDirector: createEmptyVisa(), plannedDirector: createEmptyVisa() }),
+    }));
+  });
+
+  it("preserves signature-only updates and unchanged period edits", async () => {
+    const { regular, exceptional, workflow } = setup();
+    await workflow.savePeriod(period.id, { userId: period.userId, startDate: period.startDate, endDate: period.endDate });
+    expect(regular.saveRegularPeriod).toHaveBeenCalledWith(period.id, period);
+    await workflow.saveOperation(operation.id, { title: "New title" });
+    expect(exceptional.saveExceptionalOperation).toHaveBeenCalledWith(operation.id, expect.objectContaining({ visas: operation.visas, plannedUsers: operation.plannedUsers }));
+  });
+
+  it("rejects edits that would invalidate signatures on a period already sent to RH", async () => {
+    const { regular, workflow } = setup({ ...period, sentToRhAt: signed.signedAt });
+    await expect(workflow.savePeriod(period.id, { userId: "9" })).rejects.toThrow("L'envoi aux RH");
+    expect(regular.saveRegularPeriod).not.toHaveBeenCalled();
+  });
 });

@@ -1,5 +1,6 @@
 import { APP_LABELS } from "../../i18n/labels";
 import { createEmptyVisa } from "../../shared/visa.models";
+import { revalidateExceptionalOperation, revalidateRegularIntervention, revalidateRegularPeriod } from "../../shared/visa-revalidation";
 import { clearExceptionalDirectorVisas, exceptionalReadyForDirector, exceptionalReadyForRh, regularReadyForDirector, regularReadyForRh } from "../../shared/visa-workflow";
 import { ExceptionalOperationUpdate, RegularInterventionUpdate, RegularPeriodUpdate } from "../../types";
 import { ExceptionalRepository } from "./exceptional.repository";
@@ -18,10 +19,10 @@ export class VisaWorkflowPersistence {
   private async persistPeriod(id: string | undefined, update: RegularPeriodUpdate): Promise<string> {
     const current = id ? (await this.regular.fetchRegularPeriods()).find(item => item.id === id) : undefined;
     if (id && !current) throw new Error(`Astreinte introuvable : ${id}`);
-    const merged = { ...current, ...update };
+    const merged = revalidateRegularPeriod(current, update);
     const interventions = id ? await this.regular.fetchRegularInterventions(id) : [];
     const ready = regularReadyForDirector(merged, interventions);
-    if (!ready && update.directorVisa?.signed && !current?.directorVisa?.signed) {
+    if (!ready && merged.directorVisa?.signed && !current?.directorVisa?.signed) {
       throw new Error(APP_LABELS.validation.messages.directorPrerequisites);
     }
     if (!ready && merged.directorVisa?.signed) merged.directorVisa = createEmptyVisa();
@@ -37,7 +38,7 @@ export class VisaWorkflowPersistence {
   private async persistIntervention(id: string | undefined, periodId: string, update: RegularInterventionUpdate): Promise<string> {
     const current = id ? (await this.regular.fetchRegularInterventions(periodId)).find(item => item.id === id) : undefined;
     if (id && !current) throw new Error(`Intervention introuvable : ${id}`);
-    const merged = { ...current, ...update };
+    const merged = revalidateRegularIntervention(current, periodId, update);
     if (!merged.agentVisa?.signed) {
       const period = (await this.regular.fetchRegularPeriods()).find(item => item.id === periodId);
       if (!period) throw new Error(`Astreinte introuvable : ${periodId}`);
@@ -58,9 +59,9 @@ export class VisaWorkflowPersistence {
     const current = id ? await this.exceptional.fetchExceptionalOperation(id) : undefined;
     if (id && !current) throw new Error(`Operation introuvable : ${id}`);
     if (current && update.type && update.type !== current.type) throw new Error("Le type d'une operation existante ne peut pas etre change.");
-    const merged = { ...current, ...update };
+    const merged = revalidateExceptionalOperation(current, update);
     if (!exceptionalReadyForDirector(merged)) {
-      const requested = update.visas?.directorGlobal ?? update.visas?.actualDirector ?? update.visas?.plannedDirector;
+      const requested = merged.visas?.directorGlobal ?? merged.visas?.actualDirector ?? merged.visas?.plannedDirector;
       const previous = current?.visas.directorGlobal ?? current?.visas.actualDirector ?? current?.visas.plannedDirector;
       if (requested?.signed && !previous?.signed) throw new Error(APP_LABELS.validation.messages.directorPrerequisites);
       if (merged.visas && [merged.visas.directorGlobal, merged.visas.actualDirector, merged.visas.plannedDirector].some(visa => visa?.signed)) {

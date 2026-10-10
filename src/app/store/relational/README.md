@@ -56,6 +56,21 @@ entre suppression de visa et signature directeur. Il ne s'agit pas d'une garanti
 transactionnelle entre plusieurs clients : les accès SQL directs restent soumis
 aux contraintes et policies déployées sur le serveur.
 
+`shared/visa-revalidation.ts` compare les données persistées avec les modifications
+avant l'écriture. Un changement d'horaires ou d'utilisateur retire le visa de la
+période régulière ou de l'intervention concernée et celui du directeur. Pour une
+opération exceptionnelle, les lignes ajoutées/modifiées repartent sans visa ; les
+lignes inchangées gardent leur signature. Toute modification de ces cibles, y
+compris un retrait, retire les visas globaux initiateur/directeur et leurs alias.
+Un changement des bornes globales seul invalide les visas du volet concerné.
+Les bornes globales recalculées à partir d'une ligne modifiée n'invalident pas les
+autres lignes. Un changement d'ordre, de libellé ou de format de date représentant
+le même instant ne demande pas une nouvelle signature. Les doublons sont comptés
+séparément pour qu'une nouvelle ligne identique n'hérite pas d'un ancien visa.
+Une intervention déplacée ne conserve pas la signature de son ancienne cible.
+Les envois RH existants restent verrouillés : leur annulation est nécessaire
+avant une modification entraînant une revalidation.
+
 `date-time.ts` adapte les bornes `timestamptz` en heure locale du navigateur au
 format `YYYY-MM-DDTHH:mm`, puis écrit des instants ISO UTC explicites. Les dates
 calendaires des jours fériés et les horodatages d'audit sont traités séparément.
