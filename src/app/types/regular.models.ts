@@ -3,7 +3,7 @@ import { Team } from "./settings.models";
 import { ManagedUser } from "./user.models";
 
 export type RegularTeam = Team;
-export type RegularUser = Pick<ManagedUser, "id" | "displayName" | "email">;
+export type RegularUser = Pick<ManagedUser, "id" | "displayName" | "email" | "deletedAt">;
 
 export interface RegularOnCallPeriod {
   directionId?: string;

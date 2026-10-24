@@ -1,3 +1,4 @@
+import { isUserAssignable } from "../../shared/user-availability";
 import { hasDirectorRights } from "../../shared/user-role-permissions";
 import { createFeatureSelector, createSelector } from "@ngrx/store";
 import { SettingsState } from "./settings.reducer";
@@ -43,7 +44,7 @@ export const selectSettingsRhCompensation = createSelector(selectSettingsState, 
 
 /** Seuls les profils d'encadrement peuvent être désignés initiateurs d'une opération. */
 export const selectOperationInitiators = createSelector(selectSettingsUsers,
-  users => users.filter(user => Boolean(user.email) && (user.role === 0 || user.role === 2 || hasDirectorRights(user.role)))
+  users => users.filter(user => isUserAssignable(user) && Boolean(user.email) && (user.role === 0 || user.role === 2 || hasDirectorRights(user.role)))
     .sort((first, second) => (first.displayName || first.email).localeCompare(second.displayName || second.email)),
 );
 

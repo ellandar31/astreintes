@@ -1,3 +1,4 @@
+import { isUserAssignable } from "../../shared/user-availability";
 import { Direction } from "../../types";
 import { CommonModule } from "@angular/common";
 import { Component, EventEmitter, Input, Output } from "@angular/core";
@@ -127,9 +128,12 @@ export class OperationModalComponent {
     }).format(date);
   }
 
+  /** A former initiator stays visible on their historical operation only. */
+  get assignableInitiators() { return this.initiatorUsers.filter(user => isUserAssignable(user) || user.id === this.operation?.initiatorUid); }
+
   selectInitiator(userId: string): void {
     const selectedUser = this.initiatorUsers.find((user) => user.id === userId);
-    if (!selectedUser) return;
+    if (!selectedUser || !isUserAssignable(selectedUser)) return;
 
     // Creation defaults to the initiator's direction; existing operations retain their own association.
     if (!this.operation) this.form.directionId = selectedUser.directionId || this.form.directionId;
@@ -147,7 +151,7 @@ export class OperationModalComponent {
     if (this.isLocked || this.planningReadOnly) return;
     const user = this.users.find((item) => item.id === userId);
 
-    if (!user) {
+    if (!user || !isUserAssignable(user)) {
       return;
     }
 
@@ -186,7 +190,7 @@ export class OperationModalComponent {
       return;
     }
 
-    this.form.actualUsers = this.form.plannedUsers.map((participant) => ({
+    this.form.actualUsers = this.form.plannedUsers.filter(participant => this.availableUsers().some(user => user.id === participant.userId)).map((participant) => ({
       ...participant,
       visa: this.createEmptyVisa(),
     }));
@@ -194,7 +198,7 @@ export class OperationModalComponent {
   }
 
   availableUsers(): SelectableUser[] {
-    return this.users;
+    return this.users.filter(isUserAssignable);
   }
 
   userLabel(user: SelectableUser): string {

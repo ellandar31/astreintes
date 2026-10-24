@@ -16,7 +16,8 @@
         {{ labels.common.fields.initiator }}
         <p-select
           inputId="operation-initiator"
-          [options]="initiatorUsers"
+          [options]="assignableInitiators"
+          optionDisabled="deletedAt"
           name="initiatorUid"
           [ngModel]="form.initiatorUid"
           (ngModelChange)="selectInitiator($event)"

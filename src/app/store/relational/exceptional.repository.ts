@@ -185,18 +185,23 @@ export class ExceptionalRepository {
     }, new Map<string, OperationParticipant[]>());
   }
 
-  /** Child IDs are regenerated on replacement, so visas must be removed then restored against the new targets. */
+  /** Retain existing identities: editing historical dates must not create a new assignment after departure. */
   private async replaceExceptionalParticipants(operationId: number, kind: "planned" | "actual", participants: OperationParticipant[], tables: ExceptionalTables): Promise<void> {
     const { data: existing, error: fetchError } = await this.client
       .from(tables.participants)
-      .select("id")
+      .select("id,user_id")
       .eq(tables.parentColumn, operationId)
       .eq("participant_kind", kind);
     if (fetchError) {
       throw fetchError;
     }
 
-    const existingIds = (existing ?? []).map((row) => Number(row["id"]));
+    const retained = new Map(participants.flatMap(participant => {
+      const row = (existing ?? []).find(item => idText(item["id"]) === participant.id && idText(item["user_id"]) === participant.userId);
+      return row ? [[participant, Number(row["id"])] as const] : [];
+    }));
+    const retainedIds = new Set(retained.values());
+    const existingIds = (existing ?? []).map((row) => Number(row["id"])).filter(id => !retainedIds.has(id));
     if (existingIds.length) {
       const { data: deleted, error: deleteError } = await this.client.from(tables.participants).delete().in("id", existingIds).select("id");
       if (deleteError) {
@@ -206,7 +211,15 @@ export class ExceptionalRepository {
       await this.visas.deleteVisas("participant_id", existingIds, tables.visas);
     }
 
-    await this.finishChildWrites(participants.map(participant => this.insertExceptionalParticipant(operationId, kind, participant, tables)));
+    await this.finishChildWrites(participants.map(async participant => {
+      const id = retained.get(participant);
+      if (!id) return this.insertExceptionalParticipant(operationId, kind, participant, tables);
+      const { error } = await this.client.from(tables.participants).update({
+        starts_at: databaseDateTime(participant.startDate), ends_at: databaseDateTime(participant.endDate),
+      }).eq("id", id);
+      if (error) throw error;
+      await this.visas.upsertVisa("participant_id", id, "exceptional_participant_agent", participant.visa, tables.visas);
+    }));
   }
 
   private async fetchExceptionalInterventions(operationIds: number[], tables: ExceptionalTables): Promise<Map<number, ExceptionalIntervention[]>> {

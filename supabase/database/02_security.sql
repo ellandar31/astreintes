@@ -166,7 +166,7 @@ GRANT USAGE ON SEQUENCE public.app_users_id_seq TO authenticated;
 CREATE POLICY profiles_read ON public.app_users FOR SELECT TO authenticated USING (true);
 
 CREATE POLICY profiles_insert ON public.app_users FOR INSERT TO authenticated
-  WITH CHECK (app_private.is_application_admin() OR (auth_user_id = (SELECT auth.uid()) AND role = 'user'));
+  WITH CHECK (app_private.is_application_admin());
 
 CREATE POLICY profiles_update ON public.app_users FOR UPDATE TO authenticated
   USING (app_private.is_application_admin() OR auth_user_id = (SELECT auth.uid()))
@@ -421,5 +421,73 @@ CREATE POLICY directions_admin_update ON public.directions AS RESTRICTIVE FOR UP
  USING (app_private.is_application_admin()) WITH CHECK (app_private.is_application_admin());
 CREATE POLICY directions_admin_delete ON public.directions AS RESTRICTIVE FOR DELETE TO authenticated
  USING (app_private.is_application_admin());
+
+
+-- Authentication tokens outlive profile removal. Every table therefore checks the
+-- live application profile, independently of token expiry and browser logout.
+CREATE OR REPLACE FUNCTION app_private.has_active_profile()
+RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = '' AS $$
+ SELECT EXISTS (SELECT 1 FROM public.app_users
+ WHERE auth_user_id = (SELECT auth.uid()) AND deleted_at IS NULL);
+$$;
+REVOKE ALL ON FUNCTION app_private.has_active_profile() FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION app_private.has_active_profile() TO authenticated;
+DO $$ DECLARE t text; BEGIN
+ FOR t IN SELECT tablename FROM pg_catalog.pg_tables WHERE schemaname = 'public' LOOP
+  EXECUTE format('DROP POLICY IF EXISTS active_profile_required ON public.%I', t);
+  EXECUTE format('CREATE POLICY active_profile_required ON public.%I AS RESTRICTIVE TO authenticated USING (app_private.has_active_profile()) WITH CHECK (app_private.has_active_profile())', t);
+ END LOOP;
+END; $$;
+
+-- Provision once when Auth creates the identity. Login cannot resurrect a deleted
+-- profile; only an administrator can explicitly restore application access.
+CREATE OR REPLACE FUNCTION app_private.provision_application_user()
+RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = '' AS $$
+BEGIN
+ INSERT INTO public.app_users(auth_user_id, email, role)
+ VALUES (NEW.id, coalesce(NEW.email, ''), 'user');
+ RETURN NEW;
+END;
+$$;
+REVOKE ALL ON FUNCTION app_private.provision_application_user() FROM PUBLIC, anon, authenticated;
+DROP TRIGGER IF EXISTS provision_application_user ON auth.users;
+CREATE TRIGGER provision_application_user AFTER INSERT ON auth.users
+FOR EACH ROW EXECUTE FUNCTION app_private.provision_application_user();
+
+-- Preserve historical assignments, but validate every new identity or transfer.
+-- The row lock serializes an assignment with a concurrent departure update.
+CREATE OR REPLACE FUNCTION app_private.guard_active_assignment()
+RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = '' AS $$
+DECLARE column_name text; assigned_id bigint; previous jsonb := '{}'::jsonb;
+BEGIN
+ IF TG_OP = 'UPDATE' THEN previous := to_jsonb(OLD); END IF;
+ FOREACH column_name IN ARRAY TG_ARGV LOOP
+  assigned_id := (to_jsonb(NEW)->>column_name)::bigint;
+  IF assigned_id IS NULL THEN CONTINUE; END IF;
+  IF TG_OP = 'UPDATE' AND previous->column_name = to_jsonb(NEW)->column_name
+   AND previous->'operation_id' IS NOT DISTINCT FROM to_jsonb(NEW)->'operation_id'
+   AND previous->'regular_period_id' IS NOT DISTINCT FROM to_jsonb(NEW)->'regular_period_id'
+   AND previous->'participant_kind' IS NOT DISTINCT FROM to_jsonb(NEW)->'participant_kind' THEN
+   CONTINUE;
+  END IF;
+  PERFORM id FROM public.app_users WHERE id = assigned_id AND deleted_at IS NULL FOR SHARE;
+  IF NOT FOUND THEN
+   RAISE EXCEPTION 'Un utilisateur ayant une date de départ ne peut plus être affecté à une opération.' USING ERRCODE = '23514';
+  END IF;
+ END LOOP;
+ RETURN NEW;
+END;
+$$;
+REVOKE ALL ON FUNCTION app_private.guard_active_assignment() FROM PUBLIC, anon, authenticated;
+DO $$ DECLARE t text; BEGIN
+ FOREACH t IN ARRAY ARRAY['regular_on_call_periods','regular_interventions','exceptional_on_call_participants','exceptional_work_participants','exceptional_on_call_interventions'] LOOP
+  EXECUTE format('DROP TRIGGER IF EXISTS guard_active_assignment ON public.%I', t);
+  EXECUTE format('CREATE TRIGGER guard_active_assignment BEFORE INSERT OR UPDATE ON public.%I FOR EACH ROW EXECUTE FUNCTION app_private.guard_active_assignment(''user_id'')', t);
+ END LOOP;
+ FOREACH t IN ARRAY ARRAY['exceptional_on_calls','exceptional_works'] LOOP
+  EXECUTE format('DROP TRIGGER IF EXISTS guard_active_assignment ON public.%I', t);
+  EXECUTE format('CREATE TRIGGER guard_active_assignment BEFORE INSERT OR UPDATE ON public.%I FOR EACH ROW EXECUTE FUNCTION app_private.guard_active_assignment(''initiator_user_id'', ''operation_manager_user_id'')', t);
+ END LOOP;
+END; $$;
 
 COMMIT;

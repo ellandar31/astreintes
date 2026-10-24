@@ -16,7 +16,8 @@
         {{ labels.common.fields.user }}
         <p-select
           inputId="regular-period-user"
-          [options]="users"
+          [options]="assignableUsers"
+        optionDisabled="deletedAt"
           name="regularUser"
           [disabled]="isLocked || planningReadOnly"
           [ngModel]="form.userId"

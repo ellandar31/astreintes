@@ -2,7 +2,7 @@
 INSERT INTO auth.users(id, email)
 VALUES ('00000000-0000-4000-8000-000000000006', 'rh@example.test');
 INSERT INTO public.app_users(auth_user_id, email, role)
-VALUES ('00000000-0000-4000-8000-000000000006', 'rh@example.test', 'rh');
+VALUES ('00000000-0000-4000-8000-000000000006', 'rh@example.test', 'rh') ON CONFLICT (auth_user_id) DO UPDATE SET role = excluded.role;
 
 DO $$ BEGIN
   IF (SELECT count(*) FROM pg_catalog.pg_tables WHERE schemaname = 'public') <> 18 THEN

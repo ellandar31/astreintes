@@ -89,6 +89,47 @@ describe("NgRx effects using typed domain APIs", () => {
     subscription.unsubscribe();
   });
 
+  it.each([undefined, { ...user, deletedAt: "2099-01-01T00:00:00Z" }])(
+    "ends a session when its profile is missing or has any departure date", profile => {
+      jest.mocked(appStore.users.watch).mockImplementation(next => { next(profile ? [profile] : []); return jest.fn(); });
+      const received: Action[] = [];
+      const subscription = TestBed.inject(AuthEffects).watchSessionUsers$.subscribe(action => received.push(action));
+      actions.next(AuthActions.sessionChanged({ user: sessionUser }));
+      expect(received.at(-1)).toEqual(AuthActions.logoutRequested());
+      subscription.unsubscribe();
+    },
+  );
+
+  it("checks the profile periodically without realtime and cancels polling on logout", async () => {
+    jest.useFakeTimers();
+    try {
+      jest.mocked(appStore.users.watch).mockImplementation(next => { next([user]); return jest.fn(); });
+      jest.mocked(appStore.users.get).mockRejectedValueOnce(new Error("Network unavailable"))
+        .mockResolvedValueOnce(user).mockResolvedValueOnce(undefined);
+      const received: Action[] = [];
+      const subscription = TestBed.inject(AuthEffects).watchSessionUsers$.subscribe(action => received.push(action));
+      actions.next(AuthActions.sessionChanged({ user: sessionUser }));
+      await jest.advanceTimersByTimeAsync(15_000);
+      expect(received.at(-1)).toEqual(SettingsActions.usersChanged({ users: [user] }));
+      await jest.advanceTimersByTimeAsync(15_000);
+      expect(received.at(-1)).toEqual(SettingsActions.usersChanged({ users: [user] }));
+      await jest.advanceTimersByTimeAsync(15_000);
+      expect(received.at(-1)).toEqual(AuthActions.logoutRequested());
+      actions.next(AuthActions.logoutRequested());
+      await jest.advanceTimersByTimeAsync(30_000);
+      expect(appStore.users.get).toHaveBeenCalledTimes(3);
+      subscription.unsubscribe();
+    } finally { jest.useRealTimers(); }
+  });
+
+  it("does not synchronize a departed profile on login", async () => {
+    jest.mocked(appStore.users.get).mockResolvedValue({ ...user, deletedAt: "2026-10-24T00:00:00Z" });
+    const result = firstValueFrom(TestBed.inject(AuthEffects).registerSessionUser$);
+    actions.next(AuthActions.sessionChanged({ user: sessionUser }));
+    expect(await result).toEqual(AuthActions.logoutRequested());
+    expect(appStore.users.save).not.toHaveBeenCalled();
+  });
+
   it("publishes typed periods directly and stops all watches on navigation", () => {
     const stop = jest.fn();
     const period: RegularOnCallPeriod = { id: "11", teamId: "2", userId: "7", userName: "Agent", userEmail: user.email, startDate: "2026-10-10T18:00", endDate: "2026-10-11T08:00" };
@@ -131,13 +172,13 @@ describe("NgRx effects using typed domain APIs", () => {
     expect(appStore.users.save).toHaveBeenCalledWith(user.uid, { uid: user.uid, email: user.email, lastLoginAt: "2026-10-10T08:00:00Z" });
   });
 
-  it("registers a new application user with the standard role", async () => {
+  it("ends a removed profile session without recreating it", async () => {
     jest.mocked(appStore.users.get).mockResolvedValue(undefined);
     jest.mocked(appStore.users.save).mockResolvedValue("7");
     const result = firstValueFrom(TestBed.inject(AuthEffects).registerSessionUser$);
     actions.next(AuthActions.sessionChanged({ user: sessionUser }));
-    await result;
-    expect(appStore.users.save).toHaveBeenCalledWith(user.uid, expect.objectContaining({ role: 1, displayName: "" }));
+    expect(await result).toEqual(AuthActions.logoutRequested());
+    expect(appStore.users.save).not.toHaveBeenCalled();
   });
 
 

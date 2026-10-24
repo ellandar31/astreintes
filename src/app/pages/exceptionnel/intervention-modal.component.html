@@ -4,7 +4,8 @@
       {{ labels.common.fields.user }}
       <p-select
         inputId="exceptional-intervention-user"
-        [options]="users"
+        [options]="assignableUsers"
+        optionDisabled="deletedAt"
         name="interventionUser"
         [ngModel]="form.userId"
         (ngModelChange)="selectUser($event)"

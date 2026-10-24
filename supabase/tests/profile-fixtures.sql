@@ -11,7 +11,6 @@ INSERT INTO auth.users VALUES
  ('00000000-0000-4000-8000-000000000003', 'initiator@example.test'),
  ('00000000-0000-4000-8000-000000000004', 'director@example.test'),
  ('00000000-0000-4000-8000-000000000005', 'new@example.test');
-INSERT INTO public.app_users (auth_user_id, email, role, direction_id)
-SELECT id, email, (CASE email WHEN 'admin@example.test' THEN 'admin'
+UPDATE public.app_users SET role = (CASE email WHEN 'admin@example.test' THEN 'admin'
  WHEN 'initiator@example.test' THEN 'initiator' WHEN 'director@example.test' THEN 'director'
- ELSE 'user' END)::public.user_role, 1 FROM auth.users WHERE email <> 'new@example.test';
+ ELSE 'user' END)::public.user_role, direction_id = 1 WHERE email <> 'new@example.test';

@@ -53,8 +53,8 @@ SELECT public.expect_denied($s$INSERT INTO public.app_users (auth_user_id,email)
  VALUES ('00000000-0000-4000-8000-000000000005','forged@example.test')$s$);
 SELECT public.expect_denied($s$INSERT INTO public.app_users (auth_user_id,email)
  VALUES ('00000000-0000-4000-8000-000000000002','user@example.test')$s$);
-INSERT INTO public.app_users (auth_user_id,email,display_name)
- VALUES ('00000000-0000-4000-8000-000000000005','new@example.test','New user');
+SELECT public.expect_denied($s$INSERT INTO public.app_users (auth_user_id,email,display_name)
+ VALUES ('00000000-0000-4000-8000-000000000005','new@example.test','New user')$s$);
 SELECT public.expect_denied($s$INSERT INTO public.app_users (auth_user_id,email,role)
  VALUES ('00000000-0000-4000-8000-000000000005','new@example.test','admin')
  ON CONFLICT (auth_user_id) DO UPDATE SET role = excluded.role$s$);

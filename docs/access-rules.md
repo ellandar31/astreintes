@@ -364,3 +364,23 @@ l’annulation préalable de l’envoi. Les contrôles s’appliquent aussi aux 
 
 Le filtre de la validation directeur propose « Toutes les directions » ; il ne
 constitue pas une restriction d’accès aux seules opérations de sa direction.
+
+### Fin d’accès d’un utilisateur
+
+Un profil applicatif absent ou dont `deleted_at` est renseigné interdit l’accès,
+quelle que soit la date enregistrée. Les politiques SQL contrôlent le profil vivant
+sur toutes les tables, même si le jeton Auth est encore valide. L’application ferme
+la session dès réception du changement ; un contrôle toutes les 15 secondes couvre
+les installations sans Realtime. Les erreurs réseau ne valent pas suppression.
+
+Les nouveaux profils sont créés une seule fois par le déclencheur d’inscription
+sur `auth.users`, avec le rôle utilisateur. Une connexion ne recrée jamais un profil
+supprimé. Un administrateur doit restaurer explicitement son accès si nécessaire.
+
+Une date `deleted_at` renseignée interdit également toute nouvelle affectation
+à une astreinte, un travail ou une intervention, ainsi que la désignation comme
+initiateur ou responsable d’opération. Les listes de choix excluent ces profils ;
+une sélection historique reste affichée et désactivée. Les contrôles SQL refusent
+aussi une affectation directe ou le déplacement vers une autre opération.
+Les affectations existantes sont conservées et peuvent être corrigées sans
+réaffecter l’utilisateur.

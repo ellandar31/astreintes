@@ -19,7 +19,7 @@ export interface OperationParticipant {
   visa: SignatureVisa;
 }
 
-export type SelectableUser = Pick<ManagedUser, "id" | "uid" | "displayName" | "email" | "directionId">;
+export type SelectableUser = Pick<ManagedUser, "id" | "uid" | "displayName" | "email" | "directionId" | "deletedAt">;
 
 export interface ExceptionalIntervention {
   /** Persisted identity keeps edits from rebuilding another agent's intervention. */

@@ -6,4 +6,6 @@ runDatabaseTests('user_roles', [
   'compensation-rh-permissions-assertions.sql',
   'operation-metadata-assertions.sql',
   'directions-assertions.sql',
+  'session-access-assertions.sql',
+  'active-assignment-assertions.sql',
 ]);

@@ -1,3 +1,4 @@
+import { isUserAssignable } from "../../shared/user-availability";
 import { Direction } from "../../types";
 import { TruncatedTextComponent } from "../../shared/truncated-text.component";
 import { Component, EventEmitter, Input, Output } from "@angular/core";
@@ -73,9 +74,13 @@ export class RegularPeriodModalComponent {
     this.saved.emit({ ...this.form });
   }
 
+  /** Keep a historical selection visible, but disabled in the dropdown. */
+  get assignableUsers() { return this.users.filter(user => isUserAssignable(user) || user.id === this.form.userId); }
+
   selectUser(userId: string): void {
     const selectedUser = this.users.find((user) => user.id === userId);
 
+    if (!selectedUser || !isUserAssignable(selectedUser)) return;
     this.form.userId = userId;
     this.form.userName = selectedUser?.displayName || selectedUser?.email || "";
     this.form.userEmail = selectedUser?.email || "";

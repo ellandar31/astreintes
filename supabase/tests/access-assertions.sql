@@ -5,7 +5,7 @@ BEGIN
  RAISE EXCEPTION 'Expected permission denial: %', statement;
 END; $$;
 INSERT INTO auth.users(id,email) VALUES ('00000000-0000-4000-8000-000000000006','rh@example.test');
-INSERT INTO public.app_users(auth_user_id,email,role) VALUES ('00000000-0000-4000-8000-000000000006','rh@example.test','rh');
+INSERT INTO public.app_users(auth_user_id,email,role) VALUES ('00000000-0000-4000-8000-000000000006','rh@example.test','rh') ON CONFLICT (auth_user_id) DO UPDATE SET role = excluded.role;
 INSERT INTO public.regular_on_call_periods(id,user_id,starts_at,ends_at) VALUES
  (701,2,'2026-10-10 08:00+02','2026-10-10 18:00+02'),
  (702,3,'2026-10-10 08:00+02','2026-10-10 18:00+02');

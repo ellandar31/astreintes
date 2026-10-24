@@ -1,3 +1,4 @@
+import { isUserAssignable } from "../../shared/user-availability";
 import { CommonModule } from "@angular/common";
 import { Component, EventEmitter, OnDestroy, Output, effect, inject } from "@angular/core";
 import { FormsModule, NgForm } from "@angular/forms";
@@ -122,7 +123,7 @@ export class TeamsSettingsComponent implements OnDestroy {
   }
 
   availableUsers(): ManagedUser[] {
-    return this.users().filter((user) => !this.teamForm.members.includes(user.id));
+    return this.users().filter((user) => isUserAssignable(user) && !this.teamForm.members.includes(user.id));
   }
 
   memberLabel(memberId: string): string {

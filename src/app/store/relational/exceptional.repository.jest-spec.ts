@@ -49,6 +49,21 @@ describe("Separate exceptional persistence families", () => {
       visas: { plannedInitiator: visa, plannedDirector: visa, actualInitiator: visa, actualDirector: visa } };
   }
 
+  it("retains historical participant identities when correcting their dates", async () => {
+    const current = existingOperation();
+    const { repository, calls } = routedClient(undefined, undefined, {
+      exceptional_on_call_participants: [{ id: 21, user_id: 7 }],
+    });
+    jest.spyOn(repository, "fetchExceptionalOperation").mockResolvedValue(current);
+    await repository.saveExceptionalOperation(current.id, {
+      ...current,
+      plannedUsers: [{ ...current.plannedUsers[0], endDate: "2026-10-11T09:00" }],
+    });
+    const childCalls = calls.filter(call => call.table === "exceptional_on_call_participants");
+    expect(childCalls.some(call => call.method === "delete" || call.method === "insert")).toBe(false);
+    expect(childCalls.some(call => call.method === "update")).toBe(true);
+  });
+
   it("updates only the changed intervention without replacing participants or foreign interventions", async () => {
     const current = existingOperation();
     const { repository, calls } = routedClient(undefined, undefined, {
