@@ -591,4 +591,66 @@ END; $$;
 REVOKE ALL ON FUNCTION public.save_user_assignments(jsonb) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.save_user_assignments(jsonb) TO authenticated;
 
+-- Retention uses the server clock and treatment timestamp, with a strict boundary.
+CREATE OR REPLACE FUNCTION public.list_rh_purge_candidates(retention_years integer)
+RETURNS TABLE(operation_type text, operation_id bigint, title text, treated_at timestamptz)
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = '' AS $$
+DECLARE cutoff timestamptz;
+BEGIN
+ IF NOT EXISTS (SELECT 1 FROM public.app_users WHERE auth_user_id=auth.uid() AND deleted_at IS NULL AND is_rh) THEN
+   RAISE EXCEPTION 'RH access required' USING ERRCODE='42501';
+ END IF;
+ IF retention_years IS NULL OR retention_years NOT IN (1,2) THEN
+   RAISE EXCEPTION 'Retention must be one or two years' USING ERRCODE='22023';
+ END IF;
+ cutoff := now() - make_interval(years => retention_years);
+ RETURN QUERY
+ SELECT 'regular'::text, r.id, coalesce(t.name, nullif(u.display_name,''), u.email), r.treated_at
+ FROM public.regular_on_call_periods r LEFT JOIN public.teams t ON t.id=r.team_id
+ JOIN public.app_users u ON u.id=r.user_id WHERE r.treated_at < cutoff
+ UNION ALL
+ SELECT 'exceptionalOnCall'::text, e.id, e.title, e.treated_at FROM public.exceptional_on_calls e WHERE e.treated_at < cutoff
+ UNION ALL
+ SELECT 'exceptionalWork'::text, w.id, w.title, w.treated_at FROM public.exceptional_works w WHERE w.treated_at < cutoff
+ ORDER BY 4,1,2;
+END; $$;
+REVOKE ALL ON FUNCTION public.list_rh_purge_candidates(integer) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.list_rh_purge_candidates(integer) TO authenticated;
+
+-- Delete only the confirmed snapshot, atomically. Locks serialize this purge with
+-- treatment cancellation or changes. Cascading FKs remove interventions and visas.
+CREATE OR REPLACE FUNCTION public.purge_rh_operations(retention_years integer, operations jsonb)
+RETURNS integer LANGUAGE plpgsql SECURITY DEFINER SET search_path = '' AS $$
+DECLARE cutoff timestamptz; item jsonb; target_table text; treatment timestamptz; deleted_count integer := 0;
+BEGIN
+ IF NOT EXISTS (SELECT 1 FROM public.app_users WHERE auth_user_id=auth.uid() AND deleted_at IS NULL AND is_rh) THEN
+   RAISE EXCEPTION 'RH access required' USING ERRCODE='42501';
+ END IF;
+ IF retention_years IS NULL OR retention_years NOT IN (1,2)
+    OR jsonb_typeof(operations) IS DISTINCT FROM 'array' THEN
+   RAISE EXCEPTION 'Invalid retention or operations' USING ERRCODE='22023';
+ END IF;
+ cutoff := now() - make_interval(years => retention_years);
+ FOR item IN SELECT value FROM jsonb_array_elements(operations) ORDER BY value->>'type', (value->>'id')::bigint LOOP
+   target_table := CASE item->>'type' WHEN 'regular' THEN 'regular_on_call_periods'
+     WHEN 'exceptionalOnCall' THEN 'exceptional_on_calls' WHEN 'exceptionalWork' THEN 'exceptional_works' END;
+   IF target_table IS NULL THEN RAISE EXCEPTION 'Invalid operation type' USING ERRCODE='22023'; END IF;
+   treatment := NULL;
+   EXECUTE format('SELECT treated_at FROM public.%I WHERE id=$1 FOR UPDATE',target_table)
+     INTO treatment USING (item->>'id')::bigint;
+   IF treatment IS NULL OR treatment >= cutoff OR treatment IS DISTINCT FROM (item->>'treatedAt')::timestamptz THEN
+     RAISE EXCEPTION 'Purge preview is outdated' USING ERRCODE='22023';
+   END IF;
+   EXECUTE format('DELETE FROM public.%I WHERE id=$1',target_table) USING (item->>'id')::bigint;
+   deleted_count := deleted_count + 1;
+ END LOOP;
+ RETURN deleted_count;
+END; $$;
+REVOKE ALL ON FUNCTION public.purge_rh_operations(integer,jsonb) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.purge_rh_operations(integer,jsonb) TO authenticated;
+
+CREATE INDEX IF NOT EXISTS regular_periods_treatment_idx ON public.regular_on_call_periods(treated_at) WHERE treated_at IS NOT NULL;
+CREATE INDEX IF NOT EXISTS exceptional_on_calls_treatment_idx ON public.exceptional_on_calls(treated_at) WHERE treated_at IS NOT NULL;
+CREATE INDEX IF NOT EXISTS exceptional_works_treatment_idx ON public.exceptional_works(treated_at) WHERE treated_at IS NOT NULL;
+
 COMMIT;

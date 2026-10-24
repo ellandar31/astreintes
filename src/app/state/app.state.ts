@@ -1,3 +1,4 @@
+import { RhPurgeState, rhPurgeReducer } from "./rh-purge/rh-purge.state";
 import { ActionReducerMap } from "@ngrx/store";
 import { AuthState, authReducer } from "./auth/auth.reducer";
 import { ExceptionalState, exceptionalReducer } from "./exceptional/exceptional.reducer";
@@ -11,6 +12,7 @@ export interface AppState {
   profile: ProfileState;
   regular: RegularState;
   settings: SettingsState;
+  rhPurge: RhPurgeState;
 }
 
 export const appReducers: ActionReducerMap<AppState> = {
@@ -19,4 +21,5 @@ export const appReducers: ActionReducerMap<AppState> = {
   profile: profileReducer,
   regular: regularReducer,
   settings: settingsReducer,
+  rhPurge: rhPurgeReducer,
 };

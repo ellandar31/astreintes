@@ -14,7 +14,11 @@
   </p-card>
 
   <div class="rh-content">
-    @if (activeSection === "exports" && canExport()) {
+    @if (activeSection === "userPurge" && canExport()) {
+      <app-rh-purge [userMode]="true" />
+    } @else if (activeSection === "purge" && canExport()) {
+      <app-rh-purge />
+    } @else if (activeSection === "exports" && canExport()) {
       <app-rh-exports></app-rh-exports>
     } @else if (activeSection === "userExports" && canExport()) {
       <app-rh-exports [userMode]="true"></app-rh-exports>

@@ -1,3 +1,5 @@
+import { RhPurgeRepository } from "./rh-purge.repository";
+import { RhPurgeOperation, RhRetentionYears } from "../../types/rh-purge.models";
 import { NewApplicationUser, UserAssignmentUpdate } from "../../types/user.models";
 import { RhTreatmentOperation } from "../../types/rh-export.models";
 import { DirectionsRepository } from "./directions.repository";
@@ -41,6 +43,7 @@ export class SupabaseDomainStore {
   readonly regular;
   readonly exceptional;
   readonly rhSettings;
+  readonly rhPurge;
 
   constructor(client: SupabaseClient) {
     const observer = new DomainObserverService(client);
@@ -111,6 +114,15 @@ export class SupabaseDomainStore {
       watchOperations: watch<ExceptionalOperation[]>(operationTables, () => exceptional.fetchExceptionalOperations()),
       saveOperation: (id: string | undefined, update: ExceptionalOperationUpdate) => observer.write(operationTables.filter(table => table !== "app_users"), () => visaWorkflow.saveOperation(id, update)),
       deleteOperation: (id: string) => observer.write(operationTables.filter(table => table !== "app_users"), () => exceptional.deleteExceptionalOperation(id)),
+    };
+    const purge = new RhPurgeRepository(client);
+    this.rhPurge = {
+      preview: (years: RhRetentionYears) => purge.preview(years),
+      previewUser: (userId: string) => purge.previewUser(userId),
+      purgeUser: (userId: string, operations: RhPurgeOperation[]) => observer.write(
+        [...periodTables, ...operationTables, "regular_interventions"], () => purge.purgeUser(userId, operations)),
+      purge: (years: RhRetentionYears, operations: RhPurgeOperation[]) => observer.write(
+        [...periodTables, ...operationTables, "regular_interventions"], () => purge.purge(years, operations)),
     };
     this.rhSettings = {
       /** Atomic RH-only transition; SQL validates live submission and permissions. */

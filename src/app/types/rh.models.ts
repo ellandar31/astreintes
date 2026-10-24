@@ -1,6 +1,6 @@
 import { SignatureVisa } from "./signature.models";
 
-export type RhSection = "exports" | "userExports" | "periodExports";
+export type RhSection = "exports" | "userExports" | "periodExports" | "purge" | "userPurge";
 
 export interface RhUser {
   /** Identité de connexion distincte de la clé SQL utilisée dans les opérations. */

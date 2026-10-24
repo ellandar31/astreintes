@@ -592,4 +592,8 @@ ALTER TABLE ONLY public.exceptional_work_visas
 -- One prepared or linked profile per email, regardless of case.
 CREATE UNIQUE INDEX app_users_email_normalized_key ON public.app_users (lower(email));
 
+CREATE INDEX regular_periods_treatment_idx ON public.regular_on_call_periods(treated_at) WHERE treated_at IS NOT NULL;
+CREATE INDEX exceptional_on_calls_treatment_idx ON public.exceptional_on_calls(treated_at) WHERE treated_at IS NOT NULL;
+CREATE INDEX exceptional_works_treatment_idx ON public.exceptional_works(treated_at) WHERE treated_at IS NOT NULL;
+
 COMMIT;

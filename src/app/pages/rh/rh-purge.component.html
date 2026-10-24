@@ -1,0 +1,38 @@
+@if (canPurge()) {
+  <p-card [header]="copy.title">
+    <div class="purge-content">
+      <p>{{ copy.description }}</p>
+      <div class="purge-controls">
+        <label>{{ copy.retention }}
+          <p-select [options]="retentions" optionLabel="label" optionValue="value"
+            [ngModel]="state().years" (ngModelChange)="refresh($event)" [disabled]="state().purging" appendTo="body" />
+        </label>
+        <p-button [label]="copy.refresh" icon="pi pi-refresh" [loading]="state().loading"
+          [disabled]="state().purging" (onClick)="refresh()" />
+      </div>
+      @if (state().error) { <p-message severity="error" [text]="state().error" /> }
+      @if (state().deletedCount !== null) { <p-message severity="success">{{ state().deletedCount }} {{ copy.deleted }}</p-message> }
+      <p>{{ state().operations.length }} {{ copy.count }}</p>
+      <p-table [value]="state().operations | tableRows: fields" [loading]="state().loading" styleClass="rh-table">
+        <ng-template pTemplate="header"><tr>
+          <th pSortableColumn="typeLabel"><app-table-column-header field="typeLabel" [label]="labels.common.fields.type" /></th>
+          <th pSortableColumn="title"><app-table-column-header field="title" [label]="labels.rhDocuments.periodExport.operation" /></th>
+          <th pSortableColumn="treatedDate"><app-table-column-header field="treatedDate" kind="date" [label]="labels.rhDocuments.periodExport.treatedAt" /></th>
+        </tr></ng-template>
+        <ng-template pTemplate="body" let-row><tr><td>{{ row.typeLabel }}</td><td>{{ row.title }}</td><td>{{ row.treatedAt | date: 'dd/MM/yyyy HH:mm' }}</td></tr></ng-template>
+        <ng-template pTemplate="emptymessage"><tr><td colspan="3">{{ copy.empty }}</td></tr></ng-template>
+      </p-table>
+      <p-button severity="danger" icon="pi pi-trash" [label]="copy.action" [loading]="state().purging"
+        [disabled]="state().loading || state().purging || !state().operations.length" (onClick)="openConfirmation()" />
+    </div>
+  </p-card>
+  @if (confirming()) {
+    <app-modal [title]="copy.confirmation" (closed)="confirming.set(false)">
+      <p>{{ state().operations.length }} {{ copy.confirmText }}</p>
+      <div class="purge-controls">
+        <p-button severity="secondary" [label]="copy.cancel" (onClick)="confirming.set(false)" />
+        <p-button severity="danger" icon="pi pi-trash" [label]="copy.confirm" (onClick)="confirmPurge()" />
+      </div>
+    </app-modal>
+  }
+}

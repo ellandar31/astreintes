@@ -1,3 +1,4 @@
+import { RhPurgeComponent } from "./rh-purge.component";
 import { Store } from "@ngrx/store";
 import { selectCanExportRh } from "../../state/settings/settings.selectors";
 import { CommonModule } from "@angular/common";
@@ -12,7 +13,7 @@ import { RhSection } from "./rh.models";
 @Component({
   selector: "app-rh-page",
   standalone: true,
-  imports: [ButtonModule, CardModule, CommonModule, RhExportsComponent],
+  imports: [ButtonModule, CardModule, CommonModule, RhExportsComponent, RhPurgeComponent],
   templateUrl: "./rh-page.component.html",
   styleUrl: "./rh-page.component.css",
 })
@@ -24,6 +25,8 @@ export class RhPageComponent {
     { id: "periodExports", label: APP_LABELS.rh.menu.periodExports },
     { id: "exports", label: APP_LABELS.rh.menu.exports },
     { id: "userExports", label: APP_LABELS.rh.menu.userExports },
+    { id: "purge", label: APP_LABELS.rh.menu.purge },
+    { id: "userPurge", label: APP_LABELS.rh.menu.userPurge },
   ];
 
   private readonly store = inject(Store);

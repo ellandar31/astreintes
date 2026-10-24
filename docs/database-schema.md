@@ -124,3 +124,17 @@ pour appliquer toutes les affectations modifiées dans une transaction. Une
 validation échouée annule l’ensemble ; le changement éventuel du rôle de
 l’administrateur courant ne coupe pas le traitement des autres lignes.
 Cette fonction est installée en réexécutant `02_security.sql`.
+
+## Purge des opérations RH
+
+Le menu RH propose un aperçu puis une confirmation des opérations traitées depuis
+strictement plus d’un ou deux ans (deux ans par défaut). La date `treated_at` et
+l’horloge PostgreSQL déterminent l’éligibilité, indépendamment des dates de l’opération.
+Les fonctions `list_rh_purge_candidates` et `purge_rh_operations` exigent un profil
+actif avec le flag RH. Le rôle de base ne donne pas ce droit à lui seul.
+
+La suppression porte exclusivement sur les identifiants et dates de traitement
+confirmés dans l’aperçu. Les lignes sont verrouillées et revérifiées ; si une ligne
+a changé, toute la transaction est annulée. Les clés étrangères en cascade retirent
+les participants, interventions et visas associés. Aucune purge automatique n’est
+planifiée. Pour une base existante, réexécuter `02_security.sql` avant déploiement.

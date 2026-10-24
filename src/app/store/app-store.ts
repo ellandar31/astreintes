@@ -28,6 +28,7 @@ export const appStore = {
   regular: persistence.regular,
   exceptional: persistence.exceptional,
   rhSettings: persistence.rhSettings,
+  rhPurge: persistence.rhPurge,
   now: () => new Date().toISOString(),
   errors: {
     isError(error: unknown): error is StoreError {

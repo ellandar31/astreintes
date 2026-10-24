@@ -1,3 +1,4 @@
+import { RhPurgeEffects } from "./state/rh-purge/rh-purge.effects";
 import { ApplicationConfig } from "@angular/core";
 import { provideAnimationsAsync } from "@angular/platform-browser/animations/async";
 import { provideEffects } from "@ngrx/effects";
@@ -23,6 +24,6 @@ export const appConfig: ApplicationConfig = {
       },
     }),
     provideStore(appReducers),
-    provideEffects(AuthEffects, ExceptionalEffects, ProfileEffects, RegularEffects, SettingsEffects),
+    provideEffects(AuthEffects, ExceptionalEffects, ProfileEffects, RegularEffects, SettingsEffects, RhPurgeEffects),
   ],
 };
