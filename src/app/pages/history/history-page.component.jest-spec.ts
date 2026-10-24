@@ -6,7 +6,6 @@ import { selectExceptionalOperations, selectExceptionalError } from "../../state
 import { selectRegularInterventions, selectRegularPeriods, selectRegularPublicHolidays, selectRegularError } from "../../state/regular/regular.selectors";
 import { selectSettingsRhCompensation, selectSettingsUsers } from "../../state/settings/settings.selectors";
 import { HistoryPageComponent } from "./history-page.component";
-import { RegularActions } from "../../state/regular/regular.actions";
 
 const users = [
   { id: '7', uid: 'auth-id', role: 0, email: 'manager@example.test', displayName: 'Responsable' },
@@ -14,7 +13,7 @@ const users = [
 ];
 
 describe("Sélecteur utilisateur des contrôles RH", () => {
-  it("keeps archived items in History, cancels an untreated send, and closes the detail when returned to validation", () => {
+  it("keeps archived items in History and closes the detail when returned to validation", () => {
     const fixture = TestBed.createComponent(HistoryPageComponent);
     fixture.componentRef.setInput('currentUser', { uid: 'auth-id', email: users[0].email, displayName: 'Responsable' });
     fixture.detectChanges();
@@ -22,20 +21,15 @@ describe("Sélecteur utilisateur des contrôles RH", () => {
     view.selectUser('8');
     fixture.detectChanges();
     const item = view.userSections[0].monthSections[0].items[0];
-    expect(view.canCancelRhSend(item)).toBe(true);
     view.openDetail(item);
     const store = TestBed.inject(MockStore);
     const dispatch = jest.spyOn(store, 'dispatch');
-    view.cancelRhSend(item);
-    expect(dispatch).toHaveBeenCalledWith(RegularActions.periodRhSentUpdateRequested({ periodId: 'p1', sent: false }));
     store.overrideSelector(selectRegularPeriods, [{ ...view.regularPeriods[0], treatedAt: '2026-10-24T11:00' }]);
     store.refreshState();
     fixture.detectChanges();
     const treated = view.userSections[0].monthSections[0].items[0];
     expect(treated.treatedAt).toBeDefined();
-    expect(view.canCancelRhSend(treated)).toBe(false);
     dispatch.mockClear();
-    view.cancelRhSend(treated);
     expect(dispatch).not.toHaveBeenCalled();
     store.overrideSelector(selectRegularPeriods, [{ ...view.regularPeriods[0], sentToRhAt: undefined, treatedAt: undefined }]);
     store.refreshState();
@@ -75,6 +69,16 @@ describe("Sélecteur utilisateur des contrôles RH", () => {
     fixture.detectChanges();
     expect(view.userSections.map(section => section.user.id)).toEqual(['8']);
     expect(fixture.nativeElement.querySelector('.month-label').textContent).toContain('octobre 2026');
+    expect(fixture.nativeElement.querySelector('.user-section-header')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.user-section')).toBeNull();
+    expect(fixture.nativeElement.querySelector('tbody tr')).not.toBeNull();
+    const monthButton = fixture.nativeElement.querySelector('.month-section-header') as HTMLButtonElement;
+    monthButton.click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('tbody')).toBeNull();
+    monthButton.click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('tbody tr')).not.toBeNull();
     view.openDetail(view.userSections[0].monthSections[0].items[0]);
     view.selectUser('7');
     fixture.detectChanges();

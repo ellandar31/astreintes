@@ -117,7 +117,9 @@ Le module RH est composé de plusieurs écrans.
 ## Historique (onglet du bandeau)
 
 Consultation des opérations envoyées aux RH ou traitées, par collaborateur et
-par mois. Ces opérations ne figurent plus dans les écrans actifs de planification.
+par mois. Les astreintes régulières envoyées restent visibles en grisé dans le
+calendrier, sans possibilité de les ouvrir. Les opérations traitées et les
+opérations exceptionnelles envoyées sont retirées des écrans de planification.
 Les opérations envoyées restent dans la validation directeur pour permettre
 l’annulation de l’envoi ; les opérations traitées restent dans l’historique.
 Les exports restent dans le menu RH.

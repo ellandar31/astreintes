@@ -28,32 +28,25 @@
   margin: 0;
 }
 
-.user-sections,
+.history-sections,
 .month-sections {
   display: grid;
   gap: var(--app-space-xl);
 }
 
-.month-section,
-.user-section {
+.month-section {
   display: grid;
   gap: var(--app-space-md);
 }
 
-:host ::ng-deep .month-section .p-card-body,
-:host ::ng-deep .user-section .p-card-body {
+:host ::ng-deep .month-section .p-card-body {
   padding: var(--app-space-md);
 }
 
-:host ::ng-deep .month-section .p-card-content,
-:host ::ng-deep .user-section .p-card-content {
+:host ::ng-deep .month-section .p-card-content {
   display: grid;
   gap: var(--app-space-md);
   padding: 0;
-}
-
-.month-sections {
-  padding-left: var(--app-space-lg);
 }
 
 :host ::ng-deep .section-header {
@@ -74,8 +67,7 @@
   background: var(--app-color-surface-soft);
 }
 
-.month-label,
-.user-label {
+.month-label {
   color: var(--app-color-heading-strong);
   font-weight: 800;
 }

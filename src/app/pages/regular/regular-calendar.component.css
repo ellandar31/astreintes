@@ -160,6 +160,12 @@
 .period-bar.color-4 { --period-color: var(--app-period-color-4); } /* Rouge brique */
 .period-bar.color-5 { --period-color: var(--app-period-color-5); } /* Bleu clair */
 
+.period-bar.period-archived {
+  background: var(--app-color-border);
+  color: var(--app-color-subtle);
+  cursor: default;
+}
+
 .period-bar:not(.period-start) {
   opacity: 0.78;
 }

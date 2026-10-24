@@ -85,6 +85,8 @@
               <div
                 class="period-bar"
                 [class.period-start]="isPeriodStart(day, period)"
+                [class.period-archived]="isPeriodSentToRh(period)"
+                [attr.aria-disabled]="isPeriodSentToRh(period) ? 'true' : null"
                 [class]="'period-bar color-' + (getPeriodColor(period) % 6)"
                 (dblclick)="openEditPeriodModal(period)"
               >

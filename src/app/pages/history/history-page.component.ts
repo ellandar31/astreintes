@@ -97,7 +97,7 @@ export class HistoryPageComponent implements OnChanges, OnDestroy, OnInit {
   exceptionalOperations: RhExceptionalOperation[] = [];
   selectedDetailItem: HistoryDetailItem | null = null;
   expandedMonthSectionKey: string | null = null;
-  expandedUserId: string | null = null;
+  private monthContextUserId: string | null = null;
   userSections: HistoryUserSection[] = [];
 
   onCallCompensationRules: OnCallCompensationRule[] = [
@@ -220,7 +220,7 @@ export class HistoryPageComponent implements OnChanges, OnDestroy, OnInit {
     if (!this.canSelectUser || !this.users.some(user => user.id === userId)) return;
     this.selectedUserId = userId;
     this.selectedDetailItem = null;
-    this.expandedUserId = null;
+    this.monthContextUserId = null;
     this.expandedMonthSectionKey = null;
     this.rebuildControlSections();
   }
@@ -233,21 +233,6 @@ export class HistoryPageComponent implements OnChanges, OnDestroy, OnInit {
     return this.expandedMonthSectionKey === this.monthSectionKey(userId, monthKey);
   }
 
-  toggleUserSection(userId: string): void {
-    if (this.expandedUserId === userId) {
-      this.expandedUserId = null;
-      this.expandedMonthSectionKey = null;
-      return;
-    }
-
-    this.expandedUserId = userId;
-    this.expandFirstMonthForUser(userId);
-  }
-
-  isUserExpanded(userId: string): boolean {
-    return this.expandedUserId === userId;
-  }
-
   /** Ouvre le détail figé d'une ligne RH pour exposer le calcul qui justifie le coefficient affiché. */
   openDetail(item: HistoryDetailItem): void {
     this.selectedDetailItem = item;
@@ -256,24 +241,6 @@ export class HistoryPageComponent implements OnChanges, OnDestroy, OnInit {
   /** Ferme la consultation sans perdre le modèle pré-calculé de la page principale. */
   closeDetail(): void {
     this.selectedDetailItem = null;
-  }
-
-  /** Returning an operation to validation is restricted to its existing RH management roles. */
-  canCancelRhSend(item: HistoryDetailItem): boolean {
-    if (!(this.currentProfile?.role === 0 || hasDirectorRights(this.currentProfile?.role))) return false;
-    const source = item.sourceCollection === "regularOnCallPeriods"
-      ? this.regularPeriods.find(period => period.id === item.sourceId)
-      : this.exceptionalOperations.find(operation => operation.id === item.sourceId);
-    return Boolean(source?.sentToRhAt && !source.treatedAt);
-  }
-
-  cancelRhSend(item: HistoryDetailItem): void {
-    if (!item.sourceId || !this.canCancelRhSend(item)) return;
-    if (item.sourceCollection === "regularOnCallPeriods") {
-      this.store.dispatch(RegularActions.periodRhSentUpdateRequested({ periodId: item.sourceId, sent: false }));
-    } else {
-      this.store.dispatch(ExceptionalActions.operationRhSentUpdateRequested({ operationId: item.sourceId, sent: false }));
-    }
   }
 
   /** Affiche le nom humain quand il existe, tout en gardant le mail comme identifiant vérifiable. */
@@ -340,7 +307,7 @@ export class HistoryPageComponent implements OnChanges, OnDestroy, OnInit {
       .filter((section) => section.itemCount > 0 || this.isCurrentUser(section.user) || (this.canSelectUser && section.user.id === this.selectedUserId));
 
     this.syncSelectedDetailItem();
-    this.ensureDefaultExpandedState();
+    this.ensureDefaultMonth();
     this.changeDetector.markForCheck();
   }
 
@@ -598,26 +565,23 @@ export class HistoryPageComponent implements OnChanges, OnDestroy, OnInit {
   }
 
   /**
-   * Maintient un seul panneau utilisateur/mois ouvert.
-   *
-   * Après reconstruction des données, l'ancien utilisateur sélectionné peut ne
-   * plus exister ou ne plus avoir d'élément visible ; on retombe alors sur le
-   * profil courant, puis sur le premier bloc disponible.
+   * Ouvre le premier mois lors d'un changement d'utilisateur et conserve ensuite
+   * le choix de déplier ou replier un mois pendant les rafraîchissements.
    */
-  private ensureDefaultExpandedState(): void {
-    if (this.expandedUserId && this.userSections.some((section) => section.user.id === this.expandedUserId)) {
+  private ensureDefaultMonth(): void {
+    if (this.monthContextUserId && this.userSections.some((section) => section.user.id === this.monthContextUserId)) {
       return;
     }
 
     const defaultSection = this.userSections.find((section) => this.isCurrentUser(section.user)) || this.userSections[0];
 
     if (defaultSection) {
-      this.expandedUserId = defaultSection.user.id;
+      this.monthContextUserId = defaultSection.user.id;
       this.expandFirstMonthForUser(defaultSection.user.id);
       return;
     }
 
-    this.expandedUserId = null;
+    this.monthContextUserId = null;
     this.expandedMonthSectionKey = null;
   }
 

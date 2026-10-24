@@ -32,91 +32,69 @@
     }
   </header>
 
-  <div class="user-sections">
+  <div class="history-sections">
     @for (userSection of userSections; track userSection.user.id) {
-      <p-card styleClass="user-section">
-        <button
-          pButton
-          class="section-header user-section-header"
-          [attr.aria-expanded]="isUserExpanded(userSection.user.id)"
-          (click)="toggleUserSection(userSection.user.id)"
-          type="button"
-        >
-          <span class="user-label">{{ userLabel(userSection.user) }}</span>
-          <span class="section-meta">
-            <span class="chevron" [class.expanded]="isUserExpanded(userSection.user.id)" aria-hidden="true"></span>
-            <span>{{ userSection.itemCount }} {{ labels.rh.controls.itemCountDisplayed }}</span>
-          </span>
-        </button>
+      <div class="month-sections">
+        @for (monthSection of userSection.monthSections; track monthSection.monthKey) {
+          <p-card styleClass="month-section">
+            <button
+              pButton
+              class="section-header month-section-header"
+              [attr.aria-expanded]="isMonthExpanded(userSection.user.id, monthSection.monthKey)"
+              (click)="toggleMonthSection(userSection.user.id, monthSection.monthKey)"
+              type="button"
+            >
+              <span class="month-label">{{ monthSection.monthLabel }}</span>
+              <span class="section-meta">
+                <span class="chevron" [class.expanded]="isMonthExpanded(userSection.user.id, monthSection.monthKey)" aria-hidden="true"></span>
+                <span>{{ monthSection.items.length }} {{ labels.rh.controls.itemCount }}</span>
+              </span>
+            </button>
 
-        @if (isUserExpanded(userSection.user.id)) {
-          <div class="month-sections">
-            @for (monthSection of userSection.monthSections; track monthSection.monthKey) {
-              <p-card styleClass="month-section">
-                <button
-                  pButton
-                  class="section-header month-section-header"
-                  [attr.aria-expanded]="isMonthExpanded(userSection.user.id, monthSection.monthKey)"
-                  (click)="toggleMonthSection(userSection.user.id, monthSection.monthKey)"
-                  type="button"
-                >
-                  <span class="month-label">{{ monthSection.monthLabel }}</span>
-                  <span class="section-meta">
-                    <span class="chevron" [class.expanded]="isMonthExpanded(userSection.user.id, monthSection.monthKey)" aria-hidden="true"></span>
-                    <span>{{ monthSection.items.length }} {{ labels.rh.controls.itemCount }}</span>
-                  </span>
-                </button>
-
-                @if (isMonthExpanded(userSection.user.id, monthSection.monthKey)) {
-                  <p-table [value]="monthSection.items" styleClass="history-table summary-table" [tableStyle]="{ 'min-width': '61.25rem' }">
-                    <ng-template pTemplate="header">
-                      <tr>
-                        <th scope="col">{{ labels.common.table.type }}</th>
-                        <th scope="col">{{ labels.common.table.item }}</th>
-                        <th scope="col">{{ labels.common.table.period }}</th>
-                        <th scope="col">{{ labels.common.messages.rhSentAt }}</th>
-                        <th scope="col">{{ labels.common.fields.lines }}</th>
-                        <th scope="col">{{ labels.common.table.actions }}</th>
-                      </tr>
-                    </ng-template>
-                    <ng-template pTemplate="body" let-item>
-                      <tr>
-                        <td>{{ item.type }}</td>
-                        <td>{{ item.title }}</td>
-                        <td>{{ item.period }}</td>
-                        <td class="sent-date">
-                          {{ labels.rh.controls.sentPrefix }} <strong>{{ item.sentToRhLabel }}</strong>
-                          <div>{{ item.treatedAt ? labels.rh.controls.treatedStatus : labels.rh.controls.sentStatus }}</div>
-                        </td>
-                        <td>{{ item.lines.length }}</td>
-                        <td>
-                          <button
-                            pButton
-                            type="button"
-                            class="p-button-sm p-button-outlined p-button-secondary"
-                            (click)="openDetail(item)"
-                          >
-                            <span class="pi pi-eye" aria-hidden="true"></span>
-                            <span>{{ labels.common.actions.consult }}</span>
-                          </button>
-                          @if (canCancelRhSend(item)) {
-                            <p-button [label]="labels.common.actions.cancelRhSend" severity="secondary" [outlined]="true"
-                              (onClick)="cancelRhSend(item)" />
-                          }
-                        </td>
-                      </tr>
-                    </ng-template>
-                  </p-table>
-                }
-              </p-card>
-            } @empty {
-              <div class="empty-state">
-                {{ labels.rh.controls.emptyForUser }}
-              </div>
+            @if (isMonthExpanded(userSection.user.id, monthSection.monthKey)) {
+              <p-table [value]="monthSection.items" styleClass="history-table summary-table" [tableStyle]="{ 'min-width': '61.25rem' }">
+                <ng-template pTemplate="header">
+                  <tr>
+                    <th scope="col">{{ labels.common.table.type }}</th>
+                    <th scope="col">{{ labels.common.table.item }}</th>
+                    <th scope="col">{{ labels.common.table.period }}</th>
+                    <th scope="col">{{ labels.common.messages.rhSentAt }}</th>
+                    <th scope="col">{{ labels.common.fields.lines }}</th>
+                    <th scope="col">{{ labels.common.table.actions }}</th>
+                  </tr>
+                </ng-template>
+                <ng-template pTemplate="body" let-item>
+                  <tr>
+                    <td>{{ item.type }}</td>
+                    <td>{{ item.title }}</td>
+                    <td>{{ item.period }}</td>
+                    <td class="sent-date">
+                      {{ labels.rh.controls.sentPrefix }} <strong>{{ item.sentToRhLabel }}</strong>
+                      <div>{{ item.treatedAt ? labels.rh.controls.treatedStatus : labels.rh.controls.sentStatus }}</div>
+                    </td>
+                    <td>{{ item.lines.length }}</td>
+                    <td>
+                      <button
+                        pButton
+                        type="button"
+                        class="p-button-sm p-button-outlined p-button-secondary"
+                        (click)="openDetail(item)"
+                      >
+                        <span class="pi pi-eye" aria-hidden="true"></span>
+                        <span>{{ labels.common.actions.consult }}</span>
+                      </button>
+                    </td>
+                  </tr>
+                </ng-template>
+              </p-table>
             }
+          </p-card>
+        } @empty {
+          <div class="empty-state">
+            {{ labels.rh.controls.emptyForUser }}
           </div>
         }
-      </p-card>
+      </div>
     } @empty {
       <div class="empty-state">
         {{ labels.rh.controls.emptyGlobal }}

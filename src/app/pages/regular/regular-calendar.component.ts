@@ -115,9 +115,10 @@ export class RegularCalendarComponent implements OnDestroy {
     });
 
     effect(() => {
-      this.periods = this.regularPeriods().filter(period => !isArchivedOperation(period));
-      if (this.editingPeriodId && !this.periods.some(period => period.id === this.editingPeriodId)) this.closePeriodModal();
-      if (this.interventionPeriodId && !this.periods.some(period => period.id === this.interventionPeriodId)) this.closeInterventionModal();
+      // Sent periods remain as calendar context, but are no longer editable.
+      this.periods = this.regularPeriods().filter(period => !period.treatedAt);
+      if (this.editingPeriodId && !this.periods.some(period => period.id === this.editingPeriodId && !isArchivedOperation(period))) this.closePeriodModal();
+      if (this.interventionPeriodId && !this.periods.some(period => period.id === this.interventionPeriodId && !isArchivedOperation(period))) this.closeInterventionModal();
     });
 
     effect(() => {
@@ -212,6 +213,7 @@ export class RegularCalendarComponent implements OnDestroy {
   }
 
   openEditPeriodModal(period: RegularOnCallPeriod): void {
+    if (isArchivedOperation(period) || isArchivedOperation(this.periods.find(current => current.id === period.id) || period)) return;
     this.editingPeriodId = period.id;
     this.periodForm = {
       directionId: period.directionId || "",
@@ -282,6 +284,7 @@ export class RegularCalendarComponent implements OnDestroy {
       startDate: intervention.startDate,
       endDate: intervention.endDate,
       comment: intervention.comment || "",
+      ticket: intervention.ticket || "",
     };
     this.isInterventionModalOpen = true;
   }
@@ -358,6 +361,11 @@ export class RegularCalendarComponent implements OnDestroy {
       return;
     }
 
+    if (!form.ticket?.trim()) {
+      this.interventionError = this.labels.common.messages.ticketRequired;
+      return;
+    }
+
     const existingIntervention = this.editingInterventionId
       ? this.interventions.find((intervention) => intervention.id === this.editingInterventionId)
       : undefined;
@@ -365,7 +373,7 @@ export class RegularCalendarComponent implements OnDestroy {
     this.store.dispatch(RegularActions.interventionSaveRequested({
       editingInterventionId: this.editingInterventionId,
       existingIntervention,
-      form,
+      form: { ...form, ticket: form.ticket.trim() },
       parentPeriod,
     }));
     this.closeInterventionModal();
@@ -474,6 +482,7 @@ export class RegularCalendarComponent implements OnDestroy {
       startDate: this.toDateTimeLocal(startDate),
       endDate: this.toDateTimeLocal(endDate),
       comment: "",
+      ticket: "",
     };
   }
 
@@ -489,6 +498,7 @@ export class RegularCalendarComponent implements OnDestroy {
       startDate,
       endDate,
       comment: "",
+      ticket: "",
     };
   }
 
