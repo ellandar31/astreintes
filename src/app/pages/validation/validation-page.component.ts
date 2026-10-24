@@ -28,7 +28,7 @@ import {
 import { SettingsActions } from "../../state/settings/settings.actions";
 import { selectSettingsDirections, selectSettingsMessage, selectSettingsUsers } from "../../state/settings/settings.selectors";
 import { StoreAuthUser } from "../../store/app-store";
-import { ExceptionalOperation } from "../exceptionnel/exceptional.models";
+import { ExceptionalOperation } from "../../types/exceptional.models";
 import { RegularIntervention, RegularOnCallPeriod } from "../regular/regular.models";
 import { ValidationConsultationModalComponent } from "./validation-consultation-modal.component";
 import { AppUser, ValidationItem, ValidationSection, ValidationSectionId, VisaProgressItem } from "./validation.models";

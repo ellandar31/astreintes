@@ -5,7 +5,7 @@ import { MockStore, provideMockStore } from "@ngrx/store/testing";
 import { selectExceptionalOperations, selectExceptionalError } from "../../state/exceptional/exceptional.selectors";
 import { selectRegularInterventions, selectRegularPeriods, selectRegularPublicHolidays, selectRegularError } from "../../state/regular/regular.selectors";
 import { selectSettingsRhCompensation, selectSettingsUsers } from "../../state/settings/settings.selectors";
-import { RhControlsComponent } from "./rh-controls.component";
+import { HistoryPageComponent } from "./history-page.component";
 import { RegularActions } from "../../state/regular/regular.actions";
 
 const users = [
@@ -15,7 +15,7 @@ const users = [
 
 describe("Sélecteur utilisateur des contrôles RH", () => {
   it("keeps archived items in History, cancels an untreated send, and closes the detail when returned to validation", () => {
-    const fixture = TestBed.createComponent(RhControlsComponent);
+    const fixture = TestBed.createComponent(HistoryPageComponent);
     fixture.componentRef.setInput('currentUser', { uid: 'auth-id', email: users[0].email, displayName: 'Responsable' });
     fixture.detectChanges();
     const view = fixture.componentInstance;
@@ -44,7 +44,7 @@ describe("Sélecteur utilisateur des contrôles RH", () => {
     expect(view.selectedDetailItem).toBeNull();
   });
   beforeEach(async () => {
-    await TestBed.configureTestingModule({ imports: [RhControlsComponent], providers: [
+    await TestBed.configureTestingModule({ imports: [HistoryPageComponent], providers: [
       provideNoopAnimations(), provideMockStore({ selectors: [
         { selector: selectSettingsUsers, value: users },
         { selector: selectRegularError, value: "" },
@@ -64,11 +64,11 @@ describe("Sélecteur utilisateur des contrôles RH", () => {
     const store = TestBed.inject(MockStore);
     store.overrideSelector(selectSettingsUsers, [{ ...users[0], role }, users[1]]);
     store.refreshState();
-    const fixture = TestBed.createComponent(RhControlsComponent);
+    const fixture = TestBed.createComponent(HistoryPageComponent);
     fixture.componentRef.setInput('currentUser', { uid: 'auth-id', email: users[0].email, displayName: 'Responsable' });
     fixture.detectChanges();
     const view = fixture.componentInstance;
-    expect(fixture.nativeElement.querySelector('#rh-controls-selected-user')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('#history-selected-user')).not.toBeNull();
     expect(view.selectedUserId).toBe('7');
     expect(view.userSections.map(section => section.user.id)).toEqual(['7']);
     view.selectUser('8');
@@ -87,7 +87,7 @@ describe("Sélecteur utilisateur des contrôles RH", () => {
     const store = TestBed.inject(MockStore);
     store.overrideSelector(selectSettingsUsers, [{ ...users[0], role: 1 }, users[1]]);
     store.refreshState();
-    const fixture = TestBed.createComponent(RhControlsComponent);
+    const fixture = TestBed.createComponent(HistoryPageComponent);
     fixture.componentRef.setInput('currentUser', { uid: 'auth-id', email: users[0].email, displayName: 'Responsable' });
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('p-select')).toBeNull();
@@ -114,7 +114,7 @@ describe("Sélecteur utilisateur des contrôles RH", () => {
     ];
     store.overrideSelector(selectExceptionalOperations, operations);
     store.refreshState();
-    const fixture = TestBed.createComponent(RhControlsComponent);
+    const fixture = TestBed.createComponent(HistoryPageComponent);
     fixture.componentRef.setInput('currentUser', { uid: 'auth-id', email: users[0].email, displayName: 'Responsable' });
     fixture.detectChanges();
     const view = fixture.componentInstance;

@@ -3,19 +3,19 @@
   min-width: 0;
 }
 
-:host ::ng-deep .rh-panel .p-card-body {
+:host ::ng-deep .history-panel .p-card-body {
   display: grid;
   gap: var(--app-space-2xl);
   padding: var(--app-space-2xl);
 }
 
-:host ::ng-deep .rh-panel .p-card-content {
+:host ::ng-deep .history-panel .p-card-content {
   display: grid;
   gap: var(--app-space-2xl);
   padding: 0;
 }
 
-.rh-panel-header {
+.history-panel-header {
   align-items: end;
   display: flex;
   flex-wrap: wrap;
@@ -23,7 +23,7 @@
   justify-content: space-between;
 }
 
-.rh-panel-header h2 {
+.history-panel-header h2 {
   color: var(--app-color-heading);
   margin: 0;
 }

@@ -1,4 +1,4 @@
-import { OperationModalComponent } from "../pages/exceptionnel/operation-modal.component";
+import { OperationModalComponent } from "../pages/exceptional-common/operation-modal.component";
 import { RegularPeriodModalComponent } from "../pages/regular/regular-period-modal.component";
 import { isUserAssignable } from "./user-availability";
 

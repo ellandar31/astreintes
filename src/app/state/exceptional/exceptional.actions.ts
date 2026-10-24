@@ -4,7 +4,7 @@ import {
   ExceptionalIntervention,
   ExceptionalOperation,
   SelectableUser,
-} from "../../pages/exceptionnel/exceptional.models";
+} from "../../types/exceptional.models";
 
 export const ExceptionalActions = createActionGroup({
   source: "Exceptional",

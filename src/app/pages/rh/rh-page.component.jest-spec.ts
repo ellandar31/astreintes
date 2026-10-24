@@ -20,7 +20,7 @@ describe("RH export navigation", () => {
     fixture.componentRef.setInput("user", null);
     fixture.detectChanges();
     expect(fixture.componentInstance.visibleSections().map(section => section.id)).toEqual(["exports", "periodExports"]);
-    expect(fixture.nativeElement.querySelector("app-rh-controls")).toBeNull();
+    expect(fixture.nativeElement.querySelector("app-history-page")).toBeNull();
     expect(fixture.nativeElement.querySelector("app-rh-exports")).not.toBeNull();
     fixture.componentInstance.setSection("periodExports");
     fixture.detectChanges();

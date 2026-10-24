@@ -1,2 +1,2 @@
 // Compatibility export: shared models have one definition in types/.
-export * from "../../types/rh-control-detail.models";
+export * from "../../types/history.models";

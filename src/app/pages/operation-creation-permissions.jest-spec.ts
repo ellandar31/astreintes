@@ -10,7 +10,7 @@ import { selectCanCreateOperations, selectCanEditPlanning, selectCurrentApplicat
 import { ExceptionalActions } from "../state/exceptional/exceptional.actions";
 import { RegularActions } from "../state/regular/regular.actions";
 import { ExceptionalOperation, RegularOnCallPeriod } from "../types";
-import { ExceptionalOperationsComponent } from "./exceptionnel/exceptional-operations.component";
+import { ExceptionalOperationsComponent } from "./exceptional-common/exceptional-operations.component";
 import { RegularCalendarComponent } from "./regular/regular-calendar.component";
 
 const period: RegularOnCallPeriod = {

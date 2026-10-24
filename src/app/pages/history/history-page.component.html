@@ -1,17 +1,17 @@
-<p-card styleClass="rh-panel" [attr.aria-labelledby]="'rh-controls-title'">
+<p-card styleClass="history-panel" [attr.aria-labelledby]="'history-title'">
   @if (regularError() || exceptionalError()) {
     <p-message severity="error" [text]="regularError() || exceptionalError()" />
   }
-  <header class="rh-panel-header">
+  <header class="history-panel-header">
     <div>
       <p class="eyebrow">{{ labels.rh.controls.eyebrow }}</p>
-      <h2 id="rh-controls-title">{{ labels.rh.controls.title }}</h2>
+      <h2 id="history-title">{{ labels.rh.controls.title }}</h2>
     </div>
     @if (canSelectUser) {
-      <label class="user-filter" for="rh-controls-selected-user">
+      <label class="user-filter" for="history-selected-user">
         {{ labels.common.users.user }}
         <p-select
-          inputId="rh-controls-selected-user"
+          inputId="history-selected-user"
           [options]="users"
           [ngModel]="selectedUserId"
           (ngModelChange)="selectUser($event)"
@@ -68,7 +68,7 @@
                 </button>
 
                 @if (isMonthExpanded(userSection.user.id, monthSection.monthKey)) {
-                  <p-table [value]="monthSection.items" styleClass="rh-table summary-table" [tableStyle]="{ 'min-width': '61.25rem' }">
+                  <p-table [value]="monthSection.items" styleClass="history-table summary-table" [tableStyle]="{ 'min-width': '61.25rem' }">
                     <ng-template pTemplate="header">
                       <tr>
                         <th scope="col">{{ labels.common.table.type }}</th>
@@ -126,5 +126,5 @@
 </p-card>
 
 @if (selectedDetailItem) {
-  <app-rh-control-detail-modal [item]="selectedDetailItem" (closed)="closeDetail()"></app-rh-control-detail-modal>
+  <app-history-detail-modal [item]="selectedDetailItem" (closed)="closeDetail()"></app-history-detail-modal>
 }

@@ -25,9 +25,9 @@ ils sont inventoriés ci-dessous, mais ne doivent pas devenir des contrats parta
 | --- | --- |
 | [database.models.ts](../src/app/types/database.models.ts) | `JsonRecord`, `RelationalTable` |
 | [exceptional.models.ts](../src/app/types/exceptional.models.ts) | `ExceptionalOperationType`, `SortField`, `SortDirection`, `ModalMode`, `FilterField`, `OperationParticipant`, `SelectableUser`, `ExceptionalIntervention`, `ExceptionalOperation`, `ExceptionalOperationForm`, `ExceptionalInterventionForm` |
+| [history.models.ts](../src/app/types/history.models.ts) | `HistoryDetailLine`, `HistoryDetailItem` |
 | [persistence.models.ts](../src/app/types/persistence.models.ts) | `RegularPeriodUpdate`, `RegularInterventionUpdate`, `ExceptionalOperationUpdate`, `StoreAuthUser`, `StoreError`, `StoreUnsubscribe`, `DomainObserver` |
 | [regular.models.ts](../src/app/types/regular.models.ts) | `RegularTeam`, `RegularUser`, `RegularOnCallPeriod`, `RegularOnCallPeriodForm`, `RegularIntervention`, `RegularInterventionForm`, `RegularPublicHoliday` |
-| [rh-control-detail.models.ts](../src/app/types/rh-control-detail.models.ts) | `RhControlDetailLine`, `RhControlDetailItem` |
 | [rh-export.models.ts](../src/app/types/rh-export.models.ts) | `ExportTemplateId`, `RhExportPeriod`, `RhPeriodExportOperations`, `CalculationSegment`, `ExportOperation`, `RhExportContext`, `OnCallCompensationRow`, `InterventionCompensationRow` |
 | [rh.models.ts](../src/app/types/rh.models.ts) | `RhSection`, `RhUser`, `RhRegularPeriod`, `RhPublicHoliday`, `RhExceptionalIntervention`, `RhExceptionalOperation`, `RhControlRow` |
 | [settings.models.ts](../src/app/types/settings.models.ts) | `SettingsSection`, `ScheduleDay`, `Team`, `ScheduleRule`, `PublicHoliday`, `OnCallCompensationRule`, `PeriodCompensationRule`, `RhCompensationSettings`, `Direction` |
@@ -40,8 +40,8 @@ ils sont inventoriés ci-dessous, mais ne doivent pas devenir des contrats parta
 | Fichier propriétaire | Types |
 | --- | --- |
 | [src/app/app.component.ts](../src/app/app.component.ts) | `TabId`, `ModalView` |
+| [src/app/pages/history/history-page.component.ts](../src/app/pages/history/history-page.component.ts) | `HistoryRegularIntervention`, `HistoryUserSection`, `HistoryMonthSection` |
 | [src/app/pages/regular/regular-calendar.component.ts](../src/app/pages/regular/regular-calendar.component.ts) | `CalendarDay` |
-| [src/app/pages/rh/rh-controls.component.ts](../src/app/pages/rh/rh-controls.component.ts) | `RhRegularIntervention`, `RhUserControlSection`, `RhMonthControlSection` |
 | [src/app/pages/rh/rh-exports.component.ts](../src/app/pages/rh/rh-exports.component.ts) | `RegularInterventionExport` |
 | [src/app/shared/modal.component.ts](../src/app/shared/modal.component.ts) | `ModalSize` |
 | [src/app/state/app.state.ts](../src/app/state/app.state.ts) | `AppState` |

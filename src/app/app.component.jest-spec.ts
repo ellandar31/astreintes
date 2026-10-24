@@ -5,9 +5,9 @@ import { provideNoopAnimations } from "@angular/platform-browser/animations";
 import { MockStore, provideMockStore } from "@ngrx/store/testing";
 import { AppComponent } from "./app.component";
 import { APP_LABELS } from "./i18n/labels";
-import { ExceptionalOperationsComponent } from "./pages/exceptionnel/exceptional-operations.component";
+import { ExceptionalOperationsComponent } from "./pages/exceptional-common/exceptional-operations.component";
 import { RegularCalendarComponent } from "./pages/regular/regular-calendar.component";
-import { RhControlsComponent } from "./pages/rh/rh-controls.component";
+import { HistoryPageComponent } from "./pages/history/history-page.component";
 import { SettingsPageComponent } from "./pages/settings/settings-page.component";
 import { selectCanCreateOperations, selectCanOpenSettings, selectCanEditPlanning, selectCurrentApplicationUser, selectOperationInitiators } from "./state/settings/settings.selectors";
 import { createEmptyVisa } from "./shared/visa.models";
@@ -22,7 +22,7 @@ class RegularCalendarStubComponent { }
 @Component({ selector: "app-settings-page", standalone: true, template: "" })
 class SettingsPageStubComponent { }
 
-@Component({ selector: "app-rh-controls", standalone: true, template: "History" })
+@Component({ selector: "app-history-page", standalone: true, template: "History" })
 class HistoryStubComponent { @Input() currentUser: unknown; }
 
 const emptyVisa = createEmptyVisa();
@@ -61,7 +61,7 @@ describe("Separate exceptional navigation", () => {
         { selector: selectExceptionalError, value: "" },
       ] })],
     }).overrideComponent(AppComponent, {
-      remove: { imports: [RegularCalendarComponent, SettingsPageComponent, RhControlsComponent] },
+      remove: { imports: [RegularCalendarComponent, SettingsPageComponent, HistoryPageComponent] },
       add: { imports: [RegularCalendarStubComponent, SettingsPageStubComponent, HistoryStubComponent] },
     }).compileComponents();
   });
@@ -81,7 +81,7 @@ describe("Separate exceptional navigation", () => {
       .find(button => button.textContent?.trim() === APP_LABELS.app.tabs.history)!;
     history.click();
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector("app-rh-controls")).not.toBeNull();
+    expect(fixture.nativeElement.querySelector("app-history-page")).not.toBeNull();
     expect(fixture.nativeElement.querySelector("app-rh-page")).toBeNull();
     expect(history.getAttribute("aria-current")).toBe("page");
   });

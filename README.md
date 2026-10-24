@@ -23,6 +23,7 @@ typée par domaine ; les repositories Supabase renvoient directement les objets
 métier, sans conversion intermédiaire en documents.
 
 - [Architecture de persistance](src/app/store/relational/README.md)
+- [Organisation des pages selon le bandeau](src/app/pages/README.md)
 - [Règles de droits, validation et contrôles RH](docs/access-rules.md)
 - [Catalogue des types et règles de maintenance](docs/type-catalog.md)
 - [Séparation SQL des astreintes et travaux supplémentaires](docs/exceptional-database-split.md)

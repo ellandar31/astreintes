@@ -1,5 +1,5 @@
 import { createReducer, on } from "@ngrx/store";
-import { ExceptionalOperation, SelectableUser } from "../../pages/exceptionnel/exceptional.models";
+import { ExceptionalOperation, SelectableUser } from "../../types/exceptional.models";
 import { ExceptionalActions } from "./exceptional.actions";
 
 export interface ExceptionalState {

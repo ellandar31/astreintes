@@ -30,19 +30,19 @@ import {
   OnCallCompensationRow,
   PeriodCompensationRule,
   RhExportContext,
-} from "./export-libraries/rh-export.models";
-import { RhExportCalculationLibrary } from "./export-libraries/rh-export-calculations";
-import { formatRange } from "./export-libraries/rh-export-utils";
-import { RhControlDetailModalComponent } from "./rh-control-detail-modal.component";
-import { RhControlDetailItem, RhControlDetailLine } from "./rh-control-detail.models";
+} from "../rh/export-libraries/rh-export.models";
+import { RhExportCalculationLibrary } from "../rh/export-libraries/rh-export-calculations";
+import { formatRange } from "../rh/export-libraries/rh-export-utils";
+import { HistoryDetailModalComponent } from "./history-detail-modal.component";
+import { HistoryDetailItem, HistoryDetailLine } from "./history.models";
 import {
   RhExceptionalOperation,
   RhPublicHoliday,
   RhRegularPeriod,
   RhUser,
-} from "./rh.models";
+} from "../../types/rh.models";
 
-interface RhRegularIntervention {
+interface HistoryRegularIntervention {
   id: string;
   periodId: string;
   teamId: string;
@@ -55,20 +55,20 @@ interface RhRegularIntervention {
   agentVisa?: SignatureVisa;
 }
 
-interface RhUserControlSection {
+interface HistoryUserSection {
   user: RhUser;
   itemCount: number;
-  monthSections: RhMonthControlSection[];
+  monthSections: HistoryMonthSection[];
 }
 
-interface RhMonthControlSection {
+interface HistoryMonthSection {
   monthKey: string;
   monthLabel: string;
-  items: RhControlDetailItem[];
+  items: HistoryDetailItem[];
 }
 
 /**
- * Vue de contrôle RH.
+ * Historique des opérations envoyées aux RH et traitées.
  *
  * Cette page est volontairement plus proche d'un read-model que d'un écran CRUD :
  * elle agrège des astreintes régulières, opérations exceptionnelles, interventions,
@@ -78,27 +78,27 @@ interface RhMonthControlSection {
  * template Angular.
  */
 @Component({
-  selector: "app-rh-controls",
+  selector: "app-history-page",
   standalone: true,
-  imports: [ButtonModule, CardModule, CommonModule, FormsModule, SelectModule, RhControlDetailModalComponent, TableModule, MessageModule],
-  templateUrl: "./rh-controls.component.html",
-  styleUrl: "./rh-controls.component.css",
+  imports: [ButtonModule, CardModule, CommonModule, FormsModule, SelectModule, HistoryDetailModalComponent, TableModule, MessageModule],
+  templateUrl: "./history-page.component.html",
+  styleUrl: "./history-page.component.css",
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class RhControlsComponent implements OnChanges, OnDestroy, OnInit {
+export class HistoryPageComponent implements OnChanges, OnDestroy, OnInit {
   @Input({ required: true }) currentUser: StoreAuthUser | null = null;
   readonly labels = APP_LABELS;
 
   users: RhUser[] = [];
   selectedUserId = "";
   regularPeriods: RhRegularPeriod[] = [];
-  regularInterventions: RhRegularIntervention[] = [];
+  regularInterventions: HistoryRegularIntervention[] = [];
   publicHolidays: RhPublicHoliday[] = [];
   exceptionalOperations: RhExceptionalOperation[] = [];
-  selectedDetailItem: RhControlDetailItem | null = null;
+  selectedDetailItem: HistoryDetailItem | null = null;
   expandedMonthSectionKey: string | null = null;
   expandedUserId: string | null = null;
-  userSections: RhUserControlSection[] = [];
+  userSections: HistoryUserSection[] = [];
 
   onCallCompensationRules: OnCallCompensationRule[] = [
     { id: "week", label: APP_LABELS.rh.rules.week, coefficient: 0 },
@@ -142,7 +142,7 @@ export class RhControlsComponent implements OnChanges, OnDestroy, OnInit {
     });
 
     effect(() => {
-      this.regularInterventions = this.regularInterventionsSignal() as RhRegularIntervention[];
+      this.regularInterventions = this.regularInterventionsSignal() as HistoryRegularIntervention[];
       this.rebuildControlSections();
     });
 
@@ -249,7 +249,7 @@ export class RhControlsComponent implements OnChanges, OnDestroy, OnInit {
   }
 
   /** Ouvre le détail figé d'une ligne RH pour exposer le calcul qui justifie le coefficient affiché. */
-  openDetail(item: RhControlDetailItem): void {
+  openDetail(item: HistoryDetailItem): void {
     this.selectedDetailItem = item;
   }
 
@@ -259,7 +259,7 @@ export class RhControlsComponent implements OnChanges, OnDestroy, OnInit {
   }
 
   /** Returning an operation to validation is restricted to its existing RH management roles. */
-  canCancelRhSend(item: RhControlDetailItem): boolean {
+  canCancelRhSend(item: HistoryDetailItem): boolean {
     if (!(this.currentProfile?.role === 0 || hasDirectorRights(this.currentProfile?.role))) return false;
     const source = item.sourceCollection === "regularOnCallPeriods"
       ? this.regularPeriods.find(period => period.id === item.sourceId)
@@ -267,7 +267,7 @@ export class RhControlsComponent implements OnChanges, OnDestroy, OnInit {
     return Boolean(source?.sentToRhAt && !source.treatedAt);
   }
 
-  cancelRhSend(item: RhControlDetailItem): void {
+  cancelRhSend(item: HistoryDetailItem): void {
     if (!item.sourceId || !this.canCancelRhSend(item)) return;
     if (item.sourceCollection === "regularOnCallPeriods") {
       this.store.dispatch(RegularActions.periodRhSentUpdateRequested({ periodId: item.sourceId, sent: false }));
@@ -303,7 +303,7 @@ export class RhControlsComponent implements OnChanges, OnDestroy, OnInit {
     const visibleUsers = this.visibleUsers;
     const calculator = new RhExportCalculationLibrary(this.exportContext());
     const regularInterventionsByPeriod = this.regularInterventionsByPeriod();
-    const userItems = new Map<string, RhControlDetailItem[]>();
+    const userItems = new Map<string, HistoryDetailItem[]>();
     const monthKeys = new Set<string>();
 
     visibleUsers.forEach((user) => {
@@ -354,8 +354,8 @@ export class RhControlsComponent implements OnChanges, OnDestroy, OnInit {
   private allItemsForUser(
     user: RhUser,
     calculator: RhExportCalculationLibrary,
-    regularInterventionsByPeriod: Map<string, RhRegularIntervention[]>,
-  ): RhControlDetailItem[] {
+    regularInterventionsByPeriod: Map<string, HistoryRegularIntervention[]>,
+  ): HistoryDetailItem[] {
     return [
       ...this.regularControlItems(user, calculator, regularInterventionsByPeriod),
       ...this.exceptionalControlItems(user, calculator),
@@ -371,8 +371,8 @@ export class RhControlsComponent implements OnChanges, OnDestroy, OnInit {
   private regularControlItems(
     user: RhUser,
     calculator: RhExportCalculationLibrary,
-    regularInterventionsByPeriod: Map<string, RhRegularIntervention[]>,
-  ): RhControlDetailItem[] {
+    regularInterventionsByPeriod: Map<string, HistoryRegularIntervention[]>,
+  ): HistoryDetailItem[] {
     return this.regularPeriods
       .filter(isArchivedOperation)
       // Les astreintes régulières sans initiateur restent personnelles pour le profil initiateur.
@@ -421,7 +421,7 @@ export class RhControlsComponent implements OnChanges, OnDestroy, OnInit {
    * Une opération peut concerner plusieurs agents sur des périodes différentes ;
    * le contrôle RH doit isoler ce qui impacte le bulletin d'une personne donnée.
    */
-  private exceptionalControlItems(user: RhUser, calculator: RhExportCalculationLibrary): RhControlDetailItem[] {
+  private exceptionalControlItems(user: RhUser, calculator: RhExportCalculationLibrary): HistoryDetailItem[] {
     return this.exceptionalOperations
       .filter(isArchivedOperation)
       .filter(operation => this.canControlExceptionalOperation(operation))
@@ -464,7 +464,7 @@ export class RhControlsComponent implements OnChanges, OnDestroy, OnInit {
    * Ce modèle commun est partagé par les exports Excel et par la page
    * de contrôle afin d'éviter deux interprétations concurrentes des mêmes règles.
    */
-  private regularExportOperation(period: RhRegularPeriod, periodInterventions: RhRegularIntervention[]): ExportOperation {
+  private regularExportOperation(period: RhRegularPeriod, periodInterventions: HistoryRegularIntervention[]): ExportOperation {
     const interventions = periodInterventions
       .filter((intervention) => this.matchesRegularPeriodUser(intervention, period))
       .sort((first, second) => first.startDate.localeCompare(second.startDate));
@@ -552,7 +552,7 @@ export class RhControlsComponent implements OnChanges, OnDestroy, OnInit {
     };
   }
 
-  private onCallLine(row: OnCallCompensationRow, calculator: RhExportCalculationLibrary, id: string): RhControlDetailLine {
+  private onCallLine(row: OnCallCompensationRow, calculator: RhExportCalculationLibrary, id: string): HistoryDetailLine {
     return {
       id,
       nature: this.labels.rh.controls.types.onCall,
@@ -564,7 +564,7 @@ export class RhControlsComponent implements OnChanges, OnDestroy, OnInit {
     };
   }
 
-  private interventionLine(row: InterventionCompensationRow, calculator: RhExportCalculationLibrary, id: string, nature: string): RhControlDetailLine {
+  private interventionLine(row: InterventionCompensationRow, calculator: RhExportCalculationLibrary, id: string, nature: string): HistoryDetailLine {
     return {
       id,
       nature,
@@ -585,7 +585,7 @@ export class RhControlsComponent implements OnChanges, OnDestroy, OnInit {
     };
   }
 
-  private matchesRegularPeriodUser(intervention: RhRegularIntervention, period: RhRegularPeriod): boolean {
+  private matchesRegularPeriodUser(intervention: HistoryRegularIntervention, period: RhRegularPeriod): boolean {
     return intervention.userId === period.userId || Boolean(intervention.userEmail && intervention.userEmail === period.userEmail);
   }
 
@@ -630,13 +630,13 @@ export class RhControlsComponent implements OnChanges, OnDestroy, OnInit {
    * Indexe les interventions pour éviter un scan complet à chaque astreinte.
    * Cet index est local au read-model RH et ne modifie pas la forme de stockage.
    */
-  private regularInterventionsByPeriod(): Map<string, RhRegularIntervention[]> {
+  private regularInterventionsByPeriod(): Map<string, HistoryRegularIntervention[]> {
     return this.regularInterventions.reduce((index, intervention) => {
       const interventions = index.get(intervention.periodId) || [];
       interventions.push(intervention);
       index.set(intervention.periodId, interventions);
       return index;
-    }, new Map<string, RhRegularIntervention[]>());
+    }, new Map<string, HistoryRegularIntervention[]>());
   }
 
   /**

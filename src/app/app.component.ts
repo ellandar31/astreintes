@@ -10,11 +10,12 @@ import { PasswordModule } from "primeng/password";
 import { ProgressSpinnerModule } from "primeng/progressspinner";
 import { TooltipModule } from "primeng/tooltip";
 import { APP_LABELS } from "./i18n/labels";
-import { ExceptionalOperationsComponent } from "./pages/exceptionnel/exceptional-operations.component";
+import { ExceptionalOnCallPageComponent } from "./pages/exceptional-on-call/exceptional-on-call-page.component";
+import { ExceptionalWorkPageComponent } from "./pages/exceptional-work/exceptional-work-page.component";
 import { ProfilePageComponent } from "./pages/profile/profile-page.component";
 import { RegularCalendarComponent } from "./pages/regular/regular-calendar.component";
 import { RhPageComponent } from "./pages/rh/rh-page.component";
-import { RhControlsComponent } from "./pages/rh/rh-controls.component";
+import { HistoryPageComponent } from "./pages/history/history-page.component";
 import { SettingsPageComponent } from "./pages/settings/settings-page.component";
 import { ValidationPageComponent } from "./pages/validation/validation-page.component";
 import { ModalComponent } from "./shared/modal.component";
@@ -46,7 +47,8 @@ type ModalView = "profile" | "settings";
     CommonModule,
     ButtonModule,
     CardModule,
-    ExceptionalOperationsComponent,
+    ExceptionalOnCallPageComponent,
+    ExceptionalWorkPageComponent,
     FormsModule,
     InputTextModule,
     MessageModule,
@@ -56,7 +58,7 @@ type ModalView = "profile" | "settings";
     ProgressSpinnerModule,
     RegularCalendarComponent,
     RhPageComponent,
-    RhControlsComponent,
+    HistoryPageComponent,
     SettingsPageComponent,
     TooltipModule,
     ValidationPageComponent,

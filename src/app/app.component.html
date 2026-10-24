@@ -57,15 +57,15 @@
     @if (activeTab === "regular") {
       <app-regular-calendar></app-regular-calendar>
     } @else if (activeTab === "exceptionalOnCall") {
-      <app-exceptional-operations [user]="user()" operationType="astreinte"></app-exceptional-operations>
+      <app-exceptional-on-call-page [user]="user()"></app-exceptional-on-call-page>
     } @else if (activeTab === "exceptionalWork") {
-      <app-exceptional-operations [user]="user()" operationType="travaux"></app-exceptional-operations>
+      <app-exceptional-work-page [user]="user()"></app-exceptional-work-page>
     } @else if (activeTab === "validation") {
       <app-validation-page [user]="user()"></app-validation-page>
     } @else if (activeTab === "rh") {
       <app-rh-page [user]="user()"></app-rh-page>
     } @else if (activeTab === "history") {
-      <app-rh-controls [currentUser]="user()"></app-rh-controls>
+      <app-history-page [currentUser]="user()"></app-history-page>
     }
 
     @if (modalView === "profile") {

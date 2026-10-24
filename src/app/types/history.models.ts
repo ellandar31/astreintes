@@ -1,4 +1,4 @@
-export interface RhControlDetailLine {
+export interface HistoryDetailLine {
   id: string;
   nature: string;
   label: string;
@@ -9,7 +9,7 @@ export interface RhControlDetailLine {
   details: string;
 }
 
-export interface RhControlDetailItem {
+export interface HistoryDetailItem {
   sourceId?: string;
   sourceCollection?: "regularOnCallPeriods" | "exceptionalOperations";
   treatedAt?: string;
@@ -19,5 +19,5 @@ export interface RhControlDetailItem {
   sentToRhAt: unknown;
   sentToRhLabel: string;
   period: string;
-  lines: RhControlDetailLine[];
+  lines: HistoryDetailLine[];
 }

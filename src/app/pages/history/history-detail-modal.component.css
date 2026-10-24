@@ -34,7 +34,7 @@
   font-weight: 800;
 }
 
-:host ::ng-deep .rh-table pre {
+:host ::ng-deep .history-table pre {
   color: var(--app-color-subtle);
   font-family: inherit;
   font-size: 0.82rem;

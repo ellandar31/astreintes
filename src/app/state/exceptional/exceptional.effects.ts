@@ -3,7 +3,7 @@ import { Actions, createEffect, ofType } from "@ngrx/effects";
 import { Observable, catchError, concatMap, from, map, merge, of, switchMap, takeUntil } from "rxjs";
 import {
   SelectableUser,
-} from "../../pages/exceptionnel/exceptional.models";
+} from "../../types/exceptional.models";
 import { appStore } from "../../store/app-store";
 import { ExceptionalActions } from "./exceptional.actions";
 

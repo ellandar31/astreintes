@@ -3,21 +3,21 @@ import { Component, EventEmitter, Input, Output } from "@angular/core";
 import { TableModule } from "primeng/table";
 import { APP_LABELS } from "../../i18n/labels";
 import { ModalComponent } from "../../shared/modal.component";
-import { RhControlDetailItem, RhControlDetailLine } from "./rh-control-detail.models";
+import { HistoryDetailItem, HistoryDetailLine } from "./history.models";
 
 @Component({
-  selector: "app-rh-control-detail-modal",
+  selector: "app-history-detail-modal",
   standalone: true,
   imports: [CommonModule, ModalComponent, TableModule],
-  templateUrl: "./rh-control-detail-modal.component.html",
-  styleUrl: "./rh-control-detail-modal.component.css",
+  templateUrl: "./history-detail-modal.component.html",
+  styleUrl: "./history-detail-modal.component.css",
 })
-export class RhControlDetailModalComponent {
-  @Input({ required: true }) item!: RhControlDetailItem;
+export class HistoryDetailModalComponent {
+  @Input({ required: true }) item!: HistoryDetailItem;
   @Output() closed = new EventEmitter<void>();
   readonly labels = APP_LABELS;
 
-  formatLineTotal(line: RhControlDetailLine): string {
+  formatLineTotal(line: HistoryDetailLine): string {
     return `${this.formatNumber(line.hours)} h x ${this.formatNumber(line.coefficient)}`;
   }
 

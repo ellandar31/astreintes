@@ -7,7 +7,7 @@ export type * from "./user.models";
 export type * from "./persistence.models";
 export type * from "./database.models";
 export type * from "./rh.models";
-export type * from "./rh-control-detail.models";
+export type * from "./history.models";
 export type * from "./validation.models";
 export type { ExportTemplateId, CalculationSegment, ExportOperation, RhExportContext, OnCallCompensationRow, InterventionCompensationRow } from "./rh-export.models";
 export type { RhExportPeriod, RhPeriodExportOperations } from "./rh-export.models";
