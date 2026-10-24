@@ -11,7 +11,7 @@ import { hasDirectorRights } from "../../shared/user-role-permissions";
 import { CommonModule } from "@angular/common";
 import { Component, Input, OnDestroy, computed, effect, inject, signal } from "@angular/core";
 import { ButtonModule } from "primeng/button";
-import { TableModule } from "primeng/table";
+import { SharedTableModule } from "../../shared/shared-table.module";
 import { Store } from "@ngrx/store";
 import { APP_LABELS } from "../../i18n/labels";
 import { createEmptyVisa } from "../../shared/visa.models";
@@ -48,7 +48,7 @@ import { OperationModalComponent } from "./operation-modal.component";
 @Component({
   selector: "app-exceptional-operations",
   standalone: true,
-  imports: [FormsModule, SelectButtonModule, CalendarComponent, TableColumnHeaderComponent, TableRowsPipe, ButtonModule, CommonModule, InterventionModalComponent, OperationModalComponent, TableModule],
+  imports: [FormsModule, SelectButtonModule, CalendarComponent, TableColumnHeaderComponent, TableRowsPipe, ButtonModule, CommonModule, InterventionModalComponent, OperationModalComponent, SharedTableModule],
   templateUrl: "./exceptional-operations.component.html",
   styleUrl: "./exceptional-operations.component.css",
 })

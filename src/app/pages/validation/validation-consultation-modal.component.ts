@@ -3,7 +3,7 @@ import { TableRowsPipe, tableDate } from "../../shared/table-rows.pipe";
 import { CommonModule } from "@angular/common";
 import { Component, EventEmitter, Input, Output } from "@angular/core";
 import { ButtonModule } from "primeng/button";
-import { TableModule } from "primeng/table";
+import { SharedTableModule } from "../../shared/shared-table.module";
 import { TagModule } from "primeng/tag";
 import { APP_LABELS } from "../../i18n/labels";
 import { ModalComponent } from "../../shared/modal.component";
@@ -13,7 +13,7 @@ import { ValidationItem, VisaProgressItem } from "./validation.models";
 @Component({
   selector: "app-validation-consultation-modal",
   standalone: true,
-  imports: [TableColumnHeaderComponent, TableRowsPipe, ButtonModule, CommonModule, ModalComponent, TableModule, TagModule, TruncatedTextComponent],
+  imports: [TableColumnHeaderComponent, TableRowsPipe, ButtonModule, CommonModule, ModalComponent, SharedTableModule, TagModule, TruncatedTextComponent],
   templateUrl: "./validation-consultation-modal.component.html",
   styleUrl: "./validation-consultation-modal.component.css",
 })

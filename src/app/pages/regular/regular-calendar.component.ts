@@ -1,5 +1,5 @@
 import { SelectButtonModule } from "primeng/selectbutton";
-import { TableModule } from "primeng/table";
+import { SharedTableModule } from "../../shared/shared-table.module";
 import { TableColumnHeaderComponent } from "../../shared/table-column-header.component";
 import { TableRowsPipe, tableDate } from "../../shared/table-rows.pipe";
 import { isArchivedOperation } from "../../shared/operation-archive";
@@ -47,7 +47,7 @@ import { RegularPeriodModalComponent } from "./regular-period-modal.component";
 @Component({
   selector: "app-regular-calendar",
   standalone: true,
-  imports: [SelectButtonModule, TableModule, TableColumnHeaderComponent, TableRowsPipe, CalendarComponent, ButtonModule, CommonModule, FormsModule, RegularInterventionModalComponent, RegularPeriodModalComponent, SelectModule],
+  imports: [SelectButtonModule, SharedTableModule, TableColumnHeaderComponent, TableRowsPipe, CalendarComponent, ButtonModule, CommonModule, FormsModule, RegularInterventionModalComponent, RegularPeriodModalComponent, SelectModule],
   templateUrl: "./regular-calendar.component.html",
   styleUrl: "./regular-calendar.component.css",
 })

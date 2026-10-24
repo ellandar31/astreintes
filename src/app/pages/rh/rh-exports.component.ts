@@ -10,7 +10,7 @@ import { MessageModule } from "primeng/message";
 import { CheckboxChangeEvent, CheckboxModule } from "primeng/checkbox";
 import { selectSettingsState } from "../../state/settings/settings.selectors";
 import { SelectModule } from "primeng/select";
-import { TableModule } from "primeng/table";
+import { SharedTableModule } from "../../shared/shared-table.module";
 import { Store } from "@ngrx/store";
 import { APP_LABELS } from "../../i18n/labels";
 import { SignatureVisa, createEmptyVisa } from "../../shared/visa.models";
@@ -65,7 +65,7 @@ interface RegularInterventionExport {
   selector: "app-rh-exports",
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [TableColumnHeaderComponent, TableRowsPipe, ButtonModule, CardModule, CommonModule, FormsModule, InputTextModule, MessageModule, CheckboxModule, SelectModule, TableModule],
+  imports: [TableColumnHeaderComponent, TableRowsPipe, ButtonModule, CardModule, CommonModule, FormsModule, InputTextModule, MessageModule, CheckboxModule, SelectModule, SharedTableModule],
   templateUrl: "./rh-exports.component.html",
   styleUrl: "./rh-exports.component.css",
 })

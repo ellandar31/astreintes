@@ -9,7 +9,7 @@ import { ButtonModule } from "primeng/button";
 import { CardModule } from "primeng/card";
 import { MessageModule } from "primeng/message";
 import { SelectModule } from "primeng/select";
-import { TableModule } from "primeng/table";
+import { SharedTableModule } from "../../shared/shared-table.module";
 import { TagModule } from "primeng/tag";
 import { Store } from "@ngrx/store";
 import { APP_LABELS } from "../../i18n/labels";
@@ -48,7 +48,7 @@ import { AppUser, ValidationItem, ValidationSection, ValidationSectionId, VisaPr
 @Component({
   selector: "app-validation-page",
   standalone: true,
-  imports: [TableColumnHeaderComponent, TableRowsPipe, ButtonModule, CardModule, CommonModule, FormsModule, MessageModule, SelectModule, TableModule, TagModule, TruncatedTextComponent, ValidationConsultationModalComponent],
+  imports: [TableColumnHeaderComponent, TableRowsPipe, ButtonModule, CardModule, CommonModule, FormsModule, MessageModule, SelectModule, SharedTableModule, TagModule, TruncatedTextComponent, ValidationConsultationModalComponent],
   templateUrl: "./validation-page.component.html",
   styleUrl: "./validation-page.component.css",
 })

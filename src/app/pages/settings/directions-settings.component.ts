@@ -5,7 +5,7 @@ import { FormsModule, NgForm } from "@angular/forms";
 import { Store } from "@ngrx/store";
 import { ButtonModule } from "primeng/button";
 import { InputTextModule } from "primeng/inputtext";
-import { TableModule } from "primeng/table";
+import { SharedTableModule } from "../../shared/shared-table.module";
 import { APP_LABELS } from "../../i18n/labels";
 import { SettingsActions } from "../../state/settings/settings.actions";
 import { selectCanManageUsers, selectSettingsDirections, selectSettingsMessage } from "../../state/settings/settings.selectors";
@@ -14,7 +14,7 @@ import { Direction } from "../../types";
 /** Only administrators maintain this reference; existing associations prevent deletion in SQL. */
 @Component({
   selector: "app-directions-settings", standalone: true,
-  imports: [TableColumnHeaderComponent, TableRowsPipe, FormsModule, ButtonModule, InputTextModule, TableModule],
+  imports: [TableColumnHeaderComponent, TableRowsPipe, FormsModule, ButtonModule, InputTextModule, SharedTableModule],
   templateUrl: "./directions-settings.component.html", styleUrls: ["./settings-common.scss"],
 })
 export class DirectionsSettingsComponent {

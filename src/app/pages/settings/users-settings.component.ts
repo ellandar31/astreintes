@@ -8,7 +8,7 @@ import { FormsModule } from "@angular/forms";
 import { Store } from "@ngrx/store";
 import { ButtonModule } from "primeng/button";
 import { SelectModule } from "primeng/select";
-import { TableModule } from "primeng/table";
+import { SharedTableModule } from "../../shared/shared-table.module";
 import { TagModule } from "primeng/tag";
 import { APP_LABELS } from "../../i18n/labels";
 import { SettingsActions } from "../../state/settings/settings.actions";
@@ -18,7 +18,7 @@ import { ManagedUser, UserRole } from "./settings.models";
 @Component({
   selector: "app-users-settings",
   standalone: true,
-  imports: [TableColumnHeaderComponent, TableRowsPipe, CheckboxModule, TruncatedTextComponent, ButtonModule, CommonModule, FormsModule, SelectModule, TableModule, TagModule],
+  imports: [TableColumnHeaderComponent, TableRowsPipe, CheckboxModule, TruncatedTextComponent, ButtonModule, CommonModule, FormsModule, SelectModule, SharedTableModule, TagModule],
   templateUrl: "./users-settings.component.html",
   styleUrls: ["./settings-common.scss"],
 })

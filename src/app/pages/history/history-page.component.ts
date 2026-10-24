@@ -8,7 +8,7 @@ import { CommonModule } from "@angular/common";
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges, effect, inject } from "@angular/core";
 import { ButtonModule } from "primeng/button";
 import { CardModule } from "primeng/card";
-import { TableModule } from "primeng/table";
+import { SharedTableModule } from "../../shared/shared-table.module";
 import { MessageModule } from "primeng/message";
 import { Store } from "@ngrx/store";
 import { APP_LABELS } from "../../i18n/labels";
@@ -83,7 +83,7 @@ interface HistoryMonthSection {
 @Component({
   selector: "app-history-page",
   standalone: true,
-  imports: [TableColumnHeaderComponent, TableRowsPipe, ButtonModule, CardModule, CommonModule, FormsModule, SelectModule, HistoryDetailModalComponent, TableModule, MessageModule],
+  imports: [TableColumnHeaderComponent, TableRowsPipe, ButtonModule, CardModule, CommonModule, FormsModule, SelectModule, HistoryDetailModalComponent, SharedTableModule, MessageModule],
   templateUrl: "./history-page.component.html",
   styleUrl: "./history-page.component.css",
   changeDetection: ChangeDetectionStrategy.OnPush,

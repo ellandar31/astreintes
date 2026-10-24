@@ -2,7 +2,7 @@ import { TableColumnHeaderComponent } from "../../shared/table-column-header.com
 import { TableRowsPipe, tableDate } from "../../shared/table-rows.pipe";
 import { CommonModule } from "@angular/common";
 import { Component, EventEmitter, Input, Output } from "@angular/core";
-import { TableModule } from "primeng/table";
+import { SharedTableModule } from "../../shared/shared-table.module";
 import { APP_LABELS } from "../../i18n/labels";
 import { ModalComponent } from "../../shared/modal.component";
 import { TruncatedTextComponent } from "../../shared/truncated-text.component";
@@ -11,7 +11,7 @@ import { HistoryDetailItem, HistoryDetailLine } from "./history.models";
 @Component({
   selector: "app-history-detail-modal",
   standalone: true,
-  imports: [TableColumnHeaderComponent, TableRowsPipe, CommonModule, ModalComponent, TableModule, TruncatedTextComponent],
+  imports: [TableColumnHeaderComponent, TableRowsPipe, CommonModule, ModalComponent, SharedTableModule, TruncatedTextComponent],
   templateUrl: "./history-detail-modal.component.html",
   styleUrl: "./history-detail-modal.component.css",
 })

@@ -42,7 +42,6 @@
 }
 
 :host ::ng-deep .exceptional-table .p-datatable-thead > tr > th {
-  font-weight: 900;
   min-width: 8.75rem;
 }
 

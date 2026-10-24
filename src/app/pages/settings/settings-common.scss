@@ -53,8 +53,7 @@
   font-size: var(--app-font-base);
 }
 
-:host ::ng-deep .compact-table .p-datatable-tbody > tr > td,
-:host ::ng-deep .compact-table .p-datatable-thead > tr > th {
+:host ::ng-deep .compact-table .p-datatable-tbody > tr > td {
   padding: var(--app-space-sm) var(--app-space-md);
 }
 

@@ -9,7 +9,7 @@ import { CardModule } from "primeng/card";
 import { InputNumberModule } from "primeng/inputnumber";
 import { InputTextModule } from "primeng/inputtext";
 import { SelectModule } from "primeng/select";
-import { TableModule } from "primeng/table";
+import { SharedTableModule } from "../../shared/shared-table.module";
 import { TagModule } from "primeng/tag";
 import { APP_LABELS } from "../../i18n/labels";
 import { SettingsActions } from "../../state/settings/settings.actions";
@@ -24,7 +24,7 @@ import { PublicHoliday } from "./settings.models";
 @Component({
   selector: "app-holidays-settings",
   standalone: true,
-  imports: [TableColumnHeaderComponent, TableRowsPipe, ButtonModule, CardModule, CommonModule, FormsModule, InputNumberModule, InputTextModule, SelectModule, TableModule, TagModule],
+  imports: [TableColumnHeaderComponent, TableRowsPipe, ButtonModule, CardModule, CommonModule, FormsModule, InputNumberModule, InputTextModule, SelectModule, SharedTableModule, TagModule],
   templateUrl: "./holidays-settings.component.html",
   styleUrls: ["./settings-common.scss"],
 })

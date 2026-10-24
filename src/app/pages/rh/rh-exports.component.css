@@ -89,3 +89,10 @@
   width: min(100%, 22rem);
   min-width: 0;
 }
+
+/* Reserve room for the period controls and paginator. PrimeNG owns the only
+   table scroll container; the shared outer frame must not add another one. */
+.period-export-table {
+  min-width: 0;
+  overflow: hidden;
+}

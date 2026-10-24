@@ -379,60 +379,35 @@ select:focus {
   box-shadow: none;
 }
 
-:is(
-  .settings-table,
-  .validation-table,
-  .progress-table,
-  .exceptional-table,
-  .interventions-table,
-  .rh-table,
-  .history-table,
-  .export-table
-) {
+.app-data-table {
+  display: block;
   border: var(--app-border-width) solid var(--app-color-border);
   border-radius: var(--app-radius-md);
   overflow: auto;
 }
 
-:is(
-  .settings-table,
-  .validation-table,
-  .progress-table,
-  .exceptional-table,
-  .interventions-table,
-  .rh-table,
-  .history-table,
-  .export-table
-) .p-datatable-thead > tr > th {
+.app-data-table .p-datatable-thead > tr > th {
   background: var(--app-color-surface-muted);
   color: var(--app-color-subtle);
   font-size: var(--app-font-sm);
   text-transform: uppercase;
+  font-weight: 700;
 }
 
-:is(
-  .settings-table,
-  .validation-table,
-  .progress-table,
-  .exceptional-table,
-  .interventions-table,
-  .rh-table,
-  .history-table,
-  .export-table
-) .p-datatable-tbody > tr > td,
-:is(
-  .settings-table,
-  .validation-table,
-  .progress-table,
-  .exceptional-table,
-  .interventions-table,
-  .rh-table,
-  .history-table,
-  .export-table
-) .p-datatable-thead > tr > th {
+.app-data-table .p-datatable-tbody > tr > td,
+.app-data-table .p-datatable-thead > tr > th {
   border-color: var(--app-color-border);
-  padding: var(--app-space-md) var(--app-space-lg);
   text-align: left;
+}
+
+/* Plain headings and headings with filter buttons share the same alignment. */
+.app-data-table .p-datatable-thead > tr > th {
+  padding: var(--app-space-xs) var(--app-space-lg);
+  vertical-align: middle;
+}
+
+.app-data-table .p-datatable-tbody > tr > td {
+  padding: var(--app-space-md) var(--app-space-lg);
   vertical-align: top;
 }
 

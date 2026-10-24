@@ -21,15 +21,15 @@ export class RhPageComponent {
 
   readonly labels = APP_LABELS;
   readonly sections: Array<{ id: RhSection; label: string }> = [
+    { id: "periodExports", label: APP_LABELS.rh.menu.periodExports },
     { id: "exports", label: APP_LABELS.rh.menu.exports },
     { id: "userExports", label: APP_LABELS.rh.menu.userExports },
-    { id: "periodExports", label: APP_LABELS.rh.menu.periodExports },
   ];
 
   private readonly store = inject(Store);
   readonly canExport = this.store.selectSignal(selectCanExportRh);
   readonly visibleSections = computed(() => this.canExport() ? this.sections : []);
-  activeSection: RhSection = "exports";
+  activeSection: RhSection = "periodExports";
 
   setSection(section: RhSection): void {
     if (!this.canExport()) return;

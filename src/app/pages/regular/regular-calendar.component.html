@@ -55,7 +55,7 @@
   }
   <div class="regular-table-view" [hidden]="viewMode() !== 'table'">
     <p-table [value]="tablePeriods() | tableRows: periodTableFields: interventionCounts()"
-      sortField="tableStartDate" [paginator]="true" [rows]="25" [rowsPerPageOptions]="[25, 50, 100]"
+      sortField="tableStartDate"
       [tableStyle]="{ 'min-width': '48rem' }">
       <ng-template pTemplate="header">
         <tr>

@@ -9,7 +9,7 @@ import { ButtonModule } from "primeng/button";
 import { InputTextModule } from "primeng/inputtext";
 import { MessageModule } from "primeng/message";
 import { SelectModule } from "primeng/select";
-import { TableModule } from "primeng/table";
+import { SharedTableModule } from "../../shared/shared-table.module";
 import { APP_LABELS } from "../../i18n/labels";
 import { ModalComponent } from "../../shared/modal.component";
 import { RegularIntervention, RegularOnCallPeriodForm, RegularUser } from "./regular.models";
@@ -17,7 +17,7 @@ import { RegularIntervention, RegularOnCallPeriodForm, RegularUser } from "./reg
 @Component({
   selector: "app-regular-period-modal",
   standalone: true,
-  imports: [TableColumnHeaderComponent, TableRowsPipe, TruncatedTextComponent, ButtonModule, FormsModule, InputTextModule, MessageModule, ModalComponent, SelectModule, TableModule],
+  imports: [TableColumnHeaderComponent, TableRowsPipe, TruncatedTextComponent, ButtonModule, FormsModule, InputTextModule, MessageModule, ModalComponent, SelectModule, SharedTableModule],
   templateUrl: "./regular-period-modal.component.html",
   styleUrls: ["./regular-period-modal.component.css", "../../shared/user-select-form.css"],
 })

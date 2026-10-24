@@ -25,8 +25,9 @@
     <p-button [label]="periodLabels.treat" icon="pi pi-check" [loading]="treatmentPending"
       [disabled]="!selectedUntreatedCount || treatmentPending" (onClick)="updateTreatment(true)" />
     @if (treatmentMessage) { <p-message severity="info">{{ treatmentMessage }}</p-message> }
-    <p-table [value]="(periodExportRows()) | tableRows" [rowTrackBy]="trackPeriodOperation"
-      [paginator]="true" [rows]="25" [rowsPerPageOptions]="[25, 50, 100]" [tableStyle]="{ 'min-width': '47.5rem' }"
+    <p-table class="period-export-table" [value]="(periodExportRows()) | tableRows" [rowTrackBy]="trackPeriodOperation"
+      [scrollable]="true" scrollHeight="clamp(10rem, calc(100dvh - 32rem), 30rem)"
+      [tableStyle]="{ 'min-width': '47.5rem' }"
       [attr.aria-label]="periodLabels.count" styleClass="export-table">
       <ng-template pTemplate="header">
         <tr>

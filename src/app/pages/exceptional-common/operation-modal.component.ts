@@ -9,7 +9,7 @@ import { ButtonModule } from "primeng/button";
 import { InputTextModule } from "primeng/inputtext";
 import { MessageModule } from "primeng/message";
 import { SelectModule } from "primeng/select";
-import { TableModule } from "primeng/table";
+import { SharedTableModule } from "../../shared/shared-table.module";
 import { APP_LABELS } from "../../i18n/labels";
 import { TruncatedTextComponent } from "../../shared/truncated-text.component";
 import { ModalComponent } from "../../shared/modal.component";
@@ -32,7 +32,7 @@ import {
 @Component({
   selector: "app-operation-modal",
   standalone: true,
-  imports: [TableColumnHeaderComponent, TableRowsPipe, ButtonModule, CommonModule, FormsModule, InputTextModule, MessageModule, ModalComponent, TruncatedTextComponent, SelectModule, TableModule],
+  imports: [TableColumnHeaderComponent, TableRowsPipe, ButtonModule, CommonModule, FormsModule, InputTextModule, MessageModule, ModalComponent, TruncatedTextComponent, SelectModule, SharedTableModule],
   templateUrl: "./operation-modal.component.html",
   styleUrls: ["./operation-modal.component.css", "../../shared/user-select-form.css"],
 })

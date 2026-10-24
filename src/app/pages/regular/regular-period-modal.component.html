@@ -23,6 +23,8 @@
           [ngModel]="form.userId"
           (ngModelChange)="selectUser($event)"
           optionLabel="email"
+          [filter]="true"
+          filterBy="displayName,email"
           optionValue="id"
           [placeholder]="labels.common.users.select"
           appendTo="body"
