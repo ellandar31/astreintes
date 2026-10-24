@@ -9,7 +9,7 @@ import { ProfileActions } from "./profile.actions";
 
 @Injectable()
 /**
- * Maintains the current user's editable profile and signature preferences.
+ * Maintains the current user's editable display name and visa name.
  *
  * Signature data is part of the application profile because visas must be rendered in
  * validation screens and RH exports without reopening provider-specific auth
@@ -60,19 +60,16 @@ export class ProfileEffects {
   );
 
   /**
-   * Supplies editable signature defaults when a profile does not exist yet.
-   *
-   * Older users may not have signature fields yet. The fallbacks keep the visa
-   * workflow usable with a simple typed name until the user uploads or draws a
-   * signature.
+   * Projects legacy profiles onto the name-only visa settings.
+   * Historical visa snapshots are independent and remain unchanged.
    */
   private profileFromStore(data: ApplicationUser | undefined, user: StoreAuthUser): SignatureProfile {
     return {
       displayName: data?.displayName ?? user.displayName ?? "",
-      signatureMode: data?.signatureMode ?? "name",
+      signatureMode: "name",
       signatureName: data?.signatureName || user.displayName || user.email || "",
-      signatureImage: data?.signatureImage ?? "",
-      signatureDrawing: data?.signatureDrawing ?? "",
+      signatureImage: "",
+      signatureDrawing: "",
     };
   }
 
@@ -80,7 +77,7 @@ export class ProfileEffects {
    * Persists profile fields used by both the application shell and exports.
    *
    * The display name is pushed to Auth provider for provider-level consistency,
-   * while signature preferences stay in application data where validation/export
+   * while the visa name stays in application data where validation/export
    * features can read them through the central store.
    */
   private async saveProfile(
@@ -90,9 +87,12 @@ export class ProfileEffects {
     const displayName = profile.displayName?.trim() || "";
     const signatureName = profile.signatureName?.trim() || displayName || user.displayName || user.email || "";
     const savedProfile: SignatureProfile = {
-      ...profile,
       displayName,
       signatureName,
+      // Clear obsolete graphics when saving so they cannot be reused by legacy clients.
+      signatureMode: "name",
+      signatureImage: "",
+      signatureDrawing: "",
     };
 
     if (displayName && displayName !== user.displayName) {

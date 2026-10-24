@@ -35,61 +35,6 @@
       </label>
     </p-card>
 
-    <p-card styleClass="profile-panel signature-panel" [attr.aria-labelledby]="'profile-signature-title'">
-      <ng-template pTemplate="header">
-        <div class="profile-panel-header">
-          <p class="panel-kicker">{{ labels.profile.sections.signature }}</p>
-          <h3 id="profile-signature-title">{{ labels.profile.sections.visa }}</h3>
-        </div>
-      </ng-template>
-
-      <p-selectButton
-        [options]="signatureModeOptions"
-        [(ngModel)]="profile.signatureMode"
-        optionLabel="label"
-        optionValue="value"
-        [allowEmpty]="false"
-        [ariaLabel]="labels.profile.fields.signatureMode"
-        styleClass="signature-modes"
-      ></p-selectButton>
-
-      <label class="profile-control">
-        <span>{{ labels.profile.fields.signatureImage }}</span>
-        <input class="file-input" accept="image/*" (change)="loadSignatureImage($event)" type="file" />
-      </label>
-
-      <div class="signature-pad-shell">
-        <canvas
-          #signaturePad
-          width="520"
-          height="150"
-          (mousedown)="startDrawing($event)"
-          (mousemove)="draw($event)"
-          (mouseup)="stopDrawing()"
-          (mouseleave)="stopDrawing()"
-          (touchstart)="startDrawing($event)"
-          (touchmove)="draw($event)"
-          (touchend)="stopDrawing()"
-        ></canvas>
-        <p-button
-          [label]="labels.profile.actions.clearPad"
-          severity="secondary"
-          [outlined]="true"
-          size="small"
-          (onClick)="clearDrawing()"
-        ></p-button>
-      </div>
-
-      <div class="signature-preview">
-        <span>{{ labels.profile.preview }}</span>
-        @if (signaturePreview) {
-          <img [src]="signaturePreview" [alt]="labels.profile.signatureAlt" />
-        } @else {
-          <strong>{{ profile.signatureName || displayedName || email }}</strong>
-        }
-      </div>
-    </p-card>
-
     <div class="profile-actions">
       <p-button
         [disabled]="isSaving()"

@@ -240,6 +240,26 @@ describe("Validation consultation", () => {
     }
   });
 
+  it.each(["image", "draw"] as const)("utilise le nom pour un nouveau visa avec un ancien profil %s", (signatureMode) => {
+    const component = createPage().componentInstance;
+    component.profile = {
+      ...component.profile!, role: 1, signatureName: "Nom du visa", signatureMode,
+      signatureImage: "data:image/png;base64,aW1hZ2U=",
+      signatureDrawing: "data:image/png;base64,ZGVzc2lu",
+    };
+    const dispatch = jest.spyOn(TestBed.inject(MockStore), "dispatch").mockClear();
+
+    component.signItem(component.validationItems.find(item => item.kind === "regular-period-agent")!);
+
+    expect(dispatch).toHaveBeenCalledWith(expect.objectContaining({
+      field: "agentVisa",
+      periodId: period.id,
+      visa: expect.objectContaining({
+        signed: true, signedByName: "Nom du visa", signatureMode: "name", signatureValue: "Nom du visa",
+      }),
+    }));
+  });
+
   it("autorise l'administrateur à retirer tout visa et refuse la signature sans profil", () => {
     const component = createPage().componentInstance;
     const own = component.validationItems[0];

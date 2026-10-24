@@ -4,37 +4,6 @@
       <p class="eyebrow">{{ item.category }}</p>
       <h3>{{ item.title }}</h3>
 
-      <div class="item-metadata">
-        <dl>
-          <dt>{{ labels.common.table.person }}</dt>
-          <dd>{{ item.userLabel }}</dd>
-        </dl>
-        <dl>
-          <dt>{{ labels.common.table.start }}</dt>
-          <dd>{{ formatDateTime(item.startDate) }}</dd>
-        </dl>
-        <dl>
-          <dt>{{ labels.common.table.end }}</dt>
-          <dd>{{ formatDateTime(item.endDate) }}</dd>
-        </dl>
-        <dl>
-          <dt>{{ labels.validation.consultation.currentVisa }}</dt>
-          <dd>
-            @if (item.visa.signed) {
-              {{ item.visa.signedByName }} - {{ formatDateTime(item.visa.signedAt) }}
-            } @else {
-              {{ labels.common.statuses.notSigned }}
-            }
-          </dd>
-        </dl>
-      </div>
-
-      @if (item.visa.signatureValue && item.visa.signatureMode !== "name") {
-        <img class="visa-preview" [src]="item.visa.signatureValue" alt="Visa" />
-      } @else if (item.visa.signed) {
-        <p class="name-visa">{{ item.visa.signatureValue || item.visa.signedByName }}</p>
-      }
-
       <section class="progress-section" aria-labelledby="visa-progress-title">
         <h4 id="visa-progress-title">{{ labels.validation.consultation.progressTitle }}</h4>
 

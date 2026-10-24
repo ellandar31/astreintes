@@ -910,47 +910,20 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
   /**
    * Construit le visa sauvegardé en base.
    *
-   * Le profil peut fournir une image, un dessin ou un nom. Si une ancienne
-   * signature image n'est plus exploitable, on bascule sur le nom pour conserver
-   * une signature lisible dans les exports.
+   * Les nouveaux visas utilisent uniquement le nom, même si un ancien profil
+   * conserve une préférence graphique. Les visas historiques restent inchangés.
    */
   private buildVisa(item: ValidationItem): SignatureVisa {
     const signer = this.visaSignerForItem(item);
-    let mode = signer.profile?.signatureMode || "name";
 
-    let signatureValue: string;
-
-    switch (mode) {
-      case "image":
-        signatureValue = signer.profile?.signatureImage || "";
-        break;
-
-      case "draw":
-        signatureValue = signer.profile?.signatureDrawing || "";
-        break;
-
-      default:
-        signatureValue = signer.name;
-        break;
-    }
-
-    if ((mode === "image" || mode === "draw") && !this.isImageSignatureValue(signatureValue)) {
-      mode = "name";
-      signatureValue = signer.name;
-    }
-   
     return {
       signed: true,
       signedAt: new Date().toISOString(),
       signedByName: signer.name,
       signedByUid: signer.uid,
-      signatureMode: mode,
-      signatureValue,
+      signatureMode: "name",
+      signatureValue: signer.name,
     };
-  }
-
-  private isImageSignatureValue(value: string): boolean {
-    return /^data:image\/(?:png|jpeg|jpg|gif|webp);base64,/i.test(value);
   }
 
   /**

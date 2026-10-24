@@ -10,7 +10,7 @@
 .profile-layout {
   display: grid;
   gap: var(--app-space-2xl);
-  grid-template-columns: minmax(16.25rem, 0.8fr) minmax(26.25rem, 1.2fr);
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .profile-panel {
@@ -82,60 +82,6 @@
   width: 100%;
 }
 
-.signature-panel {
-  align-content: start;
-}
-
-:host ::ng-deep .signature-modes {
-  width: fit-content;
-}
-
-:host ::ng-deep .signature-modes .p-togglebutton {
-  min-width: 4.5rem;
-}
-
-.file-input {
-  background: var(--app-color-surface);
-  border: var(--app-border-width) solid var(--app-color-border-strong);
-  border-radius: var(--app-radius-sm);
-  min-height: var(--app-size-control-md);
-  padding: var(--app-space-sm) var(--app-space-md);
-}
-
-.signature-pad-shell {
-  display: grid;
-  gap: var(--app-space-sm);
-}
-
-.signature-pad-shell canvas {
-  border: var(--app-border-width) solid var(--app-color-border-strong);
-  border-radius: var(--app-radius-sm);
-  height: 7.5rem;
-  touch-action: none;
-  width: 100%;
-}
-
-.signature-preview {
-  border: var(--app-border-width) solid var(--app-color-border);
-  border-radius: var(--app-radius-md);
-  display: grid;
-  gap: var(--app-space-sm);
-  min-height: 7rem;
-  padding: var(--app-space-lg);
-}
-
-.signature-preview span {
-  color: var(--app-color-muted);
-  font-size: 0.82rem;
-  font-weight: 800;
-}
-
-.signature-preview img {
-  max-height: 5.625rem;
-  max-width: 100%;
-  object-fit: contain;
-}
-
 .profile-actions {
   align-items: center;
   display: flex;
@@ -143,15 +89,4 @@
   gap: var(--app-space-lg);
   grid-column: 1 / -1;
   justify-content: flex-end;
-}
-
-.compact-button {
-  min-height: 2rem;
-  padding: var(--app-space-xs) var(--app-space-md);
-}
-
-@media (max-width: 56.25rem) {
-  .profile-layout {
-    grid-template-columns: 1fr;
-  }
 }

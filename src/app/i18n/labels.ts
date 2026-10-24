@@ -180,27 +180,15 @@ export const APP_LABELS = {
     sections: {
       globalOptions: "Options globales",
       information: "Informations",
-      signature: "Signature",
-      visa: "Visa",
     },
     fields: {
       displayNamePlaceholder: "Nom affiché",
-      signatureImage: "Image de signature",
-      signatureMode: "Mode de signature",
       signatureName: "Nom utilisé pour le visa",
     },
-    modes: {
-      name: "Nom",
-      image: "Image",
-      draw: "Pad",
-    },
     actions: {
-      clearPad: "Effacer le pad",
       saveProfile: "Enregistrer le profil",
       saving: "Enregistrement...",
     },
-    preview: "Aperçu",
-    signatureAlt: "Signature",
   },
   regular: {
     actions: {
