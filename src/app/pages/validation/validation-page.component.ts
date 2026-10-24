@@ -22,6 +22,7 @@ import {
   selectRegularError,
   selectRegularInterventions,
   selectRegularPeriods,
+  selectRegularTeams,
 } from "../../state/regular/regular.selectors";
 import { SettingsActions } from "../../state/settings/settings.actions";
 import { selectSettingsMessage, selectSettingsUsers } from "../../state/settings/settings.selectors";
@@ -71,6 +72,7 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
   private readonly regularError = this.store.selectSignal(selectRegularError);
   private readonly regularInterventionsSignal = this.store.selectSignal(selectRegularInterventions);
   private readonly regularPeriodsSignal = this.store.selectSignal(selectRegularPeriods);
+  private readonly regularTeams = this.store.selectSignal(selectRegularTeams);
   private readonly settingsMessage = this.store.selectSignal(selectSettingsMessage);
   private readonly settingsUsers = this.store.selectSignal(selectSettingsUsers);
 
@@ -88,6 +90,8 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
 
     effect(() => {
       this.regularPeriods = this.regularPeriodsSignal();
+      // Team names can arrive after periods or change while the consultation is open.
+      this.regularTeams();
       this.refreshSelectedItem();
     });
 
@@ -153,6 +157,12 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
     return this.users.find((item) => item.id === this.selectedUserId || item.uid === this.selectedUserId);
   }
 
+  /** Identify regular on-call periods by their team; the agent has a dedicated column. */
+  private regularPeriodTitle(period: RegularOnCallPeriod): string {
+    return this.regularTeams().find((team) => team.id === period.teamId)?.name
+      || this.labels.common.users.unspecified;
+  }
+
   get validationItems(): ValidationItem[] {
     const selectedId = this.selectedUserId || this.user?.uid || "";
     const selectedEmail = this.selectedUser?.email || this.user?.email || "";
@@ -164,7 +174,7 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
           id: `regular-period-agent-${period.id}`,
           kind: "regular-period-agent",
           category: this.labels.validation.categories.regularOnCall,
-          title: period.userName || period.userEmail,
+          title: this.regularPeriodTitle(period),
           userLabel: period.userName || period.userEmail,
           startDate: period.startDate,
           endDate: period.endDate,
@@ -179,7 +189,7 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
           id: `regular-period-director-${period.id}`,
           kind: "regular-period-director",
           category: this.labels.validation.categories.regularOnCallDirectorVisa,
-          title: period.userName || period.userEmail,
+          title: this.regularPeriodTitle(period),
           userLabel: period.userName || period.userEmail,
           startDate: period.startDate,
           endDate: period.endDate,
@@ -306,7 +316,7 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
             id: `regular-period-agent-${period.id}`,
             kind: "regular-period-agent",
             category: this.labels.validation.categories.regularOnCall,
-            title: period.userName || period.userEmail,
+            title: this.regularPeriodTitle(period),
             userLabel: period.userName || period.userEmail,
             startDate: period.startDate,
             endDate: period.endDate,
@@ -325,7 +335,7 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
             id: `regular-period-director-${period.id}`,
             kind: "regular-period-director",
             category: this.labels.validation.categories.regularOnCallDirectorVisa,
-            title: period.userName || period.userEmail,
+            title: this.regularPeriodTitle(period),
             userLabel: period.userName || period.userEmail,
             startDate: period.startDate,
             endDate: period.endDate,
@@ -344,7 +354,7 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
             id: `regular-intervention-${intervention.id}`,
             kind: "regular-intervention-agent" as const,
             category: this.labels.common.fields.intervention,
-            title: period.userName || period.userEmail,
+            title: this.regularPeriodTitle(period),
             userLabel: intervention.userName || intervention.userEmail,
             startDate: intervention.startDate,
             endDate: intervention.endDate,

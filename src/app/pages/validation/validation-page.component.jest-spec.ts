@@ -2,7 +2,7 @@ import { TestBed } from "@angular/core/testing";
 import { provideNoopAnimations } from "@angular/platform-browser/animations";
 import { MockStore, provideMockStore } from "@ngrx/store/testing";
 import { selectExceptionalError, selectExceptionalOperations } from "../../state/exceptional/exceptional.selectors";
-import { selectRegularError, selectRegularInterventions, selectRegularPeriods } from "../../state/regular/regular.selectors";
+import { selectRegularError, selectRegularInterventions, selectRegularPeriods, selectRegularTeams } from "../../state/regular/regular.selectors";
 import { selectSettingsMessage, selectSettingsUsers } from "../../state/settings/settings.selectors";
 import { createEmptyVisa } from "../../shared/visa.models";
 import { ExceptionalOperation, RegularIntervention, RegularOnCallPeriod } from "../../types";
@@ -59,6 +59,7 @@ describe("Validation consultation", () => {
       imports: [ValidationPageComponent],
       providers: [provideNoopAnimations(), provideMockStore({ selectors: [
         { selector: selectRegularPeriods, value: [period] },
+        { selector: selectRegularTeams, value: [{ id: "2", name: "Équipe technique", members: [] }] },
         { selector: selectRegularInterventions, value: [intervention] },
         { selector: selectExceptionalOperations, value: [] },
         { selector: selectRegularError, value: "" },
@@ -70,16 +71,17 @@ describe("Validation consultation", () => {
   });
 
 
-  it("renders each consultation term directly inside its description list", () => {
+  it("affiche le nom de l’équipe comme titre et conserve la personne dans sa colonne", () => {
     const fixture = createPage();
-    fixture.componentInstance.openItem(fixture.componentInstance.validationItems[0]);
+    const item = fixture.componentInstance.validationItems[0];
+    expect(item.title).toBe("Équipe technique");
+    expect(item.userLabel).toBe("Agent");
+    fixture.componentInstance.openItem(item);
     fixture.detectChanges();
-    const terms = fixture.nativeElement.querySelectorAll(".item-metadata dt") as NodeListOf<HTMLElement>;
-    expect(terms).toHaveLength(4);
-    for (const term of terms) {
-      expect(term.parentElement?.tagName).toBe("DL");
-      expect(term.nextElementSibling?.tagName).toBe("DD");
-    }
+    const cells = fixture.nativeElement.querySelectorAll(".validation-table tbody tr:first-child td") as NodeListOf<HTMLElement>;
+    expect(cells[1].textContent).toContain("Équipe technique");
+    expect(cells[2].textContent).toContain("Agent");
+    expect(fixture.nativeElement.querySelector(".item-details h3").textContent).toContain("Équipe technique");
   });
 
   it("keeps the same consultation button through pointer change detection and opens the modal", () => {
