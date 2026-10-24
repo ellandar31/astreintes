@@ -10,7 +10,7 @@ import { UsersSettingsComponent } from "./users-settings.component";
 
 const user: ApplicationUser = {
   id: "7", uid: "auth-id", email: "agent@example.test", displayName: "Agent", role: 1,
-  signatureMode: "name", signatureName: "Agent", signatureImage: "", signatureDrawing: "", lastLoginAt: "",
+  signatureName: "Agent", lastLoginAt: "",
 };
 
 describe("Profile administration permissions", () => {

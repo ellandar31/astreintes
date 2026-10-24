@@ -1,5 +1,9 @@
 # Nouvelle analyse de sécurité — 10 octobre 2026
 
+> Rapport historique : les références à `schema.sql` et aux migrations décrivent
+> l’état audité. Pour l’installation actuelle, voir [les trois scripts SQL](database-schema.md).
+
+
 Cette analyse remplace les conclusions du premier audit pour l'état actuel du dépôt. Workflow Vibe Code Security Reviewer : authentification, droits API/SQL, données sensibles et opérations métier. Aucun correctif applicatif ni modification de la base de développement.
 
 ## Résultat et validation

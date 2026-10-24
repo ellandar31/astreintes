@@ -5,6 +5,7 @@ export function sameIntervention(first: ExceptionalIntervention, second: Excepti
   return first.userId === second.userId && first.startDate === second.startDate
     && first.endDate === second.endDate && first.wasOnSite === second.wasOnSite
     && first.label === second.label && first.comment === second.comment
+    && (second.ticket === undefined || first.ticket === second.ticket)
     && JSON.stringify(first.agentVisa) === JSON.stringify(second.agentVisa);
 }
 

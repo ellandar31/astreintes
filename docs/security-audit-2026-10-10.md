@@ -1,5 +1,9 @@
 # Audit de sécurité — 10 octobre 2026
 
+> Rapport historique : les références à `schema.sql` et aux migrations décrivent
+> l’état audité. Pour l’installation actuelle, voir [les trois scripts SQL](database-schema.md).
+
+
 > Rapport historique : les nouvelles migrations modifient ces conclusions. Consulter [la nouvelle analyse](security-reanalysis-2026-10-10.md) pour l'état actuel, notamment la protection des rôles désormais testée.
 
 Audit ciblé des risques les plus élevés, réalisé avec Vibe Code Security Reviewer. Périmètre : client Angular/NgRx, repositories Supabase, schéma SQL versionné, configuration Auth, génération documentaire et passerelle Nginx. Inspection en lecture seule des permissions et politiques de la base Supabase locale ; aucune donnée personnelle consultée, aucune mutation ou exploitation effectuée.

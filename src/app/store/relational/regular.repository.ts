@@ -31,6 +31,7 @@ export class RegularRepository {
         startDate: dateTimeLocalText(period["starts_at"]),
         endDate: dateTimeLocalText(period["ends_at"]),
         sentToRhAt: text(period["sent_to_rh_at"]) || undefined,
+        treatedAt: text(period["treated_at"]) || undefined,
         agentVisa: visas.get(visaKey(period["id"], "regular_period_agent")),
         directorVisa: visas.get(visaKey(period["id"], "regular_period_director")),
       };
@@ -47,11 +48,13 @@ export class RegularRepository {
       starts_at: databaseDateTime(data["startDate"]),
       ends_at: databaseDateTime(data["endDate"]),
       sent_to_rh_at: nullableText(data["sentToRhAt"]),
+      ...(data.treatedAt !== undefined ? { treated_at: nullableText(data.treatedAt) } : {}),
     };
     const planningUnchanged = current && current.id === identifier
       && current.userId === data.userId && current.teamId === data.teamId
       && current.startDate === data.startDate && current.endDate === data.endDate
-      && current.sentToRhAt === data.sentToRhAt;
+      && current.sentToRhAt === data.sentToRhAt
+      && (data.treatedAt === undefined || current.treatedAt === data.treatedAt);
     // Clearing/signing a visa must not rewrite minute-only UI values onto precise SQL timestamps.
     const { data: savedPeriod, error } = planningUnchanged
       ? { data: { id }, error: null }
@@ -103,6 +106,7 @@ export class RegularRepository {
         startDate: dateTimeLocalText(intervention["starts_at"]),
         endDate: dateTimeLocalText(intervention["ends_at"]),
         comment: text(intervention["comment"]),
+        ticket: text(intervention["ticket"]) || undefined,
         agentVisa: visas.get(visaKey(intervention["id"], "regular_intervention_agent")),
       };
     });
@@ -118,6 +122,7 @@ export class RegularRepository {
       starts_at: databaseDateTime(data["startDate"]),
       ends_at: databaseDateTime(data["endDate"]),
       comment: text(data["comment"]),
+      ...(data.ticket !== undefined ? { ticket: nullableText(data.ticket) } : {}),
     };
     const query = id
       ? this.client.from("regular_interventions").update(payload).eq("id", id).select("id").single()

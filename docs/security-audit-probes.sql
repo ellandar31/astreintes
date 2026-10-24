@@ -1,4 +1,4 @@
--- Diagnostic exclusivement destiné à une base de test isolée, après schema.sql
+-- Diagnostic exclusivement destiné à une base de test isolée, après les trois scripts de supabase/database/
 -- et les fixtures user-roles-bootstrap. Les succès ci-dessous reproduisent des
 -- défauts ; ils ne constituent pas des tests de non-régression de sécurité.
 BEGIN;

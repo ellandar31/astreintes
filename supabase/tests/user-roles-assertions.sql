@@ -18,8 +18,7 @@ BEGIN
   PERFORM set_config('request.jwt.claim.sub', actor.auth_user_id::text, false);
   -- User-editable Auth metadata must never override the canonical role.
   PERFORM set_config('request.jwt.claims', '{"user_metadata":{"role":"admin"}}', false);
-  UPDATE public.app_users SET display_name = 'Edited', signature_name = 'My signature',
-   signature_image = 'image', signature_drawing = 'drawing', last_login_at = now()
+  UPDATE public.app_users SET display_name = 'Edited', signature_name = 'My signature', last_login_at = now()
    WHERE auth_user_id = actor.auth_user_id;
   GET DIAGNOSTICS affected = ROW_COUNT;
   IF affected <> 1 THEN RAISE EXCEPTION 'Own profile edit refused for %', actor.email; END IF;

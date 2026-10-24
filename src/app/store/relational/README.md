@@ -99,7 +99,7 @@ sont conservés ; les IDs Angular deviennent `astreinte:ID` et `travaux:ID` pour
 Le type d'une opération existante ne peut pas être changé implicitement par une
 mise à jour ; une telle conversion demanderait une migration explicite des liens.
 
-Le schéma initial `schema.sql` crée directement les familles séparées, leurs
+Le script `supabase/database/01_structure.sql` crée directement les familles séparées, leurs
 participants, visas et séquences. Les lectures et écritures ciblées ne chargent
 pas l'autre famille ; seule la liste combinée agrège les deux familles pour
 l'interface. Le repository refuse toute création d'intervention sur des travaux

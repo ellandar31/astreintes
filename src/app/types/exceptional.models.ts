@@ -34,6 +34,8 @@ export interface ExceptionalIntervention {
   agentVisa: SignatureVisa;
   label: string;
   comment: string;
+  /** External ticket reference; optional for historical interventions. */
+  ticket?: string;
 }
 
 export interface ExceptionalOperation {
@@ -61,6 +63,8 @@ export interface ExceptionalOperation {
   /** Only exceptional on-call periods have interventions; work operations keep this array empty. */
   interventions: ExceptionalIntervention[];
   sentToRhAt?: string;
+  /** Date of RH processing, independent of submission. */
+  treatedAt?: string;
 }
 
 export interface ExceptionalOperationForm {
@@ -86,4 +90,6 @@ export interface ExceptionalInterventionForm {
   wasOnSite: boolean;
   label: string;
   comment: string;
+  /** External ticket reference; optional for historical interventions. */
+  ticket?: string;
 }

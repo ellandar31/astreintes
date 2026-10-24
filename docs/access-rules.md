@@ -2,7 +2,7 @@
 
 Ce document constitue la référence unique des règles d'accès par profil dans
 l'application Astreintes. Il regroupe les règles métier, leur mise en œuvre,
-les migrations nécessaires et les limites actuelles des protections.
+les scripts d’installation nécessaires et les limites actuelles des protections.
 
 ## 1. Profils et identités
 
@@ -274,7 +274,7 @@ Angular ; ces règles ne constituent pas à elles seules un cloisonnement SQL.
 
 ### 9.2. Protections SQL préparées
 
-Les migrations protègent les profils et rôles, la création des objets parents,
+Le script de sécurisation protège les profils et rôles, la création des objets parents,
 le planning et les interventions. Les règles restrictives se combinent avec les
 anciennes politiques permissives. Les mises à jour contrôlent les anciennes et
 nouvelles identités lorsque nécessaire.
@@ -305,42 +305,21 @@ identifiants ne doivent jamais être exposés au navigateur.
 
 ## 10. Déploiement
 
-Les migrations présentes dans le dépôt ne prouvent pas leur application à une
-base distante. Les tests de droits utilisent une base jetable et ne déploient
-aucune modification en production.
+L’installation bêta repose sur trois scripts, à exécuter séparément avec le rôle
+`postgres`, dans l’ordre suivant :
 
-Avant application, sauvegarder la base et vérifier les administrateurs actuels :
+1. `supabase/database/01_structure.sql` sur une base applicative vide ;
+2. `supabase/database/02_security.sql` pour les droits et politiques RLS ;
+3. `supabase/database/03_operations.sql` pour les règles métier et déclencheurs.
 
-```sql
-SELECT id, auth_user_id, email, role
-FROM public.app_users
-WHERE role = 'admin';
-```
+Le type de rôle inclut directement `rh` dans le script de structure. Les scripts
+02 et 03 sont réexécutables. Les anciennes migrations ont été supprimées ; aucun
+script ne réinitialise une base existante. Voir [la procédure d’installation](database-schema.md).
 
-S'il n'existe aucun administrateur, attribuer ce rôle à un compte explicitement
-identifié depuis une session SQL d'administration de confiance. Vérifier aussi
-les habilitations des administrateurs déjà présents.
-
-Sur le schéma relationnel correspondant à l'application, appliquer dans l'ordre :
-
-1. `supabase/migrations/20261010190000_protect_user_roles.sql`
-2. `supabase/migrations/20261010200000_restrict_operation_creation.sql`
-3. `supabase/migrations/20261010210000_protect_planning_and_interventions.sql`
-4. `supabase/migrations/20261010220000_scope_exceptional_initiator_writes.sql`
-5. `supabase/migrations/20261010230000_allow_director_operation_creation.sql`
-6. `supabase/migrations/20261010231000_add_rh_role.sql`
-7. `supabase/migrations/20261010232000_grant_rh_director_permissions.sql`
-8. `supabase/migrations/20261010233000_protect_compensation_and_rh_send.sql`
-
-L'ajout de la valeur d'énumération `rh` doit être validé avant la migration
-qui l'utilise : exécuter les deux dernières migrations séparément, sans les
-englober dans une transaction commune. Les comptes existants gardent leur rôle ;
-seul un administrateur peut attribuer le nouveau profil RH.
-
-Utiliser le SQL Editor ou `psql` avec un compte d'administration de confiance.
-Les scripts sont transactionnels et réexécutables. La première migration
-remplace les anciennes politiques de `app_users`.
-Déployer ensuite le client Angular correspondant et vérifier les cinq profils.
+S’il n’existe aucun administrateur, attribuer ce rôle à un compte explicitement
+identifié depuis une session SQL d’administration de confiance. Le code présent
+dans le dépôt ne prouve pas son application à une base distante ; les tests
+utilisent une base jetable et ne déploient aucune modification en production.
 
 ## 11. Vérification
 
@@ -352,8 +331,8 @@ npm run build
 
 Le test SQL nécessite Docker et le conteneur Supabase local
 `supabase_db_astreintes`. La variable `SUPABASE_TEST_CONTAINER` permet de choisir
-un autre conteneur. Il crée une base temporaire distincte, applique les migrations
-à deux reprises et vérifie les refus ainsi que les usages autorisés. Il supprime
+un autre conteneur. Il crée une base temporaire distincte, installe les trois scripts,
+puis rejoue la sécurisation et les opérations et vérifie les refus ainsi que les usages autorisés. Il supprime
 uniquement la base temporaire créée, jamais la base applicative.
 
 Les tests Jest couvrent notamment les profils absents, les matrices de rôles et la parité Directeur/RH,

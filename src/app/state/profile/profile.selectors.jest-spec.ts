@@ -5,7 +5,7 @@ const state: ProfileState = {
   isLoading: false,
   isSaving: true,
   message: "Profil enregistré.",
-  profile: { displayName: "Agent", signatureMode: "name", signatureName: "Agent" },
+  profile: { displayName: "Agent", signatureName: "Agent" },
   saveCompletedAt: 123,
 };
 

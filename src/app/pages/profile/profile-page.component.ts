@@ -92,10 +92,7 @@ export class ProfilePageComponent implements OnChanges, OnDestroy {
   private emptyProfile(): SignatureProfile {
     return {
       displayName: "",
-      signatureMode: "name",
       signatureName: "",
-      signatureImage: "",
-      signatureDrawing: "",
     };
   }
 }

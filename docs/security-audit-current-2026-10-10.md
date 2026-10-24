@@ -1,5 +1,9 @@
 # Audit actuel — 10 octobre 2026
 
+> Rapport historique : les références à `schema.sql` et aux migrations décrivent
+> l’état audité. Pour l’installation actuelle, voir [les trois scripts SQL](database-schema.md).
+
+
 État audité : commit `aa59c8f`, avec Vibe Code Security Reviewer. Ce rapport remplace les conclusions des deux audits précédents pour cet état du dépôt.
 
 ## Résultat

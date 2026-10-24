@@ -34,7 +34,6 @@ export class VisasRepository {
       signedAt: text(row["signed_at"]),
       signedByName: text(row["signed_by_name"]),
       signedByUid: text(signer["auth_user_id"]),
-      signatureMode: row["signature_mode"] === "image" || row["signature_mode"] === "draw" || row["signature_mode"] === "name" ? row["signature_mode"] : undefined,
       signatureValue: text(row["signature_value"]) || undefined,
     };
   }
@@ -49,7 +48,6 @@ export class VisasRepository {
       signed_by_user_id: signed ? await this.users.resolveAppUserId(text(visa["signedByUid"])) : null,
       signed_by_name: signed ? text(visa["signedByName"], "Signature migree") : "",
       signed_at: signed ? nullableText(visa["signedAt"]) : null,
-      signature_mode: signed ? visa["signatureMode"] ?? null : null,
       signature_value: signed ? text(visa["signatureValue"]) : "",
     };
     const { data: existing, error: fetchError } = await this.client

@@ -63,6 +63,7 @@ export class ExceptionalRepository {
         actualStartDate: dateTimeLocalText(operation["actual_starts_at"]),
         actualEndDate: dateTimeLocalText(operation["actual_ends_at"]),
         sentToRhAt: text(operation["sent_to_rh_at"]) || undefined,
+        treatedAt: text(operation["treated_at"]) || undefined,
         plannedUsers: participants.get(participantKey(operationId, "planned")) ?? [],
         actualUsers: participants.get(participantKey(operationId, "actual")) ?? [],
         interventions: interventions.get(operationId) ?? [],
@@ -99,8 +100,9 @@ export class ExceptionalRepository {
       actual_starts_at: databaseDateTime(data["actualStartDate"]),
       actual_ends_at: databaseDateTime(data["actualEndDate"]),
       sent_to_rh_at: nullableText(data["sentToRhAt"]),
+      ...(data.treatedAt !== undefined ? { treated_at: nullableText(data.treatedAt) } : {}),
     };
-    const planningUnchanged = current && [
+    const planningUnchanged = current && (data.treatedAt === undefined || current.treatedAt === data.treatedAt) && [
       "initiatorUid", "operationManagerUid", "operationManagerName", "title", "startDate",
       "forecastEndDate", "actualStartDate", "actualEndDate", "sentToRhAt",
     ].every(field => current[field as keyof ExceptionalOperation] === data[field as keyof ExceptionalOperationUpdate]);
@@ -233,6 +235,7 @@ export class ExceptionalRepository {
         wasOnSite: intervention["was_on_site"] === true,
         label: text(intervention["label"]),
         comment: text(intervention["comment"]),
+        ticket: text(intervention["ticket"]) || undefined,
         agentVisa: visas.get(visaKey(intervention["id"], "exceptional_intervention_agent")) ?? createEmptyVisa(),
       });
       index.set(operationId, rows);
@@ -301,6 +304,7 @@ export class ExceptionalRepository {
       was_on_site: intervention["wasOnSite"] === true,
       label: text(intervention["label"]),
       comment: text(intervention["comment"]),
+      ...(intervention.ticket !== undefined ? { ticket: nullableText(intervention.ticket) } : {}),
     };
     const query = intervention.id
       ? this.client.from(tables.interventions).update(payload).eq("id", Number(intervention.id)).eq(tables.parentColumn, operationId)

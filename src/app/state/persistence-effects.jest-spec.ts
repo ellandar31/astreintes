@@ -28,8 +28,7 @@ jest.mock("../store/app-store", () => ({
 }));
 
 const user: ApplicationUser = {
-  id: "7", uid: "auth-id", email: "agent@example.fr", displayName: "Edited profile", role: 3,
-  signatureMode: "image", signatureName: "Agent", signatureImage: "saved-image", signatureDrawing: "",
+  id: "7", uid: "auth-id", email: "agent@example.fr", displayName: "Edited profile", role: 3,  signatureName: "Agent"
 };
 const sessionUser = { uid: user.uid, displayName: null, email: user.email };
 
@@ -122,9 +121,9 @@ describe("NgRx effects using typed domain APIs", () => {
     jest.mocked(appStore.auth.updateProfile).mockResolvedValue(undefined);
     jest.mocked(appStore.users.save).mockResolvedValue("7");
     const result = firstValueFrom(TestBed.inject(ProfileEffects).saveProfile$);
-    actions.next(ProfileActions.saveRequested({ user: sessionUser, profile: { displayName: "New name", signatureMode: "name", signatureName: "Agent" } }));
+    actions.next(ProfileActions.saveRequested({ user: sessionUser, profile: { displayName: "New name", signatureName: "Agent" } }));
     await result;
     expect(appStore.auth.updateProfile).toHaveBeenCalledWith(sessionUser, { displayName: "New name" });
-    expect(appStore.users.save).toHaveBeenCalledWith(user.uid, { displayName: "New name", signatureMode: "name", signatureName: "Agent", signatureImage: "", signatureDrawing: "", email: user.email });
+    expect(appStore.users.save).toHaveBeenCalledWith(user.uid, { displayName: "New name", signatureName: "Agent", email: user.email });
   });
 });

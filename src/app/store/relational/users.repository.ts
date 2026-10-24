@@ -75,11 +75,10 @@ export class UsersRepository {
       uid: authUserId,
       email: text(row["email"]),
       displayName: text(row["display_name"]),
+      trigram: text(row["trigram"]) || undefined,
+      deletedAt: text(row["deleted_at"]) || undefined,
       role: userRoleFromDb(row["role"]),
-      signatureMode: row["signature_mode"] === "image" || row["signature_mode"] === "draw" ? row["signature_mode"] : "name",
       signatureName: text(row["signature_name"]),
-      signatureImage: text(row["signature_image"]),
-      signatureDrawing: text(row["signature_drawing"]),
       lastLoginAt: text(row["last_login_at"]),
     };
   }
@@ -89,15 +88,15 @@ export class UsersRepository {
     const existing = await this.fetchUser(identifier);
     const payload: JsonRecord = {};
     const fields = {
-      uid: "auth_user_id", email: "email", displayName: "display_name",
-      signatureMode: "signature_mode", signatureName: "signature_name",
-      signatureImage: "signature_image", signatureDrawing: "signature_drawing",
+      uid: "auth_user_id", email: "email", displayName: "display_name", signatureName: "signature_name",
     } as const;
     for (const field of Object.keys(fields) as Array<keyof typeof fields>) {
       if (data[field] !== undefined) {
         payload[fields[field]] = text(data[field]);
       }
     }
+    if (data.trigram !== undefined) payload["trigram"] = nullableText(data.trigram);
+    if (data.deletedAt !== undefined) payload["deleted_at"] = nullableText(data.deletedAt);
     if (data.role !== undefined) {
       payload["role"] = userRoleToDb(data.role);
     }

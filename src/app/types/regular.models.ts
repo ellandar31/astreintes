@@ -16,6 +16,8 @@ export interface RegularOnCallPeriod {
   agentVisa?: SignatureVisa;
   directorVisa?: SignatureVisa;
   sentToRhAt?: string;
+  /** Date of RH processing, independent of submission. */
+  treatedAt?: string;
 }
 
 export interface RegularOnCallPeriodForm {
@@ -36,6 +38,8 @@ export interface RegularIntervention {
   startDate: string;
   endDate: string;
   comment: string;
+  /** External ticket reference; optional for historical interventions. */
+  ticket?: string;
   agentVisa?: SignatureVisa;
 }
 
@@ -46,6 +50,8 @@ export interface RegularInterventionForm {
   startDate: string;
   endDate: string;
   comment: string;
+  /** External ticket reference; optional for historical interventions. */
+  ticket?: string;
 }
 
 export interface RegularPublicHoliday {

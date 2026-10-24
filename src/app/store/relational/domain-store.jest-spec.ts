@@ -40,7 +40,7 @@ function relationalClient(tables: Record<string, JsonRecord[]> = {}, failure?: E
 }
 
 const authId = "690d58ef-7ec0-4a47-9511-2856263cf526";
-const userRow = { id: 7, auth_user_id: authId, email: "agent@example.fr", display_name: "Agent", role: "director", signature_mode: "name", signature_image: "saved-image" };
+const userRow = { id: 7, auth_user_id: authId, email: "agent@example.fr", display_name: "Agent", role: "director" };
 const visa = { ...createEmptyVisa(), signed: true, signedAt: "2026-09-14T12:00:00Z", signedByName: "Original signer", signedByUid: authId, signatureValue: "snapshot" };
 const period: RegularOnCallPeriod = {
   id: "11", teamId: "2", userId: "7", userName: "Agent", userEmail: userRow.email,
@@ -101,7 +101,7 @@ describe("Typed relational persistence", () => {
       app_users: [userRow],
       regular_on_call_periods: [{ id: 11, team_id: 2, user_id: 7, starts_at: "2026-09-12T18:00:00Z", ends_at: "2026-09-13T08:00:00Z" }],
       regular_interventions: [{ id: 21, regular_period_id: 11, user_id: 7, comment: "On site" }, { id: 22, regular_period_id: 12, user_id: 7 }],
-      visas: [{ id: 1, regular_period_id: 11, scope: "regular_period_agent", signed_at: visa.signedAt, signed_by_user: userRow, signature_mode: "name", signature_value: "snapshot" }],
+      visas: [{ id: 1, regular_period_id: 11, scope: "regular_period_agent", signed_at: visa.signedAt, signed_by_user: userRow, signature_value: visa.signatureValue }],
     });
     const store = new SupabaseDomainStore(client);
     const periods = await store.regular.listPeriods();
@@ -266,4 +266,38 @@ describe("Typed relational persistence", () => {
 it("maps the RH SQL role to its distinct application profile", async () => {
   const users = new UsersRepository(relationalClient({ app_users: [{ ...userRow, role: 'rh' }] }).client);
   expect(await users.fetchUser('7')).toMatchObject({ id: '7', role: 4 });
+});
+
+describe("Optional operation and employee metadata", () => {
+  it("reads and patches employee metadata without clearing omitted departure dates", async () => {
+    const stamp = "2026-10-24T08:00:00Z";
+    const { client, writes } = relationalClient({ app_users: [{ ...userRow, trigram: "ABC", deleted_at: stamp }] });
+    const users = new UsersRepository(client);
+    expect(await users.fetchUser("7")).toMatchObject({ trigram: "ABC", deletedAt: stamp });
+    await users.saveUser("7", { trigram: "DEF" });
+    expect(writes[0].payload).toEqual({ trigram: "DEF" });
+    await users.saveUser("7", { deletedAt: null });
+    expect(writes[1].payload).toEqual({ deleted_at: null });
+  });
+
+  it("persists regular tickets and treatment dates while preserving omitted metadata", async () => {
+    const stamp = "2026-10-24T08:00:00Z";
+    const { client, writes } = relationalClient({ app_users: [userRow],
+      regular_on_call_periods: [{ id: 11, treated_at: stamp }],
+      regular_interventions: [{ id: 12, regular_period_id: 11, user_id: 7, ticket: "INC-123" }],
+    });
+    const users = new UsersRepository(client);
+    const repository = new RegularRepository(client, users, new VisasRepository(client, users));
+    expect((await repository.fetchRegularPeriods())[0].treatedAt).toBe(stamp);
+    const intervention = (await repository.fetchRegularInterventions())[0];
+    expect(intervention.ticket).toBe("INC-123");
+    await repository.saveRegularIntervention("12", "11", { ...intervention, ticket: "INC-456" });
+    expect(writes[writes.length - 1]?.payload["ticket"]).toBe("INC-456");
+    await repository.saveRegularIntervention("12", "11", { ...intervention, ticket: undefined });
+    expect(writes[writes.length - 1]?.payload).not.toHaveProperty("ticket");
+    await repository.saveRegularPeriod("11", { ...period, agentVisa: undefined, treatedAt: stamp }, period);
+    expect(writes[writes.length - 1]?.payload["treated_at"]).toBe(stamp);
+    await repository.saveRegularPeriod("11", { ...period, agentVisa: undefined, treatedAt: null }, period);
+    expect(writes[writes.length - 1]?.payload["treated_at"]).toBeNull();
+  });
 });

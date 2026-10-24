@@ -32,14 +32,14 @@ Les données concernent des personnes physiques identifiables directement ou par
 
 | Table(s) | Champs ou données personnelles significatifs | Qualification et vigilance |
 | --- | --- | --- |
-| `app_users` | `auth_user_id`, `email`, `display_name`, `role`, `signature_mode`, `signature_name`, `signature_image`, `signature_drawing`, `last_login_at`, horodatages | Identité, habilitations, données de connexion et représentation de signature ; **sensibilité élevée pour les signatures** |
+| `app_users` | `auth_user_id`, `email`, `display_name`, `role`, `signature_name`, `last_login_at`, horodatages | Identité, habilitations, données de connexion et représentation de signature ; **sensibilité élevée pour les signatures** |
 | `teams`, `team_members` | Nom d'équipe, associations `user_id` / `team_id` | Appartenance organisationnelle ; donnée indirectement personnelle |
 | `regular_on_call_periods` | `user_id`, `team_id`, `starts_at`, `ends_at`, `sent_to_rh_at` | Planning nominatif et historique RH |
 | `regular_interventions` | `user_id`, `starts_at`, `ends_at`, `comment` | Horaires réels et zone de texte libre ; risque de données excessives |
 | `exceptional_on_calls`, `exceptional_works` | Initiateur, responsable, nom du responsable, `title`, horaires prévus et réels, envoi RH | Identification des responsables et suivi des opérations ; texte libre |
 | `exceptional_on_call_participants`, `exceptional_work_participants` | `user_id`, `participant_kind` (`planned`/`actual`), horaires | Présence prévue ou réelle ; chronologie d'activité individuelle |
 | `exceptional_on_call_interventions` | `user_id`, horaires, `label`, `comment` | Activité individualisée et texte libre |
-| `visas`, `exceptional_on_call_visas`, `exceptional_work_visas` | Signataire, nom figé, date de signature, `signature_mode`, `signature_value` | Preuve de validation, données de signature répliquées |
+| `visas`, `exceptional_on_call_visas`, `exceptional_work_visas` | Signataire, nom figé, date de signature, `signature_value` | Preuve de validation, données de signature répliquées |
 | `rh_on_call_compensation_rules`, `rh_period_compensation_rules` | Codes, coefficients et règles | Paramètres non personnels isolément ; deviennent des éléments RH lorsqu'appliqués à des agents |
 | `schedule_rules`, `public_holidays` | Règles horaires, jours fériés | Référentiels sans données personnelles directes dans le schéma |
 

@@ -1,4 +1,3 @@
-import { VisaSignatureMode } from "./signature.models";
 
 export type UserRole = 0 | 1 | 2 | 3 | 4;
 
@@ -8,6 +7,9 @@ export interface ManagedUser {
   uid?: string;
   email: string;
   displayName: string;
+  trigram?: string;
+  /** Company departure date; this does not delete the Auth account. */
+  deletedAt?: string | null;
   role: UserRole;
   lastLoginAt?: unknown;
 }
@@ -15,9 +17,6 @@ export interface ManagedUser {
 /** Application identity, distinct from the Supabase authentication UUID in uid. */
 export interface ApplicationUser extends ManagedUser {
   uid: string;
-  signatureMode: VisaSignatureMode;
   signatureName: string;
-  signatureImage: string;
-  signatureDrawing: string;
   lastLoginAt?: string;
 }

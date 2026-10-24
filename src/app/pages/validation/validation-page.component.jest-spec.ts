@@ -242,12 +242,10 @@ describe("Validation consultation", () => {
     }
   });
 
-  it.each(["image", "draw"] as const)("utilise le nom pour un nouveau visa avec un ancien profil %s", (signatureMode) => {
+  it("utilise le nom configuré dans le profil pour le nouveau visa", () => {
     const component = createPage().componentInstance;
     component.profile = {
-      ...component.profile!, role: 1, signatureName: "Nom du visa", signatureMode,
-      signatureImage: "data:image/png;base64,aW1hZ2U=",
-      signatureDrawing: "data:image/png;base64,ZGVzc2lu",
+      ...component.profile!, role: 1, signatureName: "Nom du visa"
     };
     const dispatch = jest.spyOn(TestBed.inject(MockStore), "dispatch").mockClear();
 
@@ -257,7 +255,7 @@ describe("Validation consultation", () => {
       field: "agentVisa",
       periodId: period.id,
       visa: expect.objectContaining({
-        signed: true, signedByName: "Nom du visa", signatureMode: "name", signatureValue: "Nom du visa",
+        signed: true, signedByName: "Nom du visa", signatureValue: "Nom du visa",
       }),
     }));
   });

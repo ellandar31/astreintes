@@ -21,6 +21,8 @@ export interface RhRegularPeriod {
   agentVisa?: SignatureVisa;
   directorVisa?: SignatureVisa;
   sentToRhAt?: string;
+  /** Date of RH processing, independent of submission. */
+  treatedAt?: string;
 }
 
 export interface RhPublicHoliday {
@@ -39,6 +41,7 @@ export interface RhExceptionalIntervention {
   wasOnSite?: boolean;
   label?: string;
   comment?: string;
+  ticket?: string;
   agentVisa?: SignatureVisa;
 }
 
@@ -66,6 +69,8 @@ export interface RhExceptionalOperation {
     actualDirector?: SignatureVisa;
   };
   sentToRhAt?: string;
+  /** Date of RH processing, independent of submission. */
+  treatedAt?: string;
 }
 
 export interface RhControlRow {

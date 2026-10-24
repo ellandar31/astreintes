@@ -952,8 +952,8 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
   /**
    * Construit le visa sauvegardé en base.
    *
-   * Les nouveaux visas utilisent uniquement le nom, même si un ancien profil
-   * conserve une préférence graphique. Les visas historiques restent inchangés.
+   * Le nom configuré est figé au moment de la validation pour que les changements
+   * ultérieurs du profil ne modifient pas l’identité affichée sur les visas existants.
    */
   private buildVisa(item: ValidationItem): SignatureVisa {
     const signer = this.visaSignerForItem(item);
@@ -963,7 +963,6 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
       signedAt: new Date().toISOString(),
       signedByName: signer.name,
       signedByUid: signer.uid,
-      signatureMode: "name",
       signatureValue: signer.name,
     };
   }
@@ -975,25 +974,20 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
    * enregistré doit alors porter l'identité de l'utilisateur représenté par la
    * ligne, pas celle de l'administrateur qui a cliqué.
    */
-  private visaSignerForItem(item: ValidationItem): { uid: string; name: string; email: string; profile: AppUser | null } {
+  private visaSignerForItem(item: ValidationItem): { uid: string; name: string } {
     if (!this.isAdmin) {
       return {
         uid: this.user?.uid || "",
         name: this.profile?.signatureName || this.profile?.displayName || this.user?.displayName || this.user?.email || "",
-        email: this.user?.email || "",
-        profile: this.profile,
       };
     }
     const reference = this.visaSignerReference(item);
     const profile = this.findUser(reference.userId, reference.email);
     const fallbackName = reference.name || profile?.signatureName || profile?.displayName || profile?.email || this.user?.displayName || this.user?.email || "";
-    const fallbackEmail = reference.email || profile?.email || this.user?.email || "";
 
     return {
       uid: profile?.uid || reference.userId || profile?.id || this.user?.uid || "",
       name: profile?.signatureName || profile?.displayName || fallbackName,
-      email: fallbackEmail,
-      profile: profile || null,
     };
   }
 

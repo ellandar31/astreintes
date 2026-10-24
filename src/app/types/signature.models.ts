@@ -1,5 +1,3 @@
-export type VisaSignatureMode = "name" | "image" | "draw";
-
 /** Relational signature targets are explicit so a visa cannot attach to an arbitrary column. */
 export type VisaStorageTable = "visas" | "exceptional_on_call_visas" | "exceptional_work_visas";
 export type VisaTargetColumn = "regular_period_id" | "regular_intervention_id" | "operation_id" | "participant_id" | "intervention_id";
@@ -12,10 +10,7 @@ export type VisaScope =
 
 export interface SignatureProfile {
   displayName?: string;
-  signatureMode?: VisaSignatureMode;
   signatureName?: string;
-  signatureImage?: string;
-  signatureDrawing?: string;
 }
 
 export interface SignatureVisa {
@@ -23,7 +18,6 @@ export interface SignatureVisa {
   signedAt: string;
   signedByName: string;
   signedByUid: string;
-  signatureMode?: VisaSignatureMode;
   signatureValue?: string;
 }
 

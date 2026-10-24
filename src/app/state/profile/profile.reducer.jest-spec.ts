@@ -8,14 +8,14 @@ describe("profileReducer", () => {
 
     expect(loading).toEqual(expect.objectContaining({ isLoading: true, message: "" }));
 
-    const profile = { displayName: "Agent", signatureMode: "name" as const, signatureName: "Agent" };
+    const profile = { displayName: "Agent", signatureName: "Agent" };
     const loaded = profileReducer(loading, ProfileActions.profileChanged({ profile }));
 
     expect(loaded).toEqual(expect.objectContaining({ isLoading: false, profile }));
   });
 
   it("réinitialise le profil à l'arrêt du watcher", () => {
-    const state = profileReducer({ ...initialProfileState, isLoading: true, profile: { signatureMode: "draw" } }, ProfileActions.watchStopped());
+    const state = profileReducer({ ...initialProfileState, isLoading: true}, ProfileActions.watchStopped());
 
     expect(state).toBe(initialProfileState);
   });
@@ -23,7 +23,7 @@ describe("profileReducer", () => {
   it("trace le succès ou l'échec de sauvegarde", () => {
     const saving = profileReducer(
       initialProfileState,
-      ProfileActions.saveRequested({ profile: { signatureMode: "name" }, user: { displayName: "Agent", email: "a@test.fr", uid: "u1" } }),
+      ProfileActions.saveRequested({ user: { displayName: "Agent", email: "a@test.fr", uid: "u1" } }),
     );
 
     expect(saving.isSaving).toBe(true);

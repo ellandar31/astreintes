@@ -70,11 +70,8 @@ Les signatures disponibles sont :
 - Directeur
 - RH (mêmes droits que Directeur)
 
-Les signatures peuvent être :
-
-- dessinées directement dans l'application ;
-- enregistrées dans le profil utilisateur ;
-- importées sous forme d'image.
+Les visas utilisent le nom configuré dans le profil utilisateur. Le nom du signataire
+et la date sont conservés au moment de chaque validation.
 
 ---
 
@@ -230,7 +227,7 @@ Configuration Supabase :
 
 1. en local, lancer `npx supabase start` ;
 2. ouvrir le SQL Editor de Supabase Studio sur un projet vide ;
-3. exécuter le contenu de `schema.sql` avec le rôle `postgres` ;
+3. exécuter, dans l’ordre, `01_structure.sql`, `02_security.sql` et `03_operations.sql` du dossier `supabase/database/`, avec le rôle `postgres` ;
 4. renseigner `url` et `anonKey` dans `src/app/store/supabase.config.ts` pour changer de projet ;
 5. activer l'authentification Email dans Supabase Auth.
 
@@ -266,8 +263,8 @@ hébergé, soit une instance Supabase lancée ou self-hostée avec Docker.
 
 1. Créer un projet Supabase.
 2. Activer l'authentification Email dans Supabase Auth.
-3. Dans le SQL Editor du projet vide, exécuter le contenu de `schema.sql`
-   avec le rôle `postgres`.
+3. Dans le SQL Editor du projet vide, exécuter les trois scripts de
+   `supabase/database/` dans l’ordre 01, 02, 03, avec le rôle `postgres`.
 
 4. Récupérer l'URL du projet et la clé `anon public` dans Supabase :
    `Project settings > API`.
@@ -286,7 +283,8 @@ npx supabase start
 ```
 
 Pour installer les tables applicatives dans une base vide, ouvrir le SQL Editor
-de Supabase Studio et exécuter `schema.sql` avec le rôle `postgres`.
+de Supabase Studio et exécuter les scripts de `supabase/database/` dans l’ordre
+01, 02, 03, avec le rôle `postgres`.
 
 URLs locales utiles :
 
@@ -380,16 +378,17 @@ docker compose down
 - `npm test`
 - `npm run build`
 - `npm audit --omit=dev`
-- schéma `schema.sql` installé
+- trois scripts de `supabase/database/` installés dans l’ordre 01, 02, 03
 - authentification Email activée
 - URL et clé `anon public` Supabase renseignées dans les variables Docker
 - sauvegarde/restauration de la base Supabase validée
 
 ## Schéma de données
 
-Le schéma initial est fourni dans [`schema.sql`](schema.sql) et documenté dans
-[`docs/database-schema.md`](docs/database-schema.md). Il contient toutes les tables,
-contraintes, fonctions et permissions nécessaires à une installation neuve.
+L’installation est regroupée en trois fichiers dans [`supabase/database/`](supabase/database/) :
+structure, sécurisation des accès et opérations métier, à exécuter dans l’ordre 01, 02, 03.
+La [procédure SQL](docs/database-schema.md) précise leur usage et les tests.
+Les migrations historiques ont été supprimées pendant la bêta.
 
 ---
 

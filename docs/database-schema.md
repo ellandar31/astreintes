@@ -1,16 +1,31 @@
-# Schéma relationnel Supabase
+# Base de données Astreintes — installation bêta
 
-## Installation initiale
+## Trois scripts à exécuter dans cet ordre
 
-`schema.sql` est le schéma initial pour une installation initiale dans un projet
-Supabase vide. Il requiert les rôles Supabase et le schéma `auth` (`auth.users`,
-`auth.uid()`). L'exécuter avec le rôle de maintenance `postgres`.
-La création est transactionnelle, sans données ni suppression de tables.
-Ce fichier n'est pas un script de mise à niveau d'une base existante.
+Dans le SQL Editor de Supabase, avec le rôle `postgres`, exécuter séparément :
 
-Les identifiants sont générés par PostgreSQL. `app_users.auth_user_id` relie le
-profil à Supabase Auth. Les familles exceptionnelles ont des séquences indépendantes ;
-l'application préfixe leurs identifiants avec `astreinte:` ou `travaux:`.
+1. [`01_structure.sql`](../supabase/database/01_structure.sql) : types, 17 tables,
+   colonnes, clés étrangères, contraintes et index.
+2. [`02_security.sql`](../supabase/database/02_security.sql) : droits SQL,
+   politiques RLS, contrôle des profils et autorisation des écritures.
+3. [`03_operations.sql`](../supabase/database/03_operations.sql) : horodatage
+   `updated_at`, contrôle des périodes d’intervention et verrouillage après envoi RH.
+
+Supabase fournit le schéma `auth`, `auth.users`, `auth.uid()` et les rôles
+`anon`, `authenticated`, `service_role`. Les scripts ne créent aucun utilisateur
+réel et ne renseignent aucune donnée métier. Chaque script est transactionnel.
+
+`01_structure.sql` est réservé à une base applicative vide : il ne supprime aucune
+table et ne constitue pas une mise à niveau d’une ancienne base. Les scripts 02 et
+03 peuvent être rejoués sur cette structure sans dupliquer les politiques ni les
+déclencheurs. Les accès clients sont bloqués à la création des tables, avant
+l’application du script de sécurisation.
+
+Le dépôt ne contient plus de migrations ni de `schema.sql` concurrent. Pendant
+la bêta, les évolutions sont intégrées directement aux trois scripts. Une base
+existante n’est pas modifiée par cette réorganisation : son éventuelle recréation
+reste une opération distincte. Les commandes Supabase de migration et de seed
+sont désactivées dans `config.toml` ; l’installation utilise ces trois fichiers.
 
 ## Tables utilisées
 
@@ -23,28 +38,35 @@ l'application préfixe leurs identifiants avec `astreinte:` ou `travaux:`.
 | Astreintes exceptionnelles | `exceptional_on_calls`, `exceptional_on_call_participants`, `exceptional_on_call_interventions`, `exceptional_on_call_visas` |
 | Travaux supplémentaires | `exceptional_works`, `exceptional_work_participants`, `exceptional_work_visas` |
 
-Les périodes des participants distinguent prévisionnel et réel. Les travaux utilisent
-ces périodes sans table d'interventions. Les clés étrangères des visas sont propres
-à leur famille. Chaque visa possède une seule cible et une signature unique par
-cible et portée.
+Les identifiants SQL sont générés par PostgreSQL. `app_users.auth_user_id` relie
+le profil à Supabase Auth. Les séquences des familles exceptionnelles sont
+indépendantes ; l’application préfixe leurs identifiants par `astreinte:` ou `travaux:`.
+Les travaux utilisent les périodes réelles des participants, sans table d’interventions.
+Les visas conservent un instantané indépendant du profil de leur signataire.
 
-## Règles métier et permissions
+## Métadonnées disponibles
 
-Les interventions restent dans une période valide du même utilisateur. Les
-déclencheurs conservent le verrouillage des champs de planning après envoi RH.
-Les signatures conservent un instantané indépendant du profil du signataire.
+| Tables | Colonne | Type | Usage |
+| --- | --- | --- | --- |
+| `regular_interventions`, `exceptional_on_call_interventions` | `ticket` | `text`, nullable | Référence du ticket externe |
+| `app_users` | `trigram` | `varchar(3)`, nullable | Trigramme, sans contrainte d’unicité |
+| `app_users` | `deleted_at` | `timestamptz`, nullable | Date de départ de la société |
+| `regular_on_call_periods`, `exceptional_on_calls`, `exceptional_works` | `treated_at` | `timestamptz`, nullable | Date de traitement par les RH |
 
-Toutes les tables ont la RLS activée. Les lectures authentifiées et les droits de
-base sur les référentiels, paramètres et visas sont conservés. Les politiques
-restrictives et déclencheurs protègent les profils, la création des opérations,
-le planning, les participants et les interventions. Les initiateurs éditent leurs
-propres opérations exceptionnelles ; les administrateurs, directeurs et RH ont les
-droits transverses prévus. Seuls les administrateurs attribuent les rôles.
-Les mises à jour sans modification métier du parent restent autorisées pour les visas.
+Le ticket suit les droits de l’intervention. Le départ est modifiable uniquement
+par un administrateur ; il ne supprime pas le compte Auth et ne filtre pas les
+listes. Le traitement RH suit les droits de l’envoi (admin, directeur, RH).
+Les dates d’envoi et de traitement sont indépendantes et ne sont pas renseignées
+automatiquement. Les formulaires actuels conservent les métadonnées omises.
 
 ## Vérification
 
-`npm run test:db-schema` installe le schéma complet dans une base temporaire du
-conteneur Supabase local (`SUPABASE_TEST_CONTAINER` permet d'en préciser le nom).
-Il vérifie les profils, les contraintes et l'isolation des familles après une
-installation neuve, puis supprime uniquement sa base temporaire.
+`npm run test:db-schema` crée une base temporaire dans le conteneur Supabase local,
+installe les trois scripts, rejoue les scripts 02 et 03, puis vérifie la structure,
+les droits des cinq profils, le planning, les interventions et les statuts RH.
+`npm run test:db-user-roles` utilise le même schéma complet pour les tests d’accès.
+La variable `SUPABASE_TEST_CONTAINER` permet de choisir le conteneur.
+
+Les fichiers de `supabase/tests/` sont des fixtures et assertions automatisées.
+Ils ne font pas partie de l’installation et ne doivent pas être exécutés dans la
+base applicative. Seule la base temporaire créée par le test est supprimée.

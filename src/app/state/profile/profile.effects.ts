@@ -66,10 +66,7 @@ export class ProfileEffects {
   private profileFromStore(data: ApplicationUser | undefined, user: StoreAuthUser): SignatureProfile {
     return {
       displayName: data?.displayName ?? user.displayName ?? "",
-      signatureMode: "name",
       signatureName: data?.signatureName || user.displayName || user.email || "",
-      signatureImage: "",
-      signatureDrawing: "",
     };
   }
 
@@ -89,10 +86,6 @@ export class ProfileEffects {
     const savedProfile: SignatureProfile = {
       displayName,
       signatureName,
-      // Clear obsolete graphics when saving so they cannot be reused by legacy clients.
-      signatureMode: "name",
-      signatureImage: "",
-      signatureDrawing: "",
     };
 
     if (displayName && displayName !== user.displayName) {

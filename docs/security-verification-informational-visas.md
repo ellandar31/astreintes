@@ -1,10 +1,14 @@
 # Vérification tenant compte des visas informatifs
 
+> Rapport historique : les références à `schema.sql` et aux migrations décrivent
+> l’état audité. Pour l’installation actuelle, voir [les trois scripts SQL](database-schema.md).
+
+
 État examiné : commit `66ad023`. La règle métier donnée par l'utilisateur fait foi : l'image ou le dessin du visa est informatif et ne valide pas une fiche pour les RH. Cette vérification distingue donc le contenu graphique du statut applicatif, sans assimiler une signature affichée à une approbation RH réelle.
 
 ## Constat principal
 
-L'image/dessin (`signature_value`, `signature_image`, `signature_drawing`) ne participe pas aux calculs d'indemnisation. Sa modification relève de l'intégrité d'affichage, avec une gravité faible à modérée selon l'usage. La lecture des images tierces n'est pas automatiquement une vulnérabilité élevée : elle dépend des règles de confidentialité et des destinataires attendus.
+Le visa (`signature_value`) ne participe pas aux calculs d'indemnisation. Sa modification relève de l'intégrité d'affichage, avec une gravité faible à modérée selon l'usage. La lecture des images tierces n'est pas automatiquement une vulnérabilité élevée : elle dépend des règles de confidentialité et des destinataires attendus.
 
 En revanche, **le statut du visa influence toujours l'envoi applicatif aux RH** :
 

@@ -202,4 +202,20 @@ describe("Separate exceptional persistence families", () => {
     // Empty parents skip all child/user/visa requests as well.
     expect(calls.every(call => call.table === table)).toBe(true);
   });
+  it("persists a ticket-only correction and treatment date without rebuilding unrelated children", async () => {
+    const current = existingOperation();
+    const { repository, calls } = routedClient(undefined, undefined, {
+      exceptional_on_call_interventions: [{ id: 11 }, { id: 12 }],
+    });
+    jest.spyOn(repository, "fetchExceptionalOperation").mockResolvedValue(current);
+    await repository.saveExceptionalOperation(current.id, { ...current, treatedAt: "2026-10-24T08:00:00Z",
+      interventions: [{ ...current.interventions[0], ticket: "INC-123" }, current.interventions[1]],
+    });
+    expect(calls.find(call => call.table === "exceptional_on_calls" && call.method === "update")?.value)
+      .toMatchObject({ treated_at: "2026-10-24T08:00:00Z" });
+    const interventionWrites = calls.filter(call => call.table === "exceptional_on_call_interventions" && call.method === "update");
+    expect(interventionWrites).toHaveLength(1);
+    expect(interventionWrites[0].value).toMatchObject({ ticket: "INC-123" });
+  });
+
 });
