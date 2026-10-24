@@ -1,4 +1,10 @@
 export const APP_LABELS = {
+  calendar: {
+    navigation: "Navigation mensuelle",
+    previousMonth: "Mois pr\u00e9c\u00e9dent",
+    nextMonth: "Mois suivant",
+    weekDays: ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"],
+  },
   app: {
     eyebrow: "Astreintes et travaux",
     title: "Suivi des astreintes et travaux supplémentaires",
@@ -212,8 +218,6 @@ export const APP_LABELS = {
       addOnCallPeriod: "Ajouter une période d'astreinte",
       deleteInterventionConfirm: "Supprimer cette intervention ?",
       deletePeriodConfirm: "Supprimer cette période d'astreinte ?",
-      nextMonth: "Mois suivant",
-      previousMonth: "Mois précédent",
     },
     empty: {
       noAssociatedIntervention: "Aucune intervention associée.",
@@ -244,7 +248,6 @@ export const APP_LABELS = {
     },
     title: "Planning d'astreinte",
     eyebrow: "Astreintes régulieres",
-    weekDays: ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"],
   },
   rh: {
     controls: {

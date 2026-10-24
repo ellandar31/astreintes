@@ -11,6 +11,7 @@
   border-radius: var(--app-radius-md);
   display: grid;
   gap: var(--app-space-xl);
+  grid-template-rows: auto minmax(0, 1fr);
   height: 100%;
   min-height: 0;
   padding: var(--app-space-xl);
@@ -25,8 +26,7 @@
   justify-content: space-between;
 }
 
-.regular-toolbar h2,
-.month-navigation h3 {
+.regular-toolbar h2 {
   color: var(--app-color-heading);
   margin: 0;
 }
@@ -49,137 +49,6 @@
 :host ::ng-deep .regular-actions .p-button {
   min-height: 2.625rem;
 }
-
-.month-navigation {
-  align-items: center;
-  display: flex;
-  gap: var(--app-space-xl);
-  justify-content: center;
-}
-
-.calendar-shell {
-  border: var(--app-border-width) solid var(--app-color-border);
-  border-radius: var(--app-radius-md);
-  min-height: 0;
-  overflow: auto;
-}
-
-.week-header,
-.month-grid {
-  display: grid;
-  grid-template-columns: repeat(7, minmax(8.125rem, 1fr));
-}
-
-.week-header {
-  background: var(--app-color-surface-muted);
-  border-bottom: var(--app-border-width) solid var(--app-color-border);
-}
-
-.week-header span {
-  color: var(--app-color-subtle);
-  font-size: 0.82rem;
-  font-weight: 900;
-  padding: 0.5625rem var(--app-space-md);
-  text-align: center;
-}
-
-.day-cell {
-  border-bottom: var(--app-border-width) solid var(--app-color-border);
-  border-right: var(--app-border-width) solid var(--app-color-border);
-  display: grid;
-  gap: var(--app-space-sm);
-  min-height: 7.375rem;
-  padding: var(--app-space-sm);
-}
-
-.day-cell:nth-child(7n) {
-  border-right: 0;
-}
-
-.outside-month {
-  background: var(--app-color-surface-muted);
-  color: var(--app-color-subtle);
-}
-
-.public-holiday {
-  background: var(--app-color-calendar-holiday-bg);
-  box-shadow: inset 0 0 0 0.125rem var(--app-color-calendar-holiday);
-}
-
-.outside-month.public-holiday {
-  background: var(--app-color-calendar-holiday-muted-bg);
-}
-
-.day-heading {
-  align-items: flex-start;
-  display: flex;
-  gap: var(--app-space-xs);
-  justify-content: space-between;
-  min-width: 0;
-}
-
-.day-number {
-  font-size: 0.82rem;
-  font-weight: 900;
-}
-
-.holiday-label {
-  background: var(--app-color-calendar-holiday);
-  border-radius: var(--app-radius-pill);
-  color: var(--app-color-calendar-holiday-text);
-  display: block;
-  font-size: 0.68rem;
-  font-weight: 900;
-  line-height: 1.2;
-  max-width: 82%;
-  overflow: hidden;
-  padding: 0.1875rem 0.4375rem;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.period-list {
-  display: grid;
-  gap: var(--app-space-2xs);
-  align-content: start;
-}
-
-.period-bar {
-  background: var(--period-color, var(--app-color-primary));
-  border-radius: var(--app-radius-pill);
-  color: var(--app-color-surface);
-  cursor: pointer;
-  min-height: 1.375rem;
-  overflow: hidden;
-}
-
-.period-bar.color-0 { --period-color: var(--app-period-color-0); } /* Bleu */
-.period-bar.color-1 { --period-color: var(--app-period-color-1); } /* Vert */
-.period-bar.color-2 { --period-color: var(--app-period-color-2); } /* Ocre */
-.period-bar.color-3 { --period-color: var(--app-period-color-3); } /* Violet */
-.period-bar.color-4 { --period-color: var(--app-period-color-4); } /* Rouge brique */
-.period-bar.color-5 { --period-color: var(--app-period-color-5); } /* Bleu clair */
-
-.period-bar.period-archived {
-  background: var(--app-color-border);
-  color: var(--app-color-subtle);
-  cursor: default;
-}
-
-.period-bar:not(.period-start) {
-  opacity: 0.78;
-}
-
-.period-bar span {
-  display: block;
-  font-size: 0.78rem;
-  font-weight: 900;
-  overflow: hidden;
-  padding: 0.1875rem var(--app-space-sm);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 
 @media (max-width: 47.5rem) {
   .regular-toolbar,

@@ -38,66 +38,12 @@
     </div>
   </header>
 
-  <div class="month-navigation" [attr.aria-label]="labels.regular.sections.monthNavigation">
-    <p-button
-      icon="pi pi-chevron-left"
-      [rounded]="true"
-      severity="secondary"
-      [outlined]="true"
-      (onClick)="previousMonth()"
-      [title]="labels.regular.actions.previousMonth"
-    ></p-button>
-    <h3>{{ monthLabel }}</h3>
-    <p-button
-      icon="pi pi-chevron-right"
-      [rounded]="true"
-      severity="secondary"
-      [outlined]="true"
-      (onClick)="nextMonth()"
-      [title]="labels.regular.actions.nextMonth"
-    ></p-button>
-  </div>
-
-  <div class="calendar-shell">
-    <div class="week-header">
-      @for (weekDay of weekDays; track weekDay) {
-        <span>{{ weekDay }}</span>
-      }
-    </div>
-
-    <div class="month-grid">
-      @for (day of calendarDays; track day.dateKey) {
-        @let publicHoliday = publicHolidayForDay(day);
-        <article
-          class="day-cell"
-          [class.outside-month]="!day.isCurrentMonth"
-          [class.public-holiday]="publicHoliday"
-        >
-          <div class="day-heading">
-            <span class="day-number">{{ day.dayNumber }}</span>
-            @if (publicHoliday) {
-              <span class="holiday-label"><app-truncated-text [text]="publicHoliday.label" /></span>
-            }
-          </div>
-
-          <div class="period-list">
-            @for (period of periodsForDay(day); track period.id) {
-              <div
-                class="period-bar"
-                [class.period-start]="isPeriodStart(day, period)"
-                [class.period-archived]="isPeriodArchived(period)"
-                [attr.aria-disabled]="isPeriodArchived(period) ? 'true' : null"
-                [class]="'period-bar color-' + (getPeriodColor(period) % 6)"
-                (dblclick)="openEditPeriodModal(period)"
-              >
-                <span><app-truncated-text [text]="period.userName" /></span>
-              </div>
-            }
-          </div>
-        </article>
-      }
-    </div>
-  </div>
+  <app-calendar
+    [(month)]="currentMonth"
+    [entries]="calendarEntries()"
+    [holidays]="publicHolidays"
+    (entryActivated)="openCalendarEntry($event)"
+  />
 </section>
 
 @if (isPeriodModalOpen && (editingPeriodId || canCreateOperations())) {

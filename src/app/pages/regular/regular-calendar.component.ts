@@ -1,8 +1,9 @@
 import { isArchivedOperation } from "../../shared/operation-archive";
 import { selectSettingsDirections } from "../../state/settings/settings.selectors";
-import { TruncatedTextComponent } from "../../shared/truncated-text.component";
+import { CalendarComponent } from "../../shared/calendar/calendar.component";
+import { CalendarEntry } from "../../shared/calendar/calendar.models";
 import { CommonModule } from "@angular/common";
-import { Component, OnDestroy, effect, inject } from "@angular/core";
+import { Component, OnDestroy, computed, effect, inject, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { ButtonModule } from "primeng/button";
 import { SelectModule } from "primeng/select";
@@ -31,31 +32,23 @@ import {
 import { RegularInterventionModalComponent } from "./regular-intervention-modal.component";
 import { RegularPeriodModalComponent } from "./regular-period-modal.component";
 
-interface CalendarDay {
-  date: Date;
-  dateKey: string;
-  dayNumber: number;
-  isCurrentMonth: boolean;
-}
-
 /**
  * Planning mensuel des astreintes régulières.
  *
- * Le composant garde l'ergonomie calendrier en local mais délègue les données
- * partagées au store NgRx. Les règles critiques sont le non-recouvrement des
+ * Le calendrier partagé assure le rendu mensuel ; cette page conserve les règles
+ * métier et les données partagées du store NgRx. Les règles critiques sont le non-recouvrement des
  * astreintes d'un même utilisateur et l'obligation de rattacher chaque
  * intervention à une période d'astreinte existante.
  */
 @Component({
   selector: "app-regular-calendar",
   standalone: true,
-  imports: [TruncatedTextComponent, ButtonModule, CommonModule, FormsModule, RegularInterventionModalComponent, RegularPeriodModalComponent, SelectModule],
+  imports: [CalendarComponent, ButtonModule, CommonModule, FormsModule, RegularInterventionModalComponent, RegularPeriodModalComponent, SelectModule],
   templateUrl: "./regular-calendar.component.html",
   styleUrl: "./regular-calendar.component.css",
 })
 export class RegularCalendarComponent implements OnDestroy {
   readonly labels = APP_LABELS;
-  readonly weekDays = APP_LABELS.regular.weekDays;
 
   editingInterventionId: string | null = null;
   interventionPeriodId: string | null = null;
@@ -67,9 +60,23 @@ export class RegularCalendarComponent implements OnDestroy {
   isInterventionModalOpen = false;
   isPeriodModalOpen = false;
   periodForm = this.createEmptyPeriodForm();
-  periods: RegularOnCallPeriod[] = [];
+  private readonly periodRows = signal<RegularOnCallPeriod[]>([]);
+  get periods(): RegularOnCallPeriod[] { return this.periodRows(); }
+  set periods(value: RegularOnCallPeriod[]) { this.periodRows.set(value); }
   publicHolidays: RegularPublicHoliday[] = [];
-  selectedTeamId = "";
+  private readonly selectedTeam = signal("");
+  get selectedTeamId(): string { return this.selectedTeam(); }
+  set selectedTeamId(value: string) { this.selectedTeam.set(value); }
+  readonly calendarEntries = computed<CalendarEntry[]>(() => this.selectedTeamPeriods.map(period => ({
+    id: period.id, label: period.userName, startDate: period.startDate, endDate: period.endDate,
+    disabled: this.isPeriodArchived(period),
+  })));
+
+  /** Resolve the current aggregate before opening; a stale rendered event never grants editing rights. */
+  openCalendarEntry(entry: CalendarEntry): void {
+    const period = this.periods.find(period => period.id === entry.id);
+    if (period) this.openEditPeriodModal(period);
+  }
   teams: RegularTeam[] = [];
   users: RegularUser[] = [];
 
@@ -115,7 +122,6 @@ export class RegularCalendarComponent implements OnDestroy {
     });
 
     effect(() => {
-      // Sent periods remain as calendar context, but are no longer editable.
       // Archived periods remain visible for calendar continuity; all editing paths stay locked.
       this.periods = this.regularPeriods();
       if (this.editingPeriodId && !this.periods.some(period => period.id === this.editingPeriodId && !isArchivedOperation(period))) this.closePeriodModal();
@@ -141,29 +147,6 @@ export class RegularCalendarComponent implements OnDestroy {
 
   ngOnDestroy(): void {
     this.store.dispatch(RegularActions.watchStopped());
-  }
-
-  get monthLabel(): string {
-    return new Intl.DateTimeFormat("fr-FR", { month: "long", year: "numeric" }).format(this.currentMonth);
-  }
-
-  get calendarDays(): CalendarDay[] {
-    const firstDay = new Date(this.currentMonth.getFullYear(), this.currentMonth.getMonth(), 1);
-    const firstWeekday = (firstDay.getDay() + 6) % 7;
-    const startDate = new Date(firstDay);
-    startDate.setDate(firstDay.getDate() - firstWeekday);
-
-    return Array.from({ length: 42 }, (_, index) => {
-      const date = new Date(startDate);
-      date.setDate(startDate.getDate() + index);
-
-      return {
-        date,
-        dateKey: this.toDateKey(date),
-        dayNumber: date.getDate(),
-        isCurrentMonth: date.getMonth() === this.currentMonth.getMonth(),
-      };
-    });
   }
 
   get selectedTeamUsers(): RegularUser[] {
@@ -196,14 +179,6 @@ export class RegularCalendarComponent implements OnDestroy {
 
   get editingPeriod(): RegularOnCallPeriod | undefined {
     return this.periods.find((period) => period.id === this.editingPeriodId);
-  }
-
-  previousMonth(): void {
-    this.currentMonth = new Date(this.currentMonth.getFullYear(), this.currentMonth.getMonth() - 1, 1);
-  }
-
-  nextMonth(): void {
-    this.currentMonth = new Date(this.currentMonth.getFullYear(), this.currentMonth.getMonth() + 1, 1);
   }
 
   openPeriodModal(): void {
@@ -425,36 +400,12 @@ export class RegularCalendarComponent implements OnDestroy {
     this.closePeriodModal();
   }
 
-  periodsForDay(day: CalendarDay): RegularOnCallPeriod[] {
-    return this.selectedTeamPeriods.filter(
-      (period) => this.toDateOnly(period.startDate) <= day.dateKey && this.toDateOnly(period.endDate) >= day.dateKey,
-    ).sort((a, b) => a.startDate.localeCompare(b.startDate));
-  }
-
-  isPeriodStart(day: CalendarDay, period: RegularOnCallPeriod): boolean {
-    return this.toDateOnly(period.startDate) === day.dateKey;
-  }
-
-  publicHolidayForDay(day: CalendarDay): RegularPublicHoliday | undefined {
-    return this.publicHolidays.find((holiday) => holiday.date === day.dateKey);
-  }
-
   userLabel(user: RegularUser): string {
     return user.displayName ? `${user.displayName} (${user.email})` : user.email;
   }
 
   isPeriodArchived(period: RegularOnCallPeriod | null | undefined): boolean {
     return Boolean(period && isArchivedOperation(period));
-  }
-
-  getPeriodColor(period: RegularOnCallPeriod): number {
-    let hash = 0;
-  
-    for (const c of period.id) {
-      hash = Math.trunc(((hash << 5) - hash) + (c.codePointAt(0) || 0));
-    }
-  
-    return Math.abs(hash);
   }
 
   private createEmptyPeriodForm(): RegularOnCallPeriodForm {
@@ -554,10 +505,6 @@ export class RegularCalendarComponent implements OnDestroy {
     const day = String(date.getDate()).padStart(2, "0");
 
     return `${year}-${month}-${day}`;
-  }
-
-  private toDateOnly(value: string): string {
-    return value.slice(0, 10);
   }
 
   private toDateTimeLocal(date: Date): string {

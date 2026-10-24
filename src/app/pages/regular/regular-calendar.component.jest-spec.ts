@@ -32,9 +32,9 @@ describe("Active regular calendar", () => {
     expect(view.periods.map(item => item.id)).toEqual([period.id, "2"]);
     expect(view.isPeriodModalOpen).toBe(false);
     expect(view.isInterventionModalOpen).toBe(false);
-    const bars = Array.from(fixture.nativeElement.querySelectorAll(".period-bar")) as HTMLElement[];
+    const bars = Array.from(fixture.nativeElement.querySelectorAll(".calendar-entry")) as HTMLElement[];
     expect(bars.length).toBeGreaterThan(0);
-    expect(bars.every(bar => bar.classList.contains("period-archived") && bar.getAttribute("aria-disabled") === "true")).toBe(true);
+    expect(bars.every(bar => bar.classList.contains("entry-disabled") && bar.getAttribute("aria-disabled") === "true")).toBe(true);
     for (const bar of bars) {
       bar.dispatchEvent(new MouseEvent("dblclick", { bubbles: true }));
       fixture.detectChanges();

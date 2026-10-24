@@ -1,0 +1,64 @@
+<div class="month-navigation" [attr.aria-label]="labels.navigation">
+  <p-button
+    icon="pi pi-chevron-left"
+    [rounded]="true"
+    severity="secondary"
+    [outlined]="true"
+    (onClick)="changeMonth(-1)"
+    [title]="labels.previousMonth"
+  ></p-button>
+  <h3>{{ monthLabel() }}</h3>
+  <p-button
+    icon="pi pi-chevron-right"
+    [rounded]="true"
+    severity="secondary"
+    [outlined]="true"
+    (onClick)="changeMonth(1)"
+    [title]="labels.nextMonth"
+  ></p-button>
+</div>
+
+<div class="calendar-shell">
+  <div class="week-header">
+    @for (weekDay of labels.weekDays; track weekDay) {
+      <span>{{ weekDay }}</span>
+    }
+  </div>
+
+  <div class="month-grid">
+    @for (day of days(); track day.dateKey) {
+      @let publicHoliday = day.holiday;
+      <article
+        class="day-cell"
+        [class.outside-month]="!day.isCurrentMonth"
+        [class.public-holiday]="publicHoliday"
+      >
+        <div class="day-heading">
+          <span class="day-number">{{ day.dayNumber }}</span>
+          @if (publicHoliday) {
+            <span class="holiday-label"><app-truncated-text [text]="publicHoliday.label" /></span>
+          }
+        </div>
+
+        <div class="calendar-entry-list">
+          @for (segment of day.entries; track segment.entry.id) {
+            <div
+              class="calendar-entry"
+              role="button"
+              [attr.tabindex]="segment.entry.disabled ? -1 : 0"
+              (keydown.enter)="activateEntry(segment.entry)"
+              (keydown.space)="$event.preventDefault(); activateEntry(segment.entry)"
+              [class.entry-start]="segment.isStart"
+              [class.entry-disabled]="segment.entry.disabled"
+              [attr.aria-disabled]="segment.entry.disabled ? 'true' : null"
+              [class]="'calendar-entry color-' + (segment.colorIndex)"
+              (dblclick)="activateEntry(segment.entry)"
+            >
+              <span><app-truncated-text [text]="segment.entry.label" /></span>
+            </div>
+          }
+        </div>
+      </article>
+    }
+  </div>
+</div>

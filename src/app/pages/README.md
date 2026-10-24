@@ -28,3 +28,8 @@ filtre et les tris PrimeNG. La pipe pure `tableRows` conserve un tableau local
 stable, distinct des collections NgRx, et calcule les champs de consultation
 (dates, libellés, totaux). Les actions conservent l'identité de la ligne source :
 un tri ou un filtre ne doit jamais modifier la cible d'une édition ou suppression.
+
+`regular/` adapte les astreintes au composant mensuel `shared/calendar/`. La grille,
+la navigation, les événements et les jours fériés sont partagés ; les équipes,
+les droits, les formulaires et les traitements NgRx restent dans la fonctionnalité.
+Le contrat de réutilisation est documenté dans `shared/calendar/README.md`.
