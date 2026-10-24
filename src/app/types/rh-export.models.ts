@@ -30,6 +30,7 @@ export interface ExportOperation {
   plannedUsers: Array<{ name: string; startDate: string; endDate: string; visa: SignatureVisa; userId?: string }>;
   actualUsers: Array<{ name: string; startDate: string; endDate: string; visa: SignatureVisa; userId?: string }>;
   interventions: Array<{
+    ticket?: string;
     userId?: string;
     userName: string;
     startDate: string;
@@ -60,6 +61,7 @@ export interface OnCallCompensationRow {
 }
 
 export interface InterventionCompensationRow {
+  ticket?: string;
   userName: string;
   startDate: string;
   endDate: string;

@@ -373,6 +373,7 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
         },
         ...interventions.map((intervention) => ({
           id: `regular-intervention-${intervention.id}`,
+          ticket: intervention.ticket,
           role: this.labels.validation.roles.interventionStakeholder,
           userLabel: intervention.userName || intervention.userEmail,
           startDate: intervention.startDate,
@@ -456,6 +457,7 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
       })),
       ...(operation.interventions || []).map((intervention, index) => ({
         id: `exceptional-intervention-${operation.id}-${index}`,
+        ticket: intervention.ticket,
         role: this.labels.validation.roles.interventionStakeholder,
         userLabel: intervention.userName || intervention.userEmail,
         startDate: intervention.startDate || intervention.date || "",

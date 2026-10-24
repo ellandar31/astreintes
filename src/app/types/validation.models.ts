@@ -39,6 +39,8 @@ export interface ValidationItem {
 }
 
 export interface VisaProgressItem {
+  /** Intervention ticket; operation and participant approval rows have none. */
+  ticket?: string;
   id: string;
   role: string;
   userLabel: string;

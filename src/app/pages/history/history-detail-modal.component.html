@@ -14,6 +14,7 @@
       <ng-template pTemplate="header">
         <tr>
           <th scope="col">{{ labels.rh.detail.nature }}</th>
+          <th scope="col">{{ labels.common.fields.ticket }}</th>
           <th scope="col">{{ labels.rh.detail.range }}</th>
           <th scope="col">{{ labels.rh.detail.appliedRule }}</th>
           <th scope="col">{{ labels.rh.detail.hours }}</th>
@@ -26,6 +27,7 @@
       <ng-template pTemplate="body" let-line>
         <tr>
           <td>{{ line.nature }}</td>
+          <td><app-truncated-text [text]="line.ticket || labels.common.empty.dash" /></td>
           <td>{{ line.period }}</td>
           <td>{{ line.label }}</td>
           <td>{{ formatNumber(line.hours) }} h</td>

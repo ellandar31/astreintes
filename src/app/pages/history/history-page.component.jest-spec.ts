@@ -6,6 +6,7 @@ import { selectExceptionalOperations, selectExceptionalError } from "../../state
 import { selectRegularInterventions, selectRegularPeriods, selectRegularPublicHolidays, selectRegularError } from "../../state/regular/regular.selectors";
 import { selectSettingsRhCompensation, selectSettingsUsers } from "../../state/settings/settings.selectors";
 import { HistoryPageComponent } from "./history-page.component";
+import { HistoryDetailModalComponent } from "./history-detail-modal.component";
 
 const users = [
   { id: '7', uid: 'auth-id', role: 0, email: 'manager@example.test', displayName: 'Responsable' },
@@ -13,6 +14,40 @@ const users = [
 ];
 
 describe("Sélecteur utilisateur des contrôles RH", () => {
+  it("shows each intervention ticket in historical details without mixing identical time ranges", () => {
+    const store = TestBed.inject(MockStore);
+    const intervention = {
+      id: "i1", periodId: "p1", teamId: "t1", userId: "8", userName: "Autre agent", userEmail: users[1].email,
+      startDate: "2026-10-01T19:00", endDate: "2026-10-01T20:00", comment: "",
+    };
+    store.overrideSelector(selectRegularInterventions, [
+      { ...intervention, ticket: "REG-A" }, { ...intervention, id: "i2", ticket: "REG-B" },
+    ]);
+    store.overrideSelector(selectExceptionalOperations, [{
+      id: "astreinte:1", type: "astreinte", title: "Exceptional", initiatorUid: "7", initiatorName: "Responsable",
+      operationManagerName: "", startDate: "2026-10-01T18:00", forecastEndDate: "2026-10-02T08:00",
+      actualStartDate: "2026-10-01T18:00", actualEndDate: "2026-10-02T08:00", sentToRhAt: "2026-10-03T10:00",
+      plannedUsers: [], actualUsers: [], interventions: [{ ...intervention, ticket: "EXC-123" }],
+    }]);
+    const fixture = TestBed.createComponent(HistoryPageComponent);
+    fixture.componentRef.setInput("currentUser", { uid: "auth-id", email: users[0].email, displayName: "Responsable" });
+    fixture.detectChanges();
+    const view = fixture.componentInstance;
+    view.selectUser("8");
+    fixture.detectChanges();
+    const items = view.userSections[0].monthSections.flatMap(month => month.items);
+    const regular = items.find(item => item.sourceId === "p1")!;
+    expect(regular.lines.filter(line => line.ticket).map(line => line.ticket)).toEqual(["REG-A", "REG-B"]);
+    const detail = TestBed.createComponent(HistoryDetailModalComponent);
+    detail.componentRef.setInput("item", regular);
+    detail.detectChanges();
+    expect(detail.nativeElement.querySelector(".detail-table").textContent).toContain("REG-A");
+    expect(detail.nativeElement.querySelector(".detail-table").textContent).toContain("REG-B");
+    detail.componentRef.setInput("item", items.find(item => item.sourceId === "astreinte:1")!);
+    detail.detectChanges();
+    expect(detail.nativeElement.querySelector(".detail-table").textContent).toContain("EXC-123");
+  });
+
   it("keeps archived items in History and closes the detail when returned to validation", () => {
     const fixture = TestBed.createComponent(HistoryPageComponent);
     fixture.componentRef.setInput('currentUser', { uid: 'auth-id', email: users[0].email, displayName: 'Responsable' });

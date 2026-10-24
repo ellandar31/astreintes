@@ -65,7 +65,7 @@ export class RhExportCalculationLibrary {
    */
   interventionCompensationRows(operation: ExportOperation, isWork: boolean): InterventionCompensationRow[] {
     const periods = isWork
-      ? operation.actualUsers.map(user => ({ userName: user.name, startDate: user.startDate, endDate: user.endDate, comment: "" }))
+      ? operation.actualUsers.map(user => ({ userName: user.name, startDate: user.startDate, endDate: user.endDate, comment: "", ticket: undefined }))
       : operation.interventions;
     return periods.flatMap((intervention) =>
       this.applyInterventionRounding(
@@ -82,6 +82,7 @@ export class RhExportCalculationLibrary {
             coefficient: isWork ? rule.workCoefficient : rule.interventionCoefficient,
             restCoefficient: rule.restCoefficient,
             comment: intervention.comment,
+            ...(intervention.ticket !== undefined ? { ticket: intervention.ticket } : {}),
             segments,
           };
         })

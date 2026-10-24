@@ -25,6 +25,30 @@ function createPage() {
 
 
 describe("Validation consultation", () => {
+  it("shows regular and exceptional intervention tickets in the validation detail", () => {
+    const fixture = createPage();
+    const component = fixture.componentInstance;
+    component.regularInterventions = [{ ...intervention, ticket: "REG-123" }];
+    component.openItem(component.validationItems[0]);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector(".progress-table").textContent).toContain("REG-123");
+    const operation: ExceptionalOperation = {
+      id: "astreinte:91", type: "astreinte", title: "Operation", initiatorUid: "7", initiatorName: "Agent",
+      operationManagerUid: "7", operationManagerName: "Agent", startDate: period.startDate,
+      forecastEndDate: period.endDate, actualStartDate: period.startDate, actualEndDate: period.endDate,
+      plannedUsers: [], actualUsers: [],
+      interventions: [{ ...intervention, wasOnSite: false, label: "", ticket: "EXC-456" }],
+      visas: { initiatorGlobal: createEmptyVisa(), directorGlobal: createEmptyVisa() },
+    };
+    component.exceptionalOperations = [operation];
+    component.openItem(component.validationItems.find(item => item.payload.id === operation.id)!);
+    fixture.detectChanges();
+    const table = fixture.nativeElement.querySelector(".progress-table") as HTMLElement;
+    expect(table.textContent).toContain("EXC-456");
+    expect(table.querySelectorAll("th")).toHaveLength(7);
+    expect(component.selectedItemVisaProgress.find(row => row.ticket === "EXC-456")?.actionItem?.kind).toBe("exceptional-intervention-agent");
+  });
+
   it.each(["regular", "astreinte", "travaux"] as const)("keeps a sent %s in director validation until treatment", family => {
     const store = TestBed.inject(MockStore);
     store.overrideSelector(selectSettingsUsers, [{ id: "7", uid: "auth-id", displayName: "Agent", email: period.userEmail, role: 3 }]);

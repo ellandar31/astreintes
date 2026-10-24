@@ -1,4 +1,5 @@
 export interface HistoryDetailLine {
+  ticket?: string;
   id: string;
   nature: string;
   label: string;

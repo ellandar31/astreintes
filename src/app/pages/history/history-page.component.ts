@@ -43,6 +43,7 @@ import {
 } from "../../types/rh.models";
 
 interface HistoryRegularIntervention {
+  ticket?: string;
   id: string;
   periodId: string;
   teamId: string;
@@ -456,6 +457,7 @@ export class HistoryPageComponent implements OnChanges, OnDestroy, OnInit {
         endDate: intervention.endDate,
         wasOnSite: false,
         comment: intervention.comment || "",
+        ticket: intervention.ticket,
         visa: intervention.agentVisa || createEmptyVisa(),
       })),
       initiatorVisa: createEmptyVisa(),
@@ -492,6 +494,7 @@ export class HistoryPageComponent implements OnChanges, OnDestroy, OnInit {
         endDate: intervention.endDate || "",
         wasOnSite: Boolean(intervention.wasOnSite),
         comment: intervention.comment || intervention.label || "",
+        ticket: intervention.ticket,
         visa: intervention.agentVisa || createEmptyVisa(),
       }));
 
@@ -534,6 +537,7 @@ export class HistoryPageComponent implements OnChanges, OnDestroy, OnInit {
   private interventionLine(row: InterventionCompensationRow, calculator: RhExportCalculationLibrary, id: string, nature: string): HistoryDetailLine {
     return {
       id,
+      ticket: row.ticket,
       nature,
       label: row.label,
       period: formatRange(row.startDate, row.endDate),

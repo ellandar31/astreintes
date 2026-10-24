@@ -5,12 +5,13 @@ import { TableModule } from "primeng/table";
 import { TagModule } from "primeng/tag";
 import { APP_LABELS } from "../../i18n/labels";
 import { ModalComponent } from "../../shared/modal.component";
+import { TruncatedTextComponent } from "../../shared/truncated-text.component";
 import { ValidationItem, VisaProgressItem } from "./validation.models";
 
 @Component({
   selector: "app-validation-consultation-modal",
   standalone: true,
-  imports: [ButtonModule, CommonModule, ModalComponent, TableModule, TagModule],
+  imports: [ButtonModule, CommonModule, ModalComponent, TableModule, TagModule, TruncatedTextComponent],
   templateUrl: "./validation-consultation-modal.component.html",
   styleUrl: "./validation-consultation-modal.component.css",
 })

@@ -3,12 +3,13 @@ import { Component, EventEmitter, Input, Output } from "@angular/core";
 import { TableModule } from "primeng/table";
 import { APP_LABELS } from "../../i18n/labels";
 import { ModalComponent } from "../../shared/modal.component";
+import { TruncatedTextComponent } from "../../shared/truncated-text.component";
 import { HistoryDetailItem, HistoryDetailLine } from "./history.models";
 
 @Component({
   selector: "app-history-detail-modal",
   standalone: true,
-  imports: [CommonModule, ModalComponent, TableModule],
+  imports: [CommonModule, ModalComponent, TableModule, TruncatedTextComponent],
   templateUrl: "./history-detail-modal.component.html",
   styleUrl: "./history-detail-modal.component.css",
 })
