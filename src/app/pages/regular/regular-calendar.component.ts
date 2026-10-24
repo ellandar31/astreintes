@@ -116,7 +116,8 @@ export class RegularCalendarComponent implements OnDestroy {
 
     effect(() => {
       // Sent periods remain as calendar context, but are no longer editable.
-      this.periods = this.regularPeriods().filter(period => !period.treatedAt);
+      // Archived periods remain visible for calendar continuity; all editing paths stay locked.
+      this.periods = this.regularPeriods();
       if (this.editingPeriodId && !this.periods.some(period => period.id === this.editingPeriodId && !isArchivedOperation(period))) this.closePeriodModal();
       if (this.interventionPeriodId && !this.periods.some(period => period.id === this.interventionPeriodId && !isArchivedOperation(period))) this.closeInterventionModal();
     });
@@ -254,7 +255,7 @@ export class RegularCalendarComponent implements OnDestroy {
     }
 
     if (!this.canManageIntervention(currentPeriod)) return;
-    if (this.isPeriodSentToRh(currentPeriod)) {
+    if (this.isPeriodArchived(currentPeriod)) {
       this.interventionError = this.labels.regular.errors.lockedPeriod;
       return;
     }
@@ -270,7 +271,7 @@ export class RegularCalendarComponent implements OnDestroy {
     if (!this.canManageIntervention(intervention)) return;
     const parentPeriod = this.periodForIntervention(intervention);
 
-    if (this.isPeriodSentToRh(parentPeriod)) {
+    if (this.isPeriodArchived(parentPeriod)) {
       return;
     }
 
@@ -310,7 +311,7 @@ export class RegularCalendarComponent implements OnDestroy {
     }
 
     const currentPeriod = this.editingPeriodId ? this.periods.find((period) => period.id === this.editingPeriodId) : null;
-    if (this.isPeriodSentToRh(currentPeriod)) {
+    if (this.isPeriodArchived(currentPeriod)) {
       return;
     }
 
@@ -356,7 +357,7 @@ export class RegularCalendarComponent implements OnDestroy {
       return;
     }
 
-    if (this.isPeriodSentToRh(parentPeriod)) {
+    if (this.isPeriodArchived(parentPeriod)) {
       this.interventionError = this.labels.regular.errors.lockedPeriod;
       return;
     }
@@ -381,7 +382,7 @@ export class RegularCalendarComponent implements OnDestroy {
 
   deleteIntervention(intervention: RegularIntervention): void {
     if (!this.canManageIntervention(intervention)) return;
-    if (this.isPeriodSentToRh(this.periodForIntervention(intervention))) {
+    if (this.isPeriodArchived(this.periodForIntervention(intervention))) {
       return;
     }
 
@@ -405,7 +406,7 @@ export class RegularCalendarComponent implements OnDestroy {
     }
 
     const currentPeriod = this.periods.find((period) => period.id === this.editingPeriodId);
-    if (this.isPeriodSentToRh(currentPeriod)) {
+    if (this.isPeriodArchived(currentPeriod)) {
       return;
     }
 
@@ -442,8 +443,8 @@ export class RegularCalendarComponent implements OnDestroy {
     return user.displayName ? `${user.displayName} (${user.email})` : user.email;
   }
 
-  isPeriodSentToRh(period: RegularOnCallPeriod | null | undefined): boolean {
-    return Boolean(period?.sentToRhAt);
+  isPeriodArchived(period: RegularOnCallPeriod | null | undefined): boolean {
+    return Boolean(period && isArchivedOperation(period));
   }
 
   getPeriodColor(period: RegularOnCallPeriod): number {
