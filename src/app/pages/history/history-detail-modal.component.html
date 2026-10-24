@@ -13,18 +13,18 @@
       </div>
     </header>
 
-    <p-table [value]="item.lines" styleClass="history-table detail-table" [tableStyle]="{ 'min-width': '73.75rem' }">
+    <p-table [value]="(item.lines) | tableRows: detailTableFields" styleClass="history-table detail-table" [tableStyle]="{ 'min-width': '73.75rem' }">
       <ng-template pTemplate="header">
         <tr>
-          <th scope="col">{{ labels.rh.detail.nature }}</th>
-          <th scope="col">{{ labels.common.fields.ticket }}</th>
-          <th scope="col">{{ labels.rh.detail.range }}</th>
-          <th scope="col">{{ labels.rh.detail.appliedRule }}</th>
-          <th scope="col">{{ labels.rh.detail.hours }}</th>
-          <th scope="col">{{ labels.rh.detail.coefficient }}</th>
-          <th scope="col">{{ labels.rh.detail.controlTotal }}</th>
-          <th scope="col">{{ labels.rh.detail.rest }}</th>
-          <th scope="col">{{ labels.rh.detail.calculationDetail }}</th>
+          <th scope="col" pSortableColumn="nature"><app-table-column-header field="nature" [label]="labels.rh.detail.nature" kind="text" /></th>
+          <th scope="col" pSortableColumn="ticket"><app-table-column-header field="ticket" [label]="labels.common.fields.ticket" kind="text" /></th>
+          <th scope="col" pSortableColumn="tablePeriodDate"><app-table-column-header field="tablePeriodDate" [label]="labels.rh.detail.range" kind="text" filterField="period" /></th>
+          <th scope="col" pSortableColumn="label"><app-table-column-header field="label" [label]="labels.rh.detail.appliedRule" kind="text" /></th>
+          <th scope="col" pSortableColumn="hours"><app-table-column-header field="hours" [label]="labels.rh.detail.hours" kind="numeric" /></th>
+          <th scope="col" pSortableColumn="coefficient"><app-table-column-header field="coefficient" [label]="labels.rh.detail.coefficient" kind="numeric" /></th>
+          <th scope="col" pSortableColumn="tableTotal"><app-table-column-header field="tableTotal" [label]="labels.rh.detail.controlTotal" kind="numeric" /></th>
+          <th scope="col" pSortableColumn="restCoefficient"><app-table-column-header field="restCoefficient" [label]="labels.rh.detail.rest" kind="numeric" /></th>
+          <th scope="col" pSortableColumn="details"><app-table-column-header field="details" [label]="labels.rh.detail.calculationDetail" kind="text" /></th>
         </tr>
       </ng-template>
       <ng-template pTemplate="body" let-line>

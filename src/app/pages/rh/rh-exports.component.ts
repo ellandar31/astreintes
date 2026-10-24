@@ -1,3 +1,5 @@
+import { TableColumnHeaderComponent } from "../../shared/table-column-header.component";
+import { TableRowsPipe, tableDate } from "../../shared/table-rows.pipe";
 import { CommonModule } from "@angular/common";
 import { ChangeDetectionStrategy, Component, Input, OnDestroy, computed, effect, inject, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
@@ -36,6 +38,17 @@ import { formatRange } from "./export-libraries/rh-export-utils";
 import { RhExportPeriod, RhPeriodExportOperations } from "../../types/rh-export.models";
 import { isValidRhExportPeriod, selectRhPeriodOperations, RhPeriodExcelExportLibrary, RH_EXCEL_MIME } from "./export-libraries/rh-period-excel-export.lib";
 
+/** Cached table fields keep displayed text searchable and dates chronologically sortable. */
+interface PeriodExportRow {
+  templateId: ExportTemplateId;
+  typeLabel: string;
+  operation: ExportOperation;
+  periodLabel: string;
+  startDate: Date;
+  sentDate: Date | null;
+  treatedDate: Date | null;
+}
+
 interface RegularInterventionExport {
   id: string;
   periodId: string;
@@ -52,11 +65,15 @@ interface RegularInterventionExport {
   selector: "app-rh-exports",
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [ButtonModule, CardModule, CommonModule, FormsModule, InputTextModule, MessageModule, CheckboxModule, SelectModule, TableModule],
+  imports: [TableColumnHeaderComponent, TableRowsPipe, ButtonModule, CardModule, CommonModule, FormsModule, InputTextModule, MessageModule, CheckboxModule, SelectModule, TableModule],
   templateUrl: "./rh-exports.component.html",
   styleUrl: "./rh-exports.component.css",
 })
 export class RhExportsComponent implements OnDestroy {
+  readonly exportTableFields = {
+    tableStartDate: (row: ExportOperation) => tableDate(row.forecastStartDate),
+    tablePeriod: (row: ExportOperation) => formatRange(row.forecastStartDate, row.forecastEndDate),
+  };
   @Input() periodMode = false;
   private readonly userModeState = signal(false);
   @Input() set userMode(value: boolean) { this.userModeState.set(value); }
@@ -176,6 +193,10 @@ export class RhExportsComponent implements OnDestroy {
     const selected = this.selectedPeriodOperations();
     return this.templates.flatMap(template => selected[template.id].map(operation => ({
       templateId: template.id, typeLabel: this.periodLabels.sheets[template.id], operation,
+      periodLabel: formatRange(operation.forecastStartDate, operation.forecastEndDate),
+      startDate: new Date(operation.forecastStartDate),
+      sentDate: operation.sentToRhAt ? new Date(operation.sentToRhAt) : null,
+      treatedDate: operation.treatedAt ? new Date(operation.treatedAt) : null,
     })));
   });
   readonly trackPeriodOperation = (_index: number, row: { operation: ExportOperation }): string => this.operationKey(row.operation);
@@ -284,7 +305,7 @@ export class RhExportsComponent implements OnDestroy {
   }
 
   /** Preview uses the workbook selection rule so submission dates and cancellations stay consistent. */
-  periodExportRows(): Array<{ templateId: ExportTemplateId; typeLabel: string; operation: ExportOperation }> {
+  periodExportRows(): PeriodExportRow[] {
     return this.periodRows();
   }
 

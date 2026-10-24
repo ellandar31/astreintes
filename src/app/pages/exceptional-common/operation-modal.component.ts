@@ -1,3 +1,5 @@
+import { TableColumnHeaderComponent } from "../../shared/table-column-header.component";
+import { TableRowsPipe, tableDate } from "../../shared/table-rows.pipe";
 import { isUserAssignable } from "../../shared/user-availability";
 import { Direction } from "../../types";
 import { CommonModule } from "@angular/common";
@@ -30,11 +32,21 @@ import {
 @Component({
   selector: "app-operation-modal",
   standalone: true,
-  imports: [ButtonModule, CommonModule, FormsModule, InputTextModule, MessageModule, ModalComponent, TruncatedTextComponent, SelectModule, TableModule],
+  imports: [TableColumnHeaderComponent, TableRowsPipe, ButtonModule, CommonModule, FormsModule, InputTextModule, MessageModule, ModalComponent, TruncatedTextComponent, SelectModule, TableModule],
   templateUrl: "./operation-modal.component.html",
   styleUrls: ["./operation-modal.component.css", "../../shared/user-select-form.css"],
 })
 export class OperationModalComponent {
+  readonly interventionTableFields = {
+    tableUser: (row: ExceptionalIntervention) => row.userName || row.userEmail,
+    tableStartDate: (row: ExceptionalIntervention) => tableDate(row.startDate || row.date),
+    tableEndDate: (row: ExceptionalIntervention) => tableDate(row.endDate),
+  };
+
+  /** Display sorting/filtering must never turn a row index into a different saved intervention. */
+  interventionIndex(row: ExceptionalIntervention & { tableSource?: ExceptionalIntervention }): number {
+    return this.operation?.interventions.indexOf(row.tableSource ?? row) ?? -1;
+  }
   readonly labels = APP_LABELS;
   @Input() directions: Direction[] = [];
   @Input({ required: true }) form: ExceptionalOperationForm = {

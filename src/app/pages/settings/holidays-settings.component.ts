@@ -1,3 +1,5 @@
+import { TableColumnHeaderComponent } from "../../shared/table-column-header.component";
+import { TableRowsPipe, tableDate } from "../../shared/table-rows.pipe";
 import { CommonModule } from "@angular/common";
 import { Component, EventEmitter, OnDestroy, Output, effect, inject } from "@angular/core";
 import { FormsModule, NgForm } from "@angular/forms";
@@ -22,11 +24,15 @@ import { PublicHoliday } from "./settings.models";
 @Component({
   selector: "app-holidays-settings",
   standalone: true,
-  imports: [ButtonModule, CardModule, CommonModule, FormsModule, InputNumberModule, InputTextModule, SelectModule, TableModule, TagModule],
+  imports: [TableColumnHeaderComponent, TableRowsPipe, ButtonModule, CardModule, CommonModule, FormsModule, InputNumberModule, InputTextModule, SelectModule, TableModule, TagModule],
   templateUrl: "./holidays-settings.component.html",
   styleUrls: ["./settings-common.scss"],
 })
 export class HolidaysSettingsComponent implements OnDestroy {
+  readonly holidayTableFields = {
+    tableDate: (row: { date: string }) => tableDate(row.date),
+    tableZone: (row: { zone: string }) => this.zoneLabel(row.zone),
+  };
   @Output() failure = new EventEmitter<string>();
   @Output() success = new EventEmitter<string>();
 

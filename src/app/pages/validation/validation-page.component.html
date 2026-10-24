@@ -16,6 +16,9 @@
             name="selectedUser"
             optionLabel="email"
             optionValue="id"
+            [filter]="true"
+            filterBy="displayName,email"
+            [resetFilterOnHide]="true"
             appendTo="body"
             styleClass="user-select"
           >
@@ -64,15 +67,15 @@
         <section class="validation-section" [attr.aria-label]="section.title">
           <h3>{{ section.title }}</h3>
 
-          <p-table [value]="section.items" [rowTrackBy]="trackValidationItem" styleClass="validation-table" [tableStyle]="{ 'min-width': '48.75rem' }">
+          <p-table [value]="(section.items) | tableRows: validationTableFields: directions()" [rowTrackBy]="trackValidationItem" styleClass="validation-table" [tableStyle]="{ 'min-width': '48.75rem' }">
             <ng-template pTemplate="header">
               <tr>
-                <th scope="col">{{ labels.common.table.type }}</th>
-                <th scope="col">{{ labels.common.table.item }}</th>
-                @if (section.id === "director") { <th scope="col">{{ labels.directions.field }}</th> }
-                <th scope="col">{{ labels.common.table.person }}</th>
-                <th scope="col">{{ labels.common.table.period }}</th>
-                <th scope="col">{{ labels.common.table.visa }}</th>
+                <th scope="col" pSortableColumn="category"><app-table-column-header field="category" [label]="labels.common.table.type" kind="text" /></th>
+                <th scope="col" pSortableColumn="title"><app-table-column-header field="title" [label]="labels.common.table.item" kind="text" /></th>
+                @if (section.id === "director") { <th scope="col" pSortableColumn="tableDirection"><app-table-column-header field="tableDirection" [label]="labels.directions.field" kind="text" /></th> }
+                <th scope="col" pSortableColumn="userLabel"><app-table-column-header field="userLabel" [label]="labels.common.table.person" kind="text" /></th>
+                <th scope="col" pSortableColumn="tableStartDate"><app-table-column-header field="tableStartDate" [label]="labels.common.table.period" kind="text" filterField="tablePeriod" /></th>
+                <th scope="col" pSortableColumn="visa.signed"><app-table-column-header field="visa.signed" [label]="labels.common.table.visa" kind="boolean" /></th>
                 <th scope="col">{{ labels.common.table.actions }}</th>
               </tr>
             </ng-template>

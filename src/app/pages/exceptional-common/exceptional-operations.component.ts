@@ -1,12 +1,11 @@
+import { TableColumnHeaderComponent } from "../../shared/table-column-header.component";
+import { TableRowsPipe, tableDate } from "../../shared/table-rows.pipe";
 import { isArchivedOperation } from "../../shared/operation-archive";
 import { selectSettingsDirections } from "../../state/settings/settings.selectors";
-import { TruncatedTextComponent } from "../../shared/truncated-text.component";
 import { hasDirectorRights } from "../../shared/user-role-permissions";
 import { CommonModule } from "@angular/common";
-import { Component, Input, OnDestroy, effect, inject } from "@angular/core";
-import { FormsModule } from "@angular/forms";
+import { Component, Input, OnDestroy, computed, effect, inject, signal } from "@angular/core";
 import { ButtonModule } from "primeng/button";
-import { InputTextModule } from "primeng/inputtext";
 import { TableModule } from "primeng/table";
 import { Store } from "@ngrx/store";
 import { APP_LABELS } from "../../i18n/labels";
@@ -25,13 +24,10 @@ import {
   ExceptionalOperation,
   ExceptionalOperationForm,
   ExceptionalOperationType,
-  FilterField,
   ModalMode,
   OperationParticipant,
   SelectableUser,
   SignatureVisa,
-  SortDirection,
-  SortField,
 } from "./exceptional.models";
 import { InterventionModalComponent } from "./intervention-modal.component";
 import { OperationModalComponent } from "./operation-modal.component";
@@ -47,30 +43,28 @@ import { OperationModalComponent } from "./operation-modal.component";
 @Component({
   selector: "app-exceptional-operations",
   standalone: true,
-  imports: [TruncatedTextComponent, ButtonModule, CommonModule, FormsModule, InputTextModule, InterventionModalComponent, OperationModalComponent, TableModule],
+  imports: [TableColumnHeaderComponent, TableRowsPipe, ButtonModule, CommonModule, InterventionModalComponent, OperationModalComponent, TableModule],
   templateUrl: "./exceptional-operations.component.html",
   styleUrl: "./exceptional-operations.component.css",
 })
 export class ExceptionalOperationsComponent implements OnDestroy {
+  readonly operationTableFields = { tableStartDate: (row: { startDate: string }) => tableDate(row.startDate) };
   @Input({ required: true }) user: StoreAuthUser | null = null;
   /** Each navigation branch owns a fresh view; shared data still belongs to NgRx. */
-  @Input({ required: true }) operationType: ExceptionalOperationType = "astreinte";
+  @Input({ required: true }) set operationType(value: ExceptionalOperationType) { this.family.set(value); }
+  get operationType(): ExceptionalOperationType { return this.family(); }
   readonly labels = APP_LABELS;
   readonly trackOperation = (_index: number, operation: ExceptionalOperation): string => operation.id;
 
-  activeFilterField: FilterField = null;
-  filters: Record<Exclude<SortField, "type">, string> = {
-    initiatorName: "",
-    title: "",
-    startDate: "",
-  };
   modalMode: ModalMode | null = null;
   selectedOperation: ExceptionalOperation | null = null;
   selectedInterventionIndex: number | null = null;
   shouldReturnToOperationModal = false;
-  sortDirection: SortDirection = "asc";
-  sortField: SortField = "startDate";
-  operations: ExceptionalOperation[] = [];
+  private readonly operationRows = signal<ExceptionalOperation[]>([]);
+  get operations(): ExceptionalOperation[] { return this.operationRows(); }
+  set operations(value: ExceptionalOperation[]) { this.operationRows.set(value); }
+  private readonly family = signal<ExceptionalOperationType>("astreinte");
+  private readonly familyOperations = computed(() => this.operations.filter(operation => operation.type === this.family()));
   interventionError = "";
   operationForm = this.createEmptyOperationForm("astreinte");
   interventionForm = this.createEmptyInterventionForm();
@@ -141,18 +135,7 @@ export class ExceptionalOperationsComponent implements OnDestroy {
     this.store.dispatch(ExceptionalActions.watchStopped());
   }
 
-  get filteredOperations(): ExceptionalOperation[] {
-    return this.operations
-      .filter(operation => operation.type === this.operationType)
-      .filter((operation) => {
-        return (
-          this.matchesFilter(operation.initiatorName, this.filters.initiatorName) &&
-          this.matchesFilter(operation.title, this.filters.title) &&
-          this.matchesFilter(this.formatDate(operation.startDate), this.filters.startDate)
-        );
-      })
-      .sort((first, second) => this.compareOperations(first, second));
-  }
+  get filteredOperations(): ExceptionalOperation[] { return this.familyOperations(); }
 
   openCreateModal(): void {
     if (!this.canCreateOperations()) return;
@@ -401,28 +384,6 @@ export class ExceptionalOperationsComponent implements OnDestroy {
     }));
   }
 
-  setSort(field: SortField): void {
-    if (this.sortField === field) {
-      this.sortDirection = this.sortDirection === "asc" ? "desc" : "asc";
-      return;
-    }
-
-    this.sortField = field;
-    this.sortDirection = "asc";
-  }
-
-  sortIndicator(field: SortField): string {
-    if (this.sortField !== field) {
-      return this.labels.common.icons.sortNeutral;
-    }
-
-    return this.sortDirection === "asc" ? this.labels.common.icons.sortAsc : this.labels.common.icons.sortDesc;
-  }
-
-  toggleFilter(field: SortField): void {
-    this.activeFilterField = this.activeFilterField === field ? null : field;
-  }
-
   operationTypeLabel(type: ExceptionalOperationType): string {
     return type === "astreinte" ? this.labels.exceptional.types.astreinte : this.labels.exceptional.types.travaux;
   }
@@ -559,36 +520,6 @@ export class ExceptionalOperationsComponent implements OnDestroy {
       startDate: startDates[0] || "",
       endDate: endDates.at(-1) || "",
     };
-  }
-
-  private matchesFilter(value: string, filter: string): boolean {
-    const normalizedFilter = filter.trim().toLowerCase();
-
-    if (!normalizedFilter) {
-      return true;
-    }
-
-    return value.toLowerCase().includes(normalizedFilter);
-  }
-
-  private compareOperations(first: ExceptionalOperation, second: ExceptionalOperation): number {
-    const firstValue = this.sortValue(first, this.sortField);
-    const secondValue = this.sortValue(second, this.sortField);
-    const result = firstValue.localeCompare(secondValue, "fr-FR", { numeric: true, sensitivity: "base" });
-
-    return this.sortDirection === "asc" ? result : -result;
-  }
-
-  private sortValue(operation: ExceptionalOperation, field: SortField): string {
-    if (field === "type") {
-      return this.operationTypeLabel(operation.type);
-    }
-
-    if (field === "startDate") {
-      return operation.startDate || "";
-    }
-
-    return operation[field] || "";
   }
 
 }

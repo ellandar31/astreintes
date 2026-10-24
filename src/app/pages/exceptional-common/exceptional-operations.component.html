@@ -16,42 +16,12 @@
     }
   </header>
 
-  <p-table [value]="filteredOperations" [rowTrackBy]="trackOperation" styleClass="exceptional-table" [tableStyle]="{ 'min-width': '50rem' }">
+  <p-table sortField="startDate" [value]="(filteredOperations) | tableRows: operationTableFields" [rowTrackBy]="trackOperation" styleClass="exceptional-table" [tableStyle]="{ 'min-width': '50rem' }">
     <ng-template pTemplate="header">
       <tr>
-        <th scope="col">
-          <div class="header-cell">
-            <app-truncated-text [text]="labels.common.fields.initiator" />
-            <p-button icon="pi pi-sort-alt" [rounded]="true" [text]="true" size="small" (onClick)="setSort('initiatorName')" [title]="labels.common.actions.sort"></p-button>
-            <p-button icon="pi pi-filter" [rounded]="true" [text]="true" size="small" (onClick)="toggleFilter('initiatorName')" [title]="labels.common.actions.filter"></p-button>
-          </div>
-          @if (activeFilterField === "initiatorName") {
-            <label class="sr-only" for="initiatorFilter">{{ labels.exceptional.fields.initiatorFilter }}</label>
-            <input pInputText id="initiatorFilter" class="header-filter" [(ngModel)]="filters.initiatorName" name="initiatorFilter" [placeholder]="labels.common.fields.initiator" />
-          }
-        </th>
-        <th scope="col">
-          <div class="header-cell">
-            <app-truncated-text [text]="labels.common.fields.title" />
-            <p-button icon="pi pi-sort-alt" [rounded]="true" [text]="true" size="small" (onClick)="setSort('title')" [title]="labels.common.actions.sort"></p-button>
-            <p-button icon="pi pi-filter" [rounded]="true" [text]="true" size="small" (onClick)="toggleFilter('title')" [title]="labels.common.actions.filter"></p-button>
-          </div>
-          @if (activeFilterField === "title") {
-            <label class="sr-only" for="titleFilter">{{ labels.exceptional.fields.titleFilter }}</label>
-            <input pInputText id="titleFilter" class="header-filter" [(ngModel)]="filters.title" name="titleFilter" [placeholder]="labels.common.fields.title" />
-          }
-        </th>
-        <th scope="col">
-          <div class="header-cell">
-            <app-truncated-text [text]="labels.exceptional.fields.dateStart" />
-            <p-button icon="pi pi-sort-alt" [rounded]="true" [text]="true" size="small" (onClick)="setSort('startDate')" [title]="labels.common.actions.sort"></p-button>
-            <p-button icon="pi pi-filter" [rounded]="true" [text]="true" size="small" (onClick)="toggleFilter('startDate')" [title]="labels.common.actions.filter"></p-button>
-          </div>
-          @if (activeFilterField === "startDate") {
-            <label class="sr-only" for="startDateFilter">{{ labels.exceptional.fields.startDateFilter }}</label>
-            <input pInputText id="startDateFilter" class="header-filter" [(ngModel)]="filters.startDate" name="startDateFilter" [placeholder]="labels.exceptional.fields.datePlaceholder" />
-          }
-        </th>
+        <th scope="col" pSortableColumn="initiatorName"><app-table-column-header field="initiatorName" [label]="labels.exceptional.fields.initiatorFilter" kind="text" /></th>
+        <th scope="col" pSortableColumn="title"><app-table-column-header field="title" [label]="labels.exceptional.fields.titleFilter" kind="text" /></th>
+        <th scope="col" pSortableColumn="tableStartDate"><app-table-column-header field="tableStartDate" [label]="labels.exceptional.fields.startDateFilter" kind="date" /></th>
         <th scope="col">{{ labels.common.table.actions }}</th>
       </tr>
     </ng-template>

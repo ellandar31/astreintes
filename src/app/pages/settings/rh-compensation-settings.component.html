@@ -12,11 +12,11 @@
         <h4>{{ labels.settings.rhCompensation.onCall }}</h4>
       </ng-template>
 
-      <p-table [value]="onCallRows" styleClass="settings-table editable-table" [tableStyle]="{ 'min-width': '30rem' }">
+      <p-table [value]="(onCallRows) | tableRows" styleClass="settings-table editable-table" [tableStyle]="{ 'min-width': '30rem' }">
         <ng-template pTemplate="header">
           <tr>
-            <th scope="col">{{ labels.settings.rhCompensation.type }}</th>
-            <th scope="col">{{ labels.settings.rhCompensation.coefficientOnCall }}</th>
+            <th scope="col" pSortableColumn="label"><app-table-column-header field="label" [label]="labels.settings.rhCompensation.type" kind="text" /></th>
+            <th scope="col" pSortableColumn="coefficient"><app-table-column-header field="coefficient" [label]="labels.settings.rhCompensation.coefficientOnCall" kind="numeric" /></th>
           </tr>
         </ng-template>
         <ng-template pTemplate="body" let-row>
@@ -44,13 +44,13 @@
         <h4>{{ labels.settings.rhCompensation.interventionWorkRest }}</h4>
       </ng-template>
 
-      <p-table [value]="periodRows" styleClass="settings-table editable-table" [tableStyle]="{ 'min-width': '56rem' }">
+      <p-table [value]="(periodRows) | tableRows" styleClass="settings-table editable-table" [tableStyle]="{ 'min-width': '56rem' }">
         <ng-template pTemplate="header">
           <tr>
-            <th scope="col">{{ labels.settings.rhCompensation.range }}</th>
-            <th scope="col">{{ labels.settings.rhCompensation.coefficientIntervention }}</th>
-            <th scope="col">{{ labels.settings.rhCompensation.coefficientWork }}</th>
-            <th scope="col">{{ labels.settings.rhCompensation.coefficientRest }}</th>
+            <th scope="col" pSortableColumn="label"><app-table-column-header field="label" [label]="labels.settings.rhCompensation.range" kind="text" /></th>
+            <th scope="col" pSortableColumn="interventionCoefficient"><app-table-column-header field="interventionCoefficient" [label]="labels.settings.rhCompensation.coefficientIntervention" kind="numeric" /></th>
+            <th scope="col" pSortableColumn="workCoefficient"><app-table-column-header field="workCoefficient" [label]="labels.settings.rhCompensation.coefficientWork" kind="numeric" /></th>
+            <th scope="col" pSortableColumn="restCoefficient"><app-table-column-header field="restCoefficient" [label]="labels.settings.rhCompensation.coefficientRest" kind="numeric" /></th>
           </tr>
         </ng-template>
         <ng-template pTemplate="body" let-row>

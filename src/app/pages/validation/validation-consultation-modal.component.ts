@@ -1,3 +1,5 @@
+import { TableColumnHeaderComponent } from "../../shared/table-column-header.component";
+import { TableRowsPipe, tableDate } from "../../shared/table-rows.pipe";
 import { CommonModule } from "@angular/common";
 import { Component, EventEmitter, Input, Output } from "@angular/core";
 import { ButtonModule } from "primeng/button";
@@ -11,11 +13,16 @@ import { ValidationItem, VisaProgressItem } from "./validation.models";
 @Component({
   selector: "app-validation-consultation-modal",
   standalone: true,
-  imports: [ButtonModule, CommonModule, ModalComponent, TableModule, TagModule, TruncatedTextComponent],
+  imports: [TableColumnHeaderComponent, TableRowsPipe, ButtonModule, CommonModule, ModalComponent, TableModule, TagModule, TruncatedTextComponent],
   templateUrl: "./validation-consultation-modal.component.html",
   styleUrl: "./validation-consultation-modal.component.css",
 })
 export class ValidationConsultationModalComponent {
+  readonly progressTableFields = {
+    tableStartDate: (row: VisaProgressItem) => tableDate(row.startDate),
+    tablePeriod: (row: VisaProgressItem) => `${this.formatDateTime(row.startDate)} - ${this.formatDateTime(row.endDate)}`,
+    tableSignedDate: (row: VisaProgressItem) => row.visa.signed ? tableDate(row.visa.signedAt) : null,
+  };
   readonly labels = APP_LABELS;
   /** Preserve action buttons when the parent recomputes visa progression. */
   readonly trackProgressItem = (_index: number, progress: VisaProgressItem): string => progress.id;

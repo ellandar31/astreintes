@@ -1,3 +1,5 @@
+import { TableColumnHeaderComponent } from "../../shared/table-column-header.component";
+import { TableRowsPipe } from "../../shared/table-rows.pipe";
 import { Component, EventEmitter, Output, effect, inject } from "@angular/core";
 import { FormsModule, NgForm } from "@angular/forms";
 import { Store } from "@ngrx/store";
@@ -12,7 +14,7 @@ import { Direction } from "../../types";
 /** Only administrators maintain this reference; existing associations prevent deletion in SQL. */
 @Component({
   selector: "app-directions-settings", standalone: true,
-  imports: [FormsModule, ButtonModule, InputTextModule, TableModule],
+  imports: [TableColumnHeaderComponent, TableRowsPipe, FormsModule, ButtonModule, InputTextModule, TableModule],
   templateUrl: "./directions-settings.component.html", styleUrls: ["./settings-common.scss"],
 })
 export class DirectionsSettingsComponent {

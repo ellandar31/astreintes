@@ -1,3 +1,5 @@
+import { TableColumnHeaderComponent } from "../../shared/table-column-header.component";
+import { TableRowsPipe } from "../../shared/table-rows.pipe";
 import { CommonModule } from "@angular/common";
 import { Component, EventEmitter, OnDestroy, Output, effect, inject } from "@angular/core";
 import { FormsModule } from "@angular/forms";
@@ -14,7 +16,7 @@ import { OnCallCompensationRule, PeriodCompensationRule } from "./settings.model
 @Component({
   selector: "app-rh-compensation-settings",
   standalone: true,
-  imports: [ButtonModule, CardModule, CommonModule, FormsModule, InputNumberModule, TableModule],
+  imports: [TableColumnHeaderComponent, TableRowsPipe, ButtonModule, CardModule, CommonModule, FormsModule, InputNumberModule, TableModule],
   templateUrl: "./rh-compensation-settings.component.html",
   styleUrls: ["./settings-common.scss", "./rh-compensation-settings.component.scss"],
 })

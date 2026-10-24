@@ -6,8 +6,8 @@
     <p-button type="submit" [label]="editingId ? labels.directions.save : labels.directions.add"
       [disabled]="!canManage() || directionForm.invalid || !name.trim()" />
   </form>
-  <p-table [value]="directions()" styleClass="settings-table">
-    <ng-template pTemplate="header"><tr><th>{{ labels.directions.name }}</th><th>{{ labels.common.fields.actions }}</th></tr></ng-template>
+  <p-table [value]="(directions()) | tableRows" styleClass="settings-table">
+    <ng-template pTemplate="header"><tr><th scope="col" pSortableColumn="name"><app-table-column-header field="name" [label]="labels.directions.name" kind="text" /></th><th>{{ labels.common.fields.actions }}</th></tr></ng-template>
     <ng-template pTemplate="body" let-direction><tr>
       <td>{{ direction.name }}</td>
       <td>

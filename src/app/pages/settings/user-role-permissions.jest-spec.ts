@@ -74,7 +74,7 @@ describe("Profile administration permissions", () => {
     fixture.componentInstance.saveUserAssignment(user);
     fixture.componentInstance.deleteUser(user);
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('p-button button').disabled).toBe(!allowed);
+    expect(fixture.nativeElement.querySelector('tbody p-button button').disabled).toBe(!allowed);
     if (allowed) {
       expect(dispatch).toHaveBeenCalledWith(SettingsActions.userRoleUpdateRequested({ userId: user.id, role: 0, directionId: null, isRh: false }));
       expect(dispatch).toHaveBeenCalledWith(SettingsActions.userDeleteRequested({ userId: user.id }));

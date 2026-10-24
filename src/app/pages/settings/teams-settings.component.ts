@@ -1,3 +1,5 @@
+import { TableColumnHeaderComponent } from "../../shared/table-column-header.component";
+import { TableRowsPipe, tableDate } from "../../shared/table-rows.pipe";
 import { isUserAssignable } from "../../shared/user-availability";
 import { CommonModule } from "@angular/common";
 import { Component, EventEmitter, OnDestroy, Output, effect, inject } from "@angular/core";
@@ -17,11 +19,12 @@ import { ManagedUser, Team } from "./settings.models";
 @Component({
   selector: "app-teams-settings",
   standalone: true,
-  imports: [ButtonModule, CardModule, CommonModule, FormsModule, InputTextModule, SelectModule, TableModule, TagModule],
+  imports: [TableColumnHeaderComponent, TableRowsPipe, ButtonModule, CardModule, CommonModule, FormsModule, InputTextModule, SelectModule, TableModule, TagModule],
   templateUrl: "./teams-settings.component.html",
   styleUrls: ["./settings-common.scss"],
 })
 export class TeamsSettingsComponent implements OnDestroy {
+  readonly teamTableFields = { tableMembers: (row: { members: string[] }) => row.members.map(member => this.memberLabel(member)).join(" ") };
   @Output() failure = new EventEmitter<string>();
   @Output() success = new EventEmitter<string>();
 

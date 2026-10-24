@@ -51,20 +51,6 @@
   vertical-align: middle;
 }
 
-.header-cell {
-  align-items: center;
-  display: grid;
-  gap: var(--app-space-xs);
-  grid-template-columns: minmax(0, 1fr) 1.75rem 1.75rem;
-}
-
-.header-filter {
-  margin-top: var(--app-space-sm);
-  min-height: var(--app-size-control-sm);
-  padding: var(--app-space-xs) var(--app-space-sm);
-  width: 100%;
-}
-
 .empty-row {
   color: var(--app-color-muted);
   text-align: center;

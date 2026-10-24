@@ -1,3 +1,5 @@
+import { TableColumnHeaderComponent } from "../../shared/table-column-header.component";
+import { TableRowsPipe, tableDate } from "../../shared/table-rows.pipe";
 import { isUserAssignable } from "../../shared/user-availability";
 import { Direction } from "../../types";
 import { TruncatedTextComponent } from "../../shared/truncated-text.component";
@@ -15,11 +17,16 @@ import { RegularIntervention, RegularOnCallPeriodForm, RegularUser } from "./reg
 @Component({
   selector: "app-regular-period-modal",
   standalone: true,
-  imports: [TruncatedTextComponent, ButtonModule, FormsModule, InputTextModule, MessageModule, ModalComponent, SelectModule, TableModule],
+  imports: [TableColumnHeaderComponent, TableRowsPipe, TruncatedTextComponent, ButtonModule, FormsModule, InputTextModule, MessageModule, ModalComponent, SelectModule, TableModule],
   templateUrl: "./regular-period-modal.component.html",
   styleUrls: ["./regular-period-modal.component.css", "../../shared/user-select-form.css"],
 })
 export class RegularPeriodModalComponent {
+  readonly interventionTableFields = {
+    tableUser: (row: { userName: string; userEmail: string }) => row.userName || row.userEmail,
+    tableStartDate: (row: { startDate: string }) => tableDate(row.startDate),
+    tableEndDate: (row: { endDate: string }) => tableDate(row.endDate),
+  };
   readonly labels = APP_LABELS;
   @Input() directions: Direction[] = [];
   @Input({ required: true }) form: RegularOnCallPeriodForm = {

@@ -1,3 +1,4 @@
+import { createEmptyVisa } from "../../shared/visa.models";
 import { TestBed } from "@angular/core/testing";
 import { provideNoopAnimations } from "@angular/platform-browser/animations";
 import { OperationModalComponent } from "./operation-modal.component";
@@ -5,6 +6,30 @@ import { OperationModalComponent } from "./operation-modal.component";
 /** Regression: readonly initiators must keep their hover tooltip without allowing edits. */
 describe("OperationModalComponent readonly initiator", () => {
   afterEach(() => jest.restoreAllMocks());
+
+  it("keeps intervention actions attached to the original row after table sorting", async () => {
+    await TestBed.configureTestingModule({ imports: [OperationModalComponent], providers: [provideNoopAnimations()] }).compileComponents();
+    const fixture = TestBed.createComponent(OperationModalComponent);
+    const visa = createEmptyVisa();
+    const intervention = { userId: "7", userEmail: "agent@test.fr", startDate: "2026-10-01T18:00", endDate: "2026-10-01T19:00",
+      label: "", wasOnSite: false, agentVisa: visa };
+    const interventions = [{ ...intervention, id: "1", userName: "Zeta" }, { ...intervention, id: "2", userName: "Alpha" }];
+    const operation = { id: "astreinte:1", type: "astreinte", initiatorUid: "7", initiatorName: "Agent", operationManagerName: "Agent", title: "Test",
+      startDate: intervention.startDate, forecastEndDate: intervention.endDate,
+      actualStartDate: intervention.startDate, actualEndDate: intervention.endDate,
+      plannedUsers: [], actualUsers: [], interventions, visas: { initiatorGlobal: visa, directorGlobal: visa } };
+    fixture.componentRef.setInput("operation", operation);
+    fixture.detectChanges();
+    const originalOrder = [...interventions];
+    fixture.nativeElement.querySelector("thead th").click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector("tbody tr td").textContent).toContain("Alpha");
+    const remove = jest.spyOn(fixture.componentInstance.deleteIntervention, "emit");
+    const rowButtons = fixture.nativeElement.querySelectorAll("tbody tr:first-child p-button button");
+    rowButtons[1].click();
+    expect(remove).toHaveBeenCalledWith({ operation, index: 1 });
+    expect(interventions).toEqual(originalOrder);
+  });
 
   it.each(["isLocked", "planningReadOnly"] as const)("shows the full clipped name with %s", async (readonlyInput) => {
     await TestBed.configureTestingModule({

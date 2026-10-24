@@ -49,13 +49,13 @@
   </p-card>
 
   @if (importedHolidays().length) {
-    <p-table [value]="importedHolidays()" styleClass="settings-table compact-table" [tableStyle]="{ 'min-width': '36rem' }">
+    <p-table [value]="(importedHolidays()) | tableRows: holidayTableFields" styleClass="settings-table compact-table" [tableStyle]="{ 'min-width': '36rem' }">
       <ng-template pTemplate="header">
         <tr>
-          <th scope="col">{{ labels.common.fields.title }}</th>
-          <th scope="col">{{ labels.common.fields.date }}</th>
-          <th scope="col">{{ labels.common.fields.zone }}</th>
-          <th scope="col">Source</th>
+          <th scope="col" pSortableColumn="label"><app-table-column-header field="label" [label]="labels.common.fields.title" kind="text" /></th>
+          <th scope="col" pSortableColumn="tableDate"><app-table-column-header field="tableDate" [label]="labels.common.fields.date" kind="date" /></th>
+          <th scope="col" pSortableColumn="tableZone"><app-table-column-header field="tableZone" [label]="labels.common.fields.zone" kind="text" /></th>
+          <th scope="col" pSortableColumn="source"><app-table-column-header field="source" [label]="'Source'" kind="text" /></th>
         </tr>
       </ng-template>
       <ng-template pTemplate="body" let-holiday>
@@ -107,13 +107,13 @@
     </form>
   </p-card>
 
-  <p-table [value]="holidays()" styleClass="settings-table" [tableStyle]="{ 'min-width': '42rem' }">
+  <p-table [value]="(holidays()) | tableRows: holidayTableFields" styleClass="settings-table" [tableStyle]="{ 'min-width': '42rem' }">
     <ng-template pTemplate="header">
       <tr>
-        <th scope="col">{{ labels.common.fields.title }}</th>
-        <th scope="col">{{ labels.common.fields.date }}</th>
-        <th scope="col">{{ labels.common.fields.zone }}</th>
-        <th scope="col">Source</th>
+        <th scope="col" pSortableColumn="label"><app-table-column-header field="label" [label]="labels.common.fields.title" kind="text" /></th>
+        <th scope="col" pSortableColumn="tableDate"><app-table-column-header field="tableDate" [label]="labels.common.fields.date" kind="date" /></th>
+        <th scope="col" pSortableColumn="tableZone"><app-table-column-header field="tableZone" [label]="labels.common.fields.zone" kind="text" /></th>
+        <th scope="col" pSortableColumn="source"><app-table-column-header field="source" [label]="'Source'" kind="text" /></th>
         <th scope="col">{{ labels.common.fields.actions }}</th>
       </tr>
     </ng-template>

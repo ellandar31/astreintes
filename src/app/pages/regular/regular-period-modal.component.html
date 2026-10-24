@@ -112,14 +112,14 @@
           }
         </div>
 
-        <p-table [value]="interventions" styleClass="interventions-table" [tableStyle]="{ 'min-width': isLocked ? '44rem' : '54rem' }">
+        <p-table [value]="(interventions) | tableRows: interventionTableFields" styleClass="interventions-table" [tableStyle]="{ 'min-width': isLocked ? '44rem' : '54rem' }">
           <ng-template pTemplate="header">
             <tr>
-              <th scope="col">{{ labels.common.fields.user }}</th>
-              <th scope="col">{{ labels.common.table.start }}</th>
-              <th scope="col">{{ labels.common.table.end }}</th>
-              <th scope="col">{{ labels.common.fields.comment }}</th>
-              <th scope="col">{{ labels.common.fields.ticket }}</th>
+              <th scope="col" pSortableColumn="tableUser"><app-table-column-header field="tableUser" [label]="labels.common.fields.user" kind="text" /></th>
+              <th scope="col" pSortableColumn="tableStartDate"><app-table-column-header field="tableStartDate" [label]="labels.common.table.start" kind="date" /></th>
+              <th scope="col" pSortableColumn="tableEndDate"><app-table-column-header field="tableEndDate" [label]="labels.common.table.end" kind="date" /></th>
+              <th scope="col" pSortableColumn="comment"><app-table-column-header field="comment" [label]="labels.common.fields.comment" kind="text" /></th>
+              <th scope="col" pSortableColumn="ticket"><app-table-column-header field="ticket" [label]="labels.common.fields.ticket" kind="text" /></th>
               @if (!isLocked) {
                 <th scope="col">{{ labels.common.table.actions }}</th>
               }

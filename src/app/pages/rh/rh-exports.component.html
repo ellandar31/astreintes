@@ -25,17 +25,17 @@
     <p-button [label]="periodLabels.treat" icon="pi pi-check" [loading]="treatmentPending"
       [disabled]="!selectedUntreatedCount || treatmentPending" (onClick)="updateTreatment(true)" />
     @if (treatmentMessage) { <p-message severity="info">{{ treatmentMessage }}</p-message> }
-    <p-table [value]="periodExportRows()" [rowTrackBy]="trackPeriodOperation"
+    <p-table [value]="(periodExportRows()) | tableRows" [rowTrackBy]="trackPeriodOperation"
       [paginator]="true" [rows]="25" [rowsPerPageOptions]="[25, 50, 100]" [tableStyle]="{ 'min-width': '47.5rem' }"
       [attr.aria-label]="periodLabels.count" styleClass="export-table">
       <ng-template pTemplate="header">
         <tr>
           <th scope="col">{{ periodLabels.select }}</th>
-          <th scope="col">{{ labels.common.fields.type }}</th>
-          <th scope="col">{{ periodLabels.operation }}</th>
-          <th scope="col">{{ labels.common.fields.period }}</th>
-          <th scope="col">{{ periodLabels.rhSent }}</th>
-          <th scope="col">{{ periodLabels.treatedAt }}</th>
+          <th scope="col" pSortableColumn="typeLabel"><app-table-column-header field="typeLabel" [label]="labels.common.fields.type" kind="text" /></th>
+          <th scope="col" pSortableColumn="operation.title"><app-table-column-header field="operation.title" [label]="periodLabels.operation" kind="text" /></th>
+          <th scope="col" pSortableColumn="startDate"><app-table-column-header field="startDate" [label]="labels.common.fields.period" kind="text" filterField="periodLabel" /></th>
+          <th scope="col" pSortableColumn="sentDate"><app-table-column-header field="sentDate" [label]="periodLabels.rhSent" kind="date" /></th>
+          <th scope="col" pSortableColumn="treatedDate"><app-table-column-header field="treatedDate" [label]="periodLabels.treatedAt" kind="date" /></th>
           <th scope="col">{{ labels.common.table.actions }}</th>
         </tr>
       </ng-template>
@@ -46,7 +46,7 @@
             [ariaLabel]="periodLabels.select + ' ' + row.operation.title" /></td>
           <td>{{ row.typeLabel }}</td>
           <td>{{ row.operation.title }}</td>
-          <td>{{ formatRange(row.operation.forecastStartDate, row.operation.forecastEndDate) }}</td>
+          <td>{{ row.periodLabel }}</td>
           <td>{{ row.operation.sentToRhAt | date: 'dd/MM/yyyy HH:mm' }}</td>
           <td>{{ (row.operation.treatedAt | date: 'dd/MM/yyyy HH:mm') || labels.common.empty.dash }}</td>
           <td>@if (row.operation.treatedAt) {
@@ -92,12 +92,12 @@
       </div>
     </div>
 
-    <p-table [value]="exportRows('regular')" [rowTrackBy]="trackExportOperation" styleClass="export-table" [tableStyle]="{ 'min-width': '47.5rem' }">
+    <p-table [value]="(exportRows('regular')) | tableRows: exportTableFields" [rowTrackBy]="trackExportOperation" styleClass="export-table" [tableStyle]="{ 'min-width': '47.5rem' }">
       <ng-template pTemplate="header">
         <tr>
-          <th scope="col">{{ labels.rh.controls.types.onCall }}</th>
-          <th scope="col">{{ labels.common.table.period }}</th>
-          <th scope="col">{{ labels.common.fields.interventions }}</th>
+          <th scope="col" pSortableColumn="title"><app-table-column-header field="title" [label]="labels.rh.controls.types.onCall" kind="text" /></th>
+          <th scope="col" pSortableColumn="tableStartDate"><app-table-column-header field="tableStartDate" [label]="labels.common.table.period" kind="text" filterField="tablePeriod" /></th>
+          <th scope="col" pSortableColumn="interventions.length"><app-table-column-header field="interventions.length" [label]="labels.common.fields.interventions" kind="numeric" /></th>
           <th scope="col">{{ labels.common.fields.action }}</th>
         </tr>
       </ng-template>
@@ -133,13 +133,13 @@
       </div>
     </div>
 
-    <p-table [value]="exportRows('exceptionalOnCall')" [rowTrackBy]="trackExportOperation" styleClass="export-table" [tableStyle]="{ 'min-width': '53.75rem' }">
+    <p-table [value]="(exportRows('exceptionalOnCall')) | tableRows: exportTableFields" [rowTrackBy]="trackExportOperation" styleClass="export-table" [tableStyle]="{ 'min-width': '53.75rem' }">
       <ng-template pTemplate="header">
         <tr>
-          <th scope="col">{{ labels.rh.controls.types.onCall }}</th>
-          <th scope="col">{{ labels.common.fields.initiator }}</th>
-          <th scope="col">{{ labels.common.table.period }}</th>
-          <th scope="col">{{ labels.common.fields.interventions }}</th>
+          <th scope="col" pSortableColumn="title"><app-table-column-header field="title" [label]="labels.rh.controls.types.onCall" kind="text" /></th>
+          <th scope="col" pSortableColumn="initiatorName"><app-table-column-header field="initiatorName" [label]="labels.common.fields.initiator" kind="text" /></th>
+          <th scope="col" pSortableColumn="tableStartDate"><app-table-column-header field="tableStartDate" [label]="labels.common.table.period" kind="text" filterField="tablePeriod" /></th>
+          <th scope="col" pSortableColumn="interventions.length"><app-table-column-header field="interventions.length" [label]="labels.common.fields.interventions" kind="numeric" /></th>
           <th scope="col">{{ labels.common.fields.action }}</th>
         </tr>
       </ng-template>
@@ -176,12 +176,12 @@
       </div>
     </div>
 
-    <p-table [value]="exportRows('exceptionalWork')" [rowTrackBy]="trackExportOperation" styleClass="export-table" [tableStyle]="{ 'min-width': '53.75rem' }">
+    <p-table [value]="(exportRows('exceptionalWork')) | tableRows: exportTableFields" [rowTrackBy]="trackExportOperation" styleClass="export-table" [tableStyle]="{ 'min-width': '53.75rem' }">
       <ng-template pTemplate="header">
         <tr>
-          <th scope="col">{{ labels.common.fields.intervention }}</th>
-          <th scope="col">{{ labels.common.fields.initiator }}</th>
-          <th scope="col">{{ labels.common.table.period }}</th>
+          <th scope="col" pSortableColumn="title"><app-table-column-header field="title" [label]="labels.common.fields.intervention" kind="text" /></th>
+          <th scope="col" pSortableColumn="initiatorName"><app-table-column-header field="initiatorName" [label]="labels.common.fields.initiator" kind="text" /></th>
+          <th scope="col" pSortableColumn="tableStartDate"><app-table-column-header field="tableStartDate" [label]="labels.common.table.period" kind="text" filterField="tablePeriod" /></th>
           <th scope="col">{{ labels.common.fields.action }}</th>
         </tr>
       </ng-template>

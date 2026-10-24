@@ -1,4 +1,6 @@
-import { TestBed } from "@angular/core/testing";
+import { By } from "@angular/platform-browser";
+import { Table } from "primeng/table";
+import { TestBed, fakeAsync, tick } from "@angular/core/testing";
 import { provideNoopAnimations } from "@angular/platform-browser/animations";
 import { MockStore, provideMockStore } from "@ngrx/store/testing";
 import { selectExceptionalOperations } from "../../state/exceptional/exceptional.selectors";
@@ -279,6 +281,40 @@ describe("RH period export UI", () => {
       }
     } finally { build.mockRestore(); download.mockRestore(); }
   });
+
+  it("sorts submission dates chronologically and combines header filters without changing export scope", fakeAsync(() => {
+    const fixture = TestBed.createComponent(RhExportsComponent);
+    fixture.componentRef.setInput("periodMode", true);
+    fixture.detectChanges();
+    const page = fixture.componentInstance;
+    page.periodStart = "2026-10-01";
+    page.periodEnd = "2026-10-31";
+    const period = { userId: "7", userEmail: "agent@test.fr", startDate: "2026-10-01T18:00", endDate: "2026-10-02T08:00" };
+    page.regularPeriods = [
+      { ...period, id: "1", userName: "Zeta", sentToRhAt: "2026-10-09T10:00" },
+      { ...period, id: "2", userName: "Alpha", sentToRhAt: "2026-10-02T10:00" },
+    ];
+    fixture.detectChanges();
+    const table = fixture.debugElement.query(By.directive(Table)).componentInstance as Table;
+    expect(fixture.nativeElement.querySelectorAll("p-columnfilter")).toHaveLength(5);
+    const headers = fixture.nativeElement.querySelectorAll("thead th");
+    headers[4].click();
+    fixture.detectChanges();
+    expect(table.value.map(row => row.operation.sourceId)).toEqual(["2", "1"]);
+    headers[4].click();
+    fixture.detectChanges();
+    expect(table.value.map(row => row.operation.sourceId)).toEqual(["1", "2"]);
+    table.filterDelay = 0;
+    table.filter("Alpha", "operation.title", "contains");
+    tick(1);
+    fixture.detectChanges();
+    expect(table.filteredValue?.map(row => row.operation.sourceId)).toEqual(["2"]);
+    table.filter(new Date("2026-10-09T10:00"), "sentDate", "dateIs");
+    tick(1);
+    fixture.detectChanges();
+    expect(table.filteredValue).toEqual([]);
+    expect(page.periodOperations().regular).toHaveLength(2);
+  }));
 
   it("reports generation failures and releases the busy state", async () => {
     const fixture = TestBed.createComponent(RhExportsComponent);

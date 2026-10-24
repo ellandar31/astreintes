@@ -1,3 +1,4 @@
+import { Table } from "primeng/table";
 import { Component, Input } from "@angular/core";
 import { TestBed } from "@angular/core/testing";
 import { By } from "@angular/platform-browser";
@@ -180,7 +181,8 @@ describe("Separate exceptional navigation", () => {
     fixture.componentInstance.selectTab("exceptionalOnCall");
     fixture.detectChanges();
     const first = fixture.debugElement.query(By.directive(ExceptionalOperationsComponent)).componentInstance as ExceptionalOperationsComponent;
-    first.filters.title = "On-call";
+    const firstTable = fixture.debugElement.query(By.directive(Table)).componentInstance as Table;
+    firstTable.filters = { title: { value: "On-call", matchMode: "contains" } };
     first.openEditModal(onCall);
     fixture.detectChanges();
     dispatch.mockClear();
@@ -188,7 +190,8 @@ describe("Separate exceptional navigation", () => {
     fixture.detectChanges();
     const next = fixture.debugElement.query(By.directive(ExceptionalOperationsComponent)).componentInstance as ExceptionalOperationsComponent;
     expect(next).not.toBe(first);
-    expect(next.filters.title).toBe("");
+    const nextTable = fixture.debugElement.query(By.directive(Table)).componentInstance as Table;
+    expect(nextTable.filters["title"]).toEqual([expect.objectContaining({ value: null })]);
     expect(next.selectedOperation).toBeNull();
     expect(next.modalMode).toBeNull();
     expect(dispatch).toHaveBeenCalledWith(ExceptionalActions.watchStopped());

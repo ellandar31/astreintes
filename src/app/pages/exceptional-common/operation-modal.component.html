@@ -269,21 +269,21 @@
           }
         </div>
 
-        <p-table [value]="operation.interventions || []" styleClass="interventions-table" [tableStyle]="{ 'min-width': isLocked ? '38.75rem' : '45rem' }">
+        <p-table [value]="(operation.interventions || []) | tableRows: interventionTableFields" styleClass="interventions-table" [tableStyle]="{ 'min-width': isLocked ? '38.75rem' : '45rem' }">
           <ng-template pTemplate="header">
             <tr>
-              <th scope="col">{{ labels.common.fields.user }}</th>
-              <th scope="col">{{ labels.common.table.start }}</th>
-              <th scope="col">{{ labels.common.table.end }}</th>
-              <th scope="col">{{ labels.exceptional.fields.userOnSite }}</th>
-              <th scope="col">{{ labels.exceptional.fields.visaAgent }}</th>
-              <th scope="col">{{ labels.common.fields.ticket }}</th>
+              <th scope="col" pSortableColumn="tableUser"><app-table-column-header field="tableUser" [label]="labels.common.fields.user" kind="text" /></th>
+              <th scope="col" pSortableColumn="tableStartDate"><app-table-column-header field="tableStartDate" [label]="labels.common.table.start" kind="date" /></th>
+              <th scope="col" pSortableColumn="tableEndDate"><app-table-column-header field="tableEndDate" [label]="labels.common.table.end" kind="date" /></th>
+              <th scope="col" pSortableColumn="wasOnSite"><app-table-column-header field="wasOnSite" [label]="labels.exceptional.fields.userOnSite" kind="boolean" /></th>
+              <th scope="col" pSortableColumn="agentVisa.signed"><app-table-column-header field="agentVisa.signed" [label]="labels.exceptional.fields.visaAgent" kind="boolean" /></th>
+              <th scope="col" pSortableColumn="ticket"><app-table-column-header field="ticket" [label]="labels.common.fields.ticket" kind="text" /></th>
               @if (!isLocked) {
                 <th scope="col">{{ labels.common.table.actions }}</th>
               }
             </tr>
           </ng-template>
-          <ng-template pTemplate="body" let-intervention let-index="rowIndex">
+          <ng-template pTemplate="body" let-intervention>
             <tr>
               <td>{{ intervention.userName || intervention.userEmail }}</td>
               <td>{{ formatDate(intervention.startDate || intervention.date) }}</td>
@@ -300,7 +300,7 @@
                       severity="secondary"
                       [rounded]="true"
                       [text]="true"
-                      (onClick)="editIntervention.emit({ operation, intervention, index })"
+                      (onClick)="editIntervention.emit({ operation, intervention, index: interventionIndex(intervention) })"
                       [title]="labels.common.actions.edit"
                       [attr.aria-label]="labels.common.actions.edit"
                     ></p-button>
@@ -309,7 +309,7 @@
                       severity="danger"
                       [rounded]="true"
                       [text]="true"
-                      (onClick)="deleteIntervention.emit({ operation, index })"
+                      (onClick)="deleteIntervention.emit({ operation, index: interventionIndex(intervention) })"
                       [title]="labels.common.actions.delete"
                       [attr.aria-label]="labels.common.actions.delete"
                     ></p-button>

@@ -1,3 +1,5 @@
+import { TableColumnHeaderComponent } from "../../shared/table-column-header.component";
+import { TableRowsPipe, tableDate } from "../../shared/table-rows.pipe";
 import { CommonModule } from "@angular/common";
 import { Component, EventEmitter, Input, Output } from "@angular/core";
 import { TableModule } from "primeng/table";
@@ -9,11 +11,15 @@ import { HistoryDetailItem, HistoryDetailLine } from "./history.models";
 @Component({
   selector: "app-history-detail-modal",
   standalone: true,
-  imports: [CommonModule, ModalComponent, TableModule, TruncatedTextComponent],
+  imports: [TableColumnHeaderComponent, TableRowsPipe, CommonModule, ModalComponent, TableModule, TruncatedTextComponent],
   templateUrl: "./history-detail-modal.component.html",
   styleUrl: "./history-detail-modal.component.css",
 })
 export class HistoryDetailModalComponent {
+  readonly detailTableFields = {
+    tablePeriodDate: (row: HistoryDetailLine) => tableDate(row.period),
+    tableTotal: (row: HistoryDetailLine) => row.hours * row.coefficient,
+  };
   @Input({ required: true }) item!: HistoryDetailItem;
   @Output() closed = new EventEmitter<void>();
   readonly labels = APP_LABELS;

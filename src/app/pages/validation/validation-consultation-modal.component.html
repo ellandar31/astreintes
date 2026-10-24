@@ -18,15 +18,15 @@
           }
         </header>
 
-        <p-table [value]="progressItems" [rowTrackBy]="trackProgressItem" styleClass="progress-table" [tableStyle]="{ 'min-width': '56.25rem' }">
+        <p-table [value]="(progressItems) | tableRows: progressTableFields" [rowTrackBy]="trackProgressItem" styleClass="progress-table" [tableStyle]="{ 'min-width': '56.25rem' }">
           <ng-template pTemplate="header">
             <tr>
-              <th scope="col">{{ labels.common.table.role }}</th>
-              <th scope="col">{{ labels.common.table.person }}</th>
-              <th scope="col">{{ labels.common.table.period }}</th>
-              <th scope="col">{{ labels.common.fields.ticket }}</th>
-              <th scope="col">{{ labels.common.table.status }}</th>
-              <th scope="col">{{ labels.common.table.date }}</th>
+              <th scope="col" pSortableColumn="role"><app-table-column-header field="role" [label]="labels.common.table.role" kind="text" /></th>
+              <th scope="col" pSortableColumn="userLabel"><app-table-column-header field="userLabel" [label]="labels.common.table.person" kind="text" /></th>
+              <th scope="col" pSortableColumn="tableStartDate"><app-table-column-header field="tableStartDate" [label]="labels.common.table.period" kind="text" filterField="tablePeriod" /></th>
+              <th scope="col" pSortableColumn="ticket"><app-table-column-header field="ticket" [label]="labels.common.fields.ticket" kind="text" /></th>
+              <th scope="col" pSortableColumn="visa.signed"><app-table-column-header field="visa.signed" [label]="labels.common.table.status" kind="boolean" /></th>
+              <th scope="col" pSortableColumn="tableSignedDate"><app-table-column-header field="tableSignedDate" [label]="labels.common.table.date" kind="date" /></th>
               <th scope="col">{{ labels.common.table.actions }}</th>
             </tr>
           </ng-template>

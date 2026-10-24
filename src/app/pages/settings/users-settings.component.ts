@@ -1,3 +1,5 @@
+import { TableColumnHeaderComponent } from "../../shared/table-column-header.component";
+import { TableRowsPipe, tableDate } from "../../shared/table-rows.pipe";
 import { CheckboxModule } from "primeng/checkbox";
 import { TruncatedTextComponent } from "../../shared/truncated-text.component";
 import { CommonModule } from "@angular/common";
@@ -16,11 +18,16 @@ import { ManagedUser, UserRole } from "./settings.models";
 @Component({
   selector: "app-users-settings",
   standalone: true,
-  imports: [CheckboxModule, TruncatedTextComponent, ButtonModule, CommonModule, FormsModule, SelectModule, TableModule, TagModule],
+  imports: [TableColumnHeaderComponent, TableRowsPipe, CheckboxModule, TruncatedTextComponent, ButtonModule, CommonModule, FormsModule, SelectModule, TableModule, TagModule],
   templateUrl: "./users-settings.component.html",
   styleUrls: ["./settings-common.scss"],
 })
 export class UsersSettingsComponent implements OnDestroy {
+  readonly userTableFields = {
+    tableName: (row: ManagedUser) => row.displayName || row.email,
+    tableRole: (row: ManagedUser) => this.roleLabel(row.role),
+    tableDirection: (row: ManagedUser) => this.directions().find(direction => direction.id === row.directionId)?.name || "",
+  };
   @Output() failure = new EventEmitter<string>();
   @Output() success = new EventEmitter<string>();
 

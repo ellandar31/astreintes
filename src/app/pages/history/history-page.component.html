@@ -18,6 +18,9 @@
           name="selectedUser"
           optionLabel="email"
           optionValue="id"
+          [filter]="true"
+          filterBy="displayName,email"
+          [resetFilterOnHide]="true"
           appendTo="body"
           [placeholder]="labels.common.users.select"
         >
@@ -52,15 +55,15 @@
             </button>
 
             @if (isMonthExpanded(userSection.user.id, monthSection.monthKey)) {
-              <p-table [value]="monthSection.items" styleClass="history-table summary-table" [tableStyle]="{ 'min-width': '61.25rem' }">
+              <p-table [value]="(monthSection.items) | tableRows: historyTableFields" styleClass="history-table summary-table" [tableStyle]="{ 'min-width': '61.25rem' }">
                 <ng-template pTemplate="header">
                   <tr>
-                    <th scope="col">{{ labels.common.table.type }}</th>
-                    <th scope="col">{{ labels.common.table.item }}</th>
-                    <th scope="col">{{ labels.common.table.period }}</th>
-                    <th scope="col">{{ labels.common.messages.rhSentAt }}</th>
-                    <th scope="col">{{ labels.rh.controls.treatment }}</th>
-                    <th scope="col">{{ labels.common.fields.lines }}</th>
+                    <th scope="col" pSortableColumn="type"><app-table-column-header field="type" [label]="labels.common.table.type" kind="text" /></th>
+                    <th scope="col" pSortableColumn="title"><app-table-column-header field="title" [label]="labels.common.table.item" kind="text" /></th>
+                    <th scope="col" pSortableColumn="tablePeriodDate"><app-table-column-header field="tablePeriodDate" [label]="labels.common.table.period" kind="text" filterField="period" /></th>
+                    <th scope="col" pSortableColumn="tableSentDate"><app-table-column-header field="tableSentDate" [label]="labels.common.messages.rhSentAt" kind="date" /></th>
+                    <th scope="col" pSortableColumn="tableTreatedDate"><app-table-column-header field="tableTreatedDate" [label]="labels.rh.controls.treatment" kind="date" /></th>
+                    <th scope="col" pSortableColumn="lines.length"><app-table-column-header field="lines.length" [label]="labels.common.fields.lines" kind="numeric" /></th>
                     <th scope="col">{{ labels.common.table.actions }}</th>
                   </tr>
                 </ng-template>

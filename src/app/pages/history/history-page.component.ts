@@ -1,3 +1,5 @@
+import { TableColumnHeaderComponent } from "../../shared/table-column-header.component";
+import { TableRowsPipe, tableDate } from "../../shared/table-rows.pipe";
 import { hasDirectorRights } from "../../shared/user-role-permissions";
 import { isArchivedOperation } from "../../shared/operation-archive";
 import { FormsModule } from "@angular/forms";
@@ -81,12 +83,17 @@ interface HistoryMonthSection {
 @Component({
   selector: "app-history-page",
   standalone: true,
-  imports: [ButtonModule, CardModule, CommonModule, FormsModule, SelectModule, HistoryDetailModalComponent, TableModule, MessageModule],
+  imports: [TableColumnHeaderComponent, TableRowsPipe, ButtonModule, CardModule, CommonModule, FormsModule, SelectModule, HistoryDetailModalComponent, TableModule, MessageModule],
   templateUrl: "./history-page.component.html",
   styleUrl: "./history-page.component.css",
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HistoryPageComponent implements OnChanges, OnDestroy, OnInit {
+  readonly historyTableFields = {
+    tablePeriodDate: (row: { period: string }) => tableDate(row.period),
+    tableSentDate: (row: { sentToRhAt: unknown }) => tableDate(row.sentToRhAt),
+    tableTreatedDate: (row: { treatedAt?: string }) => tableDate(row.treatedAt),
+  };
   @Input({ required: true }) currentUser: StoreAuthUser | null = null;
   readonly labels = APP_LABELS;
 

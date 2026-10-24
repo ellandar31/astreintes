@@ -22,3 +22,9 @@ pour afficher les mêmes coefficients que les exports, sans seconde implémentat
 Les contrats partagés restent dans `src/app/types/`, les états partagés dans
 `src/app/state/` et la persistance dans `src/app/store/`. Les pages `profile/` et
 `settings/` correspondent aux actions du bandeau supérieur.
+
+Les tableaux utilisent `shared/table-column-header.component.ts` pour les menus de
+filtre et les tris PrimeNG. La pipe pure `tableRows` conserve un tableau local
+stable, distinct des collections NgRx, et calcule les champs de consultation
+(dates, libellés, totaux). Les actions conservent l'identité de la ligne source :
+un tri ou un filtre ne doit jamais modifier la cible d'une édition ou suppression.

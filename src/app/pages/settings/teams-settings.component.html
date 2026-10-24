@@ -74,11 +74,11 @@
     </form>
   </p-card>
 
-  <p-table [value]="teams()" styleClass="settings-table" [tableStyle]="{ 'min-width': '46rem' }">
+  <p-table [value]="(teams()) | tableRows: teamTableFields: users()" styleClass="settings-table" [tableStyle]="{ 'min-width': '46rem' }">
     <ng-template pTemplate="header">
       <tr>
-        <th scope="col">{{ labels.settings.teams.name }}</th>
-        <th scope="col">{{ labels.settings.teams.members }}</th>
+        <th scope="col" pSortableColumn="name"><app-table-column-header field="name" [label]="labels.settings.teams.name" kind="text" /></th>
+        <th scope="col" pSortableColumn="tableMembers"><app-table-column-header field="tableMembers" [label]="labels.settings.teams.members" kind="text" /></th>
         <th scope="col">{{ labels.common.fields.actions }}</th>
       </tr>
     </ng-template>

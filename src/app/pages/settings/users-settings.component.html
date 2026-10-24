@@ -14,14 +14,14 @@
     }
   </div>
 
-  <p-table [value]="users()" styleClass="settings-table" [tableStyle]="{ 'min-width': '48rem' }">
+  <p-table [value]="(users()) | tableRows: userTableFields: directions()" styleClass="settings-table" [tableStyle]="{ 'min-width': '48rem' }">
     <ng-template pTemplate="header">
       <tr>
-        <th scope="col">{{ labels.common.fields.name }}</th>
-        <th scope="col">{{ labels.common.fields.email }}</th>
-        <th scope="col">{{ labels.common.fields.role }}</th>
-        <th scope="col">{{ labels.directions.field }}</th>
-        <th scope="col">{{ labels.settings.users.rhAccess }}</th>
+        <th scope="col" pSortableColumn="tableName"><app-table-column-header field="tableName" [label]="labels.common.fields.name" kind="text" /></th>
+        <th scope="col" pSortableColumn="email"><app-table-column-header field="email" [label]="labels.common.fields.email" kind="text" /></th>
+        <th scope="col" pSortableColumn="tableRole"><app-table-column-header field="tableRole" [label]="labels.common.fields.role" kind="text" /></th>
+        <th scope="col" pSortableColumn="tableDirection"><app-table-column-header field="tableDirection" [label]="labels.directions.field" kind="text" /></th>
+        <th scope="col" pSortableColumn="isRh"><app-table-column-header field="isRh" [label]="labels.settings.users.rhAccess" kind="boolean" /></th>
         <th scope="col">{{ labels.common.fields.actions }}</th>
       </tr>
     </ng-template>

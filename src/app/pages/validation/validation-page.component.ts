@@ -1,3 +1,5 @@
+import { TableColumnHeaderComponent } from "../../shared/table-column-header.component";
+import { TableRowsPipe, tableDate } from "../../shared/table-rows.pipe";
 import { isArchivedOperation } from "../../shared/operation-archive";
 import { hasDirectorRights } from "../../shared/user-role-permissions";
 import { CommonModule } from "@angular/common";
@@ -46,11 +48,16 @@ import { AppUser, ValidationItem, ValidationSection, ValidationSectionId, VisaPr
 @Component({
   selector: "app-validation-page",
   standalone: true,
-  imports: [ButtonModule, CardModule, CommonModule, FormsModule, MessageModule, SelectModule, TableModule, TagModule, TruncatedTextComponent, ValidationConsultationModalComponent],
+  imports: [TableColumnHeaderComponent, TableRowsPipe, ButtonModule, CardModule, CommonModule, FormsModule, MessageModule, SelectModule, TableModule, TagModule, TruncatedTextComponent, ValidationConsultationModalComponent],
   templateUrl: "./validation-page.component.html",
   styleUrl: "./validation-page.component.css",
 })
 export class ValidationPageComponent implements OnChanges, OnDestroy {
+  readonly validationTableFields = {
+    tableDirection: (row: ValidationItem) => this.directionName(row),
+    tableStartDate: (row: ValidationItem) => tableDate(row.startDate),
+    tablePeriod: (row: ValidationItem) => `${this.formatDateTime(row.startDate)} - ${this.formatDateTime(row.endDate)}`,
+  };
   @Input({ required: true }) user: StoreAuthUser | null = null;
   readonly labels = APP_LABELS;
 
