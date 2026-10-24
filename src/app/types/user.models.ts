@@ -14,6 +14,8 @@ export interface ManagedUser {
   role: UserRole;
   /** Independent export permission; never grants director or planning privileges. */
   isRh?: boolean;
+  /** Database profile creation timestamp; supplied by the database. */
+  createdAt?: string;
   lastLoginAt?: unknown;
 }
 
@@ -22,4 +24,22 @@ export interface ApplicationUser extends ManagedUser {
   uid: string;
   signatureName: string;
   lastLoginAt?: string;
+}
+
+/** Profile prepared by an administrator before an Auth identity exists. */
+export interface NewApplicationUser {
+  email: string;
+  displayName: string;
+  trigram: string;
+  role: UserRole;
+  directionId: string | null;
+  isRh: boolean;
+}
+
+/** One staged assignment in a global user-settings save. */
+export interface UserAssignmentUpdate {
+  userId: string;
+  role: UserRole;
+  directionId: string | null;
+  isRh: boolean;
 }

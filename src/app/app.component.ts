@@ -16,11 +16,12 @@ import { ProfilePageComponent } from "./pages/profile/profile-page.component";
 import { RegularCalendarComponent } from "./pages/regular/regular-calendar.component";
 import { RhPageComponent } from "./pages/rh/rh-page.component";
 import { HistoryPageComponent } from "./pages/history/history-page.component";
+import { UsersSettingsComponent } from "./pages/settings/users-settings.component";
 import { SettingsPageComponent } from "./pages/settings/settings-page.component";
 import { ValidationPageComponent } from "./pages/validation/validation-page.component";
 import { ModalComponent } from "./shared/modal.component";
 import { AuthActions } from "./state/auth/auth.actions";
-import { selectCanOpenSettings, selectCanExportRh } from "./state/settings/settings.selectors";
+import { selectCanManageUsers, selectCanOpenSettings, selectCanExportRh } from "./state/settings/settings.selectors";
 import {
   selectAuthError,
   selectAuthUser,
@@ -38,7 +39,7 @@ const tabs = [
   { id: "history", label: APP_LABELS.app.tabs.history },
 ] as const;
 type TabId = (typeof tabs)[number]["id"];
-type ModalView = "profile" | "settings";
+type ModalView = "profile" | "settings" | "accountReview";
 
 @Component({
   selector: "app-root",
@@ -60,6 +61,7 @@ type ModalView = "profile" | "settings";
     RhPageComponent,
     HistoryPageComponent,
     SettingsPageComponent,
+    UsersSettingsComponent,
     TooltipModule,
     ValidationPageComponent,
   ],
@@ -73,6 +75,7 @@ export class AppComponent {
   email = "";
   isCreatingAccount = false;
   modalView: ModalView | null = null;
+  accountReviewMessage: { severity: "success" | "error"; text: string } | null = null;
   password = "";
   private readonly store = inject(Store);
   readonly displayName = this.store.selectSignal(selectDisplayName);
@@ -80,6 +83,7 @@ export class AppComponent {
   readonly isSubmitting = this.store.selectSignal(selectIsSubmitting);
   readonly loadingSession = this.store.selectSignal(selectLoadingSession);
   readonly user = this.store.selectSignal(selectAuthUser);
+  readonly canManageUsers = this.store.selectSignal(selectCanManageUsers);
   readonly canOpenSettings = this.store.selectSignal(selectCanOpenSettings);
   readonly canExportRh = this.store.selectSignal(selectCanExportRh);
 
@@ -91,6 +95,7 @@ export class AppComponent {
       if (!this.canOpenSettings() && this.modalView === "settings") {
         this.closeModal();
       }
+      if (!this.canManageUsers() && this.modalView === "accountReview") this.closeModal();
       if (!this.canExportRh() && this.activeTab === "rh") this.activeTab = "history";
     });
   }
@@ -106,6 +111,13 @@ export class AppComponent {
   showSettings(): void {
     if (!this.canOpenSettings()) return;
     this.modalView = "settings";
+  }
+
+  /** Reuses account management without changing the current main page. */
+  showAccountReview(): void {
+    if (!this.canManageUsers()) return;
+    this.accountReviewMessage = null;
+    this.modalView = "accountReview";
   }
 
   closeModal(): void {

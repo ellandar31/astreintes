@@ -1,3 +1,4 @@
+import { NewApplicationUser, UserAssignmentUpdate } from "../../types/user.models";
 import { RhTreatmentOperation } from "../../types/rh-export.models";
 import { DirectionsRepository } from "./directions.repository";
 import { SupabaseClient } from "@supabase/supabase-js";
@@ -64,6 +65,8 @@ export class SupabaseDomainStore {
       remove: (id: string) => remove("directions", id),
     };
     this.users = {
+      saveAssignments: (assignments: UserAssignmentUpdate[]) => observer.write(["app_users"], () => users.saveAssignments(assignments)),
+      create: (user: NewApplicationUser) => observer.write(["app_users"], () => users.createUser(user)),
       list: () => users.fetchUsers(),
       get: (identifier: string) => users.fetchUser(identifier),
       watch: watch<ApplicationUser[]>(["app_users"], () => users.fetchUsers()),

@@ -19,7 +19,7 @@ jest.mock("../store/app-store", () => ({
   appStore: {
     now: () => "2026-10-10T08:00:00Z",
     auth: { onSessionChanged: jest.fn(), updateProfile: jest.fn() },
-    users: { watch: jest.fn(), watchOne: jest.fn(), get: jest.fn(), save: jest.fn() },
+    users: { saveAssignments: jest.fn(), remove: jest.fn(), create: jest.fn(), watch: jest.fn(), watchOne: jest.fn(), get: jest.fn(), save: jest.fn() },
     directions: { watch: jest.fn(), save: jest.fn(), remove: jest.fn() },
     rhSettings: { updateTreatment: jest.fn() },
     teams: { watch: jest.fn() }, holidays: { watch: jest.fn() },
@@ -46,6 +46,41 @@ describe("NgRx effects using typed domain APIs", () => {
     });
   });
   afterEach(() => { actions.complete(); TestBed.resetTestingModule(); });
+
+  it("persists all user assignments in one batch and reports a failure", async () => {
+    const assignments = [{ userId: "7", role: 1 as const, directionId: null, isRh: true }];
+    jest.mocked(appStore.users.saveAssignments).mockResolvedValue(undefined);
+    const result = firstValueFrom(TestBed.inject(SettingsEffects).saveUserAssignments$);
+    actions.next(SettingsActions.userAssignmentsSaveRequested({ assignments }));
+    expect((await result).type).toBe(SettingsActions.operationSucceeded.type);
+    expect(appStore.users.saveAssignments).toHaveBeenCalledWith(assignments);
+    jest.mocked(appStore.users.saveAssignments).mockRejectedValue(new Error("Invalid direction"));
+    const failure = firstValueFrom(TestBed.inject(SettingsEffects).saveUserAssignments$);
+    actions.next(SettingsActions.userAssignmentsSaveRequested({ assignments }));
+    expect((await failure).type).toBe(SettingsActions.operationFailed.type);
+  });
+
+  it("prepares an account and reports creation failures", async () => {
+    const prepared = { email: "future@example.test", displayName: "Future", trigram: "FUT", role: 1 as const, directionId: null, isRh: false };
+    jest.mocked(appStore.users.create).mockResolvedValue(undefined);
+    const result = firstValueFrom(TestBed.inject(SettingsEffects).createUser$);
+    actions.next(SettingsActions.userCreateRequested({ user: prepared }));
+    expect((await result).type).toBe(SettingsActions.operationSucceeded.type);
+    expect(appStore.users.create).toHaveBeenCalledWith(prepared);
+    jest.mocked(appStore.users.create).mockRejectedValue(new Error("Duplicate email"));
+    const failure = firstValueFrom(TestBed.inject(SettingsEffects).createUser$);
+    actions.next(SettingsActions.userCreateRequested({ user: prepared }));
+    expect((await failure).type).toBe(SettingsActions.operationFailed.type);
+  });
+
+  it("permanently removes an account without changing its departure date", async () => {
+    jest.mocked(appStore.users.remove).mockResolvedValue(undefined);
+    const result = firstValueFrom(TestBed.inject(SettingsEffects).deleteUser$);
+    actions.next(SettingsActions.userDeleteRequested({ userId: "7" }));
+    expect((await result).type).toBe(SettingsActions.operationSucceeded.type);
+    expect(appStore.users.remove).toHaveBeenCalledWith("7");
+    expect(appStore.users.save).not.toHaveBeenCalled();
+  });
 
   it("loads directions once per session and clears the reference on logout", () => {
     const stop = jest.fn();

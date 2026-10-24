@@ -152,6 +152,14 @@ export class SettingsEffects {
   );
   // Role updates are serialized to avoid racing administrative changes from
   // repeated clicks; the last confirmed write is reflected by the live watch.
+  readonly saveUserAssignments$ = createEffect(() => this.actions$.pipe(
+    ofType(SettingsActions.userAssignmentsSaveRequested),
+    concatMap(({ assignments }) => from(appStore.users.saveAssignments(assignments)).pipe(
+      map(() => this.success("users", APP_LABELS.directions.profileSaved)),
+      catchError(error => of(this.failure("users", this.errorMessage(error, "Erreur pendant l’enregistrement des utilisateurs.")))),
+    )),
+  ));
+
   readonly updateUserRole$ = createEffect(() =>
     this.actions$.pipe(
       ofType(SettingsActions.userRoleUpdateRequested),
@@ -164,12 +172,20 @@ export class SettingsEffects {
     ),
   );
 
+  readonly createUser$ = createEffect(() => this.actions$.pipe(
+    ofType(SettingsActions.userCreateRequested),
+    concatMap(({ user }) => from(appStore.users.create(user)).pipe(
+      map(() => this.success("users", APP_LABELS.settings.users.created)),
+      catchError(error => of(this.failure("users", this.errorMessage(error, APP_LABELS.settings.users.createFailed)))),
+    )),
+  ));
+
   readonly deleteUser$ = createEffect(() =>
     this.actions$.pipe(
       ofType(SettingsActions.userDeleteRequested),
       concatMap(({ userId }) =>
         from(appStore.users.remove(userId)).pipe(
-          map(() => this.success("users", "Utilisateur retiré de la liste applicative.")),
+          map(() => this.success("users", APP_LABELS.settings.users.deleted)),
           catchError((error) => of(this.failure("users", this.errorMessage(error, "Erreur pendant la gestion des utilisateurs.")))),
         ),
       ),

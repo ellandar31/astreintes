@@ -17,12 +17,10 @@ DO $$ DECLARE table_name text; stamp timestamptz; BEGIN
  OR (SELECT ticket FROM public.exceptional_on_call_interventions WHERE id=905) <> 'EXT-456' THEN
   RAISE EXCEPTION 'Ticket reference lost';
  END IF;
- UPDATE public.app_users SET trigram='ABC' WHERE id=2;
- BEGIN
-  UPDATE public.app_users SET trigram='ABCD' WHERE id=2;
-  RAISE EXCEPTION 'Overlong trigram accepted';
- EXCEPTION WHEN string_data_right_truncation THEN NULL;
- END;
+ UPDATE public.app_users SET trigram='LONGCODE' WHERE id=2;
+ IF (SELECT trigram FROM public.app_users WHERE id=2) <> 'LONGCODE' THEN
+  RAISE EXCEPTION 'Account code was truncated';
+ END IF;
  FOREACH table_name IN ARRAY ARRAY['regular_on_call_periods','exceptional_on_calls','exceptional_works'] LOOP
   EXECUTE format('SELECT treated_at FROM public.%I WHERE id=905',table_name) INTO stamp;
   IF stamp IS NOT NULL THEN RAISE EXCEPTION 'Treatment must default to NULL'; END IF;

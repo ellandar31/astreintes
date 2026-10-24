@@ -9,6 +9,7 @@ import { MessageModule } from "primeng/message";
 import { APP_LABELS } from "../../i18n/labels";
 import { SignatureProfile } from "../../shared/visa.models";
 import { StoreAuthUser } from "../../store/app-store";
+import { selectCurrentApplicationUser } from "../../state/settings/settings.selectors";
 import { ProfileActions } from "../../state/profile/profile.actions";
 import {
   selectProfile,
@@ -37,6 +38,8 @@ export class ProfilePageComponent implements OnChanges, OnDestroy {
   private readonly saveCompletedAt = this.store.selectSignal(selectProfileSaveCompletedAt);
   private lastHandledSaveCompletion: number | null = null;
 
+  // Administrative account data stays outside the editable signature profile.
+  readonly applicationUser = this.store.selectSignal(selectCurrentApplicationUser);
   readonly isSaving = this.store.selectSignal(selectProfileIsSaving);
   readonly message = this.store.selectSignal(selectProfileMessage);
 

@@ -13,6 +13,11 @@
         </div>
       </ng-template>
 
+      <div class="profile-field">
+        <span>{{ labels.common.fields.trigram }}</span>
+        <strong>{{ applicationUser()?.trigram || labels.common.empty.dash }}</strong>
+      </div>
+
       <label class="profile-control">
         <span>{{ labels.common.fields.name }}</span>
         <input

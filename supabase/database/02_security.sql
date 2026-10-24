@@ -451,11 +451,22 @@ END; $$;
 
 -- Provision once when Auth creates the identity. Login cannot resurrect a deleted
 -- profile; only an administrator can explicitly restore application access.
+-- Also supports applying this security script to an existing beta database.
+ALTER TABLE public.app_users ALTER COLUMN auth_user_id DROP NOT NULL;
+ALTER TABLE public.app_users ALTER COLUMN trigram TYPE text;
+CREATE UNIQUE INDEX IF NOT EXISTS app_users_email_normalized_key ON public.app_users (lower(email));
+
 CREATE OR REPLACE FUNCTION app_private.provision_application_user()
 RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = '' AS $$
 BEGIN
+ -- Claim a prepared profile without losing its assignments, role or departure date.
  INSERT INTO public.app_users(auth_user_id, email, role)
- VALUES (NEW.id, coalesce(NEW.email, ''), 'user');
+ VALUES (NEW.id, lower(coalesce(NEW.email, '')), 'user')
+ ON CONFLICT (lower(email)) DO UPDATE SET auth_user_id = EXCLUDED.auth_user_id
+ WHERE app_users.auth_user_id IS NULL;
+ IF NOT FOUND THEN
+   RAISE EXCEPTION 'Application profile already linked to another identity' USING ERRCODE = '23505';
+ END IF;
  RETURN NEW;
 END;
 $$;
@@ -528,5 +539,56 @@ BEGIN
 END; $$;
 REVOKE ALL ON FUNCTION public.set_rh_treatment(jsonb, boolean) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.set_rh_treatment(jsonb, boolean) TO authenticated;
+
+
+-- Administrative preparation never creates credentials in the browser. Auth signup
+-- later claims this row by email; an existing Auth identity is linked immediately.
+CREATE OR REPLACE FUNCTION public.create_application_user(
+ account_email text, account_name text, account_trigram text,
+ account_role public.user_role, account_direction bigint, account_is_rh boolean
+) RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path = '' AS $$
+DECLARE normalized_email text := lower(trim(account_email)); linked_id uuid;
+BEGIN
+ IF NOT app_private.is_application_admin() OR NOT app_private.has_active_profile() THEN
+   RAISE EXCEPTION 'Only active administrators can prepare accounts' USING ERRCODE = '42501';
+ END IF;
+ IF normalized_email IS NULL OR normalized_email !~ '^[^[:space:]@]+@[^[:space:]@]+[.][^[:space:]@]+$'
+    OR coalesce(trim(account_name), '') = '' THEN
+   RAISE EXCEPTION 'Invalid account name or email' USING ERRCODE = '23514';
+ END IF;
+ SELECT id INTO linked_id FROM auth.users WHERE lower(email) = normalized_email;
+ INSERT INTO public.app_users(auth_user_id, email, display_name, trigram, role, direction_id, is_rh)
+ VALUES (linked_id, normalized_email, trim(account_name), nullif(upper(trim(account_trigram)), ''),
+   account_role, account_direction, account_is_rh);
+END; $$;
+REVOKE ALL ON FUNCTION public.create_application_user(text,text,text,public.user_role,bigint,boolean) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.create_application_user(text,text,text,public.user_role,bigint,boolean) TO authenticated;
+
+-- Apply the whole table together; a late invalid assignment rolls back every row.
+CREATE OR REPLACE FUNCTION public.save_user_assignments(assignments jsonb)
+RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path = '' AS $$
+DECLARE expected_count integer; updated_count integer;
+BEGIN
+ IF NOT app_private.is_application_admin() OR NOT app_private.has_active_profile() THEN
+   RAISE EXCEPTION 'Only active administrators can assign roles' USING ERRCODE = '42501';
+ END IF;
+ IF assignments IS NULL OR jsonb_typeof(assignments) <> 'array' THEN
+   RAISE EXCEPTION 'Assignments must be an array' USING ERRCODE = '23514';
+ END IF;
+ expected_count := jsonb_array_length(assignments);
+ IF expected_count <> (SELECT count(DISTINCT item->>'id') FROM jsonb_array_elements(assignments) item) THEN
+   RAISE EXCEPTION 'Duplicate or missing account identifiers' USING ERRCODE = '23514';
+ END IF;
+ UPDATE public.app_users u SET role = input.role::public.user_role,
+   direction_id = input.direction_id, is_rh = input.is_rh
+ FROM jsonb_to_recordset(assignments) AS input(id bigint, role text, direction_id bigint, is_rh boolean)
+ WHERE u.id = input.id;
+ GET DIAGNOSTICS updated_count = ROW_COUNT;
+ IF updated_count <> expected_count THEN
+   RAISE EXCEPTION 'Account no longer exists' USING ERRCODE = '23514';
+ END IF;
+END; $$;
+REVOKE ALL ON FUNCTION public.save_user_assignments(jsonb) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.save_user_assignments(jsonb) TO authenticated;
 
 COMMIT;

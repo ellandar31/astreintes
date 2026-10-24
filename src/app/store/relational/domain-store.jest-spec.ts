@@ -40,7 +40,7 @@ function relationalClient(tables: Record<string, JsonRecord[]> = {}, failure?: E
 }
 
 const authId = "690d58ef-7ec0-4a47-9511-2856263cf526";
-const userRow = { id: 7, auth_user_id: authId, email: "agent@example.fr", display_name: "Agent", role: "director" };
+const userRow = { id: 7, auth_user_id: authId, email: "agent@example.fr", display_name: "Agent", role: "director", created_at: "2026-01-10T12:00:00Z" };
 const visa = { ...createEmptyVisa(), signed: true, signedAt: "2026-09-14T12:00:00Z", signedByName: "Original signer", signedByUid: authId, signatureValue: "snapshot" };
 const period: RegularOnCallPeriod = {
   id: "11", teamId: "2", userId: "7", userName: "Agent", userEmail: userRow.email,
@@ -57,11 +57,39 @@ const operation: ExceptionalOperation = {
 describe("Typed relational persistence", () => {
   afterEach(() => jest.restoreAllMocks());
 
+  it("sends changed assignments through a single typed RPC", async () => {
+    const rpc = jest.fn().mockResolvedValue({ error: null });
+    const users = new UsersRepository({ rpc } as unknown as SupabaseClient);
+    await users.saveAssignments([
+      { userId: "7", role: 3, directionId: "2", isRh: true },
+      { userId: "8", role: 1, directionId: null, isRh: false },
+    ]);
+    expect(rpc).toHaveBeenCalledTimes(1);
+    expect(rpc).toHaveBeenCalledWith("save_user_assignments", { assignments: [
+      { id: 7, role: "director", direction_id: 2, is_rh: true },
+      { id: 8, role: "user", direction_id: null, is_rh: false },
+    ] });
+  });
+
+  it("prepares accounts through the administrative RPC without creating credentials", async () => {
+    const rpc = jest.fn().mockResolvedValue({ error: null });
+    const users = new UsersRepository({ rpc } as unknown as SupabaseClient);
+    const account = { email: " Future@Example.fr ", displayName: " Future ", trigram: " fut ", role: 3 as const, directionId: "2", isRh: true };
+    await users.createUser(account);
+    expect(rpc).toHaveBeenCalledWith("create_application_user", {
+      account_email: "future@example.fr", account_name: "Future", account_trigram: "FUT",
+      account_role: "director", account_direction: 2, account_is_rh: true,
+    });
+    const failure = new Error("Duplicate email");
+    rpc.mockResolvedValue({ error: failure });
+    await expect(users.createUser(account)).rejects.toThrow("Duplicate email");
+  });
+
   it.each(["7", authId, userRow.email])("resolves %s into a direct application user", async identifier => {
     const users = new UsersRepository(relationalClient({ app_users: [userRow] }).client);
     expect(await users.resolveAppUserId(identifier)).toBe(7);
     const user = await users.fetchUser(identifier);
-    expect(user).toMatchObject({ id: "7", uid: authId, displayName: "Agent", role: 3 });
+    expect(user).toMatchObject({ id: "7", uid: authId, displayName: "Agent", role: 3, createdAt: "2026-01-10T12:00:00Z" });
     expect(user).not.toHaveProperty("data");
     expect(user).not.toHaveProperty("parentId");
   });

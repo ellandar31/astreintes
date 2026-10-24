@@ -60,11 +60,11 @@ CREATE TABLE public.directions (
 
 CREATE TABLE public.app_users (
     id bigint NOT NULL,
-    auth_user_id uuid NOT NULL,
+    auth_user_id uuid,
     email text NOT NULL,
     display_name text DEFAULT ''::text NOT NULL,
     direction_id bigint,
-    trigram varchar(3),
+    trigram text,
     deleted_at timestamptz,
     role public.user_role DEFAULT 'user'::public.user_role NOT NULL,
     is_rh boolean DEFAULT false NOT NULL,
@@ -587,5 +587,9 @@ ALTER TABLE ONLY public.exceptional_work_visas
 
 ALTER TABLE ONLY public.exceptional_work_visas
     ADD CONSTRAINT exceptional_work_visas_signed_by_user_id_fkey FOREIGN KEY (signed_by_user_id) REFERENCES public.app_users(id) ON DELETE SET NULL;
+
+
+-- One prepared or linked profile per email, regardless of case.
+CREATE UNIQUE INDEX app_users_email_normalized_key ON public.app_users (lower(email));
 
 COMMIT;

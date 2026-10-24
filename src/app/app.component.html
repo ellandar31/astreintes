@@ -19,6 +19,11 @@
           [pTooltip]="labels.common.modal.profile + ' - ' + displayName()"
           (onClick)="showProfile()"
         ></p-button>
+        @if (canManageUsers()) {
+          <p-button icon="pi pi-users" [label]="labels.common.modal.accountReview"
+            severity="secondary" [outlined]="true" [pTooltip]="labels.common.modal.accountReview"
+            (onClick)="showAccountReview()" />
+        }
         @if (canOpenSettings()) {
           <p-button
             icon="pi pi-cog"
@@ -71,6 +76,15 @@
     @if (modalView === "profile") {
       <app-modal [title]="labels.common.modal.profile" size="large" (closed)="closeModal()">
         <app-profile-page [user]="user()" (saved)="closeModal()"></app-profile-page>
+      </app-modal>
+    } @else if (modalView === "accountReview" && canManageUsers()) {
+      <app-modal [title]="labels.common.modal.accountReview" size="large" (closed)="closeModal()">
+        @if (accountReviewMessage; as message) {
+          <p-message [severity]="message.severity" [text]="message.text" />
+        }
+        <app-users-settings [readOnly]="true" [allowAccountActions]="true"
+          (failure)="accountReviewMessage = { severity: 'error', text: $event }"
+          (success)="accountReviewMessage = { severity: 'success', text: $event }" />
       </app-modal>
     } @else if (modalView === "settings" && canOpenSettings()) {
       <app-modal [title]="labels.common.modal.settings" size="large" (closed)="closeModal()">

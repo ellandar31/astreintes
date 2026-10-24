@@ -54,7 +54,7 @@ describe("Profile administration permissions", () => {
     expect(selectCanManageUsers.projector({ uid: user.uid }, [{ ...user, role: 0 }])).toBe(true);
   });
 
-  it.each([false, true])("guards role/deletion controls when administration is %s", async allowed => {
+  it.each([false, true])("guards global assignment controls when administration is %s", async allowed => {
     await TestBed.configureTestingModule({
       imports: [UsersSettingsComponent],
       providers: [provideNoopAnimations(), provideMockStore({ selectors: [
@@ -71,13 +71,13 @@ describe("Profile administration permissions", () => {
     const dispatch = jest.spyOn(TestBed.inject(MockStore), "dispatch");
     dispatch.mockClear();
     fixture.componentInstance.updateUserRole(user, 0);
-    fixture.componentInstance.saveUserAssignment(user);
-    fixture.componentInstance.deleteUser(user);
+    expect(fixture.componentInstance.canSaveAllAssignments()).toBe(allowed);
+    fixture.componentInstance.saveAllAssignments();
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('tbody p-button button').disabled).toBe(!allowed);
+    expect(fixture.nativeElement.querySelector('.form-actions button').disabled).toBe(true);
     if (allowed) {
-      expect(dispatch).toHaveBeenCalledWith(SettingsActions.userRoleUpdateRequested({ userId: user.id, role: 0, directionId: null, isRh: false }));
-      expect(dispatch).toHaveBeenCalledWith(SettingsActions.userDeleteRequested({ userId: user.id }));
+      expect(dispatch).toHaveBeenCalledWith(SettingsActions.userAssignmentsSaveRequested({ assignments: [{ userId: user.id, role: 0, directionId: null, isRh: false }] }));
+      expect(fixture.nativeElement.querySelector("tbody button")).toBeNull();
     } else {
       expect(dispatch).not.toHaveBeenCalled();
     }

@@ -4,13 +4,14 @@ import { TestBed } from "@angular/core/testing";
 import { By } from "@angular/platform-browser";
 import { provideNoopAnimations } from "@angular/platform-browser/animations";
 import { MockStore, provideMockStore } from "@ngrx/store/testing";
+import { UsersSettingsComponent } from "./pages/settings/users-settings.component";
 import { AppComponent } from "./app.component";
 import { APP_LABELS } from "./i18n/labels";
 import { ExceptionalOperationsComponent } from "./pages/exceptional-common/exceptional-operations.component";
 import { RegularCalendarComponent } from "./pages/regular/regular-calendar.component";
 import { HistoryPageComponent } from "./pages/history/history-page.component";
 import { SettingsPageComponent } from "./pages/settings/settings-page.component";
-import { selectCanCreateOperations, selectCanOpenSettings, selectCanEditPlanning, selectCurrentApplicationUser, selectOperationInitiators } from "./state/settings/settings.selectors";
+import { selectCanCreateOperations, selectCanManageUsers, selectCanOpenSettings, selectCanEditPlanning, selectCurrentApplicationUser, selectOperationInitiators } from "./state/settings/settings.selectors";
 import { createEmptyVisa } from "./shared/visa.models";
 import { selectAuthError, selectAuthUser, selectDisplayName, selectIsSubmitting, selectLoadingSession } from "./state/auth/auth.selectors";
 import { ExceptionalActions } from "./state/exceptional/exceptional.actions";
@@ -35,6 +36,9 @@ const onCall: ExceptionalOperation = {
 };
 const work: ExceptionalOperation = { ...onCall, id: "travaux:1", type: "travaux", title: "Work item" };
 
+@Component({ selector: "app-users-settings", standalone: true, template: "" })
+class UsersSettingsStubComponent { @Input() readOnly = false; @Input() allowAccountActions = false; }
+
 function createShell() {
   const fixture = TestBed.createComponent(AppComponent);
   fixture.detectChanges();
@@ -52,6 +56,7 @@ describe("Separate exceptional navigation", () => {
         { selector: selectLoadingSession, value: false },
         { selector: selectAuthError, value: "" },
         { selector: selectIsSubmitting, value: false },
+        { selector: selectCanManageUsers, value: false },
         { selector: selectCanOpenSettings, value: false },
         { selector: selectCanCreateOperations, value: true },
         { selector: selectCanEditPlanning, value: true },
@@ -62,8 +67,8 @@ describe("Separate exceptional navigation", () => {
         { selector: selectExceptionalError, value: "" },
       ] })],
     }).overrideComponent(AppComponent, {
-      remove: { imports: [RegularCalendarComponent, SettingsPageComponent, HistoryPageComponent] },
-      add: { imports: [RegularCalendarStubComponent, SettingsPageStubComponent, HistoryStubComponent] },
+      remove: { imports: [RegularCalendarComponent, SettingsPageComponent, HistoryPageComponent, UsersSettingsComponent] },
+      add: { imports: [RegularCalendarStubComponent, SettingsPageStubComponent, HistoryStubComponent, UsersSettingsStubComponent] },
     }).compileComponents();
   });
 
@@ -74,6 +79,23 @@ describe("Separate exceptional navigation", () => {
     fixture.detectChanges();
     expect(fixture.componentInstance.modalView).toBeNull();
     expect(fixture.nativeElement.querySelector('app-settings-page')).toBeNull();
+  });
+
+  it("opens account review only for user managers and closes it if permission is revoked", () => {
+    const fixture = createShell();
+    const store = TestBed.inject(MockStore);
+    expect(fixture.nativeElement.querySelector(".pi-users")).toBeNull();
+    fixture.componentInstance.showAccountReview();
+    expect(fixture.componentInstance.modalView).toBeNull();
+    const permission = store.overrideSelector(selectCanManageUsers, true);
+    store.refreshState(); fixture.detectChanges();
+    (fixture.nativeElement.querySelector(".pi-users").closest("button") as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector("app-users-settings")).not.toBeNull();
+    expect(fixture.componentInstance.activeTab).toBe("regular");
+    permission.setResult(false); store.refreshState(); fixture.detectChanges();
+    expect(fixture.componentInstance.modalView).toBeNull();
+    expect(fixture.nativeElement.querySelector("app-users-settings")).toBeNull();
   });
 
   it("opens History from the main navigation", () => {

@@ -1,3 +1,4 @@
+import { NewApplicationUser, UserAssignmentUpdate } from "../../types/user.models";
 import { ApplicationUser, UserRole } from "../../types";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { JsonRecord } from "./store-types";
@@ -77,6 +78,7 @@ export class UsersRepository {
       role: userRoleFromDb(row["role"]),
       isRh: row["is_rh"] === true,
       signatureName: text(row["signature_name"]),
+      createdAt: text(row["created_at"]),
       lastLoginAt: text(row["last_login_at"]),
     };
   }
@@ -118,6 +120,26 @@ export class UsersRepository {
     }
 
     return idText(savedRow["id"]);
+  }
+
+  /** Atomic batch avoids partial saves, including when an administrator changes their own role. */
+  async saveAssignments(assignments: UserAssignmentUpdate[]): Promise<void> {
+    const { error } = await this.client.rpc("save_user_assignments", {
+      assignments: assignments.map(user => ({
+        id: numberId(user.userId), role: userRoleToDb(user.role), direction_id: numberId(user.directionId || ""), is_rh: user.isRh,
+      })),
+    });
+    if (error) throw error;
+  }
+
+  /** Server-side creation links existing Auth identities without exposing admin credentials. */
+  async createUser(user: NewApplicationUser): Promise<void> {
+    const { error } = await this.client.rpc("create_application_user", {
+      account_email: user.email.trim().toLowerCase(), account_name: user.displayName.trim(),
+      account_trigram: user.trigram.trim().toUpperCase(), account_role: userRoleToDb(user.role),
+      account_direction: numberId(user.directionId || ""), account_is_rh: user.isRh,
+    });
+    if (error) throw error;
   }
 
   /** Resolve the application identity before deletion so auth UUID callers target the same profile. */

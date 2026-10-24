@@ -59,7 +59,8 @@
 
 :host ::ng-deep .role-select,
 :host ::ng-deep .user-select,
-:host ::ng-deep p-select,
+:host ::ng-deep label p-select,
+:host ::ng-deep .p-datatable-tbody p-select,
 :host ::ng-deep p-inputnumber,
 :host ::ng-deep .p-inputnumber,
 :host ::ng-deep .p-inputtext {
@@ -163,4 +164,20 @@
     display: grid;
     grid-template-columns: 1fr;
   }
+}
+
+.account-create-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+  gap: var(--app-space-lg);
+  align-items: end;
+}
+.account-create-form label {
+  display: grid;
+  gap: var(--app-space-xs);
+  min-width: 0;
+}
+
+.user-direction-column {
+  width: 13rem;
 }

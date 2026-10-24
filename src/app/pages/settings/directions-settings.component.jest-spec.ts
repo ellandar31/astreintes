@@ -22,10 +22,10 @@ describe("Directions administration", () => {
     component.updateUserRh(user, true);
     expect(dispatch).not.toHaveBeenCalled();
     expect(component.roleFor(user)).toBe(1);
-    component.saveUserAssignment(user);
-    if (allowed) expect(dispatch).toHaveBeenCalledWith(SettingsActions.userRoleUpdateRequested({
+    component.saveAllAssignments();
+    if (allowed) expect(dispatch).toHaveBeenCalledWith(SettingsActions.userAssignmentsSaveRequested({ assignments: [{
       userId: user.id, role: 1, directionId: null, isRh: true,
-    }));
+    }] }));
     else expect(dispatch).not.toHaveBeenCalled();
   });
 
@@ -66,11 +66,11 @@ describe("Directions administration", () => {
     expect(component.roleFor(user)).toBe(role);
     component.updateUserDirection(user, direction.id);
     expect(dispatch).not.toHaveBeenCalled();
-    component.saveUserAssignment(user);
-    expect(dispatch).toHaveBeenCalledWith(SettingsActions.userRoleUpdateRequested({ userId: user.id, role, directionId: direction.id, isRh: false }));
+    component.saveAllAssignments();
+    expect(dispatch).toHaveBeenCalledWith(SettingsActions.userAssignmentsSaveRequested({ assignments: [{ userId: user.id, role, directionId: direction.id, isRh: false }] }));
     dispatch.mockClear();
     component.updateUserDirection({ ...user, role, directionId: direction.id, isRh: false }, null);
-    component.saveUserAssignment({ ...user, role, directionId: direction.id, isRh: false });
+    component.saveAllAssignments();
     expect(dispatch).not.toHaveBeenCalled();
   });
 });

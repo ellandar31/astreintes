@@ -9,4 +9,5 @@ runDatabaseTests('user_roles', [
   'session-access-assertions.sql',
   'rh-access-assertions.sql',
   'active-assignment-assertions.sql',
+  'account-preparation-assertions.sql',
 ]);

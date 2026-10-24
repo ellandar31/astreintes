@@ -19,7 +19,8 @@ describe("RH export navigation", () => {
     const fixture = TestBed.createComponent(RhPageComponent);
     fixture.componentRef.setInput("user", null);
     fixture.detectChanges();
-    expect(fixture.componentInstance.visibleSections().map(section => section.id)).toEqual(["exports", "userExports", "periodExports"]);
+    expect(fixture.componentInstance.visibleSections().map(section => section.id)).toEqual(["periodExports", "exports", "userExports"]);
+    expect(fixture.componentInstance.activeSection).toBe("periodExports");
     expect(fixture.nativeElement.querySelector("app-history-page")).toBeNull();
     expect(fixture.nativeElement.querySelector("app-rh-exports")).not.toBeNull();
     fixture.componentInstance.setSection("periodExports");

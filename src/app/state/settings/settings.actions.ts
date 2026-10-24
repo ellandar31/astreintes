@@ -1,3 +1,4 @@
+import { NewApplicationUser, UserAssignmentUpdate } from "../../types/user.models";
 import { RhTreatmentOperation } from "../../types/rh-export.models";
 import { createActionGroup, emptyProps, props } from "@ngrx/store";
 import {
@@ -22,7 +23,9 @@ export const SettingsActions = createActionGroup({
     "Users Watch Started": emptyProps(),
     "Users Watch Stopped": emptyProps(),
     "Users Changed": props<{ users: ManagedUser[] }>(),
+    "User Assignments Save Requested": props<{ assignments: UserAssignmentUpdate[] }>(),
     "User Role Update Requested": props<{ role: UserRole; userId: string; directionId?: string | null; isRh?: boolean }>(),
+    "User Create Requested": props<{ user: NewApplicationUser }>(),
     "User Delete Requested": props<{ userId: string }>(),
     "Teams Watch Started": emptyProps(),
     "Teams Watch Stopped": emptyProps(),

@@ -49,7 +49,7 @@ Les visas conservent un instantané indépendant du profil de leur signataire.
 | Tables | Colonne | Type | Usage |
 | --- | --- | --- | --- |
 | `regular_interventions`, `exceptional_on_call_interventions` | `ticket` | `text`, nullable | Référence du ticket externe |
-| `app_users` | `trigram` | `varchar(3)`, nullable | Trigramme, sans contrainte d’unicité |
+| `app_users` | `trigram` | `text`, nullable | Code utilisateur sans limite de trois caractères ni contrainte d’unicité |
 | `app_users` | `deleted_at` | `timestamptz`, nullable | Date de départ de la société |
 | `app_users` | `is_rh` | `boolean NOT NULL DEFAULT false` | Accès indépendant au menu RH et aux exports |
 | `regular_on_call_periods`, `exceptional_on_calls`, `exceptional_works` | `treated_at` | `timestamptz`, nullable | Date de traitement par les RH |
@@ -98,3 +98,29 @@ les brouillons de rôle/direction restent locaux à la page de paramétrage.
 Les trois scripts d’installation incluent directement cette structure bêta. Ils
 n’ont pas été exécutés sur une base applicative existante ; aucun remplissage
 arbitraire des directions historiques n’est effectué.
+
+## Préparation des comptes avant connexion
+
+La revue de compte permet à un administrateur actif de préparer un profil par
+adresse e-mail via `create_application_user`. `app_users.auth_user_id` reste nul
+jusqu’à la création de l’identité Auth, ou référence immédiatement une identité
+existante pour cette adresse. Un index unique sur `lower(email)` empêche les
+comptes en double. Le déclencheur Auth rattache le profil préparé en conservant
+son identifiant applicatif, ses droits, sa direction et sa date de départ.
+La préparation ne crée ni mot de passe ni session.
+
+Le bouton de suppression dans la revue supprime définitivement le profil applicatif.
+`deleted_at` est réservé à la désactivation remontée par un futur connecteur.
+Une date renseignée bloque l’accès ; le rattachement ultérieur d’une identité Auth
+ne réactive pas un profil désactivé.
+
+Pour une base bêta existante, réexécuter `02_security.sql` avec le rôle `postgres`
+avant de déployer l’interface. Ce script adapte la colonne de rattachement et
+installe l’index, la fonction et le déclencheur. Ne pas rejouer `01_structure.sql`
+sur une base existante.
+
+L’enregistrement global du paramétrage utilisateur utilise `save_user_assignments`
+pour appliquer toutes les affectations modifiées dans une transaction. Une
+validation échouée annule l’ensemble ; le changement éventuel du rôle de
+l’administrateur courant ne coupe pas le traitement des autres lignes.
+Cette fonction est installée en réexécutant `02_security.sql`.
