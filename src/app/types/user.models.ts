@@ -1,5 +1,5 @@
 
-export type UserRole = 0 | 1 | 2 | 3 | 4;
+export type UserRole = 0 | 1 | 2 | 3;
 
 /** Administrative projection; signature fields belong to the full application profile. */
 export interface ManagedUser {
@@ -12,6 +12,8 @@ export interface ManagedUser {
   /** Company departure date; this does not delete the Auth account. */
   deletedAt?: string | null;
   role: UserRole;
+  /** Independent export permission; never grants director or planning privileges. */
+  isRh?: boolean;
   lastLoginAt?: unknown;
 }
 

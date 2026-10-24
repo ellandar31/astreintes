@@ -1,8 +1,8 @@
 -- Validate installation of the complete application schema in an empty database.
 INSERT INTO auth.users(id, email)
 VALUES ('00000000-0000-4000-8000-000000000006', 'rh@example.test');
-INSERT INTO public.app_users(auth_user_id, email, role)
-VALUES ('00000000-0000-4000-8000-000000000006', 'rh@example.test', 'rh') ON CONFLICT (auth_user_id) DO UPDATE SET role = excluded.role;
+INSERT INTO public.app_users(auth_user_id, email, role, is_rh)
+VALUES ('00000000-0000-4000-8000-000000000006', 'rh@example.test', 'user', true) ON CONFLICT (auth_user_id) DO UPDATE SET role = excluded.role, is_rh = excluded.is_rh;
 
 DO $$ BEGIN
   IF (SELECT count(*) FROM pg_catalog.pg_tables WHERE schemaname = 'public') <> 18 THEN
@@ -59,7 +59,7 @@ SET LOCAL ROLE authenticated;
 DO $$ DECLARE actor record; allowed boolean; BEGIN
   FOR actor IN SELECT * FROM public.app_users LOOP
     PERFORM set_config('request.jwt.claim.sub', actor.auth_user_id::text, true);
-    allowed := actor.role IN ('admin', 'initiator', 'director', 'rh');
+    allowed := actor.role IN ('admin', 'initiator', 'director');
     IF app_private.can_create_operations() <> allowed
        OR app_private.can_edit_planning() <> allowed THEN
       RAISE EXCEPTION 'Wrong planning permissions for %', actor.role;

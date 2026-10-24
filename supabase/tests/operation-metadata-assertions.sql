@@ -1,6 +1,6 @@
 -- Executed inside the disposable schema-test transaction, never against application data.
 INSERT INTO auth.users(id,email) VALUES ('00000000-0000-4000-8000-000000000006','rh@example.test');
-INSERT INTO public.app_users(auth_user_id,email,role) VALUES ('00000000-0000-4000-8000-000000000006','rh@example.test','rh') ON CONFLICT (auth_user_id) DO UPDATE SET role = excluded.role;
+INSERT INTO public.app_users(auth_user_id,email,role,is_rh) VALUES ('00000000-0000-4000-8000-000000000006','rh@example.test','user',true) ON CONFLICT (auth_user_id) DO UPDATE SET role = excluded.role, is_rh = excluded.is_rh;
 INSERT INTO public.regular_on_call_periods(id,user_id,starts_at,ends_at)
 VALUES (905,2,'2026-10-10 08:00+02','2026-10-10 18:00+02');
 INSERT INTO public.regular_interventions(id,regular_period_id,user_id,starts_at,ends_at,ticket)
@@ -43,10 +43,10 @@ DO $$ DECLARE actor record; table_name text; BEGIN
   FOREACH table_name IN ARRAY ARRAY['regular_on_call_periods','exceptional_on_calls','exceptional_works'] LOOP
    BEGIN
     EXECUTE format('UPDATE public.%I SET treated_at=now() WHERE id=905',table_name);
-    IF actor.role NOT IN ('admin','director','rh') THEN RAISE EXCEPTION 'Treatment accepted for %',actor.role; END IF;
+    IF actor.role NOT IN ('admin','director') THEN RAISE EXCEPTION 'Treatment accepted for %',actor.role; END IF;
     EXECUTE format('UPDATE public.%I SET treated_at=NULL WHERE id=905',table_name);
    EXCEPTION WHEN insufficient_privilege THEN
-    IF actor.role IN ('admin','director','rh') THEN RAISE; END IF;
+    IF actor.role IN ('admin','director') THEN RAISE; END IF;
    END;
   END LOOP;
  END LOOP;

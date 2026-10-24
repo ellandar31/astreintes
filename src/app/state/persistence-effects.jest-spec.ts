@@ -64,9 +64,9 @@ describe("NgRx effects using typed domain APIs", () => {
   it("persists role and direction in one profile update", async () => {
     jest.mocked(appStore.users.save).mockResolvedValue("7");
     const result = firstValueFrom(TestBed.inject(SettingsEffects).updateUserRole$);
-    actions.next(SettingsActions.userRoleUpdateRequested({ userId: "7", role: 3, directionId: "1" }));
+    actions.next(SettingsActions.userRoleUpdateRequested({ userId: "7", role: 3, directionId: "1", isRh: true }));
     await result;
-    expect(appStore.users.save).toHaveBeenCalledWith("7", { role: 3, directionId: "1" });
+    expect(appStore.users.save).toHaveBeenCalledWith("7", { role: 3, directionId: "1", isRh: true });
   });
 
   it("loads permissions at login without settings navigation and clears them on logout or load failure", () => {

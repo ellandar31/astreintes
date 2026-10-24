@@ -12,6 +12,23 @@ const user: ManagedUser = { id: "7", email: "agent@test.fr", displayName: "Agent
 const direction = { id: "1", name: "Direction technique" };
 
 describe("Directions administration", () => {
+  it.each([true, false])("only admins can stage and save RH access independently: %s", async allowed => {
+    await setup(allowed);
+    const fixture = TestBed.createComponent(UsersSettingsComponent);
+    fixture.detectChanges();
+    const component = fixture.componentInstance;
+    const dispatch = jest.spyOn(TestBed.inject(MockStore), "dispatch").mockClear();
+    expect(component.roles.map(role => role.value)).toEqual([0, 1, 2, 3]);
+    component.updateUserRh(user, true);
+    expect(dispatch).not.toHaveBeenCalled();
+    expect(component.roleFor(user)).toBe(1);
+    component.saveUserAssignment(user);
+    if (allowed) expect(dispatch).toHaveBeenCalledWith(SettingsActions.userRoleUpdateRequested({
+      userId: user.id, role: 1, directionId: null, isRh: true,
+    }));
+    else expect(dispatch).not.toHaveBeenCalled();
+  });
+
   async function setup(allowed: boolean) {
     await TestBed.configureTestingModule({
       imports: [DirectionsSettingsComponent, UsersSettingsComponent],
@@ -50,10 +67,10 @@ describe("Directions administration", () => {
     component.updateUserDirection(user, direction.id);
     expect(dispatch).not.toHaveBeenCalled();
     component.saveUserAssignment(user);
-    expect(dispatch).toHaveBeenCalledWith(SettingsActions.userRoleUpdateRequested({ userId: user.id, role, directionId: direction.id }));
+    expect(dispatch).toHaveBeenCalledWith(SettingsActions.userRoleUpdateRequested({ userId: user.id, role, directionId: direction.id, isRh: false }));
     dispatch.mockClear();
-    component.updateUserDirection({ ...user, role, directionId: direction.id }, null);
-    component.saveUserAssignment({ ...user, role, directionId: direction.id });
+    component.updateUserDirection({ ...user, role, directionId: direction.id, isRh: false }, null);
+    component.saveUserAssignment({ ...user, role, directionId: direction.id, isRh: false });
     expect(dispatch).not.toHaveBeenCalled();
   });
 });

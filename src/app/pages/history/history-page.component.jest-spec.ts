@@ -89,7 +89,7 @@ describe("Sélecteur utilisateur des contrôles RH", () => {
     ] }).compileComponents();
   });
 
-  it.each([0, 3, 4] as const)("le profil %s sélectionne une personne et consulte ses contrôles mensuels", role => {
+  it.each([0, 3] as const)("le profil %s sélectionne une personne et consulte ses contrôles mensuels", role => {
     const store = TestBed.inject(MockStore);
     store.overrideSelector(selectSettingsUsers, [{ ...users[0], role }, users[1]]);
     store.refreshState();

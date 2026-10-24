@@ -20,7 +20,7 @@ export const SettingsActions = createActionGroup({
     "Users Watch Started": emptyProps(),
     "Users Watch Stopped": emptyProps(),
     "Users Changed": props<{ users: ManagedUser[] }>(),
-    "User Role Update Requested": props<{ role: UserRole; userId: string; directionId?: string | null }>(),
+    "User Role Update Requested": props<{ role: UserRole; userId: string; directionId?: string | null; isRh?: boolean }>(),
     "User Delete Requested": props<{ userId: string }>(),
     "Teams Watch Started": emptyProps(),
     "Teams Watch Stopped": emptyProps(),

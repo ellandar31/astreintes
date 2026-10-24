@@ -205,7 +205,7 @@ export class HistoryPageComponent implements OnChanges, OnDestroy, OnInit {
     return this.users;
   }
 
-  /** Le choix du profil contrôlé est autorisé pour les administrateurs, initiateurs, directeurs et RH. */
+  /** Le choix du profil contrôlé dépend du rôle principal, indépendamment de l'accès aux exports RH. */
   get canSelectUser(): boolean {
     return this.currentProfile?.role === 0 || this.currentProfile?.role === 2 || hasDirectorRights(this.currentProfile?.role);
   }

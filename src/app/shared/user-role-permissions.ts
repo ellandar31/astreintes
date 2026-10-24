@@ -1,4 +1,4 @@
-/** Les profils Directeur (3) et RH (4) partagent les mêmes habilitations métier. */
+/** Only the Director base role grants director rights. RH exports are a separate flag. */
 export function hasDirectorRights(role: number | undefined): boolean {
-  return role === 3 || role === 4;
+  return role === 3;
 }

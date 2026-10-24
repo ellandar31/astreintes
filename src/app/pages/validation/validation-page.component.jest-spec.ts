@@ -25,6 +25,34 @@ function createPage() {
 
 
 describe("Validation consultation", () => {
+  it("resolves the connected profile after loading and groups the compact direction filter beside the user", async () => {
+    const store = TestBed.inject(MockStore);
+    store.overrideSelector(selectSettingsUsers, []);
+    const fixture = createPage();
+    const component = fixture.componentInstance;
+    const current = { id: "7", uid: "auth-id", displayName: "Agent", email: period.userEmail, role: 0, directionId: "2" };
+    const other = { id: "9", uid: "other-auth", displayName: "Aardvark", email: "other@example.fr", role: 1 };
+    store.overrideSelector(selectSettingsUsers, [other, current]);
+    store.refreshState();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    component.activeSectionId = "director";
+    fixture.detectChanges();
+    expect(component.users[0].id).toBe("9");
+    expect(component.selectedUserId).toBe("7");
+    expect(component.selectedDirectionId).toBe("2");
+    expect(fixture.nativeElement.querySelector(".user-filter").textContent).toContain(period.userEmail);
+    expect(fixture.nativeElement.querySelector(".validation-header .direction-filter")).not.toBeNull();
+    expect(fixture.nativeElement.querySelector(".validation-content #director-direction")).toBeNull();
+    component.selectedUserId = "9";
+    store.overrideSelector(selectSettingsUsers, [other, { ...current, displayName: "Updated" }]);
+    store.refreshState();
+    fixture.detectChanges();
+    fixture.componentRef.setInput("user", { uid: "auth-id", email: period.userEmail, displayName: "Updated" });
+    fixture.detectChanges();
+    expect(component.selectedUserId).toBe("9");
+  });
+
   it("shows regular and exceptional intervention tickets in the validation detail", () => {
     const fixture = createPage();
     const component = fixture.componentInstance;
@@ -309,14 +337,14 @@ describe("Validation consultation", () => {
     expect(component.selectedItemVisaProgress.find(row => row.actionItem?.kind === "exceptional-participant-planned")?.visa).toEqual(signed);
   });
 
-  it.each([0, 1, 2, 3, 4] as const)("contrôle les lignes régulières propres et étrangères pour le profil %s", role => {
+  it.each([0, 1, 2, 3] as const)("contrôle les lignes régulières propres et étrangères pour le profil %s", role => {
     const fixture = createPage();
     const component = fixture.componentInstance;
     component.profile = { ...component.profile!, role };
     const own = component.validationItems.find(item => item.kind === 'regular-period-agent')!;
     const foreign = { ...own, payload: { ...period, userId: '8' } };
     expect(component.canSignVisa(own)).toBe(true);
-    expect(component.canSignVisa(foreign)).toBe(role === 0 || role === 3 || role === 4);
+    expect(component.canSignVisa(foreign)).toBe(role === 0 || role === 3);
     if (role === 1 || role === 2) {
       const dispatch = jest.spyOn(TestBed.inject(MockStore), 'dispatch').mockClear();
       component.signItem(foreign);
@@ -342,11 +370,11 @@ describe("Validation consultation", () => {
     component.profile = { ...component.profile!, role: 0 };
     component.openItem(component.validationItems.find(item => item.kind === 'exceptional-operation-agent')!);
     const planned = component.selectedItemVisaProgress.find(row => row.actionItem?.kind === 'exceptional-participant-planned')!.actionItem!;
-    for (const role of [0, 1, 2, 3, 4] as const) {
+    for (const role of [0, 1, 2, 3] as const) {
       component.profile = { ...component.profile!, role };
       expect(component.canSignVisa(planned)).toBe(role !== 1);
       const foreign = { ...planned, payload: { ...operation, initiatorUid: '9' } };
-      expect(component.canSignVisa(foreign)).toBe(role === 0 || role === 3 || role === 4);
+      expect(component.canSignVisa(foreign)).toBe(role === 0 || role === 3);
     }
     component.profile = { ...component.profile!, role: 2 };
     const dispatch = jest.spyOn(TestBed.inject(MockStore), 'dispatch').mockClear();
@@ -363,9 +391,9 @@ describe("Validation consultation", () => {
     component.regularInterventions = [{ ...intervention, agentVisa: signed }];
     component.openItem(component.validationItems[0]);
     const director = component.selectedItemVisaProgress.find(row => row.actionItem?.kind === 'regular-period-director')!.actionItem!;
-    for (const role of [0, 1, 2, 3, 4] as const) {
+    for (const role of [0, 1, 2, 3] as const) {
       component.profile = { ...component.profile!, role };
-      expect(component.canSignVisa(director)).toBe(role === 0 || role === 3 || role === 4);
+      expect(component.canSignVisa(director)).toBe(role === 0 || role === 3);
     }
   });
 
@@ -387,7 +415,7 @@ describe("Validation consultation", () => {
     }));
   });
 
-  it.each([0, 1, 2, 3, 4] as const)("réserve l'envoi RH du directeur au profil autorisé %s", role => {
+  it.each([0, 1, 2, 3] as const)("réserve l'envoi RH du directeur au profil autorisé %s", role => {
     const component = createPage().componentInstance;
     const signed = { ...createEmptyVisa(), signed: true };
     component.regularPeriods = [{ ...period, agentVisa: signed, directorVisa: signed }];
@@ -396,7 +424,7 @@ describe("Validation consultation", () => {
     const item = component.directorVisaItems[0];
     const agentItem = component.validationItems.find(item => item.kind === "regular-period-agent")!;
     component.profile = { ...component.profile!, role };
-    const allowed = role === 0 || role === 3 || role === 4;
+    const allowed = role === 0 || role === 3;
     expect(component.canManageRhSend(agentItem)).toBe(false);
     expect(component.canSendToRh(item)).toBe(allowed);
     const dispatch = jest.spyOn(TestBed.inject(MockStore), "dispatch").mockClear();

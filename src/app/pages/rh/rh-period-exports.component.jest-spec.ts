@@ -68,8 +68,11 @@ describe("RH period export UI", () => {
     build.mockRestore();
   });
 
-  it.each([[0, true], [1, false], [2, false], [3, true], [4, true]] as const)("réserve les exports aux profils admin et directeur : %s", (role, allowed) => {
-    expect(selectCanExportRh.projector({ id: '7', email: 'agent@test.fr', displayName: 'Agent', role })).toBe(allowed);
+  it.each([0, 1, 2, 3] as const)("grants exports only through the RH flag for base role %s", role => {
+    const user = { id: '7', uid: 'auth-id', email: 'agent@test.fr', displayName: 'Agent', role, signatureName: '' };
+    expect(selectCanExportRh.projector({ ...user, isRh: false })).toBe(false);
+    expect(selectCanExportRh.projector({ ...user, isRh: true })).toBe(true);
+    expect(selectCanExportRh.projector({ ...user, isRh: true, deletedAt: '2099-01-01' })).toBe(false);
   });
 
   it.each([false, true])("masque le mode période %s et refuse tous les exports après révocation", async periodMode => {

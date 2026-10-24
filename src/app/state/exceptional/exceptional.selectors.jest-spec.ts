@@ -39,7 +39,7 @@ describe("exceptional selectors", () => {
       .toEqual([planned, actual]);
   });
 
-  it.each([0, 3, 4] as const)("conserve la vue complète du profil %s", role => {
+  it.each([0, 3] as const)("conserve la vue complète du profil %s", role => {
     const operations = [operation("astreinte", "a"), operation("travaux", "t")];
     expect(selectVisibleExceptionalOperations.projector(operations, { ...user, role })).toBe(operations);
   });

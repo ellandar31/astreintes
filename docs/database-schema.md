@@ -51,11 +51,12 @@ Les visas conservent un instantané indépendant du profil de leur signataire.
 | `regular_interventions`, `exceptional_on_call_interventions` | `ticket` | `text`, nullable | Référence du ticket externe |
 | `app_users` | `trigram` | `varchar(3)`, nullable | Trigramme, sans contrainte d’unicité |
 | `app_users` | `deleted_at` | `timestamptz`, nullable | Date de départ de la société |
+| `app_users` | `is_rh` | `boolean NOT NULL DEFAULT false` | Accès indépendant au menu RH et aux exports |
 | `regular_on_call_periods`, `exceptional_on_calls`, `exceptional_works` | `treated_at` | `timestamptz`, nullable | Date de traitement par les RH |
 
 Le ticket suit les droits de l’intervention. Le départ est modifiable uniquement
-par un administrateur ; il ne supprime pas le compte Auth et ne filtre pas les
-listes. Le traitement RH suit les droits de l’envoi (admin, directeur, RH).
+par un administrateur ; il désactive les accès et les nouvelles affectations tout
+en conservant l’historique. Le traitement RH suit les droits de l’envoi (admin, directeur), indépendamment de `is_rh`.
 Les dates d’envoi et de traitement sont indépendantes et ne sont pas renseignées
 automatiquement. Les formulaires actuels conservent les métadonnées omises.
 
@@ -63,7 +64,7 @@ automatiquement. Les formulaires actuels conservent les métadonnées omises.
 
 `npm run test:db-schema` crée une base temporaire dans le conteneur Supabase local,
 installe les trois scripts, rejoue les scripts 02 et 03, puis vérifie la structure,
-les droits des cinq profils, le planning, les interventions et les statuts RH.
+les droits des quatre rôles, la permission RH indépendante, le planning, les interventions et les statuts RH.
 `npm run test:db-user-roles` utilise le même schéma complet pour les tests d’accès.
 La variable `SUPABASE_TEST_CONTAINER` permet de choisir le conteneur.
 

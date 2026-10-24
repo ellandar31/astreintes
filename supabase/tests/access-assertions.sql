@@ -5,7 +5,7 @@ BEGIN
  RAISE EXCEPTION 'Expected permission denial: %', statement;
 END; $$;
 INSERT INTO auth.users(id,email) VALUES ('00000000-0000-4000-8000-000000000006','rh@example.test');
-INSERT INTO public.app_users(auth_user_id,email,role) VALUES ('00000000-0000-4000-8000-000000000006','rh@example.test','rh') ON CONFLICT (auth_user_id) DO UPDATE SET role = excluded.role;
+INSERT INTO public.app_users(auth_user_id,email,role,is_rh) VALUES ('00000000-0000-4000-8000-000000000006','rh@example.test','user',true) ON CONFLICT (auth_user_id) DO UPDATE SET role = excluded.role, is_rh = excluded.is_rh;
 INSERT INTO public.regular_on_call_periods(id,user_id,starts_at,ends_at) VALUES
  (701,2,'2026-10-10 08:00+02','2026-10-10 18:00+02'),
  (702,3,'2026-10-10 08:00+02','2026-10-10 18:00+02');
@@ -38,7 +38,7 @@ DO $$ DECLARE actor record; table_name text; new_id bigint; statement text; BEGI
    ELSE
     statement := format('INSERT INTO public.%I(title,initiator_user_id) VALUES (''Creation'',%s) RETURNING id',table_name,actor.id);
    END IF;
-   IF actor.role IN ('admin','initiator','director','rh') THEN
+   IF actor.role IN ('admin','initiator','director') THEN
     EXECUTE statement INTO new_id;
     EXECUTE format('DELETE FROM public.%I WHERE id=$1',table_name) USING new_id;
    ELSE
@@ -106,9 +106,7 @@ END; $$;
 SELECT set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000006',true);
 DO $$ DECLARE table_name text; affected integer; BEGIN
  FOREACH table_name IN ARRAY ARRAY['exceptional_on_calls','exceptional_works'] LOOP
-  EXECUTE format('UPDATE public.%I SET title=''RH edit'' WHERE id=702',table_name);
-  GET DIAGNOSTICS affected=ROW_COUNT;
-  IF affected<>1 THEN RAISE EXCEPTION 'RH transversal planning denied'; END IF;
+  PERFORM public.expect_denied(format('UPDATE public.%I SET title=''RH edit'' WHERE id=702',table_name));
  END LOOP;
  PERFORM public.expect_denied($s$UPDATE public.app_users SET role='admin' WHERE email='rh@example.test'$s$);
  DELETE FROM public.app_users;

@@ -76,7 +76,10 @@ Les signatures disponibles sont :
 - Agent
 - Initiateur
 - Directeur
-- RH (mêmes droits que Directeur)
+
+L’accès RH est une permission indépendante du rôle principal. Il donne accès
+au menu RH et aux exports, sans accorder les droits de validation du directeur.
+L’administrateur le configure dans la gestion des utilisateurs.
 
 Les visas utilisent le nom configuré dans le profil utilisateur. Le nom du signataire
 et la date sont conservés au moment de chaque validation.

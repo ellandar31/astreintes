@@ -194,7 +194,7 @@ describe("Planning creation permissions", () => {
     expect(dispatch).not.toHaveBeenCalled();
   });
 });
- describe.each([3, 4] as const)("Accès complet du profil %s aux opérations exceptionnelles", role => {
+ describe.each([3] as const)("Accès complet du profil %s aux opérations exceptionnelles", role => {
   it.each(['astreinte', 'travaux'] as const)("autorise la création et la modification de %s d'un autre initiateur", async type => {
     await TestBed.configureTestingModule({
       imports: [ExceptionalOperationsComponent],

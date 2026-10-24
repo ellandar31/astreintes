@@ -1,3 +1,4 @@
+import { CheckboxModule } from "primeng/checkbox";
 import { TruncatedTextComponent } from "../../shared/truncated-text.component";
 import { CommonModule } from "@angular/common";
 import { Component, EventEmitter, OnDestroy, Output, effect, inject } from "@angular/core";
@@ -15,7 +16,7 @@ import { ManagedUser, UserRole } from "./settings.models";
 @Component({
   selector: "app-users-settings",
   standalone: true,
-  imports: [TruncatedTextComponent, ButtonModule, CommonModule, FormsModule, SelectModule, TableModule, TagModule],
+  imports: [CheckboxModule, TruncatedTextComponent, ButtonModule, CommonModule, FormsModule, SelectModule, TableModule, TagModule],
   templateUrl: "./users-settings.component.html",
   styleUrls: ["./settings-common.scss"],
 })
@@ -29,7 +30,6 @@ export class UsersSettingsComponent implements OnDestroy {
     { value: 1, label: APP_LABELS.settings.users.roles.user, description: APP_LABELS.settings.users.roles.userDescription },
     { value: 2, label: APP_LABELS.settings.users.roles.initiator, description: APP_LABELS.settings.users.roles.initiatorDescription },
     { value: 3, label: APP_LABELS.settings.users.roles.director, description: APP_LABELS.settings.users.roles.directorDescription },
-    { value: 4, label: APP_LABELS.settings.users.roles.rh, description: APP_LABELS.settings.users.roles.rhDescription },
   ];
 
   private readonly store = inject(Store);
@@ -37,8 +37,8 @@ export class UsersSettingsComponent implements OnDestroy {
   private lastHandledMessage: number | null = null;
 
   readonly directions = this.store.selectSignal(selectSettingsDirections);
-  // Drafts stay local until the administrator saves role and direction together.
-  private drafts: Record<string, { role: UserRole; directionId: string | null }> = {};
+  // Save role, mandatory direction and independent export permission in one profile update.
+  private drafts: Record<string, { role: UserRole; directionId: string | null; isRh: boolean }> = {};
 
   readonly users = this.store.selectSignal(selectSettingsUsers);
   readonly canManageUsers = this.store.selectSignal(selectCanManageUsers);
@@ -49,7 +49,7 @@ export class UsersSettingsComponent implements OnDestroy {
       if (!this.canManageUsers()) { this.drafts = {}; return; }
       for (const user of this.users()) {
         const draft = this.drafts[user.id];
-        if (draft && draft.role === user.role && draft.directionId === (user.directionId || null)) delete this.drafts[user.id];
+        if (draft && draft.role === user.role && draft.directionId === (user.directionId || null) && draft.isRh === Boolean(user.isRh)) delete this.drafts[user.id];
       }
     });
 
@@ -77,7 +77,7 @@ export class UsersSettingsComponent implements OnDestroy {
 
   updateUserRole(user: ManagedUser, role: UserRole): void {
     if (!this.canManageUsers()) return;
-    this.drafts[user.id] = { role, directionId: this.directionFor(user) };
+    this.drafts[user.id] = { role, directionId: this.directionFor(user), isRh: this.rhFor(user) };
   }
 
   roleFor(user: ManagedUser): UserRole { return this.drafts[user.id]?.role ?? user.role; }
@@ -86,21 +86,28 @@ export class UsersSettingsComponent implements OnDestroy {
     return this.drafts[user.id] ? this.drafts[user.id].directionId : user.directionId || null;
   }
 
+  rhFor(user: ManagedUser): boolean { return this.drafts[user.id]?.isRh ?? Boolean(user.isRh); }
+
+  updateUserRh(user: ManagedUser, isRh: boolean): void {
+    if (!this.canManageUsers()) return;
+    this.drafts[user.id] = { role: this.roleFor(user), directionId: this.directionFor(user), isRh };
+  }
+
   requiresDirection(role: UserRole): boolean { return role === 2 || role === 3; }
 
   updateUserDirection(user: ManagedUser, directionId: string | null): void {
     if (!this.canManageUsers()) return;
-    this.drafts[user.id] = { role: this.roleFor(user), directionId };
+    this.drafts[user.id] = { role: this.roleFor(user), directionId, isRh: this.rhFor(user) };
   }
 
   canSaveAssignment(user: ManagedUser): boolean {
     return this.canManageUsers()
       && (!this.directionFor(user) || this.directions().some(direction => direction.id === this.directionFor(user)))
       && (!this.requiresDirection(this.roleFor(user)) || Boolean(this.directionFor(user)))
-      && (this.roleFor(user) !== user.role || this.directionFor(user) !== (user.directionId || null));
+      && (this.roleFor(user) !== user.role || this.directionFor(user) !== (user.directionId || null) || this.rhFor(user) !== Boolean(user.isRh));
   }
 
-  /** Save both fields atomically: a promoted initiator/director must never lack a direction. */
+  /** A role promotion and its required direction must be saved with the export permission atomically. */
   saveUserAssignment(user: ManagedUser): void {
     if (!this.canManageUsers()) return;
     const role = this.roleFor(user);
@@ -110,7 +117,7 @@ export class UsersSettingsComponent implements OnDestroy {
       return;
     }
     if (!this.canSaveAssignment(user)) return;
-    this.store.dispatch(SettingsActions.userRoleUpdateRequested({ role, userId: user.id, directionId }));
+    this.store.dispatch(SettingsActions.userRoleUpdateRequested({ role, userId: user.id, directionId, isRh: this.rhFor(user) }));
   }
 
   deleteUser(user: ManagedUser): void {

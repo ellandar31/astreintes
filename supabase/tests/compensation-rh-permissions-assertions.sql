@@ -1,5 +1,5 @@
 INSERT INTO auth.users(id,email) VALUES ('00000000-0000-4000-8000-000000000006','rh@example.test');
-INSERT INTO public.app_users(auth_user_id,email,role) VALUES ('00000000-0000-4000-8000-000000000006','rh@example.test','rh') ON CONFLICT (auth_user_id) DO UPDATE SET role = excluded.role;
+INSERT INTO public.app_users(auth_user_id,email,role,is_rh) VALUES ('00000000-0000-4000-8000-000000000006','rh@example.test','user',true) ON CONFLICT (auth_user_id) DO UPDATE SET role = excluded.role, is_rh = excluded.is_rh;
 -- Fixtures fictives : vérifier les permissions réelles du rôle utilisé par PostgREST.
 INSERT INTO public.regular_on_call_periods(id,user_id,starts_at,ends_at)
 VALUES (901,2,'2026-10-10 08:00+02','2026-10-10 18:00+02');
@@ -41,10 +41,10 @@ DO $$ DECLARE actor record; table_name text; field_name text; affected integer; 
   FOREACH table_name IN ARRAY ARRAY['regular_on_call_periods','exceptional_on_calls','exceptional_works'] LOOP
    BEGIN
     EXECUTE format('UPDATE public.%I SET sent_to_rh_at=$1 WHERE id=901',table_name) USING stamp;
-    IF actor.role NOT IN ('admin','director','rh') THEN RAISE EXCEPTION 'RH send accepted for %',actor.role; END IF;
+    IF actor.role NOT IN ('admin','director') THEN RAISE EXCEPTION 'RH send accepted for %',actor.role; END IF;
     EXECUTE format('UPDATE public.%I SET sent_to_rh_at=NULL WHERE id=901',table_name);
    EXCEPTION WHEN insufficient_privilege THEN
-    IF actor.role IN ('admin','director','rh') THEN RAISE; END IF;
+    IF actor.role IN ('admin','director') THEN RAISE; END IF;
    END;
   END LOOP;
  END LOOP;

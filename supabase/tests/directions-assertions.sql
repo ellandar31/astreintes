@@ -1,6 +1,6 @@
 -- Directions are administration data; all authenticated profiles may read/filter them.
 INSERT INTO auth.users(id,email) VALUES ('00000000-0000-4000-8000-000000000006','rh@example.test');
-INSERT INTO public.app_users(auth_user_id,email,role) VALUES ('00000000-0000-4000-8000-000000000006','rh@example.test','rh') ON CONFLICT (auth_user_id) DO UPDATE SET role = excluded.role;
+INSERT INTO public.app_users(auth_user_id,email,role,is_rh) VALUES ('00000000-0000-4000-8000-000000000006','rh@example.test','user',true) ON CONFLICT (auth_user_id) DO UPDATE SET role = excluded.role, is_rh = excluded.is_rh;
 CREATE FUNCTION public.expect_denied(statement text) RETURNS void LANGUAGE plpgsql AS $$
 BEGIN
  BEGIN EXECUTE statement; EXCEPTION WHEN insufficient_privilege THEN RETURN; END;

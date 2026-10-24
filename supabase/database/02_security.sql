@@ -4,6 +4,12 @@
 BEGIN;
 SET LOCAL search_path = '';
 
+-- Independent export permission: existing profiles stay unflagged until explicitly assigned.
+ALTER TABLE public.app_users ADD COLUMN IF NOT EXISTS is_rh boolean NOT NULL DEFAULT false;
+-- Beta upgrade: the former RH role becomes an ordinary user with export access.
+-- Keep an existing enum label unused rather than rebuilding types and dependent objects.
+UPDATE public.app_users SET role = 'user', is_rh = true WHERE role::text = 'rh';
+
 -- Replace only this application's policies/triggers so the access script is safely repeatable.
 DO $$ DECLARE item record; BEGIN
  FOR item IN SELECT tablename, policyname FROM pg_catalog.pg_policies
@@ -70,13 +76,13 @@ GRANT USAGE ON SCHEMA app_private TO authenticated;
 CREATE OR REPLACE FUNCTION app_private.can_create_operations()
 RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = '' AS $$
  SELECT EXISTS (SELECT 1 FROM public.app_users
- WHERE auth_user_id = (SELECT auth.uid()) AND role IN ('admin','initiator','director','rh'));
+ WHERE auth_user_id = (SELECT auth.uid()) AND role IN ('admin','initiator','director'));
 $$;
 
 CREATE OR REPLACE FUNCTION app_private.can_edit_planning()
 RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = '' AS $$
  SELECT EXISTS (SELECT 1 FROM public.app_users
- WHERE auth_user_id = (SELECT auth.uid()) AND role IN ('admin','initiator','director','rh'));
+ WHERE auth_user_id = (SELECT auth.uid()) AND role IN ('admin','initiator','director'));
 $$;
 
 CREATE OR REPLACE FUNCTION app_private.can_access_exceptional(family text, operation bigint, editing boolean DEFAULT false)
@@ -85,7 +91,7 @@ AS $$
  SELECT EXISTS (
   SELECT 1 FROM public.app_users u
   WHERE u.auth_user_id = (SELECT auth.uid()) AND (
-   u.role IN ('admin', 'director', 'rh') OR EXISTS (
+   u.role IN ('admin', 'director') OR EXISTS (
     SELECT 1 FROM public.exceptional_on_calls o WHERE family = 'astreinte' AND o.id = operation
      AND ((u.role = 'initiator' AND o.initiator_user_id = u.id)
       OR (NOT editing AND EXISTS (SELECT 1 FROM public.exceptional_on_call_participants p WHERE p.operation_id = o.id AND p.user_id = u.id)))
@@ -122,6 +128,9 @@ GRANT EXECUTE ON FUNCTION app_private.session_email() TO authenticated;
 CREATE OR REPLACE FUNCTION app_private.guard_user_profile()
 RETURNS trigger LANGUAGE plpgsql SET search_path = '' AS $$
 BEGIN
+  IF NEW.role::text = 'rh' THEN
+    RAISE EXCEPTION 'RH is an independent permission, not a base role' USING ERRCODE = '23514';
+  END IF;
   -- Trusted maintenance and server credentials are not browser identities.
   IF current_user IN ('postgres', 'supabase_admin', 'service_role') THEN
     RETURN NEW;
@@ -134,13 +143,14 @@ BEGIN
     RAISE EXCEPTION 'Profile identity must match the authenticated account' USING ERRCODE = '42501';
   END IF;
   IF TG_OP = 'INSERT' THEN
-    IF NEW.role IS DISTINCT FROM 'user'::public.user_role OR NEW.direction_id IS NOT NULL THEN
+    IF NEW.role IS DISTINCT FROM 'user'::public.user_role OR NEW.direction_id IS NOT NULL OR NEW.is_rh THEN
       RAISE EXCEPTION 'Only an administrator can assign roles' USING ERRCODE = '42501';
     END IF;
   ELSE
     IF NEW.role IS DISTINCT FROM OLD.role OR NEW.auth_user_id IS DISTINCT FROM OLD.auth_user_id
        OR NEW.id IS DISTINCT FROM OLD.id OR NEW.created_at IS DISTINCT FROM OLD.created_at
-       OR NEW.direction_id IS DISTINCT FROM OLD.direction_id THEN
+       OR NEW.direction_id IS DISTINCT FROM OLD.direction_id
+       OR NEW.is_rh IS DISTINCT FROM OLD.is_rh THEN
       RAISE EXCEPTION 'Only an administrator can change profile privileges or identity' USING ERRCODE = '42501';
     END IF;
   END IF;
@@ -343,9 +353,9 @@ BEGIN
  END IF;
  IF status_changed AND NOT EXISTS (
   SELECT 1 FROM public.app_users
-  WHERE auth_user_id = (SELECT auth.uid()) AND role IN ('admin','director','rh')
+  WHERE auth_user_id = (SELECT auth.uid()) AND role IN ('admin','director')
  ) THEN
-  RAISE EXCEPTION 'RH send and cancellation require an admin, director or RH profile' USING ERRCODE = '42501';
+  RAISE EXCEPTION 'RH send and cancellation require an admin or director profile' USING ERRCODE = '42501';
  END IF;
  IF TG_OP = 'DELETE' THEN RETURN OLD; END IF;
  RETURN NEW;
@@ -395,9 +405,9 @@ BEGIN
  END IF;
  IF changed AND NOT EXISTS (
   SELECT 1 FROM public.app_users
-  WHERE auth_user_id = (SELECT auth.uid()) AND role IN ('admin','director','rh')
+  WHERE auth_user_id = (SELECT auth.uid()) AND role IN ('admin','director')
  ) THEN
-  RAISE EXCEPTION 'RH treatment requires an admin, director or RH profile' USING ERRCODE = '42501';
+  RAISE EXCEPTION 'RH treatment requires an admin or director profile' USING ERRCODE = '42501';
  END IF;
  IF TG_OP = 'DELETE' THEN RETURN OLD; END IF;
  RETURN NEW;

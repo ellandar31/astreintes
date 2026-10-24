@@ -143,8 +143,8 @@ export class SettingsEffects {
   readonly updateUserRole$ = createEffect(() =>
     this.actions$.pipe(
       ofType(SettingsActions.userRoleUpdateRequested),
-      concatMap(({ role, userId, directionId }) =>
-        from(appStore.users.save(userId, { role: Number(role) as UserRole, ...(directionId !== undefined ? { directionId } : {}) })).pipe(
+      concatMap(({ role, userId, directionId, isRh }) =>
+        from(appStore.users.save(userId, { role: Number(role) as UserRole, ...(isRh !== undefined ? { isRh } : {}), ...(directionId !== undefined ? { directionId } : {}) })).pipe(
           map(() => this.success("users", APP_LABELS.directions.profileSaved)),
           catchError((error) => of(this.failure("users", this.errorMessage(error, "Erreur pendant la gestion des utilisateurs.")))),
         ),

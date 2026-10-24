@@ -29,7 +29,7 @@ export const selectCanOpenSettings = createSelector(selectAuthUser, selectSettin
     && (user.role === 0 || user.role === 2 || hasDirectorRights(user.role)))),
 );
 
-/** Administrateurs, initiateurs, directeurs et RH peuvent créer les opérations. */
+/** Administrateurs, initiateurs et directeurs peuvent créer les opérations. */
 export const selectCanCreateOperations = createSelector(selectAuthUser, selectSettingsUsers,
   (session, users) => Boolean(session && users.some(user => user.uid === session.uid
     && (user.role === 0 || user.role === 2 || hasDirectorRights(user.role)))),
@@ -48,9 +48,9 @@ export const selectOperationInitiators = createSelector(selectSettingsUsers,
     .sort((first, second) => (first.displayName || first.email).localeCompare(second.displayName || second.email)),
 );
 
-/** Les exports RH par opération et par période sont réservés à l'administration, aux directeurs et aux RH. */
+/** RH exports require the independent flag, regardless of the base role. */
 export const selectCanExportRh = createSelector(selectCurrentApplicationUser,
-  user => Boolean(user && (user.role === 0 || hasDirectorRights(user.role))),
+  user => Boolean(user && !user.deletedAt && user.isRh),
 );
 
 export const selectSettingsDirections = createSelector(selectSettingsState, state => state?.directions ?? []);

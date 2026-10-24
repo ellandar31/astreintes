@@ -12,14 +12,12 @@ les scripts d’installation nécessaires et les limites actuelles des protectio
 | Utilisateur | 1 | `user` |
 | Initiateur | 2 | `initiator` |
 | Directeur | 3 | `director` |
-| RH | 4 | `rh` |
 
-Le profil **RH** est distinct du profil Directeur, mais possède exactement les
-mêmes droits. Dans les règles ci-dessous, les autorisations du directeur
-s'appliquent aussi au profil RH, y compris l'approbation directeur, les exports,
-les contrôles et les paramètres. La gestion des rôles reste réservée à
-l'administrateur. Le profil RH est proposé dans le choix de rôle des paramètres
-et dans le champ Initiateur des opérations.
+**Accès RH et exports** est une permission indépendante du rôle principal,
+stockée dans `app_users.is_rh` (`isRh` côté Angular), désactivée par défaut.
+Seul un administrateur peut l’attribuer ou la retirer. Elle donne accès à l’onglet
+RH et à ses exports, sans modifier les droits de planning, de validation,
+de consultation de l’historique ni de paramétrage du rôle principal.
 
 Le rôle de référence est celui du profil SQL `app_users` associé à la session
 Supabase. Les métadonnées Auth modifiables par le client ne confèrent aucun droit.
@@ -32,7 +30,7 @@ Certains rapprochements historiques d'affichage utilisent encore l'email.
 
 ## 2. Synthèse des droits
 
-| Fonction | Administrateur | Utilisateur | Initiateur | Directeur / RH |
+| Fonction | Administrateur | Utilisateur | Initiateur | Directeur |
 |---|---|---|---|---|
 | Créer une astreinte régulière | Oui | Non | Oui | Oui |
 | Modifier ou supprimer le planning régulier | Oui | Non | Oui | Oui |
@@ -43,7 +41,7 @@ Certains rapprochements historiques d'affichage utilisent encore l'email.
 | Appliquer un visa | Toutes les lignes | Ses lignes | Ses lignes et les lignes participantes de ses opérations | Toutes les lignes |
 | Appliquer l'approbation directeur | Oui | Non | Non | Oui |
 | Retirer un visa | Tout visa | Son visa, sur une ligne autorisée | Son visa, sur une ligne autorisée | Son visa, sur une ligne autorisée |
-| Exporter par opération ou par période | Oui | Non | Non | Oui |
+| Exporter par opération ou par période | Si accès RH | Si accès RH | Si accès RH | Si accès RH |
 | Choisir un utilisateur dans les contrôles RH | Oui | Non | Oui, avec périmètre restreint | Oui |
 | Ouvrir les paramètres | Oui | Non | Oui | Oui |
 | Attribuer des rôles ou supprimer des profils | Oui | Non | Non | Non |
@@ -178,17 +176,17 @@ bouton est masqué ou désactivé.
 ## 6. Exports RH
 
 Les exports **par opération** et **par période** sont accessibles uniquement
-aux administrateurs et directeurs. Cela couvre les exports Excel par
+aux profils ayant `is_rh = true`, quel que soit leur rôle principal. Cela couvre les exports Excel par
 opération ainsi que l'export Excel par période.
 
-Les deux rubriques sont masquées aux utilisateurs et initiateurs. Leur ouverture
+Les deux rubriques sont masquées aux profils sans accès RH. Leur ouverture
 directe et les actions de génération sont également refusées. Le marquage et
 l'annulation d'envoi RH se font dans le tableau de validation du directeur,
 pour les astreintes régulières, exceptionnelles et les travaux supplémentaires.
-Ces actions sont réservées aux administrateurs, directeurs et profils RH.
+Ces actions restent réservées aux administrateurs et directeurs.
 L'envoi reste soumis aux prérequis de validation. En base SQL, les transitions
-d'envoi et d'annulation sont réservées aux administrateurs, directeurs et profils
-RH ; elles sont refusées aux initiateurs, même propriétaires, et aux utilisateurs.
+d'envoi et d'annulation sont réservées aux administrateurs et directeurs ; elles
+sont refusées aux initiateurs, même propriétaires, et aux utilisateurs, même avec accès RH.
 La création d'un dossier déjà envoyé et la suppression d'un dossier envoyé
 suivent la même règle, pour éviter une annulation par suppression puis recréation. Les modifications
 sans changement du statut RH conservent les droits de planning existants.
@@ -312,7 +310,11 @@ L’installation bêta repose sur trois scripts, à exécuter séparément avec 
 2. `supabase/database/02_security.sql` pour les droits et politiques RLS ;
 3. `supabase/database/03_operations.sql` pour les règles métier et déclencheurs.
 
-Le type de rôle inclut directement `rh` dans le script de structure. Les scripts
+Le type de rôle contient quatre valeurs ; l’accès RH est porté par `is_rh`.
+Le script 02 ajoute la colonne sur une ancienne base bêta et convertit les comptes
+de l’ancien rôle RH en utilisateurs avec accès RH. Les autres comptes restent
+sans cet accès tant qu’un administrateur ne l’active pas. L’ancienne valeur de
+l’énumération SQL peut subsister, mais ne peut plus être attribuée. Les scripts
 02 et 03 sont réexécutables. Les anciennes migrations ont été supprimées ; aucun
 script ne réinitialise une base existante. Voir [la procédure d’installation](database-schema.md).
 
@@ -335,7 +337,7 @@ un autre conteneur. Il crée une base temporaire distincte, installe les trois s
 puis rejoue la sécurisation et les opérations et vérifie les refus ainsi que les usages autorisés. Il supprime
 uniquement la base temporaire créée, jamais la base applicative.
 
-Les tests Jest couvrent notamment les profils absents, les matrices de rôles et la parité Directeur/RH,
+Les tests Jest couvrent notamment les profils absents, les matrices de rôles et l’indépendance de l’accès RH,
 les boutons, les appels directs, les visas, les restrictions par opération,
 les exports, le sélecteur des contrôles et la fermeture des détails devenus
 inaccessibles. La compilation vérifie la cohérence TypeScript et des templates.
@@ -408,6 +410,6 @@ consultation ouverte se ferme lorsque l’opération quitte la file correspondan
 Leurs données restent disponibles pour la consultation historique et pour les
 exports conservés dans RH.
 
-Les administrateurs, directeurs et RH peuvent annuler un envoi depuis l’historique
+Les administrateurs et directeurs peuvent annuler un envoi depuis la validation
 tant que l’opération n’est pas traitée. Elle revient alors dans les écrans actifs.
 Les périmètres de consultation par rôle et par utilisateur restent applicables.

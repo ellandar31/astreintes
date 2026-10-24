@@ -86,6 +86,21 @@ describe("Separate exceptional navigation", () => {
     expect(history.getAttribute("aria-current")).toBe("page");
   });
 
+  it("shows the RH navigation for a flagged user and hides it when the flag is removed", () => {
+    const fixture = createShell();
+    const store = TestBed.inject(MockStore);
+    expect(fixture.componentInstance.tabs.some(tab => tab.id === "rh")).toBe(false);
+    const profile = { id: "7", uid: "auth-id", role: 1 as const, email: "agent@example.fr", displayName: "Agent", signatureName: "Agent" };
+    store.overrideSelector(selectCurrentApplicationUser, { ...profile, isRh: true });
+    store.refreshState();
+    fixture.detectChanges();
+    expect(fixture.componentInstance.tabs.some(tab => tab.id === "rh")).toBe(true);
+    store.overrideSelector(selectCurrentApplicationUser, { ...profile, isRh: false });
+    store.refreshState();
+    fixture.detectChanges();
+    expect(fixture.componentInstance.tabs.some(tab => tab.id === "rh")).toBe(false);
+  });
+
   it("removes sent and treated exceptional operations from active lists, including an open modal", () => {
     const fixture = createShell();
     fixture.componentInstance.selectTab("exceptionalOnCall");

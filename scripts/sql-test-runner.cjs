@@ -6,7 +6,7 @@ const os = require('node:os');
 const databaseScripts = ['01_structure.sql', '02_security.sql', '03_operations.sql'];
 
 /** Test only a newly created database; the application's database is never reset. */
-function runDatabaseTests(suite, assertions) {
+function runDatabaseTests(suite, assertions, options = {}) {
   const container = process.env.SUPABASE_TEST_CONTAINER || 'supabase_db_astreintes';
   const database = `astreintes_${suite}_test_${process.pid}`;
   const root = path.resolve(__dirname, '..');
@@ -32,6 +32,25 @@ function runDatabaseTests(suite, assertions) {
     for (const file of databaseScripts.slice(1)) sql(read(`supabase/database/${file}`));
     sql(read('supabase/tests/profile-fixtures.sql'));
     for (const file of assertions) sql(`BEGIN;\n${read(`supabase/tests/${file}`)}\nROLLBACK;`);
+    if (options.verifyLegacyRhUpgrade) {
+      // Simulate the former beta schema in this disposable database only.
+      // Enum additions need their own commit before the legacy value is used.
+      sql("ALTER TYPE public.user_role ADD VALUE IF NOT EXISTS 'rh';");
+      sql(`INSERT INTO auth.users(id,email) VALUES ('00000000-0000-4000-8000-000000000099','legacy-rh@example.test');
+        ALTER TABLE public.app_users DISABLE TRIGGER guard_user_profile;
+        UPDATE public.app_users SET role='rh' WHERE email='legacy-rh@example.test';
+        ALTER TABLE public.app_users ENABLE TRIGGER guard_user_profile;
+        ALTER TABLE public.app_users DROP COLUMN is_rh;`);
+      sql(read('supabase/database/02_security.sql'));
+      sql(`DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM public.app_users WHERE email='legacy-rh@example.test' AND role='user' AND is_rh) THEN
+          RAISE EXCEPTION 'Legacy RH upgrade lost export access or retained the former base role';
+        END IF;
+        IF EXISTS (SELECT 1 FROM public.app_users WHERE email='admin@example.test' AND is_rh) THEN
+          RAISE EXCEPTION 'Upgrade silently granted an unrelated profile RH access';
+        END IF;
+      END; $$;`);
+    }
     console.log(`${suite}: full schema installation, script replay and SQL assertions OK`);
   } catch (error) {
     console.error(error.stderr?.toString() || error.message);

@@ -33,8 +33,7 @@ CREATE TYPE public.user_role AS ENUM (
     'admin',
     'user',
     'initiator',
-    'director',
-    'rh'
+    'director'
 );
 
 CREATE TYPE public.visa_scope AS ENUM (
@@ -68,6 +67,7 @@ CREATE TABLE public.app_users (
     trigram varchar(3),
     deleted_at timestamptz,
     role public.user_role DEFAULT 'user'::public.user_role NOT NULL,
+    is_rh boolean DEFAULT false NOT NULL,
     CONSTRAINT app_users_direction_required CHECK (role NOT IN ('initiator','director') OR direction_id IS NOT NULL),
     signature_name text DEFAULT ''::text NOT NULL,
     last_login_at timestamptz,
