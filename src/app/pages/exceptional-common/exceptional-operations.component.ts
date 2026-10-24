@@ -53,7 +53,11 @@ import { OperationModalComponent } from "./operation-modal.component";
   styleUrl: "./exceptional-operations.component.css",
 })
 export class ExceptionalOperationsComponent implements OnDestroy {
-  readonly operationTableFields = { tableStartDate: (row: { startDate: string }) => tableDate(row.startDate) };
+  readonly operationTableFields = {
+    tableStartDate: (row: ExceptionalOperation) => tableDate(row.startDate),
+    // Match the calendar's planning range, with actual dates for historical records.
+    tableEndDate: (row: ExceptionalOperation) => tableDate(row.forecastEndDate || row.actualEndDate || row.startDate),
+  };
   @Input({ required: true }) user: StoreAuthUser | null = null;
   /** Each navigation branch owns a fresh view; shared data still belongs to NgRx. */
   @Input({ required: true }) set operationType(value: ExceptionalOperationType) { this.family.set(value); }

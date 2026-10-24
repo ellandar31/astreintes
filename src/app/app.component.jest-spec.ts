@@ -149,6 +149,8 @@ describe("Separate exceptional navigation", () => {
     expect(fixture.nativeElement.querySelector("h2").textContent).toContain(APP_LABELS.app.tabs.exceptionalOnCall);
     expect(fixture.nativeElement.querySelector("tbody").textContent).toContain(onCall.title);
     expect(fixture.nativeElement.querySelector("tbody").textContent).not.toContain(work.title);
+    expect(fixture.nativeElement.querySelector("thead").textContent).toContain(APP_LABELS.exceptional.fields.endDateFilter);
+    expect(fixture.nativeElement.querySelector("tbody tr").cells[3].textContent.trim()).toBe("2026-10-11");
     expect(fixture.nativeElement.querySelector(".create-actions").textContent).toContain(APP_LABELS.exceptional.actions.addExceptionalOnCall);
     expect(fixture.nativeElement.querySelector(".table-actions .pi-plus")).not.toBeNull();
     workTab.click();
@@ -156,6 +158,7 @@ describe("Separate exceptional navigation", () => {
     expect(fixture.nativeElement.querySelector("h2").textContent).toContain(APP_LABELS.app.tabs.exceptionalWork);
     expect(fixture.nativeElement.querySelector("tbody").textContent).toContain(work.title);
     expect(fixture.nativeElement.querySelector("tbody").textContent).not.toContain(onCall.title);
+    expect(fixture.nativeElement.querySelector("tbody tr").cells[3].textContent.trim()).toBe("2026-10-11");
     expect(fixture.nativeElement.querySelector(".create-actions").textContent).toContain(APP_LABELS.exceptional.actions.addExceptionalWork);
     expect(fixture.nativeElement.querySelector(".table-actions .pi-plus")).toBeNull();
     expect(workTab.getAttribute("aria-current")).toBe("page");

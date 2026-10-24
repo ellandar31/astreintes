@@ -31,6 +31,7 @@
           <th scope="col" pSortableColumn="initiatorName"><app-table-column-header field="initiatorName" [label]="labels.exceptional.fields.initiatorFilter" kind="text" /></th>
           <th scope="col" pSortableColumn="title"><app-table-column-header field="title" [label]="labels.exceptional.fields.titleFilter" kind="text" /></th>
           <th scope="col" pSortableColumn="tableStartDate"><app-table-column-header field="tableStartDate" [label]="labels.exceptional.fields.startDateFilter" kind="date" /></th>
+          <th scope="col" pSortableColumn="tableEndDate"><app-table-column-header field="tableEndDate" [label]="labels.exceptional.fields.endDateFilter" kind="date" /></th>
           <th scope="col">{{ labels.common.table.actions }}</th>
         </tr>
       </ng-template>
@@ -40,6 +41,7 @@
           <td>{{ operation.initiatorName }}</td>
           <td><strong>{{ operation.title }}</strong></td>
           <td>{{ formatDate(operation.startDate) }}</td>
+          <td>{{ formatDate(operation.forecastEndDate || operation.actualEndDate || operation.startDate) }}</td>
           <td>
             <div class="table-actions">
               @if (isSentToRh(operation) || !canEditOperation(operation)) {
@@ -90,7 +92,7 @@
 
       <ng-template pTemplate="emptymessage">
         <tr>
-          <td colspan="4" class="empty-row">{{ operationType === 'astreinte' ? labels.exceptional.empty.noOnCall : labels.exceptional.empty.noWork }}</td>
+          <td colspan="5" class="empty-row">{{ operationType === 'astreinte' ? labels.exceptional.empty.noOnCall : labels.exceptional.empty.noWork }}</td>
         </tr>
       </ng-template>
     </p-table>
