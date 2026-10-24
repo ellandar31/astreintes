@@ -1,3 +1,5 @@
+import { Workbook } from "exceljs";
+import { APP_LABELS } from "../../../i18n/labels";
 import { ExportOperation, RhExportContext } from "./rh-export.models";
 import { RhExcelExportLibrary } from "./rh-excel-export.lib";
 
@@ -50,35 +52,42 @@ function contextFixture(): RhExportContext {
 }
 
 describe("Individual Excel export", () => {
-  it("preserves calculation details, short periods and work-only rows", () => {
-    const html = new RhExcelExportLibrary().buildExcelHtml("regular", operationFixture(), contextFixture());
-
-    expect(html).toContain("Détail calcul");
-    expect(html).toContain("sam 04/07/2026");
-    expect(html).toContain("Jour de semaine : soirée de 18h à 24h");
-    expect(html).toContain("Samedi / dimanche / jour férié : période complète retenue");
-    expect(html).toContain("<br />");
-    expect(html).toContain("<td>48</td>");
-    expect(html).toContain("Samedi (7h-21h)");
-
-    for (const templateId of ["regular", "exceptionalOnCall"] as const) {
-      const shortPeriod = new RhExcelExportLibrary().buildExcelHtml(templateId, {
-        ...operationFixture(),
-        actualUsers: [{
-          name: "Agent sans intervention",
-          startDate: "2026-10-01T22:41:00",
-          endDate: "2026-10-01T23:00:00",
-          visa: operationFixture().directorVisa,
-        }],
-        interventions: [],
-      }, contextFixture());
-      expect(shortPeriod).toContain("<td>Agent sans intervention</td>");
-      expect(shortPeriod).toContain("jeu 01/10/2026 22:41 - jeu 01/10/2026 23:00");
-      expect(shortPeriod).toContain("= 0.32 h");
-      expect(shortPeriod).toContain("<td>0</td>");
+  it.each(["regular", "exceptionalOnCall", "exceptionalWork"] as const)("generates a real separate XLSX sheets for %s", async template => {
+    const operation = { ...operationFixture(), treatedAt: "2026-10-02T14:30:00", sentToRhAt: "2026-10-01T10:00:00" };
+    const bytes = await new RhExcelExportLibrary().buildWorkbook(template, operation, contextFixture());
+    expect(Array.from(bytes.slice(0, 2))).toEqual([0x50, 0x4b]);
+    const workbook = new Workbook();
+    await workbook.xlsx.load(Buffer.from(bytes));
+    expect(workbook.worksheets).toHaveLength(template === "exceptionalWork" ? 1 : 2);
+    const sheet = workbook.worksheets[0];
+    expect(sheet.name).toBe(APP_LABELS.rhDocuments.periodExport.sheets[template]);
+    expect(sheet.getColumn("L").width).toBeGreaterThanOrEqual(80);
+    expect(sheet.getCell("O1").text).toBe(APP_LABELS.rhDocuments.periodExport.treatedAt);
+    expect(sheet.getCell("O2").text).toBe("ven 02/10/2026 14:30");
+    expect(sheet.getCell("B2").text).toBe(operation.title);
+    const values = workbook.worksheets.flatMap(worksheet => worksheet.getSheetValues().flat(2)).join(" ");
+    expect(values).toContain("Agent Test");
+    expect(values).toContain("Samedi (7h-21h)");
+    if (template !== "exceptionalWork") {
+      expect(values).toContain("Samedi / dimanche / jour férié :");
+      expect(values).toContain("Contrôle");
+      const interventionSheet = workbook.worksheets[1];
+      expect(interventionSheet.name).toBe(APP_LABELS.rhDocuments.periodExport.interventionSheets[template]);
+      expect(interventionSheet.getCell("N2").text).toBe("Contrôle");
+      expect(sheet.getColumn("N").values).not.toContain("Contrôle");
+      expect(interventionSheet.getColumn("I").values).not.toContain(APP_LABELS.rhDocuments.sections.onCall);
     }
-    const workHtml = new RhExcelExportLibrary().buildExcelHtml("exceptionalWork", { ...operationFixture(), interventions: [] }, contextFixture());
-    expect(workHtml).toContain("Samedi (7h-21h)");
-    expect(workHtml).not.toContain("Samedi / dimanche / jour férié : période complète retenue");
+    expect(sheet.getCell("L2").alignment.wrapText).toBe(true);
+  });
+
+  it("preserves short-period calculations and leaves cancelled treatment blank", async () => {
+    const operation = { ...operationFixture(), actualUsers: [{ name: "Agent sans intervention",
+      startDate: "2026-10-01T22:41:00", endDate: "2026-10-01T23:00:00", visa: operationFixture().directorVisa }], interventions: [] };
+    const workbook = new Workbook();
+    await workbook.xlsx.load(Buffer.from(await new RhExcelExportLibrary().buildWorkbook("regular", operation, contextFixture())));
+    const sheet = workbook.worksheets[0];
+    expect(sheet.getCell("A2").text).toBe("Agent sans intervention");
+    expect(sheet.getCell("L2").text).toContain("= 0.32 h");
+    expect(sheet.getCell("O2").text).toBe("");
   });
 });

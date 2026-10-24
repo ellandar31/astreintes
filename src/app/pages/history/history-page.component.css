@@ -97,9 +97,13 @@
   color: var(--app-color-danger-strong);
   margin: 0;
   white-space: nowrap;
+  font-weight: 800;
 }
 
-.sent-date strong {
+.treatment-date {
+  color: var(--app-color-danger-strong);
+  margin: 0;
+  white-space: nowrap;
   font-weight: 800;
 }
 

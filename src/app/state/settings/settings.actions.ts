@@ -1,3 +1,4 @@
+import { RhTreatmentOperation } from "../../types/rh-export.models";
 import { createActionGroup, emptyProps, props } from "@ngrx/store";
 import {
   Direction,
@@ -8,12 +9,13 @@ import {
   UserRole,
 } from "../../pages/settings/settings.models";
 
-export type SettingsMessageSource = "directions" | "users" | "teams" | "holidays" | "rhCompensation";
+export type SettingsMessageSource = "rhTreatment" | "directions" | "users" | "teams" | "holidays" | "rhCompensation";
 export type SettingsMessageKind = "success" | "failure";
 
 export const SettingsActions = createActionGroup({
   source: "Settings",
   events: {
+    "Rh Treatment Requested": props<{ operations: RhTreatmentOperation[]; treated: boolean }>(),
     "Directions Changed": props<{ directions: Direction[] }>(),
     "Direction Save Requested": props<{ directionId: string | null; name: string }>(),
     "Direction Delete Requested": props<{ directionId: string }>(),

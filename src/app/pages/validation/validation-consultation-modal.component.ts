@@ -29,6 +29,17 @@ export class ValidationConsultationModalComponent {
   @Output() deleted = new EventEmitter<ValidationItem>();
   @Output() signed = new EventEmitter<ValidationItem>();
 
+  /** Lifecycle information comes from the current aggregate refreshed by NgRx. */
+  get sentToRhAt(): string | undefined {
+    const source = this.item?.payload;
+    return source && "sentToRhAt" in source ? source.sentToRhAt : undefined;
+  }
+
+  get treatedAt(): string | undefined {
+    const source = this.item?.payload;
+    return source && "treatedAt" in source ? source.treatedAt : undefined;
+  }
+
   deleteVisa(): void {
     if (this.item) {
       this.deleted.emit(this.item);

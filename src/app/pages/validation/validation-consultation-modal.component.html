@@ -4,8 +4,19 @@
       <p class="eyebrow">{{ item.category }}</p>
       <h3>{{ item.title }}</h3>
 
+
       <section class="progress-section" aria-labelledby="visa-progress-title">
-        <h4 id="visa-progress-title">{{ labels.validation.consultation.progressTitle }}</h4>
+        <header class="progress-header">
+          <h4 id="visa-progress-title">{{ labels.validation.consultation.progressTitle }}</h4>
+          @if (sentToRhAt) {
+            <div class="rh-lifecycle-dates">
+              <p class="sent-date">{{ labels.common.messages.rhSentAt }} <strong>{{ sentToRhAt | date: 'dd/MM/yyyy HH:mm' }}</strong></p>
+              @if (treatedAt) {
+                <p class="treatment-date">{{ labels.common.messages.rhTreatedAt }} <strong>{{ treatedAt | date: 'dd/MM/yyyy HH:mm' }}</strong></p>
+              }
+            </div>
+          }
+        </header>
 
         <p-table [value]="progressItems" [rowTrackBy]="trackProgressItem" styleClass="progress-table" [tableStyle]="{ 'min-width': '56.25rem' }">
           <ng-template pTemplate="header">

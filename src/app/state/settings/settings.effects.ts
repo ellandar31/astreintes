@@ -3,7 +3,7 @@ import { APP_LABELS } from "../../i18n/labels";
 import { Injectable, inject } from "@angular/core";
 import { Actions, createEffect, ofType } from "@ngrx/effects";
 import { Action } from "@ngrx/store";
-import { Observable, catchError, concatMap, from, map, mergeMap, of, switchMap, takeUntil } from "rxjs";
+import { Observable, catchError, distinctUntilChanged, concatMap, from, map, mergeMap, of, switchMap, takeUntil } from "rxjs";
 import {
   OnCallCompensationRule,
   PeriodCompensationRule,
@@ -44,14 +44,26 @@ export class SettingsEffects {
   /** Shared reference data follows the session, rather than individual modal lifetimes. */
   readonly watchDirections$ = createEffect(() => this.actions$.pipe(
     ofType(AuthActions.sessionChanged, AuthActions.logoutRequested),
-    switchMap(action => new Observable<Action>(subscriber => {
+    // Focus and token refresh events for the same account must keep live data and permissions.
+    // Only logout or an identity change starts a new subscription lifecycle.
+    map(action => "user" in action ? action.user?.uid ?? null : null),
+    distinctUntilChanged(),
+    switchMap(uid => new Observable<Action>(subscriber => {
       subscriber.next(SettingsActions.directionsChanged({ directions: [] }));
-      if (!("user" in action) || !action.user) { subscriber.complete(); return; }
+      if (!uid) { subscriber.complete(); return; }
       return appStore.directions.watch(
         directions => subscriber.next(SettingsActions.directionsChanged({ directions })),
         () => subscriber.next(this.failure("directions", APP_LABELS.directions.loadError)),
       );
     })),
+  ));
+
+  readonly updateRhTreatment$ = createEffect(() => this.actions$.pipe(
+    ofType(SettingsActions.rhTreatmentRequested),
+    concatMap(({ operations, treated }) => from(appStore.rhSettings.updateTreatment(operations, treated)).pipe(
+      map(() => this.success("rhTreatment", APP_LABELS.rhDocuments.periodExport.treatmentSaved)),
+      catchError(() => of(this.failure("rhTreatment", APP_LABELS.rhDocuments.periodExport.treatmentFailed))),
+    )),
   ));
 
   readonly saveDirection$ = createEffect(() => this.actions$.pipe(

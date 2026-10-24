@@ -34,20 +34,41 @@ describe("RH period workbook", () => {
     { startDate: "2026-02-30", endDate: "2026-10-31" },
   ])("rejects invalid bounds %j", bounds => expect(isValidRhExportPeriod(bounds)).toBe(false));
 
-  it("creates a readable XLSX with three sheets and complete row metadata", async () => {
+  it("creates a readable XLSX with five sheets and complete row metadata", async () => {
     const buffer = await new RhPeriodExcelExportLibrary().buildWorkbook(operations, period, context);
     const workbook = new Workbook();
     await workbook.xlsx.load(Buffer.from(buffer));
-    expect(workbook.worksheets.map(sheet => sheet.name)).toEqual(Object.values(APP_LABELS.rhDocuments.periodExport.sheets));
-    for (const sheet of workbook.worksheets) {
+    expect(workbook.worksheets.map(sheet => sheet.name)).toEqual([
+      APP_LABELS.rhDocuments.periodExport.sheets.regular,
+      APP_LABELS.rhDocuments.periodExport.interventionSheets.regular,
+      APP_LABELS.rhDocuments.periodExport.sheets.exceptionalOnCall,
+      APP_LABELS.rhDocuments.periodExport.interventionSheets.exceptionalOnCall,
+      APP_LABELS.rhDocuments.periodExport.sheets.exceptionalWork,
+    ]);
+    for (const sheet of [workbook.worksheets[0], workbook.worksheets[2], workbook.worksheets[4]]) {
       const values = sheet.getRow(2).values;
       expect(values).toEqual(expect.arrayContaining(["Agent Test", "Opération Test", "Directeur Test", "jeu 01/10/2026 00:00", 2]));
       expect(sheet.getCell("L2").text).toContain("= 2 h");
       expect(sheet.getCell("L2").alignment.wrapText).toBe(true);
       expect(sheet.rowCount).toBe(2);
     }
-    expect(workbook.worksheets[2].columnCount).toBe(14);
+    expect(workbook.worksheets[2].columnCount).toBe(15);
     expect(workbook.worksheets[2].getCell("N1").value).toBe(APP_LABELS.rhDocuments.fields.comment);
+  });
+
+  it("includes treatment dates in detail and fallback rows, leaving cancelled treatment blank", async () => {
+    const treated = { ...operation, treatedAt: "2026-10-02T14:30:00" };
+    const fallback = { ...treated, actualUsers: [] };
+    const workbook = new Workbook();
+    await workbook.xlsx.load(Buffer.from(await new RhPeriodExcelExportLibrary().buildWorkbook({
+      regular: [treated], exceptionalOnCall: [fallback], exceptionalWork: [operation],
+    }, period, context)));
+    for (const sheet of workbook.worksheets) {
+      expect(sheet.getCell("O1").value).toBe(APP_LABELS.rhDocuments.periodExport.treatedAt);
+    }
+    expect(workbook.worksheets[0].getCell("O2").value).toBe("ven 02/10/2026 14:30");
+    expect(workbook.worksheets[2].getCell("O2").value).toBe("ven 02/10/2026 14:30");
+    expect(workbook.worksheets[4].getCell("O2").value).toBe("");
   });
 
   it("keeps headers in empty sheets and does not modify the source", async () => {
@@ -69,11 +90,14 @@ describe("RH period workbook", () => {
       { regular: [noHours], exceptionalOnCall: [withIntervention], exceptionalWork: [] }, period, context)));
     expect(workbook.worksheets[0].getCell("M2").value).toBe(0);
     expect(workbook.worksheets[0].getCell("N2").value).toBe("");
-    expect(workbook.worksheets[0].columnCount).toBe(14);
-    expect(workbook.worksheets[1].rowCount).toBe(3);
-    expect(workbook.worksheets[1].getCell("A3").value).toBe("Intervenant");
-    expect(workbook.worksheets[1].getCell("C3").value).toBe("Directeur Test");
-    expect(workbook.worksheets[1].getCell("N3").value).toBe("Commentaire");
+    expect(workbook.worksheets[0].columnCount).toBe(15);
+    expect(workbook.worksheets[1].rowCount).toBe(1);
+    expect(workbook.worksheets[2].rowCount).toBe(2);
+    expect(workbook.worksheets[3].rowCount).toBe(2);
+    expect(workbook.worksheets[2].getCell("A2").value).toBe("Agent Test");
+    expect(workbook.worksheets[3].getCell("A2").value).toBe("Intervenant");
+    expect(workbook.worksheets[3].getCell("C2").value).toBe("Directeur Test");
+    expect(workbook.worksheets[3].getCell("N2").value).toBe("Commentaire");
     expect(JSON.stringify(withIntervention)).toBe(snapshot);
   });
 });

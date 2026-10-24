@@ -28,9 +28,20 @@ async function main() {
     const { Workbook } = require('exceljs');
     const workbook = new Workbook();
     await workbook.xlsx.load(Buffer.from(bytes));
-    assert.equal(workbook.worksheets.length, 3);
-    assert.ok(workbook.worksheets.every(sheet => sheet.rowCount === 1 && sheet.columnCount === 14));
-    console.log('Production browser bundle: readable XLSX with three sheets.');
+    assert.equal(workbook.worksheets.length, 5);
+    assert.ok(workbook.worksheets.every(sheet => sheet.rowCount === 1 && sheet.columnCount === 15));
+    const visa = { signed: false, signedAt: '', signedByName: '', signedByUid: '' };
+    const individualBytes = await new library.RhPeriodExcelExportLibrary().buildOperationWorkbook('regular', {
+      sourceId: '1', sourceCollection: 'regularOnCallPeriods', title: 'Operation test', exportTitle: 'Astreinte',
+      initiatorName: '', operationManagerName: '', forecastStartDate: '2026-10-01T18:00', forecastEndDate: '2026-10-02T08:00',
+      actualStartDate: '2026-10-01T18:00', actualEndDate: '2026-10-02T08:00', plannedUsers: [], actualUsers: [], interventions: [],
+      initiatorVisa: visa, directorVisa: visa, sentToRhAt: '2026-10-03T10:00',
+    }, { publicHolidays: [], onCallCompensationRules: [], periodCompensationRules: [] });
+    const individual = new Workbook();
+    await individual.xlsx.load(Buffer.from(individualBytes));
+    assert.equal(individual.worksheets.length, 2);
+    assert.equal(individual.worksheets[0].getCell('B2').text, 'Operation test');
+    console.log('Production browser bundle: readable period and individual XLSX workbooks.');
   } finally {
     if (dirname(resolve(outputDirectory)) === resolve(tmpdir())) rmSync(outputDirectory, { recursive: true, force: true });
   }

@@ -80,3 +80,31 @@
   flex-wrap: wrap;
   gap: var(--app-space-xs);
 }
+
+.progress-header {
+  display: flex;
+  align-items: start;
+  flex-wrap: wrap;
+  gap: var(--app-space-md);
+}
+
+.rh-lifecycle-dates {
+  display: grid;
+  gap: var(--app-space-xs);
+  min-width: 0;
+  margin-inline-start: auto;
+  text-align: end;
+}
+
+.rh-lifecycle-dates p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.sent-date {
+  color: var(--app-color-danger-strong);
+}
+
+.treatment-date {
+  color: var(--app-color-subtle);
+}

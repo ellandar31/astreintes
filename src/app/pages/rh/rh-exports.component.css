@@ -9,6 +9,10 @@
   gap: var(--app-space-xl);
 }
 
+.rh-period-fields {
+  align-items: end;
+}
+
 .rh-period-counts {
   margin: 0;
 }
@@ -79,4 +83,9 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--app-space-sm);
+}
+
+.user-control {
+  width: min(100%, 22rem);
+  min-width: 0;
 }

@@ -11,6 +11,8 @@
       <label class="period-control">{{ periodLabels.end }}
         <input pInputText type="date" name="rhPeriodEnd" [(ngModel)]="periodEnd" />
       </label>
+    <p-button icon="pi pi-file-excel" [label]="periodLabels.download" [loading]="exportingPeriod"
+      [disabled]="!validExportPeriod || exportingPeriod" (onClick)="exportExcelPeriod()"></p-button>
     </div>
     <dl class="rh-period-counts">
       @for (template of templates; track template.id) {
@@ -20,8 +22,43 @@
     @if (!validExportPeriod) {
       <p-message severity="error">{{ periodLabels.invalidPeriod }}</p-message>
     }
-    <p-button icon="pi pi-file-excel" [label]="periodLabels.download" [loading]="exportingPeriod"
-      [disabled]="!validExportPeriod || exportingPeriod" (onClick)="exportExcelPeriod()"></p-button>
+    <p-button [label]="periodLabels.treat" icon="pi pi-check" [loading]="treatmentPending"
+      [disabled]="!selectedUntreatedCount || treatmentPending" (onClick)="updateTreatment(true)" />
+    @if (treatmentMessage) { <p-message severity="info">{{ treatmentMessage }}</p-message> }
+    <p-table [value]="periodExportRows()" [rowTrackBy]="trackPeriodOperation"
+      [paginator]="true" [rows]="25" [rowsPerPageOptions]="[25, 50, 100]" [tableStyle]="{ 'min-width': '47.5rem' }"
+      [attr.aria-label]="periodLabels.count" styleClass="export-table">
+      <ng-template pTemplate="header">
+        <tr>
+          <th scope="col">{{ periodLabels.select }}</th>
+          <th scope="col">{{ labels.common.fields.type }}</th>
+          <th scope="col">{{ periodLabels.operation }}</th>
+          <th scope="col">{{ labels.common.fields.period }}</th>
+          <th scope="col">{{ periodLabels.rhSent }}</th>
+          <th scope="col">{{ periodLabels.treatedAt }}</th>
+          <th scope="col">{{ labels.common.table.actions }}</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-row>
+        <tr>
+          <td><p-checkbox [binary]="true" [ngModel]="selectedOperationKeys.has(operationKey(row.operation))"
+            (onChange)="selectOperation(row.operation, $event)" [disabled]="!!row.operation.treatedAt || treatmentPending"
+            [ariaLabel]="periodLabels.select + ' ' + row.operation.title" /></td>
+          <td>{{ row.typeLabel }}</td>
+          <td>{{ row.operation.title }}</td>
+          <td>{{ formatRange(row.operation.forecastStartDate, row.operation.forecastEndDate) }}</td>
+          <td>{{ row.operation.sentToRhAt | date: 'dd/MM/yyyy HH:mm' }}</td>
+          <td>{{ (row.operation.treatedAt | date: 'dd/MM/yyyy HH:mm') || labels.common.empty.dash }}</td>
+          <td>@if (row.operation.treatedAt) {
+            <p-button [label]="periodLabels.cancelTreatment" icon="pi pi-undo" severity="danger"
+              [disabled]="treatmentPending" (onClick)="updateTreatment(false, row.operation)" />
+          }</td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr><td colspan="7">{{ periodLabels.empty }}</td></tr>
+      </ng-template>
+    </p-table>
     @if (exportMessage) { <p-message severity="info">{{ exportMessage }}</p-message> }
   </p-card>
 } @else {
@@ -29,13 +66,23 @@
   <header class="rh-panel-header">
     <div>
       <p class="eyebrow">{{ labels.rh.exports.eyebrow }}</p>
-      <h2 id="rh-exports-title">{{ labels.rh.exports.title }}</h2>
+      <h2 id="rh-exports-title">{{ userMode ? labels.rh.exports.userTitle : labels.rh.exports.title }}</h2>
     </div>
 
+    @if (userMode) {
+      <label class="period-control user-control" for="rh-export-user">
+        {{ labels.common.users.user }}
+        <p-select inputId="rh-export-user" name="exportUser" [options]="exportUsers"
+          [(ngModel)]="selectedUserId" (ngModelChange)="exportMessage = ''"
+          optionLabel="label" optionValue="id" [filter]="true" filterBy="label"
+          [placeholder]="labels.common.users.select" appendTo="body" />
+      </label>
+    } @else {
     <label class="period-control">
       {{ labels.common.fields.period }}
       <input pInputText [(ngModel)]="selectedMonth" name="exportMonth" type="month" />
     </label>
+    }
   </header>
 
   <p-card styleClass="export-section" [attr.aria-labelledby]="'regular-export-title'">
@@ -62,7 +109,7 @@
           <td>
             <div class="action-buttons">
 
-              <button pButton class="p-button-sm " (click)="exportExcelOperation('regular', operation)" type="button">
+              <button pButton class="p-button-sm " [disabled]="exportingOperationKey !== null" (click)="exportExcelOperation('regular', operation)" type="button">
                 <span class="pi pi-file-excel" aria-hidden="true"></span>
                 <span>{{ labels.common.actions.exportExcel }}</span>
               </button>
@@ -73,7 +120,7 @@
       </ng-template>
       <ng-template pTemplate="emptymessage">
         <tr>
-          <td colspan="4">{{ labels.rh.exports.empty.regular }}</td>
+          <td colspan="4">{{ userMode ? labels.rh.exports.userEmpty : labels.rh.exports.empty.regular }}</td>
         </tr>
       </ng-template>
     </p-table>
@@ -105,7 +152,7 @@
           <td>
             <div class="action-buttons">
 
-              <button pButton class="p-button-sm " (click)="exportExcelOperation('exceptionalOnCall', operation)" type="button">
+              <button pButton class="p-button-sm " [disabled]="exportingOperationKey !== null" (click)="exportExcelOperation('exceptionalOnCall', operation)" type="button">
                 <span class="pi pi-file-excel" aria-hidden="true"></span>
                 <span>{{ labels.common.actions.exportExcel }}</span>
               </button>
@@ -116,7 +163,7 @@
       </ng-template>
       <ng-template pTemplate="emptymessage">
         <tr>
-          <td colspan="5">{{ labels.rh.exports.empty.exceptionalOnCall }}</td>
+          <td colspan="5">{{ userMode ? labels.rh.exports.userEmpty : labels.rh.exports.empty.exceptionalOnCall }}</td>
         </tr>
       </ng-template>
     </p-table>
@@ -146,7 +193,7 @@
           <td>
             <div class="action-buttons">
 
-              <button pButton class="p-button-sm " (click)="exportExcelOperation('exceptionalWork', operation)" type="button">
+              <button pButton class="p-button-sm " [disabled]="exportingOperationKey !== null" (click)="exportExcelOperation('exceptionalWork', operation)" type="button">
                 <span class="pi pi-file-excel" aria-hidden="true"></span>
                 <span>{{ labels.common.actions.exportExcel }}</span>
               </button>
@@ -157,7 +204,7 @@
       </ng-template>
       <ng-template pTemplate="emptymessage">
         <tr>
-          <td colspan="5">{{ labels.rh.exports.empty.exceptionalWork }}</td>
+          <td colspan="5">{{ userMode ? labels.rh.exports.userEmpty : labels.rh.exports.empty.exceptionalWork }}</td>
         </tr>
       </ng-template>
     </p-table>

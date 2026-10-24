@@ -1,7 +1,7 @@
 import { Injectable, inject } from "@angular/core";
 import { Actions, createEffect, ofType } from "@ngrx/effects";
 import { Store } from "@ngrx/store";
-import { EMPTY, Observable, catchError, exhaustMap, from, map, of, switchMap, tap, timer } from "rxjs";
+import { EMPTY, Observable, catchError, distinctUntilChanged, exhaustMap, from, map, of, switchMap, tap, timer } from "rxjs";
 import { appStore, StoreAuthUser } from "../../store/app-store";
 import { AuthActions } from "./auth.actions";
 import { SettingsActions } from "../settings/settings.actions";
@@ -21,14 +21,17 @@ export class AuthEffects {
   /** Session permissions cannot depend on which page currently watches the user directory. */
   readonly watchSessionUsers$ = createEffect(() => this.actions$.pipe(
     ofType(AuthActions.sessionChanged, AuthActions.logoutRequested),
-    switchMap(action => new Observable<ReturnType<typeof SettingsActions.usersChanged> | ReturnType<typeof AuthActions.logoutRequested>>(subscriber => {
+    // Focus and token refresh events for the same account must keep live data and permissions.
+    // Only logout or an identity change starts a new subscription lifecycle.
+    map(action => "user" in action ? action.user?.uid ?? null : null),
+    distinctUntilChanged(),
+    switchMap(uid => new Observable<ReturnType<typeof SettingsActions.usersChanged> | ReturnType<typeof AuthActions.logoutRequested>>(subscriber => {
       // Clear cached permissions on session switches and failures, rather than retaining a former role.
       subscriber.next(SettingsActions.usersChanged({ users: [] }));
-      if (!("user" in action) || !action.user) {
+      if (!uid) {
         subscriber.complete();
         return;
       }
-      const uid = action.user.uid;
       const stop = appStore.users.watch(
         users => {
           const profile = users.find(user => user.uid === uid);

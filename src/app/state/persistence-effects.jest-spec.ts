@@ -21,6 +21,7 @@ jest.mock("../store/app-store", () => ({
     auth: { onSessionChanged: jest.fn(), updateProfile: jest.fn() },
     users: { watch: jest.fn(), watchOne: jest.fn(), get: jest.fn(), save: jest.fn() },
     directions: { watch: jest.fn(), save: jest.fn(), remove: jest.fn() },
+    rhSettings: { updateTreatment: jest.fn() },
     teams: { watch: jest.fn() }, holidays: { watch: jest.fn() },
     regular: { watchPeriods: jest.fn(), watchInterventions: jest.fn(), updatePeriod: jest.fn() },
     exceptional: { watchOperations: jest.fn(), saveOperation: jest.fn() },
@@ -55,10 +56,31 @@ describe("NgRx effects using typed domain APIs", () => {
     const subscription = TestBed.inject(SettingsEffects).watchDirections$.subscribe(action => received.push(action));
     actions.next(AuthActions.sessionChanged({ user: sessionUser }));
     expect(received).toContainEqual(SettingsActions.directionsChanged({ directions: [{ id: "1", name: "Technique" }] }));
+    const countBeforeRefresh = received.length;
+    actions.next(AuthActions.sessionChanged({ user: { ...sessionUser } }));
+    expect(received).toHaveLength(countBeforeRefresh);
+    expect(appStore.directions.watch).toHaveBeenCalledTimes(1);
+    expect(stop).not.toHaveBeenCalled();
     actions.next(AuthActions.logoutRequested());
     expect(stop).toHaveBeenCalledTimes(1);
     expect(received[received.length - 1]).toEqual(SettingsActions.directionsChanged({ directions: [] }));
     subscription.unsubscribe();
+  });
+
+  it.each([true, false])("persists RH treatment %s through the atomic command", async treated => {
+    jest.mocked(appStore.rhSettings.updateTreatment).mockResolvedValue(undefined);
+    const result = firstValueFrom(TestBed.inject(SettingsEffects).updateRhTreatment$);
+    const operations = [{ type: "regular" as const, id: "11" }, { type: "exceptionalWork" as const, id: "31" }];
+    actions.next(SettingsActions.rhTreatmentRequested({ operations, treated }));
+    expect(await result).toMatchObject({ source: "rhTreatment", type: SettingsActions.operationSucceeded.type });
+    expect(appStore.rhSettings.updateTreatment).toHaveBeenCalledWith(operations, treated);
+  });
+
+  it("reports a failed RH batch without claiming success", async () => {
+    jest.mocked(appStore.rhSettings.updateTreatment).mockRejectedValue(new Error("Denied"));
+    const result = firstValueFrom(TestBed.inject(SettingsEffects).updateRhTreatment$);
+    actions.next(SettingsActions.rhTreatmentRequested({ operations: [{ type: "regular", id: "11" }], treated: true }));
+    expect(await result).toMatchObject({ source: "rhTreatment", type: SettingsActions.operationFailed.type });
   });
 
   it("persists role and direction in one profile update", async () => {
@@ -86,6 +108,38 @@ describe("NgRx effects using typed domain APIs", () => {
     actions.next(AuthActions.logoutRequested());
     expect(stop).toHaveBeenCalledTimes(1);
     expect(received.at(-1)).toEqual(SettingsActions.usersChanged({ users: [] }));
+    subscription.unsubscribe();
+  });
+
+  it("preserves RH permissions on focus refresh while keeping live revocation and account switches", () => {
+    const stop = jest.fn();
+    let publishUsers: ((users: ApplicationUser[]) => void) | undefined;
+    const rhUser = { ...user, isRh: true };
+    jest.mocked(appStore.users.watch).mockImplementation(next => {
+      publishUsers = next;
+      next([rhUser]);
+      return stop;
+    });
+    const received: Action[] = [];
+    const subscription = TestBed.inject(AuthEffects).watchSessionUsers$.subscribe(action => received.push(action));
+    actions.next(AuthActions.sessionChanged({ user: sessionUser }));
+    const initialActions = [...received];
+    actions.next(AuthActions.sessionChanged({ user: { ...sessionUser, displayName: "Refreshed" } }));
+    expect(received).toEqual(initialActions);
+    expect(appStore.users.watch).toHaveBeenCalledTimes(1);
+    expect(stop).not.toHaveBeenCalled();
+
+    publishUsers?.([{ ...rhUser, isRh: false }]);
+    expect(received.at(-1)).toEqual(SettingsActions.usersChanged({ users: [{ ...rhUser, isRh: false }] }));
+    actions.next(AuthActions.sessionChanged({ user: { ...sessionUser, uid: "another-account" } }));
+    expect(stop).toHaveBeenCalledTimes(1);
+    expect(received.at(-2)).toEqual(SettingsActions.usersChanged({ users: [] }));
+    expect(appStore.users.watch).toHaveBeenCalledTimes(2);
+
+    actions.next(AuthActions.logoutRequested());
+    expect(received.at(-1)).toEqual(SettingsActions.usersChanged({ users: [] }));
+    actions.next(AuthActions.sessionChanged({ user: sessionUser }));
+    expect(appStore.users.watch).toHaveBeenCalledTimes(3);
     subscription.unsubscribe();
   });
 

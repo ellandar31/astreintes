@@ -16,6 +16,8 @@
   <div class="rh-content">
     @if (activeSection === "exports" && canExport()) {
       <app-rh-exports></app-rh-exports>
+    } @else if (activeSection === "userExports" && canExport()) {
+      <app-rh-exports [userMode]="true"></app-rh-exports>
     } @else if (activeSection === "periodExports" && canExport()) {
       <app-rh-exports [periodMode]="true"></app-rh-exports>
     }

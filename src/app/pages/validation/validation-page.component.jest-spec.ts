@@ -104,6 +104,12 @@ describe("Validation consultation", () => {
     component.activeSectionId = "director";
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain(component.labels.common.actions.cancelRhSend);
+    component.openItem(item);
+    fixture.detectChanges();
+    const sentDate = fixture.nativeElement.querySelector(".item-details .sent-date");
+    expect(sentDate.textContent).toContain(component.labels.common.messages.rhSentAt);
+    expect(sentDate.textContent).toContain("24/10/2026 10:00");
+    expect(fixture.nativeElement.querySelector(".item-details .treatment-date")).toBeNull();
     const dispatch = jest.spyOn(store, "dispatch").mockClear();
     component.updateRhSend(item, false);
     expect(dispatch).toHaveBeenCalledWith(expect.objectContaining({ sent: false }));

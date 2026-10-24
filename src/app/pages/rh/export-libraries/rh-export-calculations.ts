@@ -139,7 +139,7 @@ export class RhExportCalculationLibrary {
       const nextDay = this.addDays(dayCursor, 1);
 
       if (this.isWeekendOrHoliday(dayCursor)) {
-        this.pushClippedSegment(weekendHolidaySegments, start, end, dayCursor, nextDay, "Samedi / dimanche / jour férié : période complète retenue");
+        this.pushClippedSegment(weekendHolidaySegments, start, end, dayCursor, nextDay, "Samedi / dimanche / jour férié : ");
       } else {
         this.pushClippedSegment(weekSegments, start, end, dayCursor, this.atTime(dayCursor, 8, 0), "Jour de semaine : nuit de 00h à 08h");
         this.pushClippedSegment(weekSegments, start, end, this.atTime(dayCursor, 18, 0), nextDay, "Jour de semaine : soirée de 18h à 24h");

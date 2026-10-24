@@ -1,6 +1,6 @@
 import { SignatureVisa } from "./signature.models";
 
-export type RhSection = "exports" | "periodExports";
+export type RhSection = "exports" | "userExports" | "periodExports";
 
 export interface RhUser {
   /** Identité de connexion distincte de la clé SQL utilisée dans les opérations. */
@@ -48,6 +48,7 @@ export interface RhExceptionalIntervention {
 export interface RhExceptionalOperation {
   /** Clé du profil SQL qui a initié cette opération. */
   initiatorUid?: string;
+  operationManagerUid?: string;
   id: string;
   type: "astreinte" | "travaux";
   initiatorName: string;

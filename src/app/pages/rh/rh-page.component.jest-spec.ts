@@ -7,10 +7,10 @@ import { RhPageComponent } from "./rh-page.component";
 import { RhExportsComponent } from "./rh-exports.component";
 
 @Component({ selector: "app-rh-exports", standalone: true, template: "Exports" })
-class ExportsStub { @Input() periodMode = false; }
+class ExportsStub { @Input() periodMode = false; @Input() userMode = false; }
 
 describe("RH export navigation", () => {
-  it("retains both exports and removes the consultation submenu", () => {
+  it("exposes operation, user and period exports without the consultation submenu", () => {
     TestBed.configureTestingModule({ imports: [RhPageComponent], providers: [
       provideNoopAnimations(), provideMockStore({ selectors: [{ selector: selectCanExportRh, value: true }] }),
     ] }).overrideComponent(RhPageComponent, {
@@ -19,7 +19,7 @@ describe("RH export navigation", () => {
     const fixture = TestBed.createComponent(RhPageComponent);
     fixture.componentRef.setInput("user", null);
     fixture.detectChanges();
-    expect(fixture.componentInstance.visibleSections().map(section => section.id)).toEqual(["exports", "periodExports"]);
+    expect(fixture.componentInstance.visibleSections().map(section => section.id)).toEqual(["exports", "userExports", "periodExports"]);
     expect(fixture.nativeElement.querySelector("app-history-page")).toBeNull();
     expect(fixture.nativeElement.querySelector("app-rh-exports")).not.toBeNull();
     fixture.componentInstance.setSection("periodExports");

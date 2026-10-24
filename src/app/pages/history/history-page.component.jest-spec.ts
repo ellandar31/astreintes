@@ -48,6 +48,34 @@ describe("Sélecteur utilisateur des contrôles RH", () => {
     expect(detail.nativeElement.querySelector(".detail-table").textContent).toContain("EXC-123");
   });
 
+  it.each([undefined, "2026-10-24T11:00"])("shows RH treatment %s in its own column and avoids duplicate detail status", treatedAt => {
+    const store = TestBed.inject(MockStore);
+    const fixture = TestBed.createComponent(HistoryPageComponent);
+    fixture.componentRef.setInput("currentUser", { uid: "auth-id", email: users[0].email, displayName: "Responsable" });
+    fixture.detectChanges();
+    const view = fixture.componentInstance;
+    store.overrideSelector(selectRegularPeriods, [{ ...view.regularPeriods[0], treatedAt }]);
+    store.refreshState();
+    fixture.detectChanges();
+    view.selectUser("8");
+    fixture.detectChanges();
+    const item = view.userSections[0].monthSections[0].items[0];
+    const column = fixture.nativeElement.querySelector("td.treatment-date");
+    expect(column.textContent.trim()).toBe(treatedAt ? "24/10/2026 11:00" : "-");
+    const detail = TestBed.createComponent(HistoryDetailModalComponent);
+    detail.componentRef.setInput("item", item);
+    detail.detectChanges();
+    const header = detail.nativeElement.querySelector(".detail-header");
+    expect(header.textContent.match(/Envoy\u00e9 aux RH/g)).toHaveLength(1);
+    const treatment = header.querySelector(".treatment-date");
+    if (treatedAt) {
+      expect(treatment.textContent).toContain("24/10/2026 11:00");
+      expect(treatment.textContent).toContain("Trait\u00e9 le");
+    } else {
+      expect(treatment).toBeNull();
+    }
+  });
+
   it("keeps archived items in History and closes the detail when returned to validation", () => {
     const fixture = TestBed.createComponent(HistoryPageComponent);
     fixture.componentRef.setInput('currentUser', { uid: 'auth-id', email: users[0].email, displayName: 'Responsable' });

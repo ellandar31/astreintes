@@ -26,3 +26,8 @@ export function escapeHtml(value: string): string {
 export function toDateKey(date: Date): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
+
+/** Empty lifecycle dates remain blank rather than implying that treatment occurred. */
+export function formatOptionalDateTime(value?: string): string {
+  return value ? `${formatDate(value)} ${formatTime(value)}` : "";
+}

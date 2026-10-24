@@ -500,4 +500,33 @@ DO $$ DECLARE t text; BEGIN
  END LOOP;
 END; $$;
 
+-- Dedicated RH command: grants treatment only, without granting planning or visa rights.
+CREATE OR REPLACE FUNCTION public.set_rh_treatment(operations jsonb, treated boolean)
+RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path = '' AS $$
+DECLARE item jsonb; target_table text; operation_id bigint; submitted timestamptz;
+BEGIN
+ IF NOT EXISTS (SELECT 1 FROM public.app_users WHERE auth_user_id = (SELECT auth.uid())
+   AND deleted_at IS NULL AND is_rh) THEN
+  RAISE EXCEPTION 'RH access required' USING ERRCODE = '42501';
+ END IF;
+ IF treated IS NULL OR jsonb_typeof(operations) IS DISTINCT FROM 'array' OR jsonb_array_length(operations) = 0 THEN
+  RAISE EXCEPTION 'Select operations and a treatment status' USING ERRCODE = '22023';
+ END IF;
+ FOR item IN SELECT value FROM jsonb_array_elements(operations) LOOP
+  target_table := CASE item->>'type'
+   WHEN 'regular' THEN 'regular_on_call_periods'
+   WHEN 'exceptionalOnCall' THEN 'exceptional_on_calls'
+   WHEN 'exceptionalWork' THEN 'exceptional_works' END;
+  IF target_table IS NULL THEN RAISE EXCEPTION 'Invalid operation type' USING ERRCODE = '22023'; END IF;
+  operation_id := (item->>'id')::bigint;
+  EXECUTE format('SELECT sent_to_rh_at FROM public.%I WHERE id = $1 FOR UPDATE', target_table)
+   INTO submitted USING operation_id;
+  IF submitted IS NULL THEN RAISE EXCEPTION 'Operation must be sent to RH' USING ERRCODE = '22023'; END IF;
+  EXECUTE format('UPDATE public.%I SET treated_at = CASE WHEN $1 THEN COALESCE(treated_at, now()) ELSE NULL END WHERE id = $2', target_table)
+   USING treated, operation_id;
+ END LOOP;
+END; $$;
+REVOKE ALL ON FUNCTION public.set_rh_treatment(jsonb, boolean) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.set_rh_treatment(jsonb, boolean) TO authenticated;
+
 COMMIT;

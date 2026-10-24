@@ -59,6 +59,7 @@
                     <th scope="col">{{ labels.common.table.item }}</th>
                     <th scope="col">{{ labels.common.table.period }}</th>
                     <th scope="col">{{ labels.common.messages.rhSentAt }}</th>
+                    <th scope="col">{{ labels.rh.controls.treatment }}</th>
                     <th scope="col">{{ labels.common.fields.lines }}</th>
                     <th scope="col">{{ labels.common.table.actions }}</th>
                   </tr>
@@ -68,10 +69,8 @@
                     <td>{{ item.type }}</td>
                     <td>{{ item.title }}</td>
                     <td>{{ item.period }}</td>
-                    <td class="sent-date">
-                      {{ labels.rh.controls.sentPrefix }} <strong>{{ item.sentToRhLabel }}</strong>
-                      <div>{{ item.treatedAt ? labels.rh.controls.treatedStatus : labels.rh.controls.sentStatus }}</div>
-                    </td>
+                    <td class="sent-date">{{ item.sentToRhLabel }}</td>
+                    <td class="treatment-date">{{ (item.treatedAt | date: 'dd/MM/yyyy HH:mm') || labels.common.empty.dash }}</td>
                     <td>{{ item.lines.length }}</td>
                     <td>
                       <button

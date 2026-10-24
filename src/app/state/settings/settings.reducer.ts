@@ -70,6 +70,7 @@ export const settingsReducer = createReducer(
     rhCompensation: settings,
   })),
   on(
+    SettingsActions.rhTreatmentRequested,
     SettingsActions.directionSaveRequested,
     SettingsActions.directionDeleteRequested,
     SettingsActions.userRoleUpdateRequested,

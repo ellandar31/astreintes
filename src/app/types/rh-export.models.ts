@@ -4,6 +4,8 @@ import { OnCallCompensationRule, PeriodCompensationRule } from "./settings.model
 export type { OnCallCompensationRule, PeriodCompensationRule } from "./settings.models";
 /** Business categories shared by Excel exports. */
 export type ExportTemplateId = "regular" | "exceptionalOnCall" | "exceptionalWork";
+/** Stable references passed to the atomic RH treatment command. */
+export interface RhTreatmentOperation { type: ExportTemplateId; id: string }
 /** Calendar-date bounds apply to RH submission, not the worked period. */
 export interface RhExportPeriod { startDate: string; endDate: string }
 export type RhPeriodExportOperations = Record<ExportTemplateId, ExportOperation[]>;
@@ -41,6 +43,7 @@ export interface ExportOperation {
   }>;
   initiatorVisa: SignatureVisa;
   directorVisa: SignatureVisa;
+  treatedAt?: string;
   sentToRhAt?: string;
 }
 
