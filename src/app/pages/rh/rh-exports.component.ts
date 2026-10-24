@@ -8,7 +8,6 @@ import { CardModule } from "primeng/card";
 import { InputTextModule } from "primeng/inputtext";
 import { MessageModule } from "primeng/message";
 import { CheckboxChangeEvent, CheckboxModule } from "primeng/checkbox";
-import { selectSettingsState } from "../../state/settings/settings.selectors";
 import { SelectModule } from "primeng/select";
 import { SharedTableModule } from "../../shared/shared-table.module";
 import { Store } from "@ngrx/store";
@@ -23,7 +22,7 @@ import {
   selectRegularPublicHolidays,
 } from "../../state/regular/regular.selectors";
 import { SettingsActions } from "../../state/settings/settings.actions";
-import { selectCanExportRh, selectSettingsRhCompensation } from "../../state/settings/settings.selectors";
+import { selectSettingsState, selectCanExportRh, selectSettingsRhCompensation } from "../../state/settings/settings.selectors";
 import { RhExceptionalOperation, RhRegularPeriod } from "./rh.models";
 import { RhExcelExportLibrary } from "./export-libraries/rh-excel-export.lib";
 import {

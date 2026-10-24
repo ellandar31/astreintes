@@ -8,8 +8,7 @@ import { selectRegularInterventions, selectRegularPeriods, selectRegularPublicHo
 import { selectCanExportRh, selectSettingsRhCompensation, selectSettingsState } from "../../state/settings/settings.selectors";
 import { RhExportsComponent } from "./rh-exports.component";
 import { RhExcelExportLibrary } from "./export-libraries/rh-excel-export.lib";
-import { RH_EXCEL_MIME } from "./export-libraries/rh-period-excel-export.lib";
-import { RhPeriodExcelExportLibrary } from "./export-libraries/rh-period-excel-export.lib";
+import { RH_EXCEL_MIME, RhPeriodExcelExportLibrary } from "./export-libraries/rh-period-excel-export.lib";
 import { initialSettingsState } from "../../state/settings/settings.reducer";
 import { SettingsActions } from "../../state/settings/settings.actions";
 import { APP_LABELS } from "../../i18n/labels";

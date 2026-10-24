@@ -6,7 +6,6 @@ import { exceptionalCalendarEntries } from "./exceptional-calendar";
 import { TableColumnHeaderComponent } from "../../shared/table-column-header.component";
 import { TableRowsPipe, tableDate } from "../../shared/table-rows.pipe";
 import { isArchivedOperation } from "../../shared/operation-archive";
-import { selectSettingsDirections } from "../../state/settings/settings.selectors";
 import { hasDirectorRights } from "../../shared/user-role-permissions";
 import { CommonModule } from "@angular/common";
 import { Component, Input, OnDestroy, computed, effect, inject, signal } from "@angular/core";
@@ -16,7 +15,7 @@ import { Store } from "@ngrx/store";
 import { APP_LABELS } from "../../i18n/labels";
 import { createEmptyVisa } from "../../shared/visa.models";
 import { ExceptionalActions } from "../../state/exceptional/exceptional.actions";
-import { selectCanCreateOperations, selectCurrentApplicationUser, selectOperationInitiators } from "../../state/settings/settings.selectors";
+import { selectSettingsDirections, selectCanCreateOperations, selectCurrentApplicationUser, selectOperationInitiators } from "../../state/settings/settings.selectors";
 import {
   selectExceptionalError,
   selectVisibleExceptionalOperations,

@@ -1,5 +1,5 @@
 import { TableColumnHeaderComponent } from "../../shared/table-column-header.component";
-import { TableRowsPipe, tableDate } from "../../shared/table-rows.pipe";
+import { TableRowsPipe } from "../../shared/table-rows.pipe";
 import { isUserAssignable } from "../../shared/user-availability";
 import { CommonModule } from "@angular/common";
 import { Component, EventEmitter, OnDestroy, Output, effect, inject } from "@angular/core";

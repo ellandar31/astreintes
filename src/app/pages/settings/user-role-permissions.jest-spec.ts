@@ -1,10 +1,9 @@
-import { selectOperationInitiators } from "../../state/settings/settings.selectors";
 import { TestBed } from "@angular/core/testing";
 import { provideNoopAnimations } from "@angular/platform-browser/animations";
 import { MockStore, provideMockStore } from "@ngrx/store/testing";
 import { selectAuthUser } from "../../state/auth/auth.selectors";
 import { SettingsActions } from "../../state/settings/settings.actions";
-import { selectCanCreateOperations, selectCanManageUsers, selectCanOpenSettings, selectCanEditPlanning, selectCurrentApplicationUser, selectSettingsMessage, selectSettingsUsers } from "../../state/settings/settings.selectors";
+import { selectOperationInitiators, selectCanCreateOperations, selectCanManageUsers, selectCanOpenSettings, selectCanEditPlanning, selectCurrentApplicationUser, selectSettingsMessage, selectSettingsUsers } from "../../state/settings/settings.selectors";
 import { ApplicationUser, UserRole } from "../../types";
 import { UsersSettingsComponent } from "./users-settings.component";
 

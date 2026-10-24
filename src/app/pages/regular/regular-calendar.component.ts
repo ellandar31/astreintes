@@ -3,7 +3,6 @@ import { SharedTableModule } from "../../shared/shared-table.module";
 import { TableColumnHeaderComponent } from "../../shared/table-column-header.component";
 import { TableRowsPipe, tableDate } from "../../shared/table-rows.pipe";
 import { isArchivedOperation } from "../../shared/operation-archive";
-import { selectSettingsDirections } from "../../state/settings/settings.selectors";
 import { CalendarComponent } from "../../shared/calendar/calendar.component";
 import { CalendarEntry } from "../../shared/calendar/calendar.models";
 import { CommonModule } from "@angular/common";
@@ -15,7 +14,7 @@ import { createEmptyVisa } from "../../shared/visa.models";
 import { Store } from "@ngrx/store";
 import { APP_LABELS } from "../../i18n/labels";
 import { RegularActions } from "../../state/regular/regular.actions";
-import { selectCanCreateOperations, selectCanEditPlanning, selectCurrentApplicationUser } from "../../state/settings/settings.selectors";
+import { selectSettingsDirections, selectCanCreateOperations, selectCanEditPlanning, selectCurrentApplicationUser } from "../../state/settings/settings.selectors";
 import {
   selectRegularError,
   selectRegularInterventions,
