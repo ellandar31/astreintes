@@ -125,6 +125,6 @@ describe("NgRx effects using typed domain APIs", () => {
     actions.next(ProfileActions.saveRequested({ user: sessionUser, profile: { displayName: "New name", signatureMode: "name", signatureName: "Agent" } }));
     await result;
     expect(appStore.auth.updateProfile).toHaveBeenCalledWith(sessionUser, { displayName: "New name" });
-    expect(appStore.users.save).toHaveBeenCalledWith(user.uid, { displayName: "New name", signatureMode: "name", signatureName: "Agent", email: user.email });
+    expect(appStore.users.save).toHaveBeenCalledWith(user.uid, { displayName: "New name", signatureMode: "name", signatureName: "Agent", signatureImage: "", signatureDrawing: "", email: user.email });
   });
 });
