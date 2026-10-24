@@ -35,8 +35,10 @@ export class RhPeriodExcelExportLibrary {
   /** Lazy loading keeps the workbook dependency off the application's initial bundle. */
   async buildWorkbook(operations: RhPeriodExportOperations, period: RhExportPeriod, context: RhExportContext): Promise<Uint8Array> {
     if (!isValidRhExportPeriod(period)) throw new Error(periodLabels.invalidPeriod);
-    const { Workbook } = await import("exceljs");
-    const workbook = new Workbook();
+    // The production browser chunk exposes ExcelJS through its CommonJS default export.
+    // Named imports happen to work with the dev/Jest loaders but fail after code splitting.
+    const { default: ExcelJS } = await import("exceljs");
+    const workbook = new ExcelJS.Workbook();
     const calculator = new RhExportCalculationLibrary(context);
     const selected = selectRhPeriodOperations(operations, period);
     for (const type of ["regular", "exceptionalOnCall", "exceptionalWork"] as ExportTemplateId[]) {

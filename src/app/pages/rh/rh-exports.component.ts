@@ -9,7 +9,6 @@ import { TableModule } from "primeng/table";
 import { Store } from "@ngrx/store";
 import { APP_LABELS } from "../../i18n/labels";
 import { SignatureVisa, createEmptyVisa } from "../../shared/visa.models";
-import { exceptionalReadyForRh, regularReadyForRh } from "../../shared/visa-workflow";
 import { ExceptionalActions } from "../../state/exceptional/exceptional.actions";
 import { selectExceptionalOperations } from "../../state/exceptional/exceptional.selectors";
 import { RegularActions } from "../../state/regular/regular.actions";
@@ -141,41 +140,6 @@ export class RhExportsComponent implements OnDestroy {
       this.excelExportLibrary.buildExcelHtml(templateId, operation, this.exportContext()),
     );
     this.exportMessage = this.formatMessage(this.labels.rh.exports.messages.excelGenerated, operation.title);
-  }
-
-  markSentToRh(operation: ExportOperation): void {
-    if (!this.canExport()) return;
-    this.exportMessage = "";
-
-    if (!this.canSendToRh(operation)) {
-      this.exportMessage = this.labels.validation.messages.rhPrerequisites;
-      return;
-    }
-
-    this.dispatchRhSentUpdate(operation, true);
-
-    this.exportMessage = this.formatMessage(this.labels.rh.exports.messages.rhSent, operation.title);
-  }
-
-  /** Check live source objects, not an export snapshot captured before a visa removal. */
-  canSendToRh(operation: ExportOperation): boolean {
-    if (!this.canExport()) return false;
-    if (operation.sourceCollection === "exceptionalOperations") {
-      const source = this.exceptionalOperations.find(item => item.id === operation.sourceId);
-      return Boolean(source && !source.sentToRhAt && exceptionalReadyForRh(source));
-    }
-    const period = this.regularPeriods.find(item => item.id === operation.sourceId);
-    const interventions = this.regularInterventions.filter(item => item.periodId === operation.sourceId);
-    return Boolean(period && !period.sentToRhAt && regularReadyForRh(period, interventions));
-  }
-
-  unmarkSentToRh(operation: ExportOperation): void {
-    if (!this.canExport()) return;
-    this.exportMessage = "";
-
-    this.dispatchRhSentUpdate(operation, false);
-
-    this.exportMessage = this.formatMessage(this.labels.rh.exports.messages.rhUnsent, operation.title);
   }
 
   exportRows(templateId: ExportTemplateId): ExportOperation[] {
@@ -337,15 +301,6 @@ export class RhExportsComponent implements OnDestroy {
     const itemStart = new Date(startValue);
     const itemEnd = new Date(endValue || startValue);
     return itemStart < end && itemEnd >= start;
-  }
-
-  private dispatchRhSentUpdate(operation: ExportOperation, sent: boolean): void {
-    if (operation.sourceCollection === "exceptionalOperations") {
-      this.store.dispatch(ExceptionalActions.operationRhSentUpdateRequested({ operationId: operation.sourceId, sent }));
-      return;
-    }
-
-    this.store.dispatch(RegularActions.periodRhSentUpdateRequested({ periodId: operation.sourceId, sent }));
   }
 
   private formatMessage(template: string, title: string): string {
