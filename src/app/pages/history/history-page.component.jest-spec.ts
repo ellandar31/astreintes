@@ -1,3 +1,4 @@
+import { APP_LABELS } from "../../i18n/labels";
 import { RhExceptionalOperation } from "../../types/rh.models";
 import { TestBed } from "@angular/core/testing";
 import { provideNoopAnimations } from "@angular/platform-browser/animations";
@@ -66,11 +67,14 @@ describe("Sélecteur utilisateur des contrôles RH", () => {
     detail.componentRef.setInput("item", item);
     detail.detectChanges();
     const header = detail.nativeElement.querySelector(".detail-header");
-    expect(header.textContent.match(/Envoy\u00e9 aux RH/g)).toHaveLength(1);
+    const sentLabel = APP_LABELS.common.messages.rhSentAt;
+    expect(header.querySelectorAll(".sent-date")).toHaveLength(1);
+    expect(header.textContent.split(sentLabel)).toHaveLength(2);
+    expect(header.querySelector(".sent-date strong").textContent).toBe(item.sentToRhLabel);
     const treatment = header.querySelector(".treatment-date");
     if (treatedAt) {
       expect(treatment.textContent).toContain("24/10/2026 11:00");
-      expect(treatment.textContent).toContain("Trait\u00e9 le");
+      expect(treatment.textContent).toContain(APP_LABELS.common.messages.rhTreatedAt);
     } else {
       expect(treatment).toBeNull();
     }
