@@ -6,6 +6,13 @@
     </div>
 
     <div class="regular-actions">
+
+      <div class="view-switcher">
+        <span id="regular-view-mode">{{ labels.common.views.label }}</span>
+        <p-selectButton [options]="viewOptions" optionLabel="label" optionValue="value"
+          [ngModel]="viewMode()" (ngModelChange)="setViewMode($event)" [allowEmpty]="false"
+          ariaLabelledBy="regular-view-mode" />
+      </div>
       <label for="regular-team">
         {{ labels.regular.fields.team }}
         <p-select
@@ -38,12 +45,55 @@
     </div>
   </header>
 
-  <app-calendar
-    [(month)]="currentMonth"
-    [entries]="calendarEntries()"
-    [holidays]="publicHolidays"
-    (entryActivated)="openCalendarEntry($event)"
-  />
+  @if (viewMode() === 'calendar') {
+    <app-calendar
+      [(month)]="currentMonth"
+      [entries]="calendarEntries()"
+      [holidays]="publicHolidays"
+      (entryActivated)="openCalendarEntry($event)"
+    />
+  }
+  <div class="regular-table-view" [hidden]="viewMode() !== 'table'">
+    <p-table [value]="tablePeriods() | tableRows: periodTableFields: interventionCounts()"
+      sortField="tableStartDate" [paginator]="true" [rows]="25" [rowsPerPageOptions]="[25, 50, 100]"
+      [tableStyle]="{ 'min-width': '48rem' }">
+      <ng-template pTemplate="header">
+        <tr>
+          <th pSortableColumn="tableUser"><app-table-column-header field="tableUser" [label]="labels.common.fields.user" /></th>
+          <th pSortableColumn="tableStartDate"><app-table-column-header field="tableStartDate" kind="date" [label]="labels.common.table.start" /></th>
+          <th pSortableColumn="tableEndDate"><app-table-column-header field="tableEndDate" kind="date" [label]="labels.common.table.end" /></th>
+          <th pSortableColumn="interventionCount"><app-table-column-header field="interventionCount" kind="numeric" [label]="labels.common.fields.interventions" /></th>
+          <th scope="col">{{ labels.common.table.actions }}</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-period>
+        <tr>
+          <td>{{ period.userName || period.userEmail }}</td>
+          <td>{{ period.startDate | date: 'dd/MM/yyyy HH:mm' }}</td>
+          <td>{{ period.endDate | date: 'dd/MM/yyyy HH:mm' }}</td>
+          <td>{{ period.interventionCount }}</td>
+          <td>
+            <div class="table-actions">
+              @if (canEditPlanning()) {
+                <p-button icon="pi pi-pencil" severity="secondary" [rounded]="true" [text]="true"
+                  (onClick)="openEditPeriodModal(period)" [title]="labels.common.actions.edit" [ariaLabel]="labels.common.actions.edit" />
+                <p-button icon="pi pi-trash" severity="danger" [rounded]="true" [text]="true"
+                  (onClick)="deletePeriod(period.id)" [title]="labels.common.actions.delete" [ariaLabel]="labels.common.actions.delete" />
+              } @else {
+                <p-button icon="pi pi-eye" severity="secondary" [rounded]="true" [text]="true"
+                  (onClick)="openEditPeriodModal(period)" [title]="labels.common.actions.consult" [ariaLabel]="labels.common.actions.consult" />
+              }
+              @if (canManageIntervention(period)) {
+                <p-button icon="pi pi-plus" severity="secondary" [rounded]="true" [text]="true"
+                  (onClick)="openInterventionForPeriod(period)" [title]="labels.regular.actions.addIntervention" [ariaLabel]="labels.regular.actions.addIntervention" />
+              }
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage"><tr><td colspan="5">{{ labels.regular.empty.noActivePeriods }}</td></tr></ng-template>
+    </p-table>
+  </div>
 </section>
 
 @if (isPeriodModalOpen && (editingPeriodId || canCreateOperations())) {

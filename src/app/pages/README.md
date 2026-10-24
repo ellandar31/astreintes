@@ -33,3 +33,16 @@ un tri ou un filtre ne doit jamais modifier la cible d'une édition ou suppressi
 la navigation, les événements et les jours fériés sont partagés ; les équipes,
 les droits, les formulaires et les traitements NgRx restent dans la fonctionnalité.
 Le contrat de réutilisation est documenté dans `shared/calendar/README.md`.
+
+Les deux pages exceptionnelles proposent les vues Tableau et Calendrier dans
+`exceptional-common/`. Le tableau affiche les opérations actives autorisées ; le calendrier conserve
+aussi les opérations envoyées ou traitées, en grisé et sans ouverture.
+`exceptional-calendar.ts` adapte les bornes prévisionnelles (ou réelles pour les
+anciennes données) au calendrier partagé. L'ouverture retrouve l'opération
+courante avant de réutiliser le détail existant. Le tableau reste monté pendant
+la consultation du calendrier pour conserver ses filtres et son tri.
+
+La page régulière propose également les vues Calendrier (par défaut) et Tableau.
+Le tableau liste les astreintes actives de l'équipe sélectionnée, avec les filtres
+partagés et le nombre d'interventions ; les opérations archivées restent visibles
+uniquement dans son calendrier et dans l'historique.

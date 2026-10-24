@@ -19,6 +19,8 @@ export class CalendarComponent {
   readonly month = model(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
   readonly entries = input<readonly CalendarEntry[]>([]);
   readonly holidays = input<readonly CalendarHoliday[]>([]);
+  /** Callers can replace or hide the disabled-entry explanation in other business contexts. */
+  readonly disabledLegend = input<string>(APP_LABELS.calendar.disabledLegend);
   readonly entryActivated = output<CalendarEntry>();
   readonly monthLabel = computed(() => new Intl.DateTimeFormat("fr-FR", { month: "long", year: "numeric" }).format(this.month()));
   readonly days = computed(() => buildCalendarDays(this.month(), this.entries(), this.holidays()));

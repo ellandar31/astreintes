@@ -58,3 +58,25 @@
     grid-template-columns: 1fr;
   }
 }
+
+.view-switcher {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--app-space-sm);
+}
+
+.regular-table-view {
+  min-height: 0;
+  overflow: auto;
+}
+
+.regular-table-view[hidden] {
+  display: none;
+}
+
+.table-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--app-space-md);
+}

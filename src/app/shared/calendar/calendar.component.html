@@ -62,3 +62,10 @@
     }
   </div>
 </div>
+
+@if (disabledLegend()) {
+  <p class="calendar-legend">
+    <span class="legend-swatch" aria-hidden="true"></span>
+    <span>{{ disabledLegend() }}</span>
+  </p>
+}

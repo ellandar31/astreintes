@@ -1,5 +1,6 @@
 export const APP_LABELS = {
   calendar: {
+    disabledLegend: "Op\u00e9rations envoy\u00e9es ou trait\u00e9es",
     navigation: "Navigation mensuelle",
     previousMonth: "Mois pr\u00e9c\u00e9dent",
     nextMonth: "Mois suivant",
@@ -36,6 +37,7 @@ export const APP_LABELS = {
     },
   },
   common: {
+    views: { label: "Affichage", table: "Tableau", calendar: "Calendrier" },
     actions: {
       add: "Ajouter",
       cancelRhSend: "Annuler envoi RH",
@@ -220,6 +222,7 @@ export const APP_LABELS = {
       deletePeriodConfirm: "Supprimer cette période d'astreinte ?",
     },
     empty: {
+      noActivePeriods: "Aucune astreinte active pour cette \u00e9quipe.",
       noAssociatedIntervention: "Aucune intervention associée.",
     },
     errors: {

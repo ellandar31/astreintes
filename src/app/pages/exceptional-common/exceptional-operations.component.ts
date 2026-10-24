@@ -1,3 +1,8 @@
+import { FormsModule } from "@angular/forms";
+import { SelectButtonModule } from "primeng/selectbutton";
+import { CalendarComponent } from "../../shared/calendar/calendar.component";
+import { CalendarEntry } from "../../shared/calendar/calendar.models";
+import { exceptionalCalendarEntries } from "./exceptional-calendar";
 import { TableColumnHeaderComponent } from "../../shared/table-column-header.component";
 import { TableRowsPipe, tableDate } from "../../shared/table-rows.pipe";
 import { isArchivedOperation } from "../../shared/operation-archive";
@@ -43,7 +48,7 @@ import { OperationModalComponent } from "./operation-modal.component";
 @Component({
   selector: "app-exceptional-operations",
   standalone: true,
-  imports: [TableColumnHeaderComponent, TableRowsPipe, ButtonModule, CommonModule, InterventionModalComponent, OperationModalComponent, TableModule],
+  imports: [FormsModule, SelectButtonModule, CalendarComponent, TableColumnHeaderComponent, TableRowsPipe, ButtonModule, CommonModule, InterventionModalComponent, OperationModalComponent, TableModule],
   templateUrl: "./exceptional-operations.component.html",
   styleUrl: "./exceptional-operations.component.css",
 })
@@ -54,6 +59,28 @@ export class ExceptionalOperationsComponent implements OnDestroy {
   @Input({ required: true }) set operationType(value: ExceptionalOperationType) { this.family.set(value); }
   get operationType(): ExceptionalOperationType { return this.family(); }
   readonly labels = APP_LABELS;
+  readonly viewMode = signal<"table" | "calendar">("table");
+  readonly viewOptions = [
+    { label: APP_LABELS.common.views.table, value: "table" },
+    { label: APP_LABELS.common.views.calendar, value: "calendar" },
+  ];
+  currentMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+  // Calendar context includes archived operations; the table and editing collection remain active-only.
+  readonly calendarEntries = computed(() => exceptionalCalendarEntries(this.exceptionalOperations()
+    .filter(operation => operation.type === this.family())
+    .map(operation => this.normalizeOperation(operation))));
+
+  setViewMode(value: unknown): void {
+    if (value === "table" || value === "calendar") this.viewMode.set(value);
+  }
+
+  /** Resolve against the current visible family, including live permission/archive changes. */
+  openCalendarEntry(entry: CalendarEntry): void {
+    const operation = this.exceptionalOperations().find(operation => operation.id === entry.id
+      && operation.type === this.family() && !isArchivedOperation(operation));
+    if (operation) this.openEditModal(this.normalizeOperation(operation));
+  }
+
   readonly trackOperation = (_index: number, operation: ExceptionalOperation): string => operation.id;
 
   modalMode: ModalMode | null = null;

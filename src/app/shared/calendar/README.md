@@ -17,6 +17,8 @@ contrats `CalendarEntry` et `CalendarHoliday` depuis `calendar.models`.
 - `entries` : événements identifiés par `id`, avec `label`, `startDate`, `endDate`,
   `disabled` optionnel et `colorIndex` optionnel (palette de six couleurs du thème).
 - `holidays` : dates calendaires `YYYY-MM-DD` et libellés à mettre en évidence.
+- `disabledLegend` : explication des événements grisés, personnalisable ou masquée
+  avec une chaîne vide pour un autre contexte métier.
 - `entryActivated` : événement ouvert par double-clic ou au clavier. Un événement
   désactivé reste grisé et ne produit aucune activation.
 

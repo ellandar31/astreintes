@@ -1,3 +1,7 @@
+import { SelectButtonModule } from "primeng/selectbutton";
+import { TableModule } from "primeng/table";
+import { TableColumnHeaderComponent } from "../../shared/table-column-header.component";
+import { TableRowsPipe, tableDate } from "../../shared/table-rows.pipe";
 import { isArchivedOperation } from "../../shared/operation-archive";
 import { selectSettingsDirections } from "../../state/settings/settings.selectors";
 import { CalendarComponent } from "../../shared/calendar/calendar.component";
@@ -43,12 +47,35 @@ import { RegularPeriodModalComponent } from "./regular-period-modal.component";
 @Component({
   selector: "app-regular-calendar",
   standalone: true,
-  imports: [CalendarComponent, ButtonModule, CommonModule, FormsModule, RegularInterventionModalComponent, RegularPeriodModalComponent, SelectModule],
+  imports: [SelectButtonModule, TableModule, TableColumnHeaderComponent, TableRowsPipe, CalendarComponent, ButtonModule, CommonModule, FormsModule, RegularInterventionModalComponent, RegularPeriodModalComponent, SelectModule],
   templateUrl: "./regular-calendar.component.html",
   styleUrl: "./regular-calendar.component.css",
 })
 export class RegularCalendarComponent implements OnDestroy {
   readonly labels = APP_LABELS;
+  readonly viewMode = signal<"table" | "calendar">("calendar");
+  readonly viewOptions = [
+    { label: APP_LABELS.common.views.table, value: "table" },
+    { label: APP_LABELS.common.views.calendar, value: "calendar" },
+  ];
+  /** The calendar retains archived context; the table lists active periods for the selected team. */
+  readonly tablePeriods = computed(() => this.selectedTeamPeriods.filter(period => !isArchivedOperation(period)));
+  readonly interventionCounts = computed(() => {
+    const counts = new Map<string, number>();
+    for (const intervention of this.regularInterventions()) counts.set(intervention.periodId, (counts.get(intervention.periodId) ?? 0) + 1);
+    return counts;
+  });
+  readonly periodTableFields = {
+    tableUser: (row: RegularOnCallPeriod) => row.userName || row.userEmail,
+    tableStartDate: (row: RegularOnCallPeriod) => tableDate(row.startDate),
+    tableEndDate: (row: RegularOnCallPeriod) => tableDate(row.endDate),
+    interventionCount: (row: RegularOnCallPeriod) => this.interventionCounts().get(row.id) ?? 0,
+  };
+
+  setViewMode(value: unknown): void {
+    if (value === "table" || value === "calendar") this.viewMode.set(value);
+  }
+
 
   editingInterventionId: string | null = null;
   interventionPeriodId: string | null = null;
@@ -229,6 +256,13 @@ export class RegularCalendarComponent implements OnDestroy {
       return;
     }
 
+    this.openInterventionForPeriod(currentPeriod);
+  }
+
+  /** Both table and modal actions resolve the saved period before applying the same ownership rules. */
+  openInterventionForPeriod(period: RegularOnCallPeriod): void {
+    const currentPeriod = this.periods.find(current => current.id === period.id);
+    if (!currentPeriod) return;
     if (!this.canManageIntervention(currentPeriod)) return;
     if (this.isPeriodArchived(currentPeriod)) {
       this.interventionError = this.labels.regular.errors.lockedPeriod;
@@ -374,14 +408,14 @@ export class RegularCalendarComponent implements OnDestroy {
   }
 
   /** Supprime l'astreinte et ses interventions rattachées pour éviter des interventions orphelines. */
-  deletePeriod(): void {
+  deletePeriod(periodId: string | null = this.editingPeriodId): void {
     if (!this.canEditPlanning()) return;
-    if (!this.editingPeriodId) {
+    if (!periodId) {
       return;
     }
 
-    const currentPeriod = this.periods.find((period) => period.id === this.editingPeriodId);
-    if (this.isPeriodArchived(currentPeriod)) {
+    const currentPeriod = this.periods.find((period) => period.id === periodId);
+    if (!currentPeriod || this.isPeriodArchived(currentPeriod)) {
       return;
     }
 
@@ -393,11 +427,11 @@ export class RegularCalendarComponent implements OnDestroy {
 
     this.store.dispatch(RegularActions.periodDeleteRequested({
       interventions: this.interventions
-        .filter((intervention) => intervention.periodId === this.editingPeriodId)
+        .filter((intervention) => intervention.periodId === periodId)
         .map((intervention) => ({ id: intervention.id, periodId: intervention.periodId })),
-      periodId: this.editingPeriodId,
+      periodId,
     }));
-    this.closePeriodModal();
+    if (this.editingPeriodId === periodId) this.closePeriodModal();
   }
 
   userLabel(user: RegularUser): string {

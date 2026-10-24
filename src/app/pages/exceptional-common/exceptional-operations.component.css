@@ -39,7 +39,6 @@
 
 .create-actions {
   justify-content: flex-end;
-  margin-left: auto;
 }
 
 :host ::ng-deep .exceptional-table .p-datatable-thead > tr > th {
@@ -56,6 +55,14 @@
   text-align: center;
 }
 
+.view-switcher {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--app-space-sm);
+  margin-inline-start: auto;
+}
+
 @media (max-width: 47.5rem) {
   .exceptional-toolbar,
   .create-actions {
@@ -64,7 +71,12 @@
     grid-template-columns: 1fr;
   }
 
-  .create-actions {
-    margin-left: 0;
+  .view-switcher {
+    margin-inline-start: 0;
   }
+}
+
+
+.operation-table-view[hidden] {
+  display: none;
 }

@@ -175,6 +175,65 @@ describe("Separate exceptional navigation", () => {
     expect(fixture.nativeElement.querySelector("dialog")).not.toBeNull();
   });
 
+  it.each(["exceptionalOnCall", "exceptionalWork"] as const)("switches %s between table and shared calendar without losing table filters", async tab => {
+    const fixture = createShell();
+    fixture.componentInstance.selectTab(tab);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const view = fixture.debugElement.query(By.directive(ExceptionalOperationsComponent)).componentInstance as ExceptionalOperationsComponent;
+    view.currentMonth = new Date(2026, 9, 1);
+    expect(view.viewMode()).toBe("table");
+    expect(fixture.nativeElement.querySelector("app-calendar")).toBeNull();
+    const table = fixture.debugElement.query(By.directive(Table)).componentInstance as Table;
+    table.filters = { title: { value: "item", matchMode: "contains" } };
+    const buttons = fixture.nativeElement.querySelectorAll(".view-switcher p-togglebutton");
+    expect(buttons).toHaveLength(2);
+    buttons[1].click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(view.viewMode()).toBe("calendar");
+    expect(fixture.nativeElement.querySelector(".operation-table-view").hidden).toBe(true);
+    const expected = tab === "exceptionalOnCall" ? onCall : work;
+    const other = tab === "exceptionalOnCall" ? work : onCall;
+    const calendar = fixture.nativeElement.querySelector("app-calendar");
+    expect(calendar.textContent).toContain(expected.title);
+    expect(calendar.textContent).not.toContain(other.title);
+    expect(view.calendarEntries()).toHaveLength(1);
+    const stale = view.calendarEntries()[0];
+    calendar.querySelector(".calendar-entry").dispatchEvent(new MouseEvent("dblclick", { bubbles: true }));
+    fixture.detectChanges();
+    expect(view.selectedOperation?.id).toBe(expected.id);
+    expect(view.modalMode).toBe("edit");
+    view.closeModal();
+    const store = TestBed.inject(MockStore);
+    store.overrideSelector(selectVisibleExceptionalOperations, [
+      { ...expected, sentToRhAt: "2026-10-24T10:00" },
+      { ...expected, id: `${expected.id}:treated`, treatedAt: "2026-10-24T11:00" }, other,
+    ]);
+    store.refreshState();
+    fixture.detectChanges();
+    expect(view.calendarEntries()).toHaveLength(2);
+    expect(view.calendarEntries().every(entry => entry.disabled)).toBe(true);
+    expect(view.filteredOperations).toEqual([]);
+    const archivedBars = Array.from(calendar.querySelectorAll(".calendar-entry")) as HTMLElement[];
+    expect(archivedBars.length).toBeGreaterThan(0);
+    for (const bar of archivedBars) {
+      expect(bar.classList.contains("entry-disabled")).toBe(true);
+      expect(bar.getAttribute("aria-disabled")).toBe("true");
+      bar.dispatchEvent(new MouseEvent("dblclick", { bubbles: true }));
+    }
+    expect(view.modalMode).toBeNull();
+    view.openCalendarEntry(stale);
+    expect(view.modalMode).toBeNull();
+    buttons[0].click();
+    fixture.detectChanges();
+    expect(view.viewMode()).toBe("table");
+    expect(fixture.nativeElement.querySelector(".operation-table-view").hidden).toBe(false);
+    expect(fixture.debugElement.query(By.directive(Table)).componentInstance).toBe(table);
+    expect(table.filters["title"]).toEqual({ value: "item", matchMode: "contains" });
+  });
+
   it("resets filters and modal context on family switches and reattaches the NgRx watch", () => {
     const fixture = createShell();
     const dispatch = jest.spyOn(TestBed.inject(MockStore), "dispatch");

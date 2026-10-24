@@ -1,7 +1,7 @@
 :host {
   display: grid;
   gap: var(--app-space-xl);
-  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr) auto;
   min-height: 0;
 }
 
@@ -141,3 +141,19 @@
 }
 
 
+
+.calendar-legend {
+  display: flex;
+  align-items: center;
+  gap: var(--app-space-sm);
+  color: var(--app-color-subtle);
+  font-size: var(--app-font-sm);
+  margin: 0;
+}
+
+.legend-swatch {
+  background: var(--app-color-border);
+  border-radius: var(--app-radius-pill);
+  flex: 0 0 1.75rem;
+  height: 0.75rem;
+}

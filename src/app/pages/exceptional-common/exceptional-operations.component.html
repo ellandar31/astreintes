@@ -5,6 +5,13 @@
       <h2 id="exceptional-title">{{ operationType === 'astreinte' ? labels.app.tabs.exceptionalOnCall : labels.app.tabs.exceptionalWork }}</h2>
     </div>
 
+    <div class="view-switcher">
+      <span id="exceptional-view-mode">{{ labels.common.views.label }}</span>
+      <p-selectButton [options]="viewOptions" optionLabel="label" optionValue="value"
+        [ngModel]="viewMode()" (ngModelChange)="setViewMode($event)" [allowEmpty]="false"
+        ariaLabelledBy="exceptional-view-mode" />
+    </div>
+
     @if (canCreateOperations()) {
       <div class="create-actions">
         <p-button
@@ -16,75 +23,82 @@
     }
   </header>
 
-  <p-table sortField="startDate" [value]="(filteredOperations) | tableRows: operationTableFields" [rowTrackBy]="trackOperation" styleClass="exceptional-table" [tableStyle]="{ 'min-width': '50rem' }">
-    <ng-template pTemplate="header">
-      <tr>
-        <th scope="col" pSortableColumn="initiatorName"><app-table-column-header field="initiatorName" [label]="labels.exceptional.fields.initiatorFilter" kind="text" /></th>
-        <th scope="col" pSortableColumn="title"><app-table-column-header field="title" [label]="labels.exceptional.fields.titleFilter" kind="text" /></th>
-        <th scope="col" pSortableColumn="tableStartDate"><app-table-column-header field="tableStartDate" [label]="labels.exceptional.fields.startDateFilter" kind="date" /></th>
-        <th scope="col">{{ labels.common.table.actions }}</th>
-      </tr>
-    </ng-template>
+  <!-- Keep the table instance so its header filters and sorting survive view switches. -->
+  <div class="operation-table-view" [hidden]="viewMode() !== 'table'">
+    <p-table sortField="startDate" [value]="(filteredOperations) | tableRows: operationTableFields" [rowTrackBy]="trackOperation" styleClass="exceptional-table" [tableStyle]="{ 'min-width': '50rem' }">
+      <ng-template pTemplate="header">
+        <tr>
+          <th scope="col" pSortableColumn="initiatorName"><app-table-column-header field="initiatorName" [label]="labels.exceptional.fields.initiatorFilter" kind="text" /></th>
+          <th scope="col" pSortableColumn="title"><app-table-column-header field="title" [label]="labels.exceptional.fields.titleFilter" kind="text" /></th>
+          <th scope="col" pSortableColumn="tableStartDate"><app-table-column-header field="tableStartDate" [label]="labels.exceptional.fields.startDateFilter" kind="date" /></th>
+          <th scope="col">{{ labels.common.table.actions }}</th>
+        </tr>
+      </ng-template>
 
-    <ng-template pTemplate="body" let-operation>
-      <tr>
-        <td>{{ operation.initiatorName }}</td>
-        <td><strong>{{ operation.title }}</strong></td>
-        <td>{{ formatDate(operation.startDate) }}</td>
-        <td>
-          <div class="table-actions">
-            @if (isSentToRh(operation) || !canEditOperation(operation)) {
-              <p-button
-                icon="pi pi-eye"
-                severity="secondary"
-                [rounded]="true"
-                [text]="true"
-                (onClick)="openEditModal(operation)"
-                [title]="labels.common.actions.consult"
-                [attr.aria-label]="labels.common.actions.consult"
-              ></p-button>
-            } @else {
-              <p-button
-                icon="pi pi-pencil"
-                severity="secondary"
-                [rounded]="true"
-                [text]="true"
-                (onClick)="openEditModal(operation)"
-                [title]="labels.common.actions.edit"
-                [attr.aria-label]="labels.common.actions.edit"
-              ></p-button>
-              <p-button
-                icon="pi pi-trash"
-                severity="danger"
-                [rounded]="true"
-                [text]="true"
-                (onClick)="deleteOperation(operation)"
-                [title]="labels.common.actions.delete"
-                [attr.aria-label]="labels.common.actions.delete"
-              ></p-button>
-              @if (operationType === 'astreinte') {
+      <ng-template pTemplate="body" let-operation>
+        <tr>
+          <td>{{ operation.initiatorName }}</td>
+          <td><strong>{{ operation.title }}</strong></td>
+          <td>{{ formatDate(operation.startDate) }}</td>
+          <td>
+            <div class="table-actions">
+              @if (isSentToRh(operation) || !canEditOperation(operation)) {
                 <p-button
-                  icon="pi pi-plus"
+                  icon="pi pi-eye"
                   severity="secondary"
                   [rounded]="true"
                   [text]="true"
-                  (onClick)="openInterventionModal(operation)"
-                  [title]="labels.exceptional.actions.addIntervention"
-                  [attr.aria-label]="labels.exceptional.actions.addIntervention"
+                  (onClick)="openEditModal(operation)"
+                  [title]="labels.common.actions.consult"
+                  [attr.aria-label]="labels.common.actions.consult"
                 ></p-button>
+              } @else {
+                <p-button
+                  icon="pi pi-pencil"
+                  severity="secondary"
+                  [rounded]="true"
+                  [text]="true"
+                  (onClick)="openEditModal(operation)"
+                  [title]="labels.common.actions.edit"
+                  [attr.aria-label]="labels.common.actions.edit"
+                ></p-button>
+                <p-button
+                  icon="pi pi-trash"
+                  severity="danger"
+                  [rounded]="true"
+                  [text]="true"
+                  (onClick)="deleteOperation(operation)"
+                  [title]="labels.common.actions.delete"
+                  [attr.aria-label]="labels.common.actions.delete"
+                ></p-button>
+                @if (operationType === 'astreinte') {
+                  <p-button
+                    icon="pi pi-plus"
+                    severity="secondary"
+                    [rounded]="true"
+                    [text]="true"
+                    (onClick)="openInterventionModal(operation)"
+                    [title]="labels.exceptional.actions.addIntervention"
+                    [attr.aria-label]="labels.exceptional.actions.addIntervention"
+                  ></p-button>
+                }
               }
-            }
-          </div>
-        </td>
-      </tr>
-    </ng-template>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
 
-    <ng-template pTemplate="emptymessage">
-      <tr>
-        <td colspan="4" class="empty-row">{{ operationType === 'astreinte' ? labels.exceptional.empty.noOnCall : labels.exceptional.empty.noWork }}</td>
-      </tr>
-    </ng-template>
-  </p-table>
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="4" class="empty-row">{{ operationType === 'astreinte' ? labels.exceptional.empty.noOnCall : labels.exceptional.empty.noWork }}</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+  @if (viewMode() === 'calendar') {
+    <app-calendar [(month)]="currentMonth" [entries]="calendarEntries()"
+      (entryActivated)="openCalendarEntry($event)" />
+  }
 </section>
 
 @if (modalMode === "edit" || ((modalMode === "create-astreinte" || modalMode === "create-travaux") && canCreateOperations())) {
