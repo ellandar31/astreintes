@@ -5,7 +5,9 @@
         <p class="control-type">{{ item.type }}</p>
         <p class="control-period">{{ item.period }}</p>
       </div>
-      <p class="sent-date">{{ labels.common.messages.rhSentAt }} <strong>{{ item.sentToRhLabel }}</strong></p>
+      <p class="sent-date">{{ labels.common.messages.rhSentAt }} <strong>{{ item.sentToRhLabel }}</strong>
+        <span>{{ item.treatedAt ? labels.rh.controls.treatedStatus : labels.rh.controls.sentStatus }}</span>
+      </p>
     </header>
 
     <p-table [value]="item.lines" styleClass="rh-table detail-table" [tableStyle]="{ 'min-width': '73.75rem' }">

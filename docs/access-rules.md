@@ -384,3 +384,22 @@ une sélection historique reste affichée et désactivée. Les contrôles SQL re
 aussi une affectation directe ou le déplacement vers une autre opération.
 Les affectations existantes sont conservées et peuvent être corrigées sans
 réaffecter l’utilisateur.
+
+Dans la page Validation, un directeur désigné initiateur d’une opération accède
+également au menu de validation des initiateurs. Ce menu présente ses propres
+astreintes et travaux exceptionnels ; la file de validation directeur reste disponible.
+
+### Historique et opérations actives
+
+L’onglet **Historique** reprend la consultation par utilisateur et par mois.
+Les opérations ayant `sent_to_rh_at` ou `treated_at` renseigné sont retirées des
+plannings, des listes d’opérations exceptionnelles et des validations intervenant
+et initiateur. Les opérations envoyées restent dans la validation directeur pour
+permettre l’annulation de l’envoi RH ; les opérations traitées y sont retirées. Une
+consultation ouverte se ferme lorsque l’opération quitte la file correspondante.
+Leurs données restent disponibles pour la consultation historique et pour les
+exports conservés dans RH.
+
+Les administrateurs, directeurs et RH peuvent annuler un envoi depuis l’historique
+tant que l’opération n’est pas traitée. Elle revient alors dans les écrans actifs.
+Les périmètres de consultation par rôle et par utilisateur restent applicables.

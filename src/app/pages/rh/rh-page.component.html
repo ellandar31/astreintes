@@ -14,9 +14,7 @@
   </p-card>
 
   <div class="rh-content">
-    @if (activeSection === "controls") {
-      <app-rh-controls [currentUser]="user"></app-rh-controls>
-    } @else if (activeSection === "exports" && canExport()) {
+    @if (activeSection === "exports" && canExport()) {
       <app-rh-exports></app-rh-exports>
     } @else if (activeSection === "periodExports" && canExport()) {
       <app-rh-exports [periodMode]="true"></app-rh-exports>

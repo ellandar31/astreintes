@@ -1,3 +1,4 @@
+import { isArchivedOperation } from "../../shared/operation-archive";
 import { selectSettingsDirections } from "../../state/settings/settings.selectors";
 import { TruncatedTextComponent } from "../../shared/truncated-text.component";
 import { CommonModule } from "@angular/common";
@@ -114,7 +115,9 @@ export class RegularCalendarComponent implements OnDestroy {
     });
 
     effect(() => {
-      this.periods = this.regularPeriods();
+      this.periods = this.regularPeriods().filter(period => !isArchivedOperation(period));
+      if (this.editingPeriodId && !this.periods.some(period => period.id === this.editingPeriodId)) this.closePeriodModal();
+      if (this.interventionPeriodId && !this.periods.some(period => period.id === this.interventionPeriodId)) this.closeInterventionModal();
     });
 
     effect(() => {

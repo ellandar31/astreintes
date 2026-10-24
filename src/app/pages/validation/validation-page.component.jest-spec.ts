@@ -25,6 +25,108 @@ function createPage() {
 
 
 describe("Validation consultation", () => {
+  it.each(["regular", "astreinte", "travaux"] as const)("keeps a sent %s in director validation until treatment", family => {
+    const store = TestBed.inject(MockStore);
+    store.overrideSelector(selectSettingsUsers, [{ id: "7", uid: "auth-id", displayName: "Agent", email: period.userEmail, role: 3 }]);
+    const fixture = createPage();
+    const component = fixture.componentInstance;
+    const sentToRhAt = "2026-10-24T10:00";
+    const operation: ExceptionalOperation = {
+      id: `${family}:91`, type: family === "travaux" ? "travaux" : "astreinte", title: "Sent operation",
+      initiatorUid: "7", initiatorName: "Agent", operationManagerUid: "7", operationManagerName: "Agent",
+      startDate: period.startDate, forecastEndDate: period.endDate, actualStartDate: "", actualEndDate: "",
+      plannedUsers: [], actualUsers: [], interventions: [], sentToRhAt,
+      visas: { initiatorGlobal: createEmptyVisa(), directorGlobal: createEmptyVisa() },
+    };
+    if (family === "regular") store.overrideSelector(selectRegularPeriods, [{ ...period, sentToRhAt }]);
+    else {
+      store.overrideSelector(selectRegularPeriods, []);
+      store.overrideSelector(selectExceptionalOperations, [operation]);
+    }
+    store.refreshState();
+    fixture.detectChanges();
+    expect(component.directorVisaItems).toHaveLength(1);
+    expect(component.intervenantVisaItems).toEqual([]);
+    expect(component.initiatorVisaItems).toEqual([]);
+    const item = component.directorVisaItems[0];
+    component.activeSectionId = "director";
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain(component.labels.common.actions.cancelRhSend);
+    const dispatch = jest.spyOn(store, "dispatch").mockClear();
+    component.updateRhSend(item, false);
+    expect(dispatch).toHaveBeenCalledWith(expect.objectContaining({ sent: false }));
+    const treatedAt = "2026-10-24T11:00";
+    if (family === "regular") store.overrideSelector(selectRegularPeriods, [{ ...period, sentToRhAt, treatedAt }]);
+    else store.overrideSelector(selectExceptionalOperations, [{ ...operation, treatedAt }]);
+    store.refreshState();
+    fixture.detectChanges();
+    expect(component.directorVisaItems).toEqual([]);
+    dispatch.mockClear();
+    component.updateRhSend(item, false);
+    expect(dispatch).not.toHaveBeenCalled();
+  });
+
+  it("removes archived periods from validation and closes an open consultation", () => {
+    const fixture = createPage();
+    const component = fixture.componentInstance;
+    component.openItem(component.validationItems[0]);
+    const store = TestBed.inject(MockStore);
+    store.overrideSelector(selectRegularPeriods, [
+      { ...period, sentToRhAt: "2026-10-24T10:00" },
+      { ...period, id: "99", treatedAt: "2026-10-24T11:00" },
+    ]);
+    store.refreshState();
+    fixture.detectChanges();
+    expect(component.validationItems).toEqual([]);
+    expect(component.selectedItem).toBeNull();
+  });
+  it("defaults to the profile direction after asynchronous loading and preserves All on refresh", () => {
+    const store = TestBed.inject(MockStore);
+    store.overrideSelector(selectSettingsUsers, []);
+    store.overrideSelector(selectSettingsDirections, []);
+    const fixture = createPage();
+    const component = fixture.componentInstance;
+    store.overrideSelector(selectSettingsUsers, [{ id: "7", uid: "auth-id", displayName: "Agent", email: period.userEmail, role: 3, directionId: "2" }]);
+    store.refreshState();
+    fixture.detectChanges();
+    expect(component.selectedDirectionId).toBe("");
+    store.overrideSelector(selectSettingsDirections, [{ id: "2", name: "Services" }]);
+    store.refreshState();
+    fixture.detectChanges();
+    expect(component.selectedDirectionId).toBe("2");
+    component.selectedDirectionId = "";
+    store.refreshState();
+    fixture.detectChanges();
+    expect(component.selectedDirectionId).toBe("");
+  });
+
+  it.each(["astreinte", "travaux"] as const)("opens initiator validation for a director's own %s", type => {
+    const fixture = createPage();
+    const component = fixture.componentInstance;
+    component.profile = { ...component.profile!, role: 3 };
+    const own: ExceptionalOperation = {
+      id: `${type}:91`, type, title: "Own operation", initiatorUid: "7", initiatorName: "Agent",
+      operationManagerUid: "7", operationManagerName: "Agent", startDate: period.startDate,
+      forecastEndDate: period.endDate, actualStartDate: "", actualEndDate: "",
+      plannedUsers: [], actualUsers: [], interventions: [],
+      visas: { initiatorGlobal: createEmptyVisa(), directorGlobal: createEmptyVisa() },
+    };
+    component.exceptionalOperations = [{ ...own, id: `${type}:92`, initiatorUid: "9", initiatorName: "Other" }];
+    expect(component.canViewInitiatorSection).toBe(false);
+    component.exceptionalOperations.push(own);
+    fixture.detectChanges();
+    expect(component.validationSections.map(section => section.id)).toContain("initiator");
+    expect(component.initiatorVisaItems.map(item => item.payload.id)).toEqual([own.id]);
+    expect(component.canSignVisa(component.initiatorVisaItems[0])).toBe(true);
+    const menu = Array.from(fixture.nativeElement.querySelectorAll(".validation-submenu-button")) as HTMLButtonElement[];
+    const initiatorButton = menu.find(button => button.textContent?.includes(component.labels.validation.sections.initiator));
+    expect(initiatorButton).toBeDefined();
+    initiatorButton!.click();
+    fixture.detectChanges();
+    expect(component.activeValidationSection.id).toBe("initiator");
+    expect(component.activeValidationSection.items).toHaveLength(1);
+  });
+
   it.each([
     ["astreinte", "Astreinte exceptionnelle"],
     ["travaux", "Travail supplémentaire"],
@@ -172,7 +274,7 @@ describe("Validation consultation", () => {
     store.refreshState();
     fixture.detectChanges();
     const component = fixture.componentInstance;
-    component.openItem(component.validationItems.find(item => item.payload.id === operation.id)!);
+    component.openItem(component.validationItems.find(item => item.payload.id === operation.id && item.kind === "exceptional-operation-agent")!);
     const signed = { ...visa, signed: true, signedByUid: "auth-id", signedByName: "Agent" };
     const updated = { ...operation, plannedUsers: [{ ...operation.plannedUsers[0], visa: signed }] };
     store.overrideSelector(selectExceptionalOperations, [updated]);

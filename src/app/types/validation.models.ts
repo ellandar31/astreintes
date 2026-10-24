@@ -14,6 +14,7 @@ export type ValidationItemKind =
   | "exceptional-operation-director";
 
 export interface AppUser extends SignatureProfile {
+  directionId?: string | null;
   id: string;
   uid?: string;
   displayName: string;

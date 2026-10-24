@@ -10,6 +10,9 @@ export interface RhControlDetailLine {
 }
 
 export interface RhControlDetailItem {
+  sourceId?: string;
+  sourceCollection?: "regularOnCallPeriods" | "exceptionalOperations";
+  treatedAt?: string;
   id: string;
   type: string;
   title: string;

@@ -1,3 +1,4 @@
+import { isArchivedOperation } from "../../shared/operation-archive";
 import { selectSettingsDirections } from "../../state/settings/settings.selectors";
 import { TruncatedTextComponent } from "../../shared/truncated-text.component";
 import { hasDirectorRights } from "../../shared/user-role-permissions";
@@ -120,6 +121,7 @@ export class ExceptionalOperationsComponent implements OnDestroy {
 
     effect(() => {
       this.operations = this.exceptionalOperations()
+        .filter(operation => !isArchivedOperation(operation))
         .map((operation) => this.normalizeOperation(operation))
         .sort((first, second) => (first.startDate || "").localeCompare(second.startDate || ""));
 

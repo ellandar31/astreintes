@@ -64,6 +64,8 @@
       <app-validation-page [user]="user()"></app-validation-page>
     } @else if (activeTab === "rh") {
       <app-rh-page [user]="user()"></app-rh-page>
+    } @else if (activeTab === "history") {
+      <app-rh-controls [currentUser]="user()"></app-rh-controls>
     }
 
     @if (modalView === "profile") {

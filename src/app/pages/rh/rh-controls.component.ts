@@ -1,4 +1,5 @@
 import { hasDirectorRights } from "../../shared/user-role-permissions";
+import { isArchivedOperation } from "../../shared/operation-archive";
 import { FormsModule } from "@angular/forms";
 import { SelectModule } from "primeng/select";
 import { CommonModule } from "@angular/common";
@@ -6,14 +7,16 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnChanges
 import { ButtonModule } from "primeng/button";
 import { CardModule } from "primeng/card";
 import { TableModule } from "primeng/table";
+import { MessageModule } from "primeng/message";
 import { Store } from "@ngrx/store";
 import { APP_LABELS } from "../../i18n/labels";
 import { SignatureVisa, createEmptyVisa } from "../../shared/visa.models";
 import { ExceptionalActions } from "../../state/exceptional/exceptional.actions";
-import { selectExceptionalOperations } from "../../state/exceptional/exceptional.selectors";
+import { selectExceptionalOperations, selectExceptionalError } from "../../state/exceptional/exceptional.selectors";
 import { RegularActions } from "../../state/regular/regular.actions";
 import {
   selectRegularInterventions,
+  selectRegularError,
   selectRegularPeriods,
   selectRegularPublicHolidays,
 } from "../../state/regular/regular.selectors";
@@ -77,7 +80,7 @@ interface RhMonthControlSection {
 @Component({
   selector: "app-rh-controls",
   standalone: true,
-  imports: [ButtonModule, CardModule, CommonModule, FormsModule, SelectModule, RhControlDetailModalComponent, TableModule],
+  imports: [ButtonModule, CardModule, CommonModule, FormsModule, SelectModule, RhControlDetailModalComponent, TableModule, MessageModule],
   templateUrl: "./rh-controls.component.html",
   styleUrl: "./rh-controls.component.css",
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -110,6 +113,8 @@ export class RhControlsComponent implements OnChanges, OnDestroy, OnInit {
   ];
 
   private readonly store = inject(Store);
+  readonly regularError = this.store.selectSignal(selectRegularError);
+  readonly exceptionalError = this.store.selectSignal(selectExceptionalError);
   private readonly changeDetector = inject(ChangeDetectorRef);
   private readonly exceptionalOperationsSignal = this.store.selectSignal(selectExceptionalOperations);
   private readonly regularInterventionsSignal = this.store.selectSignal(selectRegularInterventions);
@@ -253,6 +258,24 @@ export class RhControlsComponent implements OnChanges, OnDestroy, OnInit {
     this.selectedDetailItem = null;
   }
 
+  /** Returning an operation to validation is restricted to its existing RH management roles. */
+  canCancelRhSend(item: RhControlDetailItem): boolean {
+    if (!(this.currentProfile?.role === 0 || hasDirectorRights(this.currentProfile?.role))) return false;
+    const source = item.sourceCollection === "regularOnCallPeriods"
+      ? this.regularPeriods.find(period => period.id === item.sourceId)
+      : this.exceptionalOperations.find(operation => operation.id === item.sourceId);
+    return Boolean(source?.sentToRhAt && !source.treatedAt);
+  }
+
+  cancelRhSend(item: RhControlDetailItem): void {
+    if (!item.sourceId || !this.canCancelRhSend(item)) return;
+    if (item.sourceCollection === "regularOnCallPeriods") {
+      this.store.dispatch(RegularActions.periodRhSentUpdateRequested({ periodId: item.sourceId, sent: false }));
+    } else {
+      this.store.dispatch(ExceptionalActions.operationRhSentUpdateRequested({ operationId: item.sourceId, sent: false }));
+    }
+  }
+
   /** Affiche le nom humain quand il existe, tout en gardant le mail comme identifiant vérifiable. */
   userLabel(user: RhUser): string {
     return user.displayName ? `${user.displayName} (${user.email})` : user.email;
@@ -351,7 +374,7 @@ export class RhControlsComponent implements OnChanges, OnDestroy, OnInit {
     regularInterventionsByPeriod: Map<string, RhRegularIntervention[]>,
   ): RhControlDetailItem[] {
     return this.regularPeriods
-      .filter((period) => Boolean(period.sentToRhAt))
+      .filter(isArchivedOperation)
       // Les astreintes régulières sans initiateur restent personnelles pour le profil initiateur.
       .filter(period => this.currentProfile?.role !== 2 || period.userId === this.currentProfile.id)
       .filter((period) => this.matchesUser(period.userId, period.userEmail, user))
@@ -366,10 +389,13 @@ export class RhControlsComponent implements OnChanges, OnDestroy, OnInit {
 
         return {
           id: `regular-${period.id}`,
+          sourceId: period.id,
+          sourceCollection: "regularOnCallPeriods" as const,
+          treatedAt: period.treatedAt,
           type: this.labels.rh.controls.types.regularOnCall,
           title: operation.title,
-          sentToRhAt: period.sentToRhAt,
-          sentToRhLabel: this.formatDateTime(period.sentToRhAt),
+          sentToRhAt: period.sentToRhAt || period.treatedAt,
+          sentToRhLabel: this.formatDateTime(period.sentToRhAt || period.treatedAt),
           period: formatRange(period.startDate, period.endDate),
           lines,
         };
@@ -397,11 +423,12 @@ export class RhControlsComponent implements OnChanges, OnDestroy, OnInit {
    */
   private exceptionalControlItems(user: RhUser, calculator: RhExportCalculationLibrary): RhControlDetailItem[] {
     return this.exceptionalOperations
-      .filter((operation) => Boolean(operation.sentToRhAt))
+      .filter(isArchivedOperation)
       .filter(operation => this.canControlExceptionalOperation(operation))
       .map((operation) => this.exceptionalExportOperationForUser(operation, user))
       .filter((operation): operation is ExportOperation => Boolean(operation))
       .map((operation) => {
+        const source = this.exceptionalOperations.find(source => source.id === operation.sourceId);
         const isWork = operation.exportTitle === this.labels.rh.controls.types.exceptionalWork;
         const lines = [
           ...(isWork ? [] : calculator.onCallCompensationRows(operation)).map((row, index) => this.onCallLine(row, calculator, `exceptional-oncall-${index}`)),
@@ -417,10 +444,13 @@ export class RhControlsComponent implements OnChanges, OnDestroy, OnInit {
 
         return {
           id: `exceptional-${operation.sourceId}`,
+          sourceId: operation.sourceId,
+          sourceCollection: "exceptionalOperations" as const,
+          treatedAt: source?.treatedAt,
           type: operation.exportTitle,
           title: operation.title,
-          sentToRhAt: operation.sentToRhAt,
-          sentToRhLabel: this.formatDateTime(operation.sentToRhAt),
+          sentToRhAt: operation.sentToRhAt || source?.treatedAt,
+          sentToRhLabel: this.formatDateTime(operation.sentToRhAt || source?.treatedAt),
           period: formatRange(operation.actualStartDate, operation.actualEndDate),
           lines,
         };

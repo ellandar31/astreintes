@@ -2,10 +2,11 @@ import { RhExceptionalOperation } from "../../types/rh.models";
 import { TestBed } from "@angular/core/testing";
 import { provideNoopAnimations } from "@angular/platform-browser/animations";
 import { MockStore, provideMockStore } from "@ngrx/store/testing";
-import { selectExceptionalOperations } from "../../state/exceptional/exceptional.selectors";
-import { selectRegularInterventions, selectRegularPeriods, selectRegularPublicHolidays } from "../../state/regular/regular.selectors";
+import { selectExceptionalOperations, selectExceptionalError } from "../../state/exceptional/exceptional.selectors";
+import { selectRegularInterventions, selectRegularPeriods, selectRegularPublicHolidays, selectRegularError } from "../../state/regular/regular.selectors";
 import { selectSettingsRhCompensation, selectSettingsUsers } from "../../state/settings/settings.selectors";
 import { RhControlsComponent } from "./rh-controls.component";
+import { RegularActions } from "../../state/regular/regular.actions";
 
 const users = [
   { id: '7', uid: 'auth-id', role: 0, email: 'manager@example.test', displayName: 'Responsable' },
@@ -13,10 +14,41 @@ const users = [
 ];
 
 describe("Sélecteur utilisateur des contrôles RH", () => {
+  it("keeps archived items in History, cancels an untreated send, and closes the detail when returned to validation", () => {
+    const fixture = TestBed.createComponent(RhControlsComponent);
+    fixture.componentRef.setInput('currentUser', { uid: 'auth-id', email: users[0].email, displayName: 'Responsable' });
+    fixture.detectChanges();
+    const view = fixture.componentInstance;
+    view.selectUser('8');
+    fixture.detectChanges();
+    const item = view.userSections[0].monthSections[0].items[0];
+    expect(view.canCancelRhSend(item)).toBe(true);
+    view.openDetail(item);
+    const store = TestBed.inject(MockStore);
+    const dispatch = jest.spyOn(store, 'dispatch');
+    view.cancelRhSend(item);
+    expect(dispatch).toHaveBeenCalledWith(RegularActions.periodRhSentUpdateRequested({ periodId: 'p1', sent: false }));
+    store.overrideSelector(selectRegularPeriods, [{ ...view.regularPeriods[0], treatedAt: '2026-10-24T11:00' }]);
+    store.refreshState();
+    fixture.detectChanges();
+    const treated = view.userSections[0].monthSections[0].items[0];
+    expect(treated.treatedAt).toBeDefined();
+    expect(view.canCancelRhSend(treated)).toBe(false);
+    dispatch.mockClear();
+    view.cancelRhSend(treated);
+    expect(dispatch).not.toHaveBeenCalled();
+    store.overrideSelector(selectRegularPeriods, [{ ...view.regularPeriods[0], sentToRhAt: undefined, treatedAt: undefined }]);
+    store.refreshState();
+    fixture.detectChanges();
+    expect(view.userSections[0].itemCount).toBe(0);
+    expect(view.selectedDetailItem).toBeNull();
+  });
   beforeEach(async () => {
     await TestBed.configureTestingModule({ imports: [RhControlsComponent], providers: [
       provideNoopAnimations(), provideMockStore({ selectors: [
         { selector: selectSettingsUsers, value: users },
+        { selector: selectRegularError, value: "" },
+        { selector: selectExceptionalError, value: "" },
         { selector: selectRegularPeriods, value: [{ id: 'p1', userId: '8', userName: 'Autre agent',
           userEmail: 'other@example.test', startDate: '2026-10-01T18:00', endDate: '2026-10-02T08:00',
           sentToRhAt: '2026-10-03T10:00' }] },

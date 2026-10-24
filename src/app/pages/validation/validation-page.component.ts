@@ -1,3 +1,4 @@
+import { isArchivedOperation } from "../../shared/operation-archive";
 import { hasDirectorRights } from "../../shared/user-role-permissions";
 import { CommonModule } from "@angular/common";
 import { Component, Input, OnChanges, OnDestroy, SimpleChanges, effect, inject } from "@angular/core";
@@ -60,6 +61,7 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
   activeSectionId: ValidationSectionId = "stakeholder";
   selectedUserId = "";
   selectedDirectionId = "";
+  private directionFilterInitialized = false;
   readonly directions = inject(Store).selectSignal(selectSettingsDirections);
   users: AppUser[] = [];
   validationMessage = "";
@@ -95,7 +97,7 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
     });
 
     effect(() => {
-      this.regularPeriods = this.regularPeriodsSignal();
+      this.regularPeriods = this.regularPeriodsSignal().filter(period => !period.treatedAt);
       // Team names can arrive after periods or change while the consultation is open.
       this.regularTeams();
       this.refreshSelectedItem();
@@ -107,7 +109,7 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
     });
 
     effect(() => {
-      this.exceptionalOperations = this.exceptionalOperationsSignal();
+      this.exceptionalOperations = this.exceptionalOperationsSignal().filter(operation => !operation.treatedAt);
       this.refreshSelectedItem();
     });
 
@@ -133,6 +135,11 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
       return;
     }
 
+    if (changes["user"].previousValue?.uid !== this.user?.uid) {
+      this.directionFilterInitialized = false;
+      this.selectedDirectionId = "";
+    }
+
     this.selectedUserId = this.user?.uid || "";
     this.refreshProfile();
   }
@@ -152,7 +159,11 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
   }
 
   get canViewInitiatorSection(): boolean {
-    return this.isAdmin || Number(this.profile?.role) === 2;
+    if (this.isAdmin || Number(this.profile?.role) === 2) return true;
+    // A director also acts as initiator on operations assigned to their own profile.
+    return Number(this.profile?.role) === 3 && Boolean(this.profile && this.exceptionalOperations.some(
+      operation => operation.initiatorUid === this.profile?.id,
+    ));
   }
 
   get canViewDirectorSection(): boolean {
@@ -170,12 +181,13 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
   }
 
   get validationItems(): ValidationItem[] {
-    const selectedId = this.selectedUserId || this.user?.uid || "";
+    // Operation owners use SQL profile IDs, while the initial selection is an Auth UUID.
+    const selectedId = this.selectedUser?.id || this.selectedUserId || this.user?.uid || "";
     const selectedEmail = this.selectedUser?.email || this.user?.email || "";
     const items: ValidationItem[] = [];
 
     this.regularPeriods.forEach((period) => {
-      if (this.matchesUser(period.userId, period.userEmail, selectedId, selectedEmail)) {
+      if (!isArchivedOperation(period) && this.matchesUser(period.userId, period.userEmail, selectedId, selectedEmail)) {
         items.push({
           id: `regular-period-agent-${period.id}`,
           kind: "regular-period-agent",
@@ -190,7 +202,7 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
         });
       }
 
-      if (this.canViewDirectorSection && this.isRegularPeriodReadyForDirector(period)) {
+      if (this.canViewDirectorSection && (period.sentToRhAt || this.isRegularPeriodReadyForDirector(period))) {
         items.push({
           id: `regular-period-director-${period.id}`,
           kind: "regular-period-director",
@@ -207,15 +219,15 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
 
 
     this.exceptionalOperations.forEach((operation) => {
-      if (this.matchesUser(operation.initiatorUid, operation.initiatorName, selectedId, selectedEmail)) {
+      if (!isArchivedOperation(operation) && this.matchesUser(operation.initiatorUid, operation.initiatorName, selectedId, selectedEmail)) {
         items.push(this.operationGlobalItem(operation, "exceptional-operation-initiator"));
       }
 
-      if (this.canViewDirectorSection && this.isExceptionalOperationReadyForDirector(operation)) {
+      if (this.canViewDirectorSection && (operation.sentToRhAt || this.isExceptionalOperationReadyForDirector(operation))) {
         items.push(this.operationGlobalItem(operation, "exceptional-operation-director"));
       }
 
-      const userOperationItem = this.exceptionalOperationAgentItem(operation, selectedId, selectedEmail);
+      const userOperationItem = !isArchivedOperation(operation) ? this.exceptionalOperationAgentItem(operation, selectedId, selectedEmail) : null;
 
       if (userOperationItem) {
         items.push(userOperationItem);
@@ -479,13 +491,18 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
     if (!selected) return;
     let payload: ValidationItem["payload"] | undefined;
     if (selected.kind === "regular-intervention-agent") {
-      payload = this.regularInterventions.find(item => item.id === selected.payload.id);
+      payload = this.regularInterventions.find(item => item.id === selected.payload.id
+        && this.regularPeriods.some(period => period.id === item.periodId && !isArchivedOperation(period)));
     } else if (selected.kind.startsWith("regular-period-")) {
       payload = this.regularPeriods.find(item => item.id === selected.payload.id);
     } else {
       payload = this.exceptionalOperations.find(item => item.id === selected.payload.id);
     }
-    if (!payload) return;
+    // Sent operations remain available only through the director cancellation row.
+    if (!payload || (!("periodId" in payload) && isArchivedOperation(payload) && !this.canManageRhSend(selected))) {
+      this.selectedItem = null;
+      return;
+    }
     this.selectedItem = { ...selected, payload };
     const refreshed = this.validationItems.find(item => item.id === selected.id)
       || this.selectedItemVisaProgress.find(item => item.actionItem?.id === selected.id)?.actionItem;
@@ -663,7 +680,10 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
   }
   /** RH actions belong to whole-operation director rows and retain director/admin permissions. */
   canManageRhSend(item: ValidationItem): boolean {
-    return this.canViewDirectorSection
+    const source = this.isRegularPayload(item.payload)
+      ? this.regularPeriods.find(period => period.id === item.payload.id)
+      : this.exceptionalOperations.find(operation => operation.id === item.payload.id);
+    return this.canViewDirectorSection && Boolean(source && !source.treatedAt)
       && (item.kind === "regular-period-director" || item.kind === "exceptional-operation-director");
   }
 
@@ -715,6 +735,15 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
 
     if (!this.selectedUserId) {
       this.selectedUserId = this.user.uid;
+    }
+    const directions = this.directions();
+    const defaultDirectionId = this.profile?.directionId || "";
+    // Both profile and reference load asynchronously. Apply the default once,
+    // so a later refresh never overwrites a deliberate choice such as All.
+    if (!this.directionFilterInitialized && this.profile
+      && (!defaultDirectionId || directions.some(direction => direction.id === defaultDirectionId))) {
+      this.selectedDirectionId = defaultDirectionId;
+      this.directionFilterInitialized = true;
     }
   }
 

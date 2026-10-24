@@ -11,6 +11,7 @@ export const APP_LABELS = {
       exceptionalWork: "Travaux supplémentaires",
       validation: "Validation",
       rh: "RH",
+      history: "Historique",
     },
     auth: {
       title: "Connexion",
@@ -246,11 +247,13 @@ export const APP_LABELS = {
     controls: {
       emptyForUser: "Aucun élément envoyé aux RH pour cet utilisateur.",
       emptyGlobal: "Aucun élément envoyé aux RH.",
-      eyebrow: "Contrôles RH",
+      eyebrow: "Historique",
       itemCountDisplayed: "élément(s) affiché(s)",
       itemCount: "élément(s)",
       sentPrefix: "Le",
-      title: "Détail des coefficients envoyés aux RH",
+      title: "Opérations envoyées aux RH et traitées",
+      sentStatus: "Envoyé aux RH",
+      treatedStatus: "Traité",
       types: {
         exceptionalOnCall: "Astreintes Exceptionnelles",
         exceptionalWork: "Travaux Supplémentaires",

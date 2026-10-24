@@ -1,4 +1,4 @@
-import { Component } from "@angular/core";
+import { Component, Input } from "@angular/core";
 import { TestBed } from "@angular/core/testing";
 import { By } from "@angular/platform-browser";
 import { provideNoopAnimations } from "@angular/platform-browser/animations";
@@ -7,6 +7,7 @@ import { AppComponent } from "./app.component";
 import { APP_LABELS } from "./i18n/labels";
 import { ExceptionalOperationsComponent } from "./pages/exceptionnel/exceptional-operations.component";
 import { RegularCalendarComponent } from "./pages/regular/regular-calendar.component";
+import { RhControlsComponent } from "./pages/rh/rh-controls.component";
 import { SettingsPageComponent } from "./pages/settings/settings-page.component";
 import { selectCanCreateOperations, selectCanOpenSettings, selectCanEditPlanning, selectCurrentApplicationUser, selectOperationInitiators } from "./state/settings/settings.selectors";
 import { createEmptyVisa } from "./shared/visa.models";
@@ -20,6 +21,9 @@ class RegularCalendarStubComponent { }
 
 @Component({ selector: "app-settings-page", standalone: true, template: "" })
 class SettingsPageStubComponent { }
+
+@Component({ selector: "app-rh-controls", standalone: true, template: "History" })
+class HistoryStubComponent { @Input() currentUser: unknown; }
 
 const emptyVisa = createEmptyVisa();
 const onCall: ExceptionalOperation = {
@@ -57,8 +61,8 @@ describe("Separate exceptional navigation", () => {
         { selector: selectExceptionalError, value: "" },
       ] })],
     }).overrideComponent(AppComponent, {
-      remove: { imports: [RegularCalendarComponent, SettingsPageComponent] },
-      add: { imports: [RegularCalendarStubComponent, SettingsPageStubComponent] },
+      remove: { imports: [RegularCalendarComponent, SettingsPageComponent, RhControlsComponent] },
+      add: { imports: [RegularCalendarStubComponent, SettingsPageStubComponent, HistoryStubComponent] },
     }).compileComponents();
   });
 
@@ -69,6 +73,35 @@ describe("Separate exceptional navigation", () => {
     fixture.detectChanges();
     expect(fixture.componentInstance.modalView).toBeNull();
     expect(fixture.nativeElement.querySelector('app-settings-page')).toBeNull();
+  });
+
+  it("opens History from the main navigation", () => {
+    const fixture = createShell();
+    const history = (Array.from(fixture.nativeElement.querySelectorAll("nav button")) as HTMLButtonElement[])
+      .find(button => button.textContent?.trim() === APP_LABELS.app.tabs.history)!;
+    history.click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector("app-rh-controls")).not.toBeNull();
+    expect(fixture.nativeElement.querySelector("app-rh-page")).toBeNull();
+    expect(history.getAttribute("aria-current")).toBe("page");
+  });
+
+  it("removes sent and treated exceptional operations from active lists, including an open modal", () => {
+    const fixture = createShell();
+    fixture.componentInstance.selectTab("exceptionalOnCall");
+    fixture.detectChanges();
+    const view = fixture.debugElement.query(By.directive(ExceptionalOperationsComponent)).componentInstance as ExceptionalOperationsComponent;
+    view.openEditModal(onCall);
+    const store = TestBed.inject(MockStore);
+    store.overrideSelector(selectVisibleExceptionalOperations, [
+      { ...onCall, sentToRhAt: "2026-10-24T10:00" },
+      { ...onCall, id: "astreinte:2", treatedAt: "2026-10-24T11:00" },
+      work,
+    ]);
+    store.refreshState();
+    fixture.detectChanges();
+    expect(view.filteredOperations).toEqual([]);
+    expect(view.modalMode).toBeNull();
   });
 
   it("shows settings for authorized roles and closes it when permission is revoked", () => {

@@ -113,9 +113,13 @@ Les interventions peuvent être converties en repos compensateurs selon les règ
 
 Le module RH est composé de plusieurs écrans.
 
-## Contrôles
+## Historique (onglet du bandeau)
 
-Visualisation des compteurs réglementaires par collaborateur.
+Consultation des opérations envoyées aux RH ou traitées, par collaborateur et
+par mois. Ces opérations ne figurent plus dans les écrans actifs de planification.
+Les opérations envoyées restent dans la validation directeur pour permettre
+l’annulation de l’envoi ; les opérations traitées restent dans l’historique.
+Les exports restent dans le menu RH.
 
 Affichage :
 
@@ -189,9 +193,10 @@ Accueil
 ├── Validation
 │
 ├── RH
-│   ├── Contrôles
-│   ├── Indemnisation
-│   └── Exports
+│   ├── Exports par opération
+│   └── Exports par période
+│
+├── Historique
 │
 └── Paramétrage
 |    ├── Utilisateurs

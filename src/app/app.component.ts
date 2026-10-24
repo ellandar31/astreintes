@@ -14,11 +14,12 @@ import { ExceptionalOperationsComponent } from "./pages/exceptionnel/exceptional
 import { ProfilePageComponent } from "./pages/profile/profile-page.component";
 import { RegularCalendarComponent } from "./pages/regular/regular-calendar.component";
 import { RhPageComponent } from "./pages/rh/rh-page.component";
+import { RhControlsComponent } from "./pages/rh/rh-controls.component";
 import { SettingsPageComponent } from "./pages/settings/settings-page.component";
 import { ValidationPageComponent } from "./pages/validation/validation-page.component";
 import { ModalComponent } from "./shared/modal.component";
 import { AuthActions } from "./state/auth/auth.actions";
-import { selectCanOpenSettings } from "./state/settings/settings.selectors";
+import { selectCanOpenSettings, selectCanExportRh } from "./state/settings/settings.selectors";
 import {
   selectAuthError,
   selectAuthUser,
@@ -33,6 +34,7 @@ const tabs = [
   { id: "exceptionalWork", label: APP_LABELS.app.tabs.exceptionalWork },
   { id: "validation", label: APP_LABELS.app.tabs.validation },
   { id: "rh", label: APP_LABELS.app.tabs.rh },
+  { id: "history", label: APP_LABELS.app.tabs.history },
 ] as const;
 type TabId = (typeof tabs)[number]["id"];
 type ModalView = "profile" | "settings";
@@ -54,6 +56,7 @@ type ModalView = "profile" | "settings";
     ProgressSpinnerModule,
     RegularCalendarComponent,
     RhPageComponent,
+    RhControlsComponent,
     SettingsPageComponent,
     TooltipModule,
     ValidationPageComponent,
@@ -63,7 +66,7 @@ type ModalView = "profile" | "settings";
 })
 export class AppComponent {
   readonly labels = APP_LABELS;
-  readonly tabs = tabs;
+  get tabs() { return tabs.filter(tab => tab.id !== "rh" || this.canExportRh()); }
   activeTab: TabId = "regular";
   email = "";
   isCreatingAccount = false;
@@ -76,6 +79,7 @@ export class AppComponent {
   readonly loadingSession = this.store.selectSignal(selectLoadingSession);
   readonly user = this.store.selectSignal(selectAuthUser);
   readonly canOpenSettings = this.store.selectSignal(selectCanOpenSettings);
+  readonly canExportRh = this.store.selectSignal(selectCanExportRh);
 
   constructor() {
     // La surveillance d'authentification devient une action NgRx pour éviter que le shell
@@ -85,6 +89,7 @@ export class AppComponent {
       if (!this.canOpenSettings() && this.modalView === "settings") {
         this.closeModal();
       }
+      if (!this.canExportRh() && this.activeTab === "rh") this.activeTab = "history";
     });
   }
 

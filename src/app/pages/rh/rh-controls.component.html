@@ -1,4 +1,7 @@
 <p-card styleClass="rh-panel" [attr.aria-labelledby]="'rh-controls-title'">
+  @if (regularError() || exceptionalError()) {
+    <p-message severity="error" [text]="regularError() || exceptionalError()" />
+  }
   <header class="rh-panel-header">
     <div>
       <p class="eyebrow">{{ labels.rh.controls.eyebrow }}</p>
@@ -81,7 +84,10 @@
                         <td>{{ item.type }}</td>
                         <td>{{ item.title }}</td>
                         <td>{{ item.period }}</td>
-                        <td class="sent-date">{{ labels.rh.controls.sentPrefix }} <strong>{{ item.sentToRhLabel }}</strong></td>
+                        <td class="sent-date">
+                          {{ labels.rh.controls.sentPrefix }} <strong>{{ item.sentToRhLabel }}</strong>
+                          <div>{{ item.treatedAt ? labels.rh.controls.treatedStatus : labels.rh.controls.sentStatus }}</div>
+                        </td>
                         <td>{{ item.lines.length }}</td>
                         <td>
                           <button
@@ -93,6 +99,10 @@
                             <span class="pi pi-eye" aria-hidden="true"></span>
                             <span>{{ labels.common.actions.consult }}</span>
                           </button>
+                          @if (canCancelRhSend(item)) {
+                            <p-button [label]="labels.common.actions.cancelRhSend" severity="secondary" [outlined]="true"
+                              (onClick)="cancelRhSend(item)" />
+                          }
                         </td>
                       </tr>
                     </ng-template>
