@@ -109,6 +109,21 @@
                         <span>{{ labels.common.actions.delete }}</span>
                       </button>
                     }
+                    @if (canManageRhSend(item)) {
+                      @if (isItemSentToRh(item)) {
+                        <button pButton type="button" class="p-button-sm p-button-outlined p-button-danger"
+                          (click)="updateRhSend(item, false)">
+                          <span class="pi pi-undo" aria-hidden="true"></span>
+                          <span>{{ labels.common.actions.cancelRhSend }}</span>
+                        </button>
+                      } @else {
+                        <button pButton type="button" class="p-button-sm p-button-outlined p-button-secondary"
+                          [disabled]="!canSendToRh(item)" (click)="updateRhSend(item, true)">
+                          <span class="pi pi-send" aria-hidden="true"></span>
+                          <span>{{ labels.common.actions.rhSend }}</span>
+                        </button>
+                      }
+                    }
                   </div>
                 </td>
               </tr>

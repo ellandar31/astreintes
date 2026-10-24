@@ -62,23 +62,11 @@
           <td>
             <div class="action-buttons">
 
-
               <button pButton class="p-button-sm " (click)="exportExcelOperation('regular', operation)" type="button">
                 <span class="pi pi-file-excel" aria-hidden="true"></span>
                 <span>{{ labels.common.actions.exportExcel }}</span>
               </button>
 
-              @if (operation.sentToRhAt) {
-                <button pButton class="p-button-sm p-button-outlined p-button-danger" (click)="unmarkSentToRh(operation)" type="button">
-                  <span class="pi pi-undo" aria-hidden="true"></span>
-                  <span>{{ labels.common.actions.cancelRhSend }}</span>
-                </button>
-              } @else {
-                <button pButton class="p-button-sm p-button-outlined p-button-secondary" [disabled]="!canSendToRh(operation)" (click)="markSentToRh(operation)" type="button">
-                  <span class="pi pi-send" aria-hidden="true"></span>
-                  <span>{{ labels.common.actions.rhSend }}</span>
-                </button>
-              }
             </div>
           </td>
         </tr>
@@ -117,23 +105,11 @@
           <td>
             <div class="action-buttons">
 
-
               <button pButton class="p-button-sm " (click)="exportExcelOperation('exceptionalOnCall', operation)" type="button">
                 <span class="pi pi-file-excel" aria-hidden="true"></span>
                 <span>{{ labels.common.actions.exportExcel }}</span>
               </button>
 
-              @if (operation.sentToRhAt) {
-                <button pButton class="p-button-sm p-button-outlined p-button-danger" (click)="unmarkSentToRh(operation)" type="button">
-                  <span class="pi pi-undo" aria-hidden="true"></span>
-                  <span>{{ labels.common.actions.cancelRhSend }}</span>
-                </button>
-              } @else {
-                <button pButton class="p-button-sm p-button-outlined p-button-secondary" [disabled]="!canSendToRh(operation)" (click)="markSentToRh(operation)" type="button">
-                  <span class="pi pi-send" aria-hidden="true"></span>
-                  <span>{{ labels.common.actions.rhSend }}</span>
-                </button>
-              }
             </div>
           </td>
         </tr>
@@ -170,23 +146,11 @@
           <td>
             <div class="action-buttons">
 
-
               <button pButton class="p-button-sm " (click)="exportExcelOperation('exceptionalWork', operation)" type="button">
                 <span class="pi pi-file-excel" aria-hidden="true"></span>
                 <span>{{ labels.common.actions.exportExcel }}</span>
               </button>
 
-              @if (operation.sentToRhAt) {
-                <button pButton class="p-button-sm p-button-outlined p-button-danger" (click)="unmarkSentToRh(operation)" type="button">
-                  <span class="pi pi-undo" aria-hidden="true"></span>
-                  <span>{{ labels.common.actions.cancelRhSend }}</span>
-                </button>
-              } @else {
-                <button pButton class="p-button-sm p-button-outlined p-button-secondary" [disabled]="!canSendToRh(operation)" (click)="markSentToRh(operation)" type="button">
-                  <span class="pi pi-send" aria-hidden="true"></span>
-                  <span>{{ labels.common.actions.rhSend }}</span>
-                </button>
-              }
             </div>
           </td>
         </tr>

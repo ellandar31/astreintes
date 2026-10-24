@@ -11,7 +11,7 @@ import { TagModule } from "primeng/tag";
 import { Store } from "@ngrx/store";
 import { APP_LABELS } from "../../i18n/labels";
 import { SignatureVisa, createEmptyVisa } from "../../shared/visa.models";
-import { clearExceptionalDirectorVisas, exceptionalReadyForDirector, regularReadyForDirector } from "../../shared/visa-workflow";
+import { clearExceptionalDirectorVisas, exceptionalReadyForDirector, exceptionalReadyForRh, regularReadyForDirector, regularReadyForRh } from "../../shared/visa-workflow";
 import { ExceptionalActions } from "../../state/exceptional/exceptional.actions";
 import {
   selectExceptionalError,
@@ -645,12 +645,44 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
       || item.kind === "exceptional-intervention-agent";
     return isParticipantLine && operation.initiatorUid === this.profile.id;
   }
-  private isItemSentToRh(item: ValidationItem): boolean {
+  /** RH actions belong to whole-operation director rows and retain director/admin permissions. */
+  canManageRhSend(item: ValidationItem): boolean {
+    return this.canViewDirectorSection
+      && (item.kind === "regular-period-director" || item.kind === "exceptional-operation-director");
+  }
+
+  /** Read live store projections so a row captured before a visa change cannot bypass prerequisites. */
+  canSendToRh(item: ValidationItem): boolean {
+    if (!this.canManageRhSend(item) || this.isItemSentToRh(item)) return false;
+    if (item.kind === "regular-period-director") {
+      const period = this.regularPeriods.find(period => period.id === item.payload.id);
+      return Boolean(period && regularReadyForRh(period,
+        this.regularInterventions.filter(intervention => intervention.periodId === period.id)));
+    }
+    const operation = this.exceptionalOperations.find(operation => operation.id === item.payload.id);
+    return Boolean(operation && exceptionalReadyForRh(operation));
+  }
+
+  /** Reuse the existing NgRx persistence path; cancelling unlocks the operation for corrections. */
+  updateRhSend(item: ValidationItem, sent: boolean): void {
+    if (!this.canManageRhSend(item)) return;
+    if (sent ? !this.canSendToRh(item) : !this.isItemSentToRh(item)) return;
+    if (item.kind === "regular-period-director") {
+      this.store.dispatch(RegularActions.periodRhSentUpdateRequested({ periodId: item.payload.id, sent }));
+    } else {
+      this.store.dispatch(ExceptionalActions.operationRhSentUpdateRequested({ operationId: item.payload.id, sent }));
+    }
+  }
+
+  isItemSentToRh(item: ValidationItem): boolean {
     if (item.kind === "regular-intervention-agent") {
       const intervention = item.payload as RegularIntervention;
       return Boolean(this.regularPeriods.find(period => period.id === intervention.periodId)?.sentToRhAt);
     }
-    return Boolean((item.payload as RegularOnCallPeriod | ExceptionalOperation).sentToRhAt);
+    const source = this.isRegularPayload(item.payload)
+      ? this.regularPeriods.find(period => period.id === item.payload.id)
+      : this.exceptionalOperations.find(operation => operation.id === item.payload.id);
+    return Boolean(source?.sentToRhAt);
   }
 
   userLabel(user: AppUser): string {

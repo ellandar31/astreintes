@@ -262,6 +262,68 @@ describe("Validation consultation", () => {
     }));
   });
 
+  it.each([0, 1, 2, 3, 4] as const)("réserve l'envoi RH du directeur au profil autorisé %s", role => {
+    const component = createPage().componentInstance;
+    const signed = { ...createEmptyVisa(), signed: true };
+    component.regularPeriods = [{ ...period, agentVisa: signed, directorVisa: signed }];
+    component.regularInterventions = [{ ...intervention, agentVisa: signed }];
+    component.profile = { ...component.profile!, role: 0 };
+    const item = component.directorVisaItems[0];
+    const agentItem = component.validationItems.find(item => item.kind === "regular-period-agent")!;
+    component.profile = { ...component.profile!, role };
+    const allowed = role === 0 || role === 3 || role === 4;
+    expect(component.canManageRhSend(agentItem)).toBe(false);
+    expect(component.canSendToRh(item)).toBe(allowed);
+    const dispatch = jest.spyOn(TestBed.inject(MockStore), "dispatch").mockClear();
+    component.updateRhSend(item, true);
+    expect(dispatch).toHaveBeenCalledTimes(allowed ? 1 : 0);
+    if (allowed) expect(dispatch).toHaveBeenLastCalledWith(expect.objectContaining({ periodId: period.id, sent: true }));
+    // A stale row must see the new source state before sending or cancelling.
+    component.regularPeriods = [{ ...component.regularPeriods[0], sentToRhAt: "2026-10-24T08:00:00Z" }];
+    expect(component.isItemSentToRh(item)).toBe(true);
+    expect(component.canSendToRh(item)).toBe(false);
+    dispatch.mockClear();
+    component.updateRhSend(item, false);
+    expect(dispatch).toHaveBeenCalledTimes(allowed ? 1 : 0);
+    if (allowed) expect(dispatch).toHaveBeenLastCalledWith(expect.objectContaining({ periodId: period.id, sent: false }));
+    component.regularPeriods = [{ ...period, agentVisa: signed, directorVisa: signed }];
+    component.regularInterventions = [intervention];
+    expect(component.canSendToRh(item)).toBe(false);
+  });
+
+  it.each(["astreinte", "travaux"] as const)("déplace l'envoi RH %s dans les actions du directeur", type => {
+    const fixture = createPage();
+    const component = fixture.componentInstance;
+    const signed = { ...createEmptyVisa(), signed: true };
+    component.profile = { ...component.profile!, role: 3 };
+    component.exceptionalOperations = [{
+      id: `${type}:11`, type, title: "Opération", initiatorUid: "7", initiatorName: "Agent",
+      operationManagerUid: "7", operationManagerName: "Agent", startDate: period.startDate,
+      forecastEndDate: period.endDate, actualStartDate: period.startDate, actualEndDate: period.endDate,
+      plannedUsers: [], actualUsers: [], interventions: [], visas: { initiatorGlobal: signed, directorGlobal: signed },
+    }];
+    component.activeSectionId = "director";
+    fixture.detectChanges();
+    const item = component.directorVisaItems[0];
+    const dispatch = jest.spyOn(TestBed.inject(MockStore), "dispatch").mockClear();
+    const buttons = Array.from(fixture.nativeElement.querySelectorAll(".actions button")) as HTMLButtonElement[];
+    const send = buttons.find(button => button.textContent?.includes(component.labels.common.actions.rhSend))!;
+    expect(send.disabled).toBe(false);
+    send.click();
+    expect(dispatch).toHaveBeenLastCalledWith(expect.objectContaining({ operationId: item.payload.id, sent: true }));
+    component.exceptionalOperations = [{ ...component.exceptionalOperations[0], sentToRhAt: "2026-10-24T08:00:00Z" }];
+    fixture.detectChanges();
+    const cancel = (Array.from(fixture.nativeElement.querySelectorAll(".actions button")) as HTMLButtonElement[])
+      .find(button => button.textContent?.includes(component.labels.common.actions.cancelRhSend))!;
+    cancel.click();
+    expect(dispatch).toHaveBeenLastCalledWith(expect.objectContaining({ operationId: item.payload.id, sent: false }));
+    component.exceptionalOperations = [{ ...component.exceptionalOperations[0], sentToRhAt: undefined,
+      visas: { initiatorGlobal: signed, directorGlobal: createEmptyVisa() } }];
+    dispatch.mockClear();
+    component.updateRhSend(item, true);
+    expect(dispatch).not.toHaveBeenCalled();
+  });
+
   it("autorise l'administrateur à retirer tout visa et refuse la signature sans profil", () => {
     const component = createPage().componentInstance;
     const own = component.validationItems[0];

@@ -183,7 +183,9 @@ opération ainsi que l'export Excel par période.
 
 Les deux rubriques sont masquées aux utilisateurs et initiateurs. Leur ouverture
 directe et les actions de génération sont également refusées. Le marquage et
-l'annulation d'envoi RH dans ces écrans sont réservés aux mêmes profils.
+l'annulation d'envoi RH se font dans le tableau de validation du directeur,
+pour les astreintes régulières, exceptionnelles et les travaux supplémentaires.
+Ces actions sont réservées aux administrateurs, directeurs et profils RH.
 L'envoi reste soumis aux prérequis de validation. En base SQL, les transitions
 d'envoi et d'annulation sont réservées aux administrateurs, directeurs et profils
 RH ; elles sont refusées aux initiateurs, même propriétaires, et aux utilisateurs.

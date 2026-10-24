@@ -90,8 +90,6 @@ describe("RH period export UI", () => {
     const dispatch = jest.spyOn(store, 'dispatch').mockClear();
     page.exportExcelOperation('regular', operation);
     await page.exportExcelPeriod();
-    page.markSentToRh(operation);
-    page.unmarkSentToRh(operation);
     expect(create).not.toHaveBeenCalled();
     expect(dispatch).not.toHaveBeenCalled();
     create.mockRestore();
