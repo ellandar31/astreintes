@@ -73,16 +73,7 @@ export class ExceptionalOperationsComponent implements OnDestroy {
   operations: ExceptionalOperation[] = [];
   interventionError = "";
   operationForm = this.createEmptyOperationForm("astreinte");
-  interventionForm = {
-    startDate: "",
-    endDate: "",
-    userId: "",
-    userName: "",
-    userEmail: "",
-    wasOnSite: false,
-    label: "",
-    comment: "",
-  };
+  interventionForm = this.createEmptyInterventionForm();
   users: SelectableUser[] = [];
 
   private readonly store = inject(Store);
@@ -230,6 +221,7 @@ export class ExceptionalOperationsComponent implements OnDestroy {
           wasOnSite: Boolean(intervention.wasOnSite),
           label: intervention.label || "",
           comment: intervention.comment || "",
+          ticket: intervention.ticket || "",
         }
       : this.createEmptyInterventionForm();
     this.modalMode = "intervention";
@@ -339,6 +331,11 @@ export class ExceptionalOperationsComponent implements OnDestroy {
       return;
     }
 
+    if (!form.ticket?.trim()) {
+      this.interventionError = this.labels.common.messages.ticketRequired;
+      return;
+    }
+
     const interventionPayload = {
       id: this.selectedInterventionIndex !== null ? this.selectedOperation.interventions[this.selectedInterventionIndex]?.id : undefined,
       startDate: form.startDate,
@@ -354,6 +351,7 @@ export class ExceptionalOperationsComponent implements OnDestroy {
           : this.createEmptyVisa(),
       label: form.label.trim(),
       comment: form.comment.trim(),
+      ticket: form.ticket.trim(),
     };
     const interventions = [...(this.selectedOperation.interventions || [])];
 
@@ -468,6 +466,7 @@ export class ExceptionalOperationsComponent implements OnDestroy {
       wasOnSite: false,
       label: "",
       comment: "",
+      ticket: "",
     };
   }
 

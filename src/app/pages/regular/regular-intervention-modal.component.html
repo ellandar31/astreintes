@@ -35,6 +35,12 @@
       <input id="regular-intervention-end-date" pInputText name="regularInterventionEndDate" [(ngModel)]="form.endDate" required type="datetime-local" />
     </label>
 
+    <label for="regular-intervention-ticket">
+      {{ labels.common.fields.ticket }}
+      <input id="regular-intervention-ticket" pInputText name="regularInterventionTicket"
+        [(ngModel)]="form.ticket" required pattern=".*\S.*" />
+    </label>
+
     <label for="regular-intervention-comment">
       {{ labels.common.fields.comment }}
       <textarea id="regular-intervention-comment" name="regularInterventionComment" [(ngModel)]="form.comment" rows="4"></textarea>

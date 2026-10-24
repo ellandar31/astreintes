@@ -119,6 +119,7 @@
               <th scope="col">{{ labels.common.table.start }}</th>
               <th scope="col">{{ labels.common.table.end }}</th>
               <th scope="col">{{ labels.common.fields.comment }}</th>
+              <th scope="col">{{ labels.common.fields.ticket }}</th>
               @if (!isLocked) {
                 <th scope="col">{{ labels.common.table.actions }}</th>
               }
@@ -130,6 +131,7 @@
               <td>{{ formatDateTime(intervention.startDate) }}</td>
               <td>{{ formatDateTime(intervention.endDate) }}</td>
               <td class="comment-cell"><app-truncated-text [text]="intervention.comment || labels.common.empty.dash" /></td>
+              <td><app-truncated-text [text]="intervention.ticket || labels.common.empty.dash" /></td>
               @if (!isLocked) {
                 <td>
                   <div class="action-cell">
@@ -156,7 +158,7 @@
           </ng-template>
           <ng-template pTemplate="emptymessage">
             <tr>
-              <td [attr.colspan]="isLocked ? 4 : 5">{{ labels.regular.empty.noAssociatedIntervention }}</td>
+              <td [attr.colspan]="isLocked ? 5 : 6">{{ labels.regular.empty.noAssociatedIntervention }}</td>
             </tr>
           </ng-template>
         </p-table>

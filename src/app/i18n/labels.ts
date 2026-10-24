@@ -66,6 +66,7 @@ export const APP_LABELS = {
       action: "Action",
       actions: "Actions",
       comment: "Commentaire",
+      ticket: "Ticket",
       coefficient: "Coefficient",
       date: "Date",
       email: "Email",
@@ -86,6 +87,7 @@ export const APP_LABELS = {
       zone: "Zone",
     },
     messages: {
+      ticketRequired: "Le ticket associé à l’intervention est obligatoire.",
       participantDeletionDenied: "Suppression des participants non autorisée.",
       interventionDeletionDenied: "Suppression des interventions non autorisée.",
       rhSentAt: "Envoyé aux RH le",

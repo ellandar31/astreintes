@@ -52,8 +52,8 @@ export interface RegularInterventionForm {
   startDate: string;
   endDate: string;
   comment: string;
-  /** External ticket reference; optional for historical interventions. */
-  ticket?: string;
+  /** Required when creating or editing an intervention. */
+  ticket: string;
 }
 
 export interface RegularPublicHoliday {

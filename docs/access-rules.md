@@ -385,6 +385,12 @@ aussi une affectation directe ou le déplacement vers une autre opération.
 Les affectations existantes sont conservées et peuvent être corrigées sans
 réaffecter l’utilisateur.
 
+La création et la modification d’une intervention régulière ou exceptionnelle
+nécessitent un ticket non vide. Les formulaires et leurs actions de sauvegarde
+refusent les valeurs composées uniquement d’espaces. Les tickets sont conservés
+en base et affichés dans les listes d’interventions ; les anciennes interventions
+sans ticket restent consultables, mais doivent être complétées lors d’une modification.
+
 Dans la page Validation, un directeur désigné initiateur d’une opération accède
 également au menu de validation des initiateurs. Ce menu présente ses propres
 astreintes et travaux exceptionnels ; la file de validation directeur reste disponible.
@@ -392,8 +398,10 @@ astreintes et travaux exceptionnels ; la file de validation directeur reste disp
 ### Historique et opérations actives
 
 L’onglet **Historique** reprend la consultation par utilisateur et par mois.
-Les opérations ayant `sent_to_rh_at` ou `treated_at` renseigné sont retirées des
-plannings, des listes d’opérations exceptionnelles et des validations intervenant
+Les astreintes régulières envoyées aux RH restent visibles en grisé dans le
+calendrier, sans ouverture ni modification possible. Les opérations traitées
+sont retirées du calendrier. Les opérations archivées sont retirées des listes
+d’opérations exceptionnelles et des validations intervenant
 et initiateur. Les opérations envoyées restent dans la validation directeur pour
 permettre l’annulation de l’envoi RH ; les opérations traitées y sont retirées. Une
 consultation ouverte se ferme lorsque l’opération quitte la file correspondante.

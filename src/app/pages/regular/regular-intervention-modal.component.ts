@@ -25,6 +25,7 @@ export class RegularInterventionModalComponent {
     startDate: "",
     endDate: "",
     comment: "",
+    ticket: "",
   };
   @Input() error = "";
   @Input() isEditing = false;
@@ -37,11 +38,11 @@ export class RegularInterventionModalComponent {
   }
 
   save(form: NgForm): void {
-    if (form.invalid) {
+    if (form.invalid || !this.form.ticket?.trim()) {
       return;
     }
 
-    this.saved.emit({ ...this.form });
+    this.saved.emit({ ...this.form, ticket: this.form.ticket.trim() });
   }
 
   /** Keep a historical selection visible, but disabled in the dropdown. */

@@ -35,6 +35,12 @@
       <input id="exceptional-intervention-end-date" pInputText name="interventionEndDate" [(ngModel)]="form.endDate" required type="datetime-local" />
     </label>
 
+    <label for="exceptional-intervention-ticket">
+      {{ labels.common.fields.ticket }}
+      <input id="exceptional-intervention-ticket" pInputText name="interventionTicket"
+        [(ngModel)]="form.ticket" required pattern=".*\S.*" />
+    </label>
+
     <div class="checkbox-label">
       <p-checkbox inputId="exceptional-intervention-was-on-site" name="wasOnSite" [(ngModel)]="form.wasOnSite" [binary]="true"></p-checkbox>
       <label for="exceptional-intervention-was-on-site">{{ labels.exceptional.fields.userOnSite }}</label>

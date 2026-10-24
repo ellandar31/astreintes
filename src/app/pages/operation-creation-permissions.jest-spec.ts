@@ -56,8 +56,8 @@ describe("Planning creation permissions", () => {
     view.openInterventionForCurrentPeriod();
     expect(view.isInterventionModalOpen).toBe(true);
     view.saveIntervention({ userId: "7", userName: period.userName, userEmail: period.userEmail,
-      startDate: "2026-10-10T19:00", endDate: "2026-10-10T20:00", comment: "Test" });
-    expect(dispatch).toHaveBeenCalledWith(expect.objectContaining({ type: RegularActions.interventionSaveRequested.type }));
+      startDate: "2026-10-10T19:00", endDate: "2026-10-10T20:00", comment: "Test", ticket: " INC-123 " });
+    expect(dispatch).toHaveBeenCalledWith(expect.objectContaining({ type: RegularActions.interventionSaveRequested.type, form: expect.objectContaining({ ticket: "INC-123" }) }));
   });
 
   it.each(["astreinte", "travaux"] as const)("blocks %s creation and accepts interventions only on an existing on-call", type => {
@@ -77,8 +77,8 @@ describe("Planning creation permissions", () => {
     expect(view.modalMode).toBe(type === "astreinte" ? "intervention" : null);
     if (type === "astreinte") {
       view.saveIntervention({ userId: "7", userName: period.userName, userEmail: period.userEmail,
-        startDate: "2026-10-10T19:00", endDate: "2026-10-10T20:00", wasOnSite: false, label: "Test", comment: "" });
-      expect(dispatch).toHaveBeenCalledWith(expect.objectContaining({ type: ExceptionalActions.interventionsSaveRequested.type }));
+        startDate: "2026-10-10T19:00", endDate: "2026-10-10T20:00", wasOnSite: false, label: "Test", comment: "", ticket: " INC-456 " });
+      expect(dispatch).toHaveBeenCalledWith(expect.objectContaining({ type: ExceptionalActions.interventionsSaveRequested.type, interventions: expect.arrayContaining([expect.objectContaining({ ticket: "INC-456" })]) }));
     }
   });
 

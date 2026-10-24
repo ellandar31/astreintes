@@ -29,6 +29,7 @@ export class InterventionModalComponent {
     wasOnSite: false,
     label: "",
     comment: "",
+    ticket: "",
   };
   @Input() error = "";
   @Input({ required: true }) operation: ExceptionalOperation | null = null;
@@ -37,11 +38,11 @@ export class InterventionModalComponent {
   @Output() saved = new EventEmitter<ExceptionalInterventionForm>();
 
   save(form: NgForm): void {
-    if (form.invalid) {
+    if (form.invalid || !this.form.ticket?.trim()) {
       return;
     }
 
-    this.saved.emit({ ...this.form });
+    this.saved.emit({ ...this.form, ticket: this.form.ticket.trim() });
   }
 
   /** Keep a historical selection visible, but disabled in the dropdown. */
