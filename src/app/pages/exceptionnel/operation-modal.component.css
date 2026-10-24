@@ -17,7 +17,6 @@
   min-height: var(--app-size-control-lg);
 }
 
-:host ::ng-deep .user-select,
 :host ::ng-deep .p-inputtext {
   width: 100%;
 }
@@ -135,15 +134,14 @@
 .participant-name {
   display: grid;
   gap: var(--app-space-3xs);
+  grid-template-columns: minmax(0, 1fr);
   min-width: 0;
 }
 
-.participant-name strong,
-.participant-name span,
-.participant-name small {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.participant-name strong {
+  /* The nested grid item must shrink too, otherwise the label never measures as clipped. */
+  min-width: 0;
+  max-width: 100%;
 }
 
 .participant-name span,

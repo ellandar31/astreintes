@@ -1,0 +1,31 @@
+/* Grid items and PrimeNG labels must shrink together to keep long names inside their field. */
+.operation-form label,
+.operation-form p-select {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.operation-form p-select {
+  width: 100%;
+}
+
+:host ::ng-deep .user-select {
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
+}
+
+:host ::ng-deep .user-select .p-select-label {
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* Use PrimeNG's readonly mode to preserve hover while blocking mouse and keyboard edits. */
+:host ::ng-deep .user-select.readonly-select {
+  background: var(--p-select-disabled-background);
+  color: var(--p-select-disabled-color);
+}
+
+:host ::ng-deep .user-select.readonly-select .p-select-label {
+  color: var(--p-select-disabled-color);
+}

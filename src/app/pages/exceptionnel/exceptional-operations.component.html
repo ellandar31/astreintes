@@ -21,7 +21,7 @@
       <tr>
         <th scope="col">
           <div class="header-cell">
-            <span>{{ labels.common.fields.initiator }}</span>
+            <app-truncated-text [text]="labels.common.fields.initiator" />
             <p-button icon="pi pi-sort-alt" [rounded]="true" [text]="true" size="small" (onClick)="setSort('initiatorName')" [title]="labels.common.actions.sort"></p-button>
             <p-button icon="pi pi-filter" [rounded]="true" [text]="true" size="small" (onClick)="toggleFilter('initiatorName')" [title]="labels.common.actions.filter"></p-button>
           </div>
@@ -32,7 +32,7 @@
         </th>
         <th scope="col">
           <div class="header-cell">
-            <span>{{ labels.common.fields.title }}</span>
+            <app-truncated-text [text]="labels.common.fields.title" />
             <p-button icon="pi pi-sort-alt" [rounded]="true" [text]="true" size="small" (onClick)="setSort('title')" [title]="labels.common.actions.sort"></p-button>
             <p-button icon="pi pi-filter" [rounded]="true" [text]="true" size="small" (onClick)="toggleFilter('title')" [title]="labels.common.actions.filter"></p-button>
           </div>
@@ -43,7 +43,7 @@
         </th>
         <th scope="col">
           <div class="header-cell">
-            <span>{{ labels.exceptional.fields.dateStart }}</span>
+            <app-truncated-text [text]="labels.exceptional.fields.dateStart" />
             <p-button icon="pi pi-sort-alt" [rounded]="true" [text]="true" size="small" (onClick)="setSort('startDate')" [title]="labels.common.actions.sort"></p-button>
             <p-button icon="pi pi-filter" [rounded]="true" [text]="true" size="small" (onClick)="toggleFilter('startDate')" [title]="labels.common.actions.filter"></p-button>
           </div>

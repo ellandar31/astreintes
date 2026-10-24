@@ -16,7 +16,7 @@
         required
       >
         <ng-template pTemplate="selectedItem" let-user>
-          {{ user ? userLabel(user) : labels.common.users.select }}
+          <app-truncated-text [text]="user ? userLabel(user) : labels.common.users.select" />
         </ng-template>
         <ng-template pTemplate="item" let-user>
           {{ userLabel(user) }}

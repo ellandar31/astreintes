@@ -58,12 +58,6 @@
   grid-template-columns: minmax(0, 1fr) 1.75rem 1.75rem;
 }
 
-.header-cell span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .header-filter {
   margin-top: var(--app-space-sm);
   min-height: var(--app-size-control-sm);

@@ -1,3 +1,4 @@
+import { TruncatedTextComponent } from "../../shared/truncated-text.component";
 import { hasDirectorRights } from "../../shared/user-role-permissions";
 import { CommonModule } from "@angular/common";
 import { Component, Input, OnDestroy, effect, inject } from "@angular/core";
@@ -44,7 +45,7 @@ import { OperationModalComponent } from "./operation-modal.component";
 @Component({
   selector: "app-exceptional-operations",
   standalone: true,
-  imports: [ButtonModule, CommonModule, FormsModule, InputTextModule, InterventionModalComponent, OperationModalComponent, TableModule],
+  imports: [TruncatedTextComponent, ButtonModule, CommonModule, FormsModule, InputTextModule, InterventionModalComponent, OperationModalComponent, TableModule],
   templateUrl: "./exceptional-operations.component.html",
   styleUrl: "./exceptional-operations.component.css",
 })

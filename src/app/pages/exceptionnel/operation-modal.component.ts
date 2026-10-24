@@ -7,6 +7,7 @@ import { MessageModule } from "primeng/message";
 import { SelectModule } from "primeng/select";
 import { TableModule } from "primeng/table";
 import { APP_LABELS } from "../../i18n/labels";
+import { TruncatedTextComponent } from "../../shared/truncated-text.component";
 import { ModalComponent } from "../../shared/modal.component";
 import { createEmptyVisa } from "../../shared/visa.models";
 import {
@@ -27,9 +28,9 @@ import {
 @Component({
   selector: "app-operation-modal",
   standalone: true,
-  imports: [ButtonModule, CommonModule, FormsModule, InputTextModule, MessageModule, ModalComponent, SelectModule, TableModule],
+  imports: [ButtonModule, CommonModule, FormsModule, InputTextModule, MessageModule, ModalComponent, TruncatedTextComponent, SelectModule, TableModule],
   templateUrl: "./operation-modal.component.html",
-  styleUrl: "./operation-modal.component.css",
+  styleUrls: ["./operation-modal.component.css", "../../shared/user-select-form.css"],
 })
 export class OperationModalComponent {
   readonly labels = APP_LABELS;

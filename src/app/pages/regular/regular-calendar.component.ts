@@ -1,3 +1,4 @@
+import { TruncatedTextComponent } from "../../shared/truncated-text.component";
 import { CommonModule } from "@angular/common";
 import { Component, OnDestroy, effect, inject } from "@angular/core";
 import { FormsModule } from "@angular/forms";
@@ -46,7 +47,7 @@ interface CalendarDay {
 @Component({
   selector: "app-regular-calendar",
   standalone: true,
-  imports: [ButtonModule, CommonModule, FormsModule, RegularInterventionModalComponent, RegularPeriodModalComponent, SelectModule],
+  imports: [TruncatedTextComponent, ButtonModule, CommonModule, FormsModule, RegularInterventionModalComponent, RegularPeriodModalComponent, SelectModule],
   templateUrl: "./regular-calendar.component.html",
   styleUrl: "./regular-calendar.component.css",
 })

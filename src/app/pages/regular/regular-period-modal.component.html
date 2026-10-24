@@ -117,7 +117,7 @@
               <td>{{ intervention.userName || intervention.userEmail }}</td>
               <td>{{ formatDateTime(intervention.startDate) }}</td>
               <td>{{ formatDateTime(intervention.endDate) }}</td>
-              <td class="comment-cell">{{ intervention.comment || labels.common.empty.dash }}</td>
+              <td class="comment-cell"><app-truncated-text [text]="intervention.comment || labels.common.empty.dash" /></td>
               @if (!isLocked) {
                 <td>
                   <div class="action-cell">

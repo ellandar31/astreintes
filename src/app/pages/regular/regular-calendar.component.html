@@ -72,12 +72,11 @@
           class="day-cell"
           [class.outside-month]="!day.isCurrentMonth"
           [class.public-holiday]="publicHoliday"
-          [title]="publicHoliday?.label || ''"
         >
           <div class="day-heading">
             <span class="day-number">{{ day.dayNumber }}</span>
             @if (publicHoliday) {
-              <span class="holiday-label">{{ publicHoliday.label }}</span>
+              <span class="holiday-label"><app-truncated-text [text]="publicHoliday.label" /></span>
             }
           </div>
 
@@ -87,10 +86,9 @@
                 class="period-bar"
                 [class.period-start]="isPeriodStart(day, period)"
                 [class]="'period-bar color-' + (getPeriodColor(period) % 6)"
-                [title]="period.userName"
                 (dblclick)="openEditPeriodModal(period)"
               >
-                <span>{{ period.userName }}</span>
+                <span><app-truncated-text [text]="period.userName" /></span>
               </div>
             }
           </div>

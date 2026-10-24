@@ -3,7 +3,6 @@
   gap: var(--app-space-xl);
 }
 
-:host ::ng-deep .user-select,
 :host ::ng-deep .p-inputtext {
   width: 100%;
 }

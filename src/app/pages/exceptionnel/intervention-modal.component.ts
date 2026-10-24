@@ -6,15 +6,16 @@ import { InputTextModule } from "primeng/inputtext";
 import { MessageModule } from "primeng/message";
 import { SelectModule } from "primeng/select";
 import { APP_LABELS } from "../../i18n/labels";
+import { TruncatedTextComponent } from "../../shared/truncated-text.component";
 import { ModalComponent } from "../../shared/modal.component";
 import { ExceptionalInterventionForm, ExceptionalOperation, SelectableUser } from "./exceptional.models";
 
 @Component({
   selector: "app-intervention-modal",
   standalone: true,
-  imports: [ButtonModule, CheckboxModule, FormsModule, InputTextModule, MessageModule, ModalComponent, SelectModule],
+  imports: [ButtonModule, CheckboxModule, FormsModule, InputTextModule, MessageModule, ModalComponent, TruncatedTextComponent, SelectModule],
   templateUrl: "./intervention-modal.component.html",
-  styleUrl: "./intervention-modal.component.css",
+  styleUrls: ["./intervention-modal.component.css", "../../shared/user-select-form.css"],
 })
 export class InterventionModalComponent {
   readonly labels = APP_LABELS;

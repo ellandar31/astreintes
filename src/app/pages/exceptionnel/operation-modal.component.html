@@ -14,11 +14,12 @@
           [placeholder]="labels.common.users.select"
           appendTo="body"
           styleClass="user-select"
-          [disabled]="isLocked || planningReadOnly"
+          [readonly]="isLocked || planningReadOnly"
+          [class.readonly-select]="isLocked || planningReadOnly"
           required
         >
           <ng-template pTemplate="selectedItem" let-user>
-            {{ user ? userLabel(user) : labels.common.users.select }}
+            <app-truncated-text [text]="user ? userLabel(user) : labels.common.users.select" />
           </ng-template>
           <ng-template pTemplate="item" let-user>
             {{ userLabel(user) }}
@@ -61,7 +62,7 @@
                   [disabled]="!availableUsers().length"
                 >
                   <ng-template pTemplate="selectedItem" let-user>
-                    {{ user ? userLabel(user) : labels.common.users.select }}
+                    <app-truncated-text [text]="user ? userLabel(user) : labels.common.users.select" />
                   </ng-template>
                   <ng-template pTemplate="item" let-user>
                     {{ userLabel(user) }}
@@ -84,7 +85,7 @@
             @for (participant of form.plannedUsers; track $index; let participantIndex = $index) {
               <div class="participant-row">
                 <div class="participant-name">
-                  <strong>{{ participant.displayName }}</strong>
+                  <strong><app-truncated-text [text]="participant.displayName" /></strong>
                 </div>
 
                 <label [attr.for]="'planned-start-date-' + participantIndex">
@@ -166,7 +167,7 @@
                   [disabled]="!availableUsers().length"
                 >
                   <ng-template pTemplate="selectedItem" let-user>
-                    {{ user ? userLabel(user) : labels.common.users.select }}
+                    <app-truncated-text [text]="user ? userLabel(user) : labels.common.users.select" />
                   </ng-template>
                   <ng-template pTemplate="item" let-user>
                     {{ userLabel(user) }}
@@ -189,7 +190,7 @@
             @for (participant of form.actualUsers; track $index; let participantIndex = $index) {
               <div class="participant-row">
                 <div class="participant-name">
-                  <strong>{{ participant.displayName }}</strong>
+                  <strong><app-truncated-text [text]="participant.displayName" /></strong>
                 </div>
 
                 <label [attr.for]="'actual-start-date-' + participantIndex">
