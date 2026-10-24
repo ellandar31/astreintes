@@ -5,28 +5,41 @@
       <h2 id="validation-title">{{ labels.validation.title }}</h2>
     </div>
 
-    @if (canSelectUser) {
-      <label for="validation-selected-user">
-        {{ labels.common.users.user }}
-        <p-select
-          inputId="validation-selected-user"
-          [options]="users"
-          [(ngModel)]="selectedUserId"
-          name="selectedUser"
-          optionLabel="email"
-          optionValue="id"
-          appendTo="body"
-          styleClass="user-select"
-        >
-          <ng-template pTemplate="selectedItem" let-item>
-            {{ item ? userLabel(item) : labels.common.users.select }}
-          </ng-template>
-          <ng-template pTemplate="item" let-item>
-            {{ userLabel(item) }}
-          </ng-template>
-        </p-select>
-      </label>
-    }
+    <div class="validation-filters">
+      @if (canSelectUser) {
+        <label class="user-filter" for="validation-selected-user">
+          {{ labels.common.users.user }}
+          <p-select
+            inputId="validation-selected-user"
+            [options]="users"
+            [(ngModel)]="selectedUserId"
+            name="selectedUser"
+            optionLabel="email"
+            optionValue="id"
+            appendTo="body"
+            styleClass="user-select"
+          >
+            <ng-template pTemplate="selectedItem" let-item>
+              <app-truncated-text [text]="item ? userLabel(item) : labels.common.users.select" />
+            </ng-template>
+            <ng-template pTemplate="item" let-item>
+              {{ userLabel(item) }}
+            </ng-template>
+          </p-select>
+        </label>
+      }
+      @if (activeValidationSection.id === "director") {
+        <label class="direction-filter" for="director-direction">{{ labels.directions.field }}
+          <p-select inputId="director-direction" [options]="directionOptions" optionLabel="name" optionValue="id"
+            [(ngModel)]="selectedDirectionId" [showClear]="true" [placeholder]="labels.directions.all"
+            [ariaLabel]="labels.directions.field" appendTo="body" styleClass="direction-select">
+            <ng-template pTemplate="selectedItem" let-direction>
+              <app-truncated-text [text]="direction?.name || labels.directions.all" />
+            </ng-template>
+          </p-select>
+        </label>
+      }
+    </div>
   </header>
 
   <div class="validation-layout">
@@ -51,13 +64,6 @@
         <section class="validation-section" [attr.aria-label]="section.title">
           <h3>{{ section.title }}</h3>
 
-          @if (section.id === "director") {
-            <label for="director-direction">{{ labels.directions.field }}
-              <p-select inputId="director-direction" [options]="directionOptions" optionLabel="name" optionValue="id"
-                [(ngModel)]="selectedDirectionId" [showClear]="true" [placeholder]="labels.directions.all"
-                [ariaLabel]="labels.directions.field" appendTo="body" />
-            </label>
-          }
           <p-table [value]="section.items" [rowTrackBy]="trackValidationItem" styleClass="validation-table" [tableStyle]="{ 'min-width': '48.75rem' }">
             <ng-template pTemplate="header">
               <tr>

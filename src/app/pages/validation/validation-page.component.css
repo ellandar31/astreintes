@@ -28,10 +28,30 @@
   display: grid;
   font-weight: 800;
   gap: var(--app-space-xs);
-  min-width: 16.25rem;
+  min-width: 0;
+  max-width: 100%;
 }
 
-:host ::ng-deep .user-select {
+.validation-filters {
+  align-items: end;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--app-space-lg);
+  max-width: 100%;
+}
+
+.user-filter {
+  width: 20rem;
+}
+
+.direction-filter {
+  width: 12rem;
+}
+
+.validation-filters p-select,
+:host ::ng-deep .user-select,
+:host ::ng-deep .direction-select {
+  min-width: 0;
   width: 100%;
 }
 

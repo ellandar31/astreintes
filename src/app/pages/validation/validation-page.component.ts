@@ -11,6 +11,7 @@ import { TableModule } from "primeng/table";
 import { TagModule } from "primeng/tag";
 import { Store } from "@ngrx/store";
 import { APP_LABELS } from "../../i18n/labels";
+import { TruncatedTextComponent } from "../../shared/truncated-text.component";
 import { SignatureVisa, createEmptyVisa } from "../../shared/visa.models";
 import { clearExceptionalDirectorVisas, exceptionalReadyForDirector, exceptionalReadyForRh, regularReadyForDirector, regularReadyForRh } from "../../shared/visa-workflow";
 import { ExceptionalActions } from "../../state/exceptional/exceptional.actions";
@@ -45,7 +46,7 @@ import { AppUser, ValidationItem, ValidationSection, ValidationSectionId, VisaPr
 @Component({
   selector: "app-validation-page",
   standalone: true,
-  imports: [ButtonModule, CardModule, CommonModule, FormsModule, MessageModule, SelectModule, TableModule, TagModule, ValidationConsultationModalComponent],
+  imports: [ButtonModule, CardModule, CommonModule, FormsModule, MessageModule, SelectModule, TableModule, TagModule, TruncatedTextComponent, ValidationConsultationModalComponent],
   templateUrl: "./validation-page.component.html",
   styleUrl: "./validation-page.component.css",
 })
@@ -138,9 +139,9 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
     if (changes["user"].previousValue?.uid !== this.user?.uid) {
       this.directionFilterInitialized = false;
       this.selectedDirectionId = "";
+      this.selectedUserId = "";
     }
 
-    this.selectedUserId = this.user?.uid || "";
     this.refreshProfile();
   }
 
@@ -735,8 +736,10 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
 
     this.profile = this.users.find((item) => item.id === this.user?.uid || item.uid === this.user?.uid) || null;
 
-    if (!this.selectedUserId) {
-      this.selectedUserId = this.user.uid;
+    // PrimeNG option values are SQL profile IDs, whereas Auth identifies the session by UUID.
+    // Resolve the initial value after profiles load without replacing an administrator's choice.
+    if (!this.selectedUserId || this.selectedUserId === this.user.uid || !this.canSelectUser) {
+      this.selectedUserId = this.profile?.id || this.user.uid;
     }
     const directions = this.directions();
     const defaultDirectionId = this.profile?.directionId || "";
