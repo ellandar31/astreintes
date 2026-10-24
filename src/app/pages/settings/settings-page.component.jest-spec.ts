@@ -11,7 +11,7 @@ import { selectCanManageUsers } from "../../state/settings/settings.selectors";
 import { SettingsSection } from "./settings.models";
 import { SettingsPageComponent } from "./settings-page.component";
 
-const adminSections: SettingsSection[] = ["users", "holidays", "rhCompensation"];
+const adminSections: SettingsSection[] = ["directions", "users", "holidays", "rhCompensation"];
 
 describe("Settings page visibility", () => {
   async function createPage(admin: boolean) {
@@ -49,7 +49,7 @@ describe("Settings page visibility", () => {
 
   it("keeps every settings section available to an administrator", async () => {
     const fixture = await createPage(true);
-    expect(fixture.componentInstance.sections()).toHaveLength(4);
+    expect(fixture.componentInstance.sections()).toHaveLength(5);
     expect(fixture.nativeElement.querySelector('app-users-settings')).not.toBeNull();
     for (const section of [...adminSections, "teams"] as SettingsSection[]) {
       fixture.componentInstance.setSection(section);

@@ -20,6 +20,7 @@
         <th scope="col">{{ labels.common.fields.name }}</th>
         <th scope="col">{{ labels.common.fields.email }}</th>
         <th scope="col">{{ labels.common.fields.role }}</th>
+        <th scope="col">{{ labels.directions.field }}</th>
         <th scope="col">{{ labels.common.fields.actions }}</th>
       </tr>
     </ng-template>
@@ -31,7 +32,7 @@
           <p-select
             [options]="roles"
             [disabled]="!canManageUsers()"
-            [ngModel]="user.role"
+            [ngModel]="roleFor(user)"
             (onChange)="updateUserRole(user, roleValue($event.value))"
             optionLabel="label"
             optionValue="value"
@@ -47,6 +48,21 @@
           </p-select>
         </td>
         <td>
+          <p-select [options]="directions()" optionLabel="name" optionValue="id" appendTo="body"
+            [ngModel]="directionFor(user)" (ngModelChange)="updateUserDirection(user, $event)"
+            [showClear]="!requiresDirection(roleFor(user))" [required]="requiresDirection(roleFor(user))"
+            [disabled]="!canManageUsers()" [placeholder]="labels.directions.select" [ariaLabel]="labels.directions.field" [style]="{ width: '16rem', maxWidth: '100%' }">
+            <ng-template pTemplate="selectedItem" let-direction>
+              <app-truncated-text [text]="direction?.name || labels.directions.select" />
+            </ng-template>
+          </p-select>
+          @if (requiresDirection(roleFor(user)) && !directionFor(user)) {
+            <small>{{ labels.directions.required }}</small>
+          }
+        </td>
+        <td>
+          <p-button icon="pi pi-save" [label]="labels.common.actions.save"
+            [disabled]="!canSaveAssignment(user)" (onClick)="saveUserAssignment(user)" />
           <p-button
             icon="pi pi-trash"
             [disabled]="!canManageUsers()"
@@ -62,7 +78,7 @@
     </ng-template>
     <ng-template pTemplate="emptymessage">
       <tr>
-        <td colspan="4">{{ labels.settings.empty.noUser }}</td>
+        <td colspan="5">{{ labels.settings.empty.noUser }}</td>
       </tr>
     </ng-template>
   </p-table>

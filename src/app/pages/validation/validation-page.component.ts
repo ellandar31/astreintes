@@ -25,7 +25,7 @@ import {
   selectRegularTeams,
 } from "../../state/regular/regular.selectors";
 import { SettingsActions } from "../../state/settings/settings.actions";
-import { selectSettingsMessage, selectSettingsUsers } from "../../state/settings/settings.selectors";
+import { selectSettingsDirections, selectSettingsMessage, selectSettingsUsers } from "../../state/settings/settings.selectors";
 import { StoreAuthUser } from "../../store/app-store";
 import { ExceptionalOperation } from "../exceptionnel/exceptional.models";
 import { RegularIntervention, RegularOnCallPeriod } from "../regular/regular.models";
@@ -59,6 +59,8 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
   selectedItem: ValidationItem | null = null;
   activeSectionId: ValidationSectionId = "stakeholder";
   selectedUserId = "";
+  selectedDirectionId = "";
+  readonly directions = inject(Store).selectSignal(selectSettingsDirections);
   users: AppUser[] = [];
   validationMessage = "";
   readonly canDeleteVisaForModal = (item: ValidationItem): boolean => this.canDeleteVisa(item);
@@ -77,6 +79,10 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
   private readonly settingsUsers = this.store.selectSignal(selectSettingsUsers);
 
   constructor() {
+    effect(() => {
+      const directions = this.directions();
+      if (this.selectedDirectionId && !directions.some(direction => direction.id === this.selectedDirectionId)) this.selectedDirectionId = "";
+    });
     this.store.dispatch(SettingsActions.usersWatchStarted());
     this.store.dispatch(RegularActions.watchStarted());
     this.store.dispatch(ExceptionalActions.watchStarted());
@@ -237,13 +243,23 @@ export class ValidationPageComponent implements OnChanges, OnDestroy {
     return this.validationItems.filter((item) => item.kind === "exceptional-operation-initiator");
   }
 
+  get directionOptions() {
+    return [{ id: "", name: this.labels.directions.all }, ...this.directions()];
+  }
+
+  directionName(item: ValidationItem): string {
+    const id = (item.payload as RegularOnCallPeriod | ExceptionalOperation).directionId;
+    return this.directions().find(direction => direction.id === id)?.name || this.labels.common.users.unspecified;
+  }
+
   get directorVisaItems(): ValidationItem[] {
     if (!this.canViewDirectorSection) {
       return [];
     }
 
     return this.validationItems.filter((item) =>
-      ["regular-period-director", "exceptional-operation-director"].includes(item.kind),
+      ["regular-period-director", "exceptional-operation-director"].includes(item.kind)
+      && (!this.selectedDirectionId || (item.payload as RegularOnCallPeriod | ExceptionalOperation).directionId === this.selectedDirectionId),
     );
   }
 

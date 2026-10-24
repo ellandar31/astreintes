@@ -1,3 +1,4 @@
+import { DirectionsSettingsComponent } from "./directions-settings.component";
 import { CommonModule } from "@angular/common";
 import { Component, computed, effect, inject } from "@angular/core";
 import { Store } from "@ngrx/store";
@@ -24,6 +25,7 @@ import { UsersSettingsComponent } from "./users-settings.component";
     RhCompensationSettingsComponent,
     TeamsSettingsComponent,
     UsersSettingsComponent,
+    DirectionsSettingsComponent,
   ],
   templateUrl: "./settings-page.component.html",
   styleUrl: "./settings-page.component.css",
@@ -33,6 +35,7 @@ export class SettingsPageComponent {
   private readonly store = inject(Store);
   private readonly isAdmin = this.store.selectSignal(selectCanManageUsers);
   private readonly allSections: Array<{ id: SettingsSection; label: string }> = [
+    { id: "directions", label: APP_LABELS.directions.title },
     { id: "users", label: APP_LABELS.settings.menu.users },
     { id: "teams", label: APP_LABELS.settings.menu.teams },
     { id: "holidays", label: APP_LABELS.settings.menu.holidays },

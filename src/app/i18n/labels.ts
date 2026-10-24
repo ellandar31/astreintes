@@ -174,6 +174,18 @@ export const APP_LABELS = {
     },
     eyebrow: "Exceptionnel",
   },
+  directions: {
+    title: "Gestion des directions", field: "Direction", all: "Toutes les directions",
+    select: "Sélectionner une direction", name: "Nom de la direction", add: "Ajouter une direction",
+    save: "Enregistrer la direction", edit: "Modifier la direction", remove: "Supprimer la direction",
+    empty: "Aucune direction configurée.", required: "Une direction est obligatoire pour les initiateurs et les directeurs.",
+    operationRequired: "Sélectionnez une direction pour cette opération.",
+    profileSaved: "Rôle et direction de l’utilisateur enregistrés.",
+    saved: "Direction enregistrée.", deleted: "Direction supprimée.",
+    loadError: "Impossible de charger les directions.",
+    saveError: "Impossible d’enregistrer la direction. Vérifiez son nom et son unicité.",
+    deleteError: "Impossible de supprimer cette direction : elle peut être associée à un profil ou une opération.",
+  },
   profile: {
     title: "Mon profil",
     eyebrow: "Profil",

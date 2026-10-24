@@ -20,6 +20,7 @@ const persistence = new SupabaseDomainStore(supabase);
 
 export const appStore = {
   auth: createStoreAuth(supabase),
+  directions: persistence.directions,
   users: persistence.users,
   teams: persistence.teams,
   schedule: persistence.schedule,

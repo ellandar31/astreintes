@@ -1,5 +1,6 @@
 import { createActionGroup, emptyProps, props } from "@ngrx/store";
 import {
+  Direction,
   ManagedUser,
   PublicHoliday,
   RhCompensationSettings,
@@ -7,16 +8,19 @@ import {
   UserRole,
 } from "../../pages/settings/settings.models";
 
-export type SettingsMessageSource = "users" | "teams" | "holidays" | "rhCompensation";
+export type SettingsMessageSource = "directions" | "users" | "teams" | "holidays" | "rhCompensation";
 export type SettingsMessageKind = "success" | "failure";
 
 export const SettingsActions = createActionGroup({
   source: "Settings",
   events: {
+    "Directions Changed": props<{ directions: Direction[] }>(),
+    "Direction Save Requested": props<{ directionId: string | null; name: string }>(),
+    "Direction Delete Requested": props<{ directionId: string }>(),
     "Users Watch Started": emptyProps(),
     "Users Watch Stopped": emptyProps(),
     "Users Changed": props<{ users: ManagedUser[] }>(),
-    "User Role Update Requested": props<{ role: UserRole; userId: string }>(),
+    "User Role Update Requested": props<{ role: UserRole; userId: string; directionId?: string | null }>(),
     "User Delete Requested": props<{ userId: string }>(),
     "Teams Watch Started": emptyProps(),
     "Teams Watch Stopped": emptyProps(),

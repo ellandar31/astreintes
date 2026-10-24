@@ -6,7 +6,7 @@
 .period-summary-grid {
   display: grid;
   gap: var(--app-space-lg);
-  grid-template-columns: minmax(13.75rem, 0.8fr) minmax(13.75rem, 1fr) minmax(13.75rem, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 :host ::ng-deep .user-select,
@@ -98,3 +98,5 @@
     grid-template-columns: 1fr;
   }
 }
+
+.period-summary-grid label { min-width: 0; }

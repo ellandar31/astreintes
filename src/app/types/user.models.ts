@@ -8,6 +8,7 @@ export interface ManagedUser {
   email: string;
   displayName: string;
   trigram?: string;
+  directionId?: string | null;
   /** Company departure date; this does not delete the Auth account. */
   deletedAt?: string | null;
   role: UserRole;

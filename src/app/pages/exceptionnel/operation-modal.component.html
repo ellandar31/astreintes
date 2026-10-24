@@ -1,6 +1,17 @@
 <app-modal [title]="title" size="large" (closed)="closed.emit()">
   <form class="operation-form" #operationNgForm="ngForm" (ngSubmit)="save(operationNgForm)">
     <section class="summary-panel" [attr.aria-label]="labels.exceptional.sections.generalInformation">
+      <label for="exceptional-direction">
+        {{ labels.directions.field }}
+        <p-select inputId="exceptional-direction" [options]="directions" optionLabel="name" optionValue="id"
+          name="directionId" [(ngModel)]="form.directionId" [readonly]="isLocked || planningReadOnly"
+          [class.readonly-select]="isLocked || planningReadOnly" required
+          [placeholder]="labels.directions.select" appendTo="body" styleClass="user-select">
+          <ng-template pTemplate="selectedItem" let-direction>
+            <app-truncated-text [text]="direction?.name || labels.directions.select" />
+          </ng-template>
+        </p-select>
+      </label>
       <label for="operation-initiator">
         {{ labels.common.fields.initiator }}
         <p-select

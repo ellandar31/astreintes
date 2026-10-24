@@ -86,7 +86,7 @@ DO $$ DECLARE affected integer; BEGIN
  DELETE FROM public.app_users WHERE email = 'new@example.test';
  GET DIAGNOSTICS affected = ROW_COUNT;
  IF affected <> 1 THEN RAISE EXCEPTION 'Admin deletion refused'; END IF;
- INSERT INTO public.app_users (auth_user_id,email,role)
- VALUES ('00000000-0000-4000-8000-000000000005','new@example.test','initiator');
+ INSERT INTO public.app_users (auth_user_id,email,role,direction_id)
+ VALUES ('00000000-0000-4000-8000-000000000005','new@example.test','initiator',1);
 END; $$;
 RESET ROLE;

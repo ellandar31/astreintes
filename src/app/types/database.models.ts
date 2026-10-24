@@ -2,7 +2,7 @@
 export type JsonRecord = Record<string, unknown>;
 
 export type RelationalTable =
-  | "app_users" | "teams" | "team_members" | "schedule_rules" | "public_holidays"
+  | "directions" | "app_users" | "teams" | "team_members" | "schedule_rules" | "public_holidays"
   | "rh_on_call_compensation_rules" | "rh_period_compensation_rules"
   | "regular_on_call_periods" | "regular_interventions"
   | "exceptional_on_calls" | "exceptional_works"

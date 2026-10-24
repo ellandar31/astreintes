@@ -68,15 +68,15 @@ CREATE TRIGGER check_regular_intervention_period BEFORE INSERT OR UPDATE ON publ
 
 DROP TRIGGER IF EXISTS lock_after_rh_sent ON public.exceptional_on_calls;
 
-CREATE TRIGGER lock_after_rh_sent BEFORE UPDATE ON public.exceptional_on_calls FOR EACH ROW WHEN (((old.sent_to_rh_at IS NOT NULL) AND ((old.initiator_user_id IS DISTINCT FROM new.initiator_user_id) OR (old.operation_manager_user_id IS DISTINCT FROM new.operation_manager_user_id) OR (old.operation_manager_name IS DISTINCT FROM new.operation_manager_name) OR (old.title IS DISTINCT FROM new.title) OR (old.planned_starts_at IS DISTINCT FROM new.planned_starts_at) OR (old.planned_ends_at IS DISTINCT FROM new.planned_ends_at) OR (old.actual_starts_at IS DISTINCT FROM new.actual_starts_at) OR (old.actual_ends_at IS DISTINCT FROM new.actual_ends_at)))) EXECUTE FUNCTION public.prevent_rh_sent_exceptional_changes();
+CREATE TRIGGER lock_after_rh_sent BEFORE UPDATE ON public.exceptional_on_calls FOR EACH ROW WHEN (((old.sent_to_rh_at IS NOT NULL) AND ((old.direction_id IS DISTINCT FROM new.direction_id) OR (old.initiator_user_id IS DISTINCT FROM new.initiator_user_id) OR (old.operation_manager_user_id IS DISTINCT FROM new.operation_manager_user_id) OR (old.operation_manager_name IS DISTINCT FROM new.operation_manager_name) OR (old.title IS DISTINCT FROM new.title) OR (old.planned_starts_at IS DISTINCT FROM new.planned_starts_at) OR (old.planned_ends_at IS DISTINCT FROM new.planned_ends_at) OR (old.actual_starts_at IS DISTINCT FROM new.actual_starts_at) OR (old.actual_ends_at IS DISTINCT FROM new.actual_ends_at)))) EXECUTE FUNCTION public.prevent_rh_sent_exceptional_changes();
 
 DROP TRIGGER IF EXISTS lock_after_rh_sent ON public.exceptional_works;
 
-CREATE TRIGGER lock_after_rh_sent BEFORE UPDATE ON public.exceptional_works FOR EACH ROW WHEN (((old.sent_to_rh_at IS NOT NULL) AND ((old.initiator_user_id IS DISTINCT FROM new.initiator_user_id) OR (old.operation_manager_user_id IS DISTINCT FROM new.operation_manager_user_id) OR (old.operation_manager_name IS DISTINCT FROM new.operation_manager_name) OR (old.title IS DISTINCT FROM new.title) OR (old.planned_starts_at IS DISTINCT FROM new.planned_starts_at) OR (old.planned_ends_at IS DISTINCT FROM new.planned_ends_at) OR (old.actual_starts_at IS DISTINCT FROM new.actual_starts_at) OR (old.actual_ends_at IS DISTINCT FROM new.actual_ends_at)))) EXECUTE FUNCTION public.prevent_rh_sent_exceptional_changes();
+CREATE TRIGGER lock_after_rh_sent BEFORE UPDATE ON public.exceptional_works FOR EACH ROW WHEN (((old.sent_to_rh_at IS NOT NULL) AND ((old.direction_id IS DISTINCT FROM new.direction_id) OR (old.initiator_user_id IS DISTINCT FROM new.initiator_user_id) OR (old.operation_manager_user_id IS DISTINCT FROM new.operation_manager_user_id) OR (old.operation_manager_name IS DISTINCT FROM new.operation_manager_name) OR (old.title IS DISTINCT FROM new.title) OR (old.planned_starts_at IS DISTINCT FROM new.planned_starts_at) OR (old.planned_ends_at IS DISTINCT FROM new.planned_ends_at) OR (old.actual_starts_at IS DISTINCT FROM new.actual_starts_at) OR (old.actual_ends_at IS DISTINCT FROM new.actual_ends_at)))) EXECUTE FUNCTION public.prevent_rh_sent_exceptional_changes();
 
 DROP TRIGGER IF EXISTS lock_regular_period_after_rh_sent ON public.regular_on_call_periods;
 
-CREATE TRIGGER lock_regular_period_after_rh_sent BEFORE UPDATE ON public.regular_on_call_periods FOR EACH ROW WHEN (((old.sent_to_rh_at IS NOT NULL) AND ((old.team_id IS DISTINCT FROM new.team_id) OR (old.user_id IS DISTINCT FROM new.user_id) OR (old.starts_at IS DISTINCT FROM new.starts_at) OR (old.ends_at IS DISTINCT FROM new.ends_at)))) EXECUTE FUNCTION public.prevent_rh_sent_regular_changes();
+CREATE TRIGGER lock_regular_period_after_rh_sent BEFORE UPDATE ON public.regular_on_call_periods FOR EACH ROW WHEN (((old.sent_to_rh_at IS NOT NULL) AND ((old.direction_id IS DISTINCT FROM new.direction_id) OR (old.team_id IS DISTINCT FROM new.team_id) OR (old.user_id IS DISTINCT FROM new.user_id) OR (old.starts_at IS DISTINCT FROM new.starts_at) OR (old.ends_at IS DISTINCT FROM new.ends_at)))) EXECUTE FUNCTION public.prevent_rh_sent_regular_changes();
 
 DROP TRIGGER IF EXISTS set_app_users_updated_at ON public.app_users;
 
@@ -170,6 +170,10 @@ CREATE TRIGGER set_updated_at BEFORE UPDATE ON public.exceptional_work_visas
 
 -- Trigger functions are not client-callable RPC endpoints.
 REVOKE ALL ON FUNCTION public.prevent_regular_intervention_outside_period(), public.prevent_rh_sent_exceptional_changes(), public.prevent_rh_sent_regular_changes(), public.set_updated_at(), public.prevent_exceptional_intervention_outside_actual_period() FROM PUBLIC, anon, authenticated;
+
+DROP TRIGGER IF EXISTS set_directions_updated_at ON public.directions;
+CREATE TRIGGER set_directions_updated_at BEFORE UPDATE ON public.directions
+ FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
 
 NOTIFY pgrst, 'reload schema';
 

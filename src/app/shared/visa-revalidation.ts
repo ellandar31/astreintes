@@ -16,7 +16,7 @@ function sameRange(first: { startDate?: string; endDate?: string }, second: { st
 /** A period visa approves both its assignee and its time window, not merely its ID. */
 export function revalidateRegularPeriod(current: RegularOnCallPeriod | undefined, update: RegularPeriodUpdate): RegularPeriodUpdate {
   const merged = { ...current, ...update };
-  if (current && (current.userId !== merged.userId || current.teamId !== merged.teamId || !sameRange(current, merged))) {
+  if (current && (current.userId !== merged.userId || current.teamId !== merged.teamId || current.directionId !== merged.directionId || !sameRange(current, merged))) {
     merged.agentVisa = createEmptyVisa();
     merged.directorVisa = createEmptyVisa();
   }
@@ -69,7 +69,7 @@ export function revalidateExceptionalOperation(current: ExceptionalOperation | u
   merged.actualUsers = actualRangeChanged && !actual.changed ? actual.rows.map(row => ({ ...row, visa: createEmptyVisa() })) : actual.rows;
   merged.interventions = actualRangeChanged && !actual.changed ? interventions.rows.map(row => ({ ...row, agentVisa: createEmptyVisa() })) : interventions.rows;
   const changed = planned.changed || actual.changed || interventions.changed || plannedRangeChanged || actualRangeChanged
-    || current.initiatorUid !== merged.initiatorUid || current.operationManagerUid !== merged.operationManagerUid;
+    || current.directionId !== merged.directionId || current.initiatorUid !== merged.initiatorUid || current.operationManagerUid !== merged.operationManagerUid;
   if (changed && merged.visas) {
     merged.visas = {
       ...clearExceptionalDirectorVisas(merged.visas),

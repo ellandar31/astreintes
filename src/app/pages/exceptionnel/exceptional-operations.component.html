@@ -120,6 +120,7 @@
 @if (modalMode === "edit" || ((modalMode === "create-astreinte" || modalMode === "create-travaux") && canCreateOperations())) {
   <app-operation-modal
     [form]="operationForm"
+    [directions]="directions()"
     [isLocked]="isSentToRh(selectedOperation)"
     [planningReadOnly]="selectedOperation ? !canEditOperation(selectedOperation) : !canCreateOperations()"
     [canManageIntervention]="canManageIntervention"

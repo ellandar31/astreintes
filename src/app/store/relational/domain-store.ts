@@ -1,9 +1,10 @@
+import { DirectionsRepository } from "./directions.repository";
 import { SupabaseClient } from "@supabase/supabase-js";
 import {
   ApplicationUser, DomainObserver, ExceptionalOperation, ExceptionalOperationType, ExceptionalOperationUpdate,
   PublicHoliday, RegularIntervention, RegularInterventionUpdate, RegularOnCallPeriod,
   RegularPeriodUpdate, RhCompensationSettings,
-  ScheduleRule, Team,
+  ScheduleRule, Team, Direction,
 } from "../../types";
 import { DomainObserverService } from "./domain-observer";
 import { ExceptionalRepository } from "./exceptional.repository";
@@ -27,9 +28,10 @@ const operationTables: RelationalTable[] = [
 
 /**
  * Typed persistence API used by effects. Repositories return business objects
- * directly; database columns, joins and timestamp conversions stay behind this boundary.
+ * directly; database columns, joins and timestamptz conversions stay behind this boundary.
  */
 export class SupabaseDomainStore {
+  readonly directions;
   readonly users;
   readonly teams;
   readonly schedule;
@@ -40,6 +42,7 @@ export class SupabaseDomainStore {
 
   constructor(client: SupabaseClient) {
     const observer = new DomainObserverService(client);
+    const directions = new DirectionsRepository(client);
     const users = new UsersRepository(client);
     const visas = new VisasRepository(client, users);
     const teams = new TeamsRepository(client, users);
@@ -53,6 +56,12 @@ export class SupabaseDomainStore {
       (next, error) => observer.watch(tables, load, next, error);
     const remove = (table: RelationalTable, id: string) => observer.write([table], () => deleteById(client, table, numberId(id)));
 
+    this.directions = {
+      watch: watch<Direction[]>(["directions"], () => directions.list()),
+      list: () => directions.list(),
+      save: (id: string | undefined, name: string) => observer.write(["directions"], () => directions.save(id, name)),
+      remove: (id: string) => remove("directions", id),
+    };
     this.users = {
       list: () => users.fetchUsers(),
       get: (identifier: string) => users.fetchUser(identifier),

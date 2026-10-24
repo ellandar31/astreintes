@@ -5,7 +5,7 @@ INSERT INTO public.app_users(auth_user_id, email, role)
 VALUES ('00000000-0000-4000-8000-000000000006', 'rh@example.test', 'rh');
 
 DO $$ BEGIN
-  IF (SELECT count(*) FROM pg_catalog.pg_tables WHERE schemaname = 'public') <> 17 THEN
+  IF (SELECT count(*) FROM pg_catalog.pg_tables WHERE schemaname = 'public') <> 18 THEN
     RAISE EXCEPTION 'Unexpected domain tables';
   END IF;
   -- Removed document exports must not reintroduce their obsolete configuration.

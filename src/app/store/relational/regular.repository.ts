@@ -30,6 +30,7 @@ export class RegularRepository {
         userEmail: text(user["email"]),
         startDate: dateTimeLocalText(period["starts_at"]),
         endDate: dateTimeLocalText(period["ends_at"]),
+        directionId: idText(period["direction_id"]) || undefined,
         sentToRhAt: text(period["sent_to_rh_at"]) || undefined,
         treatedAt: text(period["treated_at"]) || undefined,
         agentVisa: visas.get(visaKey(period["id"], "regular_period_agent")),
@@ -47,12 +48,14 @@ export class RegularRepository {
       user_id: userId,
       starts_at: databaseDateTime(data["startDate"]),
       ends_at: databaseDateTime(data["endDate"]),
+      ...(data.directionId !== undefined ? { direction_id: numberId(data.directionId) } : {}),
       sent_to_rh_at: nullableText(data["sentToRhAt"]),
       ...(data.treatedAt !== undefined ? { treated_at: nullableText(data.treatedAt) } : {}),
     };
     const planningUnchanged = current && current.id === identifier
       && current.userId === data.userId && current.teamId === data.teamId
       && current.startDate === data.startDate && current.endDate === data.endDate
+      && (data.directionId === undefined || current.directionId === data.directionId)
       && current.sentToRhAt === data.sentToRhAt
       && (data.treatedAt === undefined || current.treatedAt === data.treatedAt);
     // Clearing/signing a visa must not rewrite minute-only UI values onto precise SQL timestamps.

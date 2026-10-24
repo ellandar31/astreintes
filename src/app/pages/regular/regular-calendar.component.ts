@@ -1,3 +1,4 @@
+import { selectSettingsDirections } from "../../state/settings/settings.selectors";
 import { TruncatedTextComponent } from "../../shared/truncated-text.component";
 import { CommonModule } from "@angular/common";
 import { Component, OnDestroy, effect, inject } from "@angular/core";
@@ -72,6 +73,7 @@ export class RegularCalendarComponent implements OnDestroy {
   users: RegularUser[] = [];
 
   private readonly store = inject(Store);
+  readonly directions = this.store.selectSignal(selectSettingsDirections);
   readonly canCreateOperations = this.store.selectSignal(selectCanCreateOperations);
   readonly canEditPlanning = this.store.selectSignal(selectCanEditPlanning);
   private readonly currentProfile = this.store.selectSignal(selectCurrentApplicationUser);
@@ -202,13 +204,14 @@ export class RegularCalendarComponent implements OnDestroy {
   openPeriodModal(): void {
     if (!this.canCreateOperations()) return;
     this.editingPeriodId = null;
-    this.periodForm = this.createEmptyPeriodForm();
+    this.periodForm = { ...this.createEmptyPeriodForm(), directionId: this.currentProfile()?.directionId || "" };
     this.isPeriodModalOpen = true;
   }
 
   openEditPeriodModal(period: RegularOnCallPeriod): void {
     this.editingPeriodId = period.id;
     this.periodForm = {
+      directionId: period.directionId || "",
       userId: period.userId,
       userName: period.userName,
       userEmail: period.userEmail,

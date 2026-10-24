@@ -134,12 +134,13 @@ BEGIN
     RAISE EXCEPTION 'Profile identity must match the authenticated account' USING ERRCODE = '42501';
   END IF;
   IF TG_OP = 'INSERT' THEN
-    IF NEW.role IS DISTINCT FROM 'user'::public.user_role THEN
+    IF NEW.role IS DISTINCT FROM 'user'::public.user_role OR NEW.direction_id IS NOT NULL THEN
       RAISE EXCEPTION 'Only an administrator can assign roles' USING ERRCODE = '42501';
     END IF;
   ELSE
     IF NEW.role IS DISTINCT FROM OLD.role OR NEW.auth_user_id IS DISTINCT FROM OLD.auth_user_id
-       OR NEW.id IS DISTINCT FROM OLD.id OR NEW.created_at IS DISTINCT FROM OLD.created_at THEN
+       OR NEW.id IS DISTINCT FROM OLD.id OR NEW.created_at IS DISTINCT FROM OLD.created_at
+       OR NEW.direction_id IS DISTINCT FROM OLD.direction_id THEN
       RAISE EXCEPTION 'Only an administrator can change profile privileges or identity' USING ERRCODE = '42501';
     END IF;
   END IF;
@@ -409,5 +410,16 @@ DO $$ DECLARE table_name text; BEGIN
   EXECUTE format('CREATE TRIGGER protect_rh_treatment_transition BEFORE INSERT OR UPDATE OR DELETE ON public.%I FOR EACH ROW EXECUTE FUNCTION app_private.guard_rh_treatment_transition()', table_name);
  END LOOP;
 END; $$;
+
+-- Everyone authenticated can read the reference; only admins manage it.
+DROP POLICY IF EXISTS directions_admin_insert ON public.directions;
+DROP POLICY IF EXISTS directions_admin_update ON public.directions;
+DROP POLICY IF EXISTS directions_admin_delete ON public.directions;
+CREATE POLICY directions_admin_insert ON public.directions AS RESTRICTIVE FOR INSERT TO authenticated
+ WITH CHECK (app_private.is_application_admin());
+CREATE POLICY directions_admin_update ON public.directions AS RESTRICTIVE FOR UPDATE TO authenticated
+ USING (app_private.is_application_admin()) WITH CHECK (app_private.is_application_admin());
+CREATE POLICY directions_admin_delete ON public.directions AS RESTRICTIVE FOR DELETE TO authenticated
+ USING (app_private.is_application_admin());
 
 COMMIT;

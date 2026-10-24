@@ -11,6 +11,7 @@ import {
 import { SettingsState } from "./settings.reducer";
 
 const state: SettingsState = {
+  directions: [],
   holidays: [{ date: "2026-07-14", id: "h1", label: "Fête nationale", source: "manual", zone: "metropole" }],
   importedHolidays: [],
   isLoadingOfficialHolidays: true,

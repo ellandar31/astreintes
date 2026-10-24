@@ -8,7 +8,7 @@
   border-radius: var(--app-radius-sm);
   display: grid;
   gap: var(--app-space-lg);
-  grid-template-columns: minmax(13.75rem, 18.75rem) minmax(13.75rem, 18.75rem) minmax(22.5rem, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   padding: var(--app-space-md);
 }
 

@@ -1,3 +1,4 @@
+import { selectSettingsDirections } from "../../state/settings/settings.selectors";
 import { TruncatedTextComponent } from "../../shared/truncated-text.component";
 import { hasDirectorRights } from "../../shared/user-role-permissions";
 import { CommonModule } from "@angular/common";
@@ -84,6 +85,7 @@ export class ExceptionalOperationsComponent implements OnDestroy {
   users: SelectableUser[] = [];
 
   private readonly store = inject(Store);
+  readonly directions = this.store.selectSignal(selectSettingsDirections);
   readonly initiatorUsers = this.store.selectSignal(selectOperationInitiators);
   readonly canCreateOperations = this.store.selectSignal(selectCanCreateOperations);
 
@@ -165,6 +167,7 @@ export class ExceptionalOperationsComponent implements OnDestroy {
     this.selectedOperation = null;
     this.operationForm = this.createEmptyOperationForm(type);
     // Le sélecteur PrimeNG utilise les identifiants SQL, distincts de ceux de la session.
+    this.operationForm.directionId = this.currentProfile()?.directionId || "";
     this.operationForm.initiatorUid = this.initiatorUsers().find(user => user.id === this.currentProfile()?.id)?.id || "";
     this.modalMode = type === "astreinte" ? "create-astreinte" : "create-travaux";
   }
@@ -173,6 +176,7 @@ export class ExceptionalOperationsComponent implements OnDestroy {
     if (operation.type !== this.operationType) return;
     this.selectedOperation = operation;
     this.operationForm = {
+      directionId: operation.directionId || "",
       type: operation.type,
       initiatorUid: operation.initiatorUid || "",
       initiatorName: operation.initiatorName,
@@ -436,7 +440,7 @@ export class ExceptionalOperationsComponent implements OnDestroy {
     return Boolean(operation?.sentToRhAt);
   }
 
-  private createEmptyOperationForm(type: ExceptionalOperationType) {
+  private createEmptyOperationForm(type: ExceptionalOperationType): ExceptionalOperationForm {
     return {
       type,
       initiatorUid: this.user?.uid || "",

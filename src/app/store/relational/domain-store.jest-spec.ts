@@ -269,26 +269,35 @@ it("maps the RH SQL role to its distinct application profile", async () => {
 });
 
 describe("Optional operation and employee metadata", () => {
+  afterEach(() => jest.restoreAllMocks());
   it("reads and patches employee metadata without clearing omitted departure dates", async () => {
     const stamp = "2026-10-24T08:00:00Z";
-    const { client, writes } = relationalClient({ app_users: [{ ...userRow, trigram: "ABC", deleted_at: stamp }] });
+    const { client, writes } = relationalClient({ app_users: [{ ...userRow, trigram: "ABC", deleted_at: stamp, direction_id: 2 }] });
     const users = new UsersRepository(client);
-    expect(await users.fetchUser("7")).toMatchObject({ trigram: "ABC", deletedAt: stamp });
+    expect(await users.fetchUser("7")).toMatchObject({ trigram: "ABC", deletedAt: stamp, directionId: "2" });
     await users.saveUser("7", { trigram: "DEF" });
     expect(writes[0].payload).toEqual({ trigram: "DEF" });
     await users.saveUser("7", { deletedAt: null });
     expect(writes[1].payload).toEqual({ deleted_at: null });
   });
 
+  it("preserves an operation direction when only its RH status changes", async () => {
+    const current = { ...period, directionId: "2" };
+    jest.spyOn(RegularRepository.prototype, "fetchRegularPeriods").mockResolvedValue([current]);
+    const save = jest.spyOn(RegularRepository.prototype, "saveRegularPeriod").mockResolvedValue("11");
+    await new SupabaseDomainStore(relationalClient().client).regular.updatePeriod("11", { sentToRhAt: null });
+    expect(save).toHaveBeenCalledWith("11", expect.objectContaining({ directionId: "2", sentToRhAt: null }), current);
+  });
+
   it("persists regular tickets and treatment dates while preserving omitted metadata", async () => {
     const stamp = "2026-10-24T08:00:00Z";
     const { client, writes } = relationalClient({ app_users: [userRow],
-      regular_on_call_periods: [{ id: 11, treated_at: stamp }],
+      regular_on_call_periods: [{ id: 11, treated_at: stamp, direction_id: 2 }],
       regular_interventions: [{ id: 12, regular_period_id: 11, user_id: 7, ticket: "INC-123" }],
     });
     const users = new UsersRepository(client);
     const repository = new RegularRepository(client, users, new VisasRepository(client, users));
-    expect((await repository.fetchRegularPeriods())[0].treatedAt).toBe(stamp);
+    expect((await repository.fetchRegularPeriods())[0]).toMatchObject({ treatedAt: stamp, directionId: "2" });
     const intervention = (await repository.fetchRegularInterventions())[0];
     expect(intervention.ticket).toBe("INC-123");
     await repository.saveRegularIntervention("12", "11", { ...intervention, ticket: "INC-456" });

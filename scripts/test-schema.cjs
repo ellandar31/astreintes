@@ -6,4 +6,5 @@ runDatabaseTests('schema', [
   'access-assertions.sql',
   'compensation-rh-permissions-assertions.sql',
   'operation-metadata-assertions.sql',
+  'directions-assertions.sql',
 ]);

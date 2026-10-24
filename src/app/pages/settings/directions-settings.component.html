@@ -1,0 +1,20 @@
+<section class="settings-section" aria-labelledby="directions-title">
+  <h3 id="directions-title">{{ labels.directions.title }}</h3>
+  <form class="inline-form inline-form-compact" #directionForm="ngForm" (ngSubmit)="save(directionForm)">
+    <label for="direction-name">{{ labels.directions.name }}
+    <input pInputText id="direction-name" name="directionName" [(ngModel)]="name" required [disabled]="!canManage()" /></label>
+    <p-button type="submit" [label]="editingId ? labels.directions.save : labels.directions.add"
+      [disabled]="!canManage() || directionForm.invalid || !name.trim()" />
+  </form>
+  <p-table [value]="directions()" styleClass="settings-table">
+    <ng-template pTemplate="header"><tr><th>{{ labels.directions.name }}</th><th>{{ labels.common.fields.actions }}</th></tr></ng-template>
+    <ng-template pTemplate="body" let-direction><tr>
+      <td>{{ direction.name }}</td>
+      <td>
+        <p-button icon="pi pi-pencil" [text]="true" [disabled]="!canManage()" (onClick)="edit(direction)" [ariaLabel]="labels.directions.edit" />
+        <p-button icon="pi pi-trash" severity="danger" [text]="true" [disabled]="!canManage()" (onClick)="remove(direction)" [ariaLabel]="labels.directions.remove" />
+      </td>
+    </tr></ng-template>
+    <ng-template pTemplate="emptymessage"><tr><td colspan="2">{{ labels.directions.empty }}</td></tr></ng-template>
+  </p-table>
+</section>

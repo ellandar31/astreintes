@@ -4,7 +4,7 @@
 
 Dans le SQL Editor de Supabase, avec le rôle `postgres`, exécuter séparément :
 
-1. [`01_structure.sql`](../supabase/database/01_structure.sql) : types, 17 tables,
+1. [`01_structure.sql`](../supabase/database/01_structure.sql) : types, 18 tables,
    colonnes, clés étrangères, contraintes et index.
 2. [`02_security.sql`](../supabase/database/02_security.sql) : droits SQL,
    politiques RLS, contrôle des profils et autorisation des écritures.
@@ -18,8 +18,8 @@ réel et ne renseignent aucune donnée métier. Chaque script est transactionnel
 `01_structure.sql` est réservé à une base applicative vide : il ne supprime aucune
 table et ne constitue pas une mise à niveau d’une ancienne base. Les scripts 02 et
 03 peuvent être rejoués sur cette structure sans dupliquer les politiques ni les
-déclencheurs. Les accès clients sont bloqués à la création des tables, avant
-l’application du script de sécurisation.
+déclencheurs. Les droits d’accès sont définis par le script de sécurisation ;
+l’installation est complète après l’exécution des trois scripts.
 
 Le dépôt ne contient plus de migrations ni de `schema.sql` concurrent. Pendant
 la bêta, les évolutions sont intégrées directement aux trois scripts. Une base
@@ -31,7 +31,7 @@ sont désactivées dans `config.toml` ; l’installation utilise ces trois fichi
 
 | Fonction | Tables |
 | --- | --- |
-| Utilisateurs et équipes | `app_users`, `teams`, `team_members` |
+| Utilisateurs, directions et équipes | `app_users`, `directions`, `teams`, `team_members` |
 | Calendrier | `schedule_rules`, `public_holidays` |
 | Paramétrage RH | `rh_on_call_compensation_rules`, `rh_period_compensation_rules` |
 | Astreintes régulières | `regular_on_call_periods`, `regular_interventions`, `visas` |
@@ -70,3 +70,30 @@ La variable `SUPABASE_TEST_CONTAINER` permet de choisir le conteneur.
 Les fichiers de `supabase/tests/` sont des fixtures et assertions automatisées.
 Ils ne font pas partie de l’installation et ne doivent pas être exécutés dans la
 base applicative. Seule la base temporaire créée par le test est supprimée.
+
+## Directions
+
+Le menu « Gestion des directions » est réservé aux administrateurs. Les noms sont
+non vides et uniques sans tenir compte de la casse ni des espaces aux extrémités.
+Une direction déjà utilisée ne peut pas être supprimée.
+
+`app_users.direction_id` est obligatoire pour les profils Initiateur (2) et
+Directeur (3). Les autres profils peuvent être associés à une direction sans
+que cette association soit obligatoire. Seul l’administrateur modifie le rôle
+et la direction, enregistrés ensemble depuis la liste des utilisateurs.
+
+`regular_on_call_periods.direction_id`, `exceptional_on_calls.direction_id` et
+`exceptional_works.direction_id` sont obligatoires. Cette association est propre
+à l’opération : changer la direction d’un profil ne réaffecte pas ses anciens
+dossiers. La création propose la direction du créateur ; une nouvelle opération
+exceptionnelle reprend aussi celle de l’initiateur sélectionné. Elle reste modifiable
+avant l’envoi RH. La réaffectation invalide les validations globales correspondantes.
+
+Le tableau de validation du directeur affiche la direction et propose un filtre
+incluant « Toutes les directions ». Ce filtre ne modifie pas les droits d’accès SQL.
+Les listes partagées sont chargées par NgRx pour la session et vidées à la déconnexion ;
+les brouillons de rôle/direction restent locaux à la page de paramétrage.
+
+Les trois scripts d’installation incluent directement cette structure bêta. Ils
+n’ont pas été exécutés sur une base applicative existante ; aucun remplissage
+arbitraire des directions historiques n’est effectué.

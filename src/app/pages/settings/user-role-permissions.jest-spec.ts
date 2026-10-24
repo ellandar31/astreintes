@@ -63,10 +63,12 @@ describe("Profile administration permissions", () => {
     const dispatch = jest.spyOn(TestBed.inject(MockStore), "dispatch");
     dispatch.mockClear();
     fixture.componentInstance.updateUserRole(user, 0);
+    fixture.componentInstance.saveUserAssignment(user);
     fixture.componentInstance.deleteUser(user);
+    fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('p-button button').disabled).toBe(!allowed);
     if (allowed) {
-      expect(dispatch).toHaveBeenCalledWith(SettingsActions.userRoleUpdateRequested({ userId: user.id, role: 0 }));
+      expect(dispatch).toHaveBeenCalledWith(SettingsActions.userRoleUpdateRequested({ userId: user.id, role: 0, directionId: null }));
       expect(dispatch).toHaveBeenCalledWith(SettingsActions.userDeleteRequested({ userId: user.id }));
     } else {
       expect(dispatch).not.toHaveBeenCalled();

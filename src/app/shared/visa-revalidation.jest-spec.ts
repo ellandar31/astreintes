@@ -19,11 +19,17 @@ function expectGlobalRevocation(value: ReturnType<typeof revalidateExceptionalOp
 }
 
 describe("Visa revalidation after business edits", () => {
-  it.each([{ startDate: "2026-10-10T19:00" }, { endDate: "2026-10-11T09:00" }, { userId: "9" }, { teamId: "3" }])("revokes regular period approvals after %j", update => {
+  it.each([{ startDate: "2026-10-10T19:00" }, { endDate: "2026-10-11T09:00" }, { userId: "9" }, { teamId: "3" }, { directionId: "3" }])("revokes regular period approvals after %j", update => {
     const value = revalidateRegularPeriod(period, update);
     expect(value.agentVisa).toEqual(createEmptyVisa());
     expect(value.directorVisa).toEqual(createEmptyVisa());
     expect(period.agentVisa).toBe(visa);
+  });
+
+  it("restarts global exceptional approval when its direction changes", () => {
+    const value = revalidateExceptionalOperation({ ...operation, directionId: "1" }, { directionId: "2" });
+    expectGlobalRevocation(value);
+    expect(value.plannedUsers![0].visa).toBe(visa);
   });
 
   it("preserves approvals for unchanged data, equivalent date formats and label edits", () => {

@@ -24,7 +24,7 @@ describe("OperationModalComponent readonly initiator", () => {
     fixture.detectChanges();
 
     const select = fixture.nativeElement.querySelector("#operation-initiator");
-    const label = fixture.nativeElement.querySelector("app-truncated-text span");
+    const label = fixture.nativeElement.querySelector("#operation-initiator app-truncated-text span");
     expect(label).not.toBeNull();
     label.dispatchEvent(new MouseEvent("mouseenter"));
     fixture.detectChanges();

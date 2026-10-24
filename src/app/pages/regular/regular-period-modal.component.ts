@@ -1,3 +1,4 @@
+import { Direction } from "../../types";
 import { TruncatedTextComponent } from "../../shared/truncated-text.component";
 import { Component, EventEmitter, Input, Output } from "@angular/core";
 import { FormsModule, NgForm } from "@angular/forms";
@@ -15,10 +16,11 @@ import { RegularIntervention, RegularOnCallPeriodForm, RegularUser } from "./reg
   standalone: true,
   imports: [TruncatedTextComponent, ButtonModule, FormsModule, InputTextModule, MessageModule, ModalComponent, SelectModule, TableModule],
   templateUrl: "./regular-period-modal.component.html",
-  styleUrl: "./regular-period-modal.component.css",
+  styleUrls: ["./regular-period-modal.component.css", "../../shared/user-select-form.css"],
 })
 export class RegularPeriodModalComponent {
   readonly labels = APP_LABELS;
+  @Input() directions: Direction[] = [];
   @Input({ required: true }) form: RegularOnCallPeriodForm = {
     userId: "",
     userName: "",
@@ -59,7 +61,7 @@ export class RegularPeriodModalComponent {
       return;
     }
 
-    if (form.invalid) {
+    if (form.invalid || !this.form.directionId) {
       return;
     }
 

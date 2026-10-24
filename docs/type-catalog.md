@@ -30,7 +30,7 @@ ils sont inventoriés ci-dessous, mais ne doivent pas devenir des contrats parta
 | [rh-control-detail.models.ts](../src/app/types/rh-control-detail.models.ts) | `RhControlDetailLine`, `RhControlDetailItem` |
 | [rh-export.models.ts](../src/app/types/rh-export.models.ts) | `ExportTemplateId`, `RhExportPeriod`, `RhPeriodExportOperations`, `CalculationSegment`, `ExportOperation`, `RhExportContext`, `OnCallCompensationRow`, `InterventionCompensationRow` |
 | [rh.models.ts](../src/app/types/rh.models.ts) | `RhSection`, `RhUser`, `RhRegularPeriod`, `RhPublicHoliday`, `RhExceptionalIntervention`, `RhExceptionalOperation`, `RhControlRow` |
-| [settings.models.ts](../src/app/types/settings.models.ts) | `SettingsSection`, `ScheduleDay`, `Team`, `ScheduleRule`, `PublicHoliday`, `OnCallCompensationRule`, `PeriodCompensationRule`, `RhCompensationSettings` |
+| [settings.models.ts](../src/app/types/settings.models.ts) | `SettingsSection`, `ScheduleDay`, `Team`, `ScheduleRule`, `PublicHoliday`, `OnCallCompensationRule`, `PeriodCompensationRule`, `RhCompensationSettings`, `Direction` |
 | [signature.models.ts](../src/app/types/signature.models.ts) | `VisaStorageTable`, `VisaTargetColumn`, `VisaScope`, `SignatureProfile`, `SignatureVisa` |
 | [user.models.ts](../src/app/types/user.models.ts) | `UserRole`, `ManagedUser`, `ApplicationUser` |
 | [validation.models.ts](../src/app/types/validation.models.ts) | `ValidationItemKind`, `AppUser`, `ValidationItem`, `VisaProgressItem`, `ValidationSectionId`, `ValidationSection` |

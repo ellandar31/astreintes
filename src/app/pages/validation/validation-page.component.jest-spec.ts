@@ -3,7 +3,7 @@ import { provideNoopAnimations } from "@angular/platform-browser/animations";
 import { MockStore, provideMockStore } from "@ngrx/store/testing";
 import { selectExceptionalError, selectExceptionalOperations } from "../../state/exceptional/exceptional.selectors";
 import { selectRegularError, selectRegularInterventions, selectRegularPeriods, selectRegularTeams } from "../../state/regular/regular.selectors";
-import { selectSettingsMessage, selectSettingsUsers } from "../../state/settings/settings.selectors";
+import { selectSettingsDirections, selectSettingsMessage, selectSettingsUsers } from "../../state/settings/settings.selectors";
 import { createEmptyVisa } from "../../shared/visa.models";
 import { ExceptionalOperation, RegularIntervention, RegularOnCallPeriod } from "../../types";
 import { ValidationPageComponent } from "./validation-page.component";
@@ -65,6 +65,7 @@ describe("Validation consultation", () => {
         { selector: selectRegularError, value: "" },
         { selector: selectExceptionalError, value: "" },
         { selector: selectSettingsMessage, value: null },
+        { selector: selectSettingsDirections, value: [{ id: "1", name: "Technique" }, { id: "2", name: "Services" }] },
         { selector: selectSettingsUsers, value: [{ id: "7", uid: "auth-id", displayName: "Agent", email: period.userEmail, role: 1 }] },
       ] })],
     }).compileComponents();
@@ -320,6 +321,34 @@ describe("Validation consultation", () => {
     dispatch.mockClear();
     component.updateRhSend(item, true);
     expect(dispatch).not.toHaveBeenCalled();
+  });
+
+  it("filters all director operation families by direction and restores every row with All", () => {
+    const component = createPage().componentInstance;
+    const signed = { ...createEmptyVisa(), signed: true };
+    component.profile = { ...component.profile!, role: 3 };
+    component.regularPeriods = [{ ...period, directionId: "1", agentVisa: signed }];
+    component.regularInterventions = [{ ...intervention, agentVisa: signed }];
+    const exceptional = {
+      initiatorUid: "7", initiatorName: "Agent", operationManagerUid: "7", operationManagerName: "Agent",
+      startDate: period.startDate, forecastEndDate: period.endDate, actualStartDate: period.startDate,
+      actualEndDate: period.endDate, plannedUsers: [], actualUsers: [], interventions: [],
+      visas: { initiatorGlobal: signed, plannedInitiator: signed, actualInitiator: signed, plannedDirector: signed, actualDirector: signed },
+    };
+    component.exceptionalOperations = [
+      { ...exceptional, id: "astreinte:1", type: "astreinte", title: "Astreinte", directionId: "2" },
+      { ...exceptional, id: "travaux:1", type: "travaux", title: "Travaux", directionId: "1" },
+    ];
+    expect(component.directorVisaItems).toHaveLength(3);
+    component.selectedDirectionId = "1";
+    expect(component.directorVisaItems.map(item => item.kind)).toEqual(expect.arrayContaining(["regular-period-director", "exceptional-operation-director"]));
+    expect(component.directorVisaItems).toHaveLength(2);
+    component.selectedDirectionId = "2";
+    expect(component.directorVisaItems.map(item => item.payload.id)).toEqual(["astreinte:1"]);
+    expect(component.directionName(component.directorVisaItems[0])).toBe("Services");
+    component.selectedDirectionId = "";
+    expect(component.directorVisaItems).toHaveLength(3);
+    expect(component.directionOptions[0].name).toBe(component.labels.directions.all);
   });
 
   it("autorise l'administrateur à retirer tout visa et refuse la signature sans profil", () => {

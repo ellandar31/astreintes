@@ -68,7 +68,7 @@ DO $$ DECLARE table_name text; BEGIN
   EXCEPTION WHEN insufficient_privilege THEN NULL; END;
   BEGIN
    EXECUTE format('UPDATE public.%I SET sent_to_rh_at=sent_to_rh_at+interval ''1 hour'' WHERE id=901',table_name);
-   RAISE EXCEPTION 'Initiator RH timestamp replacement accepted';
+   RAISE EXCEPTION 'Initiator RH timestamptz replacement accepted';
   EXCEPTION WHEN insufficient_privilege THEN NULL; END;
   BEGIN
    IF table_name = 'regular_on_call_periods' THEN

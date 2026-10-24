@@ -1,6 +1,17 @@
 <app-modal [title]="modalTitle" size="large" (closed)="closed.emit()">
   <form class="period-form" [class.consultation-mode]="isLocked" #periodNgForm="ngForm" (ngSubmit)="save(periodNgForm)">
     <div class="period-summary-grid">
+      <label for="regular-direction">
+        {{ labels.directions.field }}
+        <p-select inputId="regular-direction" [options]="directions" optionLabel="name" optionValue="id"
+          name="directionId" [(ngModel)]="form.directionId" [readonly]="isLocked || planningReadOnly"
+          [class.readonly-select]="isLocked || planningReadOnly" required
+          [placeholder]="labels.directions.select" appendTo="body" styleClass="user-select">
+          <ng-template pTemplate="selectedItem" let-direction>
+            <app-truncated-text [text]="direction?.name || labels.directions.select" />
+          </ng-template>
+        </p-select>
+      </label>
       <label for="regular-period-user">
         {{ labels.common.fields.user }}
         <p-select

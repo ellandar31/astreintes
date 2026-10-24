@@ -1,6 +1,6 @@
 import { ExceptionalOperation, ExceptionalOperationType, OperationParticipant, ExceptionalIntervention, ExceptionalOperationUpdate } from "../../types";
 import { SupabaseClient } from "@supabase/supabase-js";
-import { text, nullableText, idText, visaKey, participantKey, userDisplayName, deleteById } from "./store-utils";
+import { text, nullableText, idText, numberId, visaKey, participantKey, userDisplayName, deleteById } from "./store-utils";
 import { UsersRepository } from "./users.repository";
 import { VisasRepository } from "./visas.repository";
 import { databaseDateTime, dateTimeLocalText } from "./date-time";
@@ -62,6 +62,7 @@ export class ExceptionalRepository {
         forecastEndDate: dateTimeLocalText(operation["planned_ends_at"]),
         actualStartDate: dateTimeLocalText(operation["actual_starts_at"]),
         actualEndDate: dateTimeLocalText(operation["actual_ends_at"]),
+        directionId: idText(operation["direction_id"]) || undefined,
         sentToRhAt: text(operation["sent_to_rh_at"]) || undefined,
         treatedAt: text(operation["treated_at"]) || undefined,
         plannedUsers: participants.get(participantKey(operationId, "planned")) ?? [],
@@ -99,10 +100,11 @@ export class ExceptionalRepository {
       planned_ends_at: databaseDateTime(data["forecastEndDate"]),
       actual_starts_at: databaseDateTime(data["actualStartDate"]),
       actual_ends_at: databaseDateTime(data["actualEndDate"]),
+      ...(data.directionId !== undefined ? { direction_id: numberId(data.directionId) } : {}),
       sent_to_rh_at: nullableText(data["sentToRhAt"]),
       ...(data.treatedAt !== undefined ? { treated_at: nullableText(data.treatedAt) } : {}),
     };
-    const planningUnchanged = current && (data.treatedAt === undefined || current.treatedAt === data.treatedAt) && [
+    const planningUnchanged = current && (data.directionId === undefined || current.directionId === data.directionId) && (data.treatedAt === undefined || current.treatedAt === data.treatedAt) && [
       "initiatorUid", "operationManagerUid", "operationManagerName", "title", "startDate",
       "forecastEndDate", "actualStartDate", "actualEndDate", "sentToRhAt",
     ].every(field => current[field as keyof ExceptionalOperation] === data[field as keyof ExceptionalOperationUpdate]);

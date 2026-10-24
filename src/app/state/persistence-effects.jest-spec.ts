@@ -20,6 +20,7 @@ jest.mock("../store/app-store", () => ({
     now: () => "2026-10-10T08:00:00Z",
     auth: { onSessionChanged: jest.fn(), updateProfile: jest.fn() },
     users: { watch: jest.fn(), watchOne: jest.fn(), get: jest.fn(), save: jest.fn() },
+    directions: { watch: jest.fn(), save: jest.fn(), remove: jest.fn() },
     teams: { watch: jest.fn() }, holidays: { watch: jest.fn() },
     regular: { watchPeriods: jest.fn(), watchInterventions: jest.fn(), updatePeriod: jest.fn() },
     exceptional: { watchOperations: jest.fn(), saveOperation: jest.fn() },
@@ -44,6 +45,29 @@ describe("NgRx effects using typed domain APIs", () => {
     });
   });
   afterEach(() => { actions.complete(); TestBed.resetTestingModule(); });
+
+  it("loads directions once per session and clears the reference on logout", () => {
+    const stop = jest.fn();
+    jest.mocked(appStore.directions.watch).mockImplementation(next => {
+      next([{ id: "1", name: "Technique" }]); return stop;
+    });
+    const received: Action[] = [];
+    const subscription = TestBed.inject(SettingsEffects).watchDirections$.subscribe(action => received.push(action));
+    actions.next(AuthActions.sessionChanged({ user: sessionUser }));
+    expect(received).toContainEqual(SettingsActions.directionsChanged({ directions: [{ id: "1", name: "Technique" }] }));
+    actions.next(AuthActions.logoutRequested());
+    expect(stop).toHaveBeenCalledTimes(1);
+    expect(received[received.length - 1]).toEqual(SettingsActions.directionsChanged({ directions: [] }));
+    subscription.unsubscribe();
+  });
+
+  it("persists role and direction in one profile update", async () => {
+    jest.mocked(appStore.users.save).mockResolvedValue("7");
+    const result = firstValueFrom(TestBed.inject(SettingsEffects).updateUserRole$);
+    actions.next(SettingsActions.userRoleUpdateRequested({ userId: "7", role: 3, directionId: "1" }));
+    await result;
+    expect(appStore.users.save).toHaveBeenCalledWith("7", { role: 3, directionId: "1" });
+  });
 
   it("loads permissions at login without settings navigation and clears them on logout or load failure", () => {
     const stop = jest.fn();

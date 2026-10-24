@@ -101,6 +101,7 @@
 @if (isPeriodModalOpen && (editingPeriodId || canCreateOperations())) {
   <app-regular-period-modal
     [form]="periodForm"
+    [directions]="directions()"
     [interventions]="editingPeriodInterventions"
     [isEditing]="!!editingPeriodId"
     [isLocked]="isPeriodSentToRh(editingPeriod)"

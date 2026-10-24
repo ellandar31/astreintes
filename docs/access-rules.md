@@ -349,3 +349,18 @@ Pour une recette métier, vérifier successivement :
 5. L'accès aux deux rubriques d'export.
 6. Le changement d'utilisateur dans les contrôles, notamment pour un initiateur.
 7. La modification des rôles et la révocation des droits sur une page ouverte.
+
+## Directions des profils et opérations
+
+Le référentiel est lisible par les comptes authentifiés et administrable uniquement
+par les administrateurs. Une direction utilisée par un profil ou une opération
+ne peut pas être supprimée. L’affectation d’un utilisateur à une direction suit
+les mêmes droits que l’attribution de son rôle.
+
+Les initiateurs et directeurs doivent avoir une direction. Chaque astreinte
+régulière, astreinte exceptionnelle et travail supplémentaire possède sa propre
+direction obligatoire. La réaffectation d’une opération envoyée aux RH exige
+l’annulation préalable de l’envoi. Les contrôles s’appliquent aussi aux appels SQL.
+
+Le filtre de la validation directeur propose « Toutes les directions » ; il ne
+constitue pas une restriction d’accès aux seules opérations de sa direction.

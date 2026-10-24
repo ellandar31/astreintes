@@ -1,3 +1,5 @@
+import { AuthActions } from "../auth/auth.actions";
+import { APP_LABELS } from "../../i18n/labels";
 import { Injectable, inject } from "@angular/core";
 import { Actions, createEffect, ofType } from "@ngrx/effects";
 import { Action } from "@ngrx/store";
@@ -38,6 +40,35 @@ const defaultPeriodRows: PeriodCompensationRule[] = [
  */
 export class SettingsEffects {
   private readonly actions$ = inject(Actions);
+
+  /** Shared reference data follows the session, rather than individual modal lifetimes. */
+  readonly watchDirections$ = createEffect(() => this.actions$.pipe(
+    ofType(AuthActions.sessionChanged, AuthActions.logoutRequested),
+    switchMap(action => new Observable<Action>(subscriber => {
+      subscriber.next(SettingsActions.directionsChanged({ directions: [] }));
+      if (!("user" in action) || !action.user) { subscriber.complete(); return; }
+      return appStore.directions.watch(
+        directions => subscriber.next(SettingsActions.directionsChanged({ directions })),
+        () => subscriber.next(this.failure("directions", APP_LABELS.directions.loadError)),
+      );
+    })),
+  ));
+
+  readonly saveDirection$ = createEffect(() => this.actions$.pipe(
+    ofType(SettingsActions.directionSaveRequested),
+    concatMap(({ directionId, name }) => from(appStore.directions.save(directionId ?? undefined, name)).pipe(
+      map(() => this.success("directions", APP_LABELS.directions.saved)),
+      catchError(() => of(this.failure("directions", APP_LABELS.directions.saveError))),
+    )),
+  ));
+
+  readonly deleteDirection$ = createEffect(() => this.actions$.pipe(
+    ofType(SettingsActions.directionDeleteRequested),
+    concatMap(({ directionId }) => from(appStore.directions.remove(directionId)).pipe(
+      map(() => this.success("directions", APP_LABELS.directions.deleted)),
+      catchError(() => of(this.failure("directions", APP_LABELS.directions.deleteError))),
+    )),
+  ));
 
   // Users are sourced from application profiles, not directly from
   // Auth provider, because roles and display names are business data.
@@ -112,9 +143,9 @@ export class SettingsEffects {
   readonly updateUserRole$ = createEffect(() =>
     this.actions$.pipe(
       ofType(SettingsActions.userRoleUpdateRequested),
-      concatMap(({ role, userId }) =>
-        from(appStore.users.save(userId, { role: Number(role) as UserRole })).pipe(
-          map(() => this.success("users", "Rôle utilisateur mis à jour.")),
+      concatMap(({ role, userId, directionId }) =>
+        from(appStore.users.save(userId, { role: Number(role) as UserRole, ...(directionId !== undefined ? { directionId } : {}) })).pipe(
+          map(() => this.success("users", APP_LABELS.directions.profileSaved)),
           catchError((error) => of(this.failure("users", this.errorMessage(error, "Erreur pendant la gestion des utilisateurs.")))),
         ),
       ),

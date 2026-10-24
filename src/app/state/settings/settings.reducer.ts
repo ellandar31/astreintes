@@ -1,5 +1,6 @@
 import { createReducer, on } from "@ngrx/store";
 import {
+  Direction,
   PublicHoliday,
   RhCompensationSettings,
   Team,
@@ -15,6 +16,7 @@ export interface SettingsOperationMessage {
 }
 
 export interface SettingsState {
+  directions: Direction[];
   isSaving: boolean;
   importedHolidays: PublicHoliday[];
   isLoadingOfficialHolidays: boolean;
@@ -26,6 +28,7 @@ export interface SettingsState {
 }
 
 export const initialSettingsState: SettingsState = {
+  directions: [],
   isSaving: false,
   importedHolidays: [],
   isLoadingOfficialHolidays: false,
@@ -38,6 +41,7 @@ export const initialSettingsState: SettingsState = {
 
 export const settingsReducer = createReducer(
   initialSettingsState,
+  on(SettingsActions.directionsChanged, (state, { directions }): SettingsState => ({ ...state, directions })),
   on(SettingsActions.usersChanged, (state, { users }): SettingsState => ({
     ...state,
     users,
@@ -66,6 +70,8 @@ export const settingsReducer = createReducer(
     rhCompensation: settings,
   })),
   on(
+    SettingsActions.directionSaveRequested,
+    SettingsActions.directionDeleteRequested,
     SettingsActions.userRoleUpdateRequested,
     SettingsActions.userDeleteRequested,
     SettingsActions.teamSaveRequested,

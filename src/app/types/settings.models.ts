@@ -1,4 +1,4 @@
-export type SettingsSection = "teams" | "users" | "schedules" | "holidays" | "rhControls" | "rhCompensation";
+export type SettingsSection = "directions" | "teams" | "users" | "schedules" | "holidays" | "rhControls" | "rhCompensation";
 export type ScheduleDay = "Lundi" | "Mardi" | "Mercredi" | "Jeudi" | "Vendredi" | "Samedi" | "Dimanche" | "Jour férié";
 export type { ManagedUser, UserRole } from "./user.models";
 
@@ -41,3 +41,6 @@ export interface RhCompensationSettings {
   onCall: OnCallCompensationRule[];
   periods: PeriodCompensationRule[];
 }
+
+/** Administrative reference shared by profiles and operation snapshots. */
+export interface Direction { id: string; name: string; }

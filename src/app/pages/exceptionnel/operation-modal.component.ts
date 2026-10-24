@@ -1,3 +1,4 @@
+import { Direction } from "../../types";
 import { CommonModule } from "@angular/common";
 import { Component, EventEmitter, Input, Output } from "@angular/core";
 import { FormsModule, NgForm } from "@angular/forms";
@@ -34,6 +35,7 @@ import {
 })
 export class OperationModalComponent {
   readonly labels = APP_LABELS;
+  @Input() directions: Direction[] = [];
   @Input({ required: true }) form: ExceptionalOperationForm = {
     type: "astreinte",
     initiatorUid: "",
@@ -85,7 +87,7 @@ export class OperationModalComponent {
 
     this.validationError = "";
 
-    if (form.invalid) {
+    if (form.invalid || !this.form.directionId) {
       return;
     }
 
@@ -129,6 +131,8 @@ export class OperationModalComponent {
     const selectedUser = this.initiatorUsers.find((user) => user.id === userId);
     if (!selectedUser) return;
 
+    // Creation defaults to the initiator's direction; existing operations retain their own association.
+    if (!this.operation) this.form.directionId = selectedUser.directionId || this.form.directionId;
     this.form.initiatorUid = userId;
     this.form.initiatorName = selectedUser?.displayName || selectedUser?.email || "";
   }

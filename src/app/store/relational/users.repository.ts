@@ -75,6 +75,7 @@ export class UsersRepository {
       uid: authUserId,
       email: text(row["email"]),
       displayName: text(row["display_name"]),
+      directionId: idText(row["direction_id"]) || undefined,
       trigram: text(row["trigram"]) || undefined,
       deletedAt: text(row["deleted_at"]) || undefined,
       role: userRoleFromDb(row["role"]),
@@ -95,6 +96,7 @@ export class UsersRepository {
         payload[fields[field]] = text(data[field]);
       }
     }
+    if (data.directionId !== undefined) payload["direction_id"] = numberId(data.directionId ?? "");
     if (data.trigram !== undefined) payload["trigram"] = nullableText(data.trigram);
     if (data.deletedAt !== undefined) payload["deleted_at"] = nullableText(data.deletedAt);
     if (data.role !== undefined) {

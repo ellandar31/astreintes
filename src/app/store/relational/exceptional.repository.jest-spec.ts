@@ -208,11 +208,11 @@ describe("Separate exceptional persistence families", () => {
       exceptional_on_call_interventions: [{ id: 11 }, { id: 12 }],
     });
     jest.spyOn(repository, "fetchExceptionalOperation").mockResolvedValue(current);
-    await repository.saveExceptionalOperation(current.id, { ...current, treatedAt: "2026-10-24T08:00:00Z",
+    await repository.saveExceptionalOperation(current.id, { ...current, directionId: "2", treatedAt: "2026-10-24T08:00:00Z",
       interventions: [{ ...current.interventions[0], ticket: "INC-123" }, current.interventions[1]],
     });
     expect(calls.find(call => call.table === "exceptional_on_calls" && call.method === "update")?.value)
-      .toMatchObject({ treated_at: "2026-10-24T08:00:00Z" });
+      .toMatchObject({ treated_at: "2026-10-24T08:00:00Z", direction_id: 2 });
     const interventionWrites = calls.filter(call => call.table === "exceptional_on_call_interventions" && call.method === "update");
     expect(interventionWrites).toHaveLength(1);
     expect(interventionWrites[0].value).toMatchObject({ ticket: "INC-123" });

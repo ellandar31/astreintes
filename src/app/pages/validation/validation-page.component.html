@@ -51,11 +51,19 @@
         <section class="validation-section" [attr.aria-label]="section.title">
           <h3>{{ section.title }}</h3>
 
+          @if (section.id === "director") {
+            <label for="director-direction">{{ labels.directions.field }}
+              <p-select inputId="director-direction" [options]="directionOptions" optionLabel="name" optionValue="id"
+                [(ngModel)]="selectedDirectionId" [showClear]="true" [placeholder]="labels.directions.all"
+                [ariaLabel]="labels.directions.field" appendTo="body" />
+            </label>
+          }
           <p-table [value]="section.items" [rowTrackBy]="trackValidationItem" styleClass="validation-table" [tableStyle]="{ 'min-width': '48.75rem' }">
             <ng-template pTemplate="header">
               <tr>
                 <th scope="col">{{ labels.common.table.type }}</th>
                 <th scope="col">{{ labels.common.table.item }}</th>
+                @if (section.id === "director") { <th scope="col">{{ labels.directions.field }}</th> }
                 <th scope="col">{{ labels.common.table.person }}</th>
                 <th scope="col">{{ labels.common.table.period }}</th>
                 <th scope="col">{{ labels.common.table.visa }}</th>
@@ -66,6 +74,7 @@
               <tr>
                 <td>{{ item.category }}</td>
                 <td><strong>{{ item.title }}</strong></td>
+                @if (section.id === "director") { <td>{{ directionName(item) }}</td> }
                 <td>{{ item.userLabel }}</td>
                 <td>{{ formatDateTime(item.startDate) }} - {{ formatDateTime(item.endDate) }}</td>
                 <td>
@@ -130,7 +139,7 @@
             </ng-template>
             <ng-template pTemplate="emptymessage">
               <tr>
-                <td colspan="6">{{ section.emptyText }}</td>
+                <td [attr.colspan]="section.id === 'director' ? 7 : 6">{{ section.emptyText }}</td>
               </tr>
             </ng-template>
           </p-table>

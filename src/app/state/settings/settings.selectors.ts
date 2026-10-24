@@ -51,3 +51,5 @@ export const selectOperationInitiators = createSelector(selectSettingsUsers,
 export const selectCanExportRh = createSelector(selectCurrentApplicationUser,
   user => Boolean(user && (user.role === 0 || hasDirectorRights(user.role))),
 );
+
+export const selectSettingsDirections = createSelector(selectSettingsState, state => state?.directions ?? []);

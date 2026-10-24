@@ -6,6 +6,7 @@ export type RegularTeam = Team;
 export type RegularUser = Pick<ManagedUser, "id" | "displayName" | "email">;
 
 export interface RegularOnCallPeriod {
+  directionId?: string;
   id: string;
   teamId: string;
   userId: string;
@@ -21,6 +22,7 @@ export interface RegularOnCallPeriod {
 }
 
 export interface RegularOnCallPeriodForm {
+  directionId?: string;
   userId: string;
   userName: string;
   userEmail: string;

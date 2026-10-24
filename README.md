@@ -29,6 +29,13 @@ métier, sans conversion intermédiaire en documents.
 - Point d'import centralisé : `src/app/types/index.ts`.
 - Mise à jour du catalogue : `npm run docs:types`.
 
+## Directions
+
+Les administrateurs configurent les directions et les affectent aux profils.
+La direction est obligatoire pour les initiateurs et directeurs, ainsi que lors
+de la création d’une opération. La validation directeur peut être filtrée par
+direction ou afficher toutes les directions.
+
 ## Gestion des astreintes
 
 L'application permet de gérer :
