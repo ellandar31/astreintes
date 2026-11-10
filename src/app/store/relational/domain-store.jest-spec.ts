@@ -57,6 +57,32 @@ const operation: ExceptionalOperation = {
 describe("Typed relational persistence", () => {
   afterEach(() => jest.restoreAllMocks());
 
+  it.each([true, false])("uses SQL identifiers for all RH treatment targets (%s)", async treated => {
+    const rpc = jest.fn().mockResolvedValue({ error: null });
+    const store = new SupabaseDomainStore({ rpc } as unknown as SupabaseClient);
+    await store.rhSettings.updateTreatment([
+      { type: "regular", id: "31" },
+      { type: "exceptionalOnCall", id: "astreinte:31" },
+      { type: "exceptionalWork", id: "travaux:31" },
+    ], treated);
+    expect(rpc).toHaveBeenCalledWith("set_rh_treatment", {
+      treated, operations: [
+        { type: "regular", id: "31" },
+        { type: "exceptionalOnCall", id: "31" },
+        { type: "exceptionalWork", id: "31" },
+      ],
+    });
+  });
+
+  it("rejects an exceptional RH target with the wrong family before any write", async () => {
+    const rpc = jest.fn();
+    const store = new SupabaseDomainStore({ rpc } as unknown as SupabaseClient);
+    await expect(store.rhSettings.updateTreatment([
+      { type: "regular", id: "31" }, { type: "exceptionalWork", id: "astreinte:31" },
+    ], true)).rejects.toThrow("Inconsistent RH operation family");
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
   it("sends changed assignments through a single typed RPC", async () => {
     const rpc = jest.fn().mockResolvedValue({ error: null });
     const users = new UsersRepository({ rpc } as unknown as SupabaseClient);

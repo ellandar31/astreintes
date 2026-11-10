@@ -148,10 +148,7 @@ export class SupabaseDomainStore {
     this.rhSettings = {
       /** Atomic RH-only transition; SQL validates live submission and permissions. */
       updateTreatment: (operations: RhTreatmentOperation[], treated: boolean) => observer.write(
-        ["regular_on_call_periods", "exceptional_on_calls", "exceptional_works"], async () => {
-          const { error } = await client.rpc("set_rh_treatment", { operations, treated });
-          if (error) throw error;
-        }),
+        ["regular_on_call_periods", "exceptional_on_calls", "exceptional_works"], () => rh.updateTreatment(operations, treated)),
       compensation: () => rh.fetchRhCompensation(),
       watchCompensation: watch<RhCompensationSettings>(["rh_on_call_compensation_rules", "rh_period_compensation_rules"], () => rh.fetchRhCompensation()),
       saveCompensation: (settings: RhCompensationSettings) => observer.write(["rh_on_call_compensation_rules", "rh_period_compensation_rules"], () => rh.saveRhCompensation(settings)),

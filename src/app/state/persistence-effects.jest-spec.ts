@@ -105,7 +105,7 @@ describe("NgRx effects using typed domain APIs", () => {
   it.each([true, false])("persists RH treatment %s through the atomic command", async treated => {
     jest.mocked(appStore.rhSettings.updateTreatment).mockResolvedValue(undefined);
     const result = firstValueFrom(TestBed.inject(SettingsEffects).updateRhTreatment$);
-    const operations = [{ type: "regular" as const, id: "11" }, { type: "exceptionalWork" as const, id: "31" }];
+    const operations = [{ type: "regular" as const, id: "11" }, { type: "exceptionalWork" as const, id: "travaux:31" }];
     actions.next(SettingsActions.rhTreatmentRequested({ operations, treated }));
     expect(await result).toMatchObject({ source: "rhTreatment", type: SettingsActions.operationSucceeded.type });
     expect(appStore.rhSettings.updateTreatment).toHaveBeenCalledWith(operations, treated);

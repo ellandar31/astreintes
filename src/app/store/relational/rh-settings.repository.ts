@@ -1,3 +1,5 @@
+import { RhTreatmentOperation } from "../../types/rh-export.models";
+import { parseExceptionalId } from "./exceptional-tables";
 import { RhCompensationSettings } from "../../types";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { text } from "./store-utils";
@@ -5,6 +7,19 @@ import { text } from "./store-utils";
 /** RH settings preserve coefficient ordering without exposing database column names. */
 export class RhSettingsRepository {
   constructor(private readonly client: SupabaseClient) { }
+
+  /** Keep namespaced UI identities distinct; the SQL command receives a family and its numeric key. */
+  async updateTreatment(operations: RhTreatmentOperation[], treated: boolean): Promise<void> {
+    const targets = operations.map(({ type, id }) => {
+      if (type === "regular") return { type, id };
+      const identity = parseExceptionalId(id);
+      const expectedType = type === "exceptionalOnCall" ? "astreinte" : "travaux";
+      if (identity.type !== expectedType) throw new Error("Inconsistent RH operation family");
+      return { type, id: String(identity.id) };
+    });
+    const { error } = await this.client.rpc("set_rh_treatment", { operations: targets, treated });
+    if (error) throw error;
+  }
 
   /** Retain configured ordering because the RH tables and exports display rules in that order. */
   async fetchRhCompensation(): Promise<RhCompensationSettings> {
