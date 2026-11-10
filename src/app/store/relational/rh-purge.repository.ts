@@ -23,8 +23,10 @@ export class RhPurgeRepository {
         .range(offset, offset + pageSize - 1);
       if (error) throw error;
       const rows = data ?? [];
-      operations.push(...rows.map((row: { operation_id: number; operation_type: RhPurgeOperation["type"]; title: string; treated_at: string; delete_operation?: boolean }) => ({
+      operations.push(...rows.map((row: { operation_id: number; operation_type: RhPurgeOperation["type"]; title: string; treated_at: string; delete_operation?: boolean; starts_at?: string | null; ends_at?: string | null }) => ({
         id: String(row.operation_id), type: row.operation_type, title: row.title, treatedAt: row.treated_at,
+        ...(row.starts_at ? { startsAt: row.starts_at } : {}),
+        ...(row.ends_at ? { endsAt: row.ends_at } : {}),
         ...(row.delete_operation !== undefined ? { deleteOperation: row.delete_operation } : {}),
       })));
       if (rows.length < pageSize) break;

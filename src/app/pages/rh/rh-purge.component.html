@@ -25,16 +25,44 @@
         <ng-template pTemplate="header"><tr>
           <th pSortableColumn="typeLabel"><app-table-column-header field="typeLabel" [label]="labels.common.fields.type" /></th>
           <th pSortableColumn="title"><app-table-column-header field="title" [label]="labels.rhDocuments.periodExport.operation" /></th>
+          @if (userMode) {
+            <th pSortableColumn="periodDate"><app-table-column-header field="periodDate" filterField="periodLabel" [label]="labels.common.fields.period" /></th>
+          }
           <th pSortableColumn="treatedDate"><app-table-column-header field="treatedDate" kind="date" [label]="labels.rhDocuments.periodExport.treatedAt" /></th>
-          @if (userMode) { <th pSortableColumn="outcome"><app-table-column-header field="outcome" [label]="userCopyLabels.outcome" /></th> }
+          @if (userMode) {
+            <th pSortableColumn="outcome"><app-table-column-header field="outcome" [label]="userCopyLabels.outcome" /></th>
+            <th scope="col">{{ labels.common.table.actions }}</th>
+          }
         </tr></ng-template>
-        <ng-template pTemplate="body" let-row><tr><td>{{ row.typeLabel }}</td><td>{{ row.title }}</td><td>{{ row.treatedAt | date: 'dd/MM/yyyy HH:mm' }}</td>@if (userMode) { <td>{{ row.outcome }}</td> }</tr></ng-template>
-        <ng-template pTemplate="emptymessage"><tr><td [attr.colspan]="userMode ? 4 : 3">{{ copy.empty }}</td></tr></ng-template>
+        <ng-template pTemplate="body" let-row>
+          <tr>
+            <td>{{ row.typeLabel }}</td><td>{{ row.title }}</td>
+            @if (userMode) { <td>{{ row.id }}</td><td>{{ row.periodLabel }}</td> }
+            <td>{{ row.treatedAt | date: 'dd/MM/yyyy HH:mm' }}</td>
+            @if (userMode) {
+              <td>{{ row.outcome }}</td>
+              <td><p-button icon="pi pi-eye" size="small" severity="secondary" [outlined]="true"
+                [label]="labels.common.actions.consult" [disabled]="state().purging" (onClick)="consult(row)" /></td>
+            }
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage"><tr><td [attr.colspan]="userMode ? 7 : 3">{{ copy.empty }}</td></tr></ng-template>
       </p-table>
       <p-button severity="danger" icon="pi pi-trash" [label]="copy.action" [loading]="state().purging"
         [disabled]="state().loading || state().purging || !state().operations.length" (onClick)="openConfirmation()" />
     </div>
   </p-card>
+  @if (state().detail; as detail) {
+    <app-modal [title]="userCopyLabels.detailTitle" size="large" (closed)="closeDetail()">
+      @if (detail.data; as data) {
+        <app-rh-purge-detail [data]="data" [row]="detail.row" [userId]="detail.userId" />
+      } @else if (detail.failed) {
+        <p-message severity="error" [text]="userCopyLabels.detailFailed" />
+      } @else {
+        <p role="status">{{ userCopyLabels.detailLoading }}</p>
+      }
+    </app-modal>
+  }
   @if (confirming()) {
     <app-modal [title]="copy.confirmation" (closed)="confirming.set(false)">
       <p>{{ state().operations.length }} {{ copy.confirmText }}</p>

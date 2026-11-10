@@ -20,6 +20,17 @@ export class RhPurgeEffects {
     )),
   ));
 
+  /** Closing or refreshing the preview discards a pending consultation response. */
+  readonly detail$ = createEffect(() => this.actions$.pipe(
+    ofType(RhPurgeActions.detailRequested),
+    switchMap(({ row, userId }) => from(appStore.rhPurge.detail(row, userId)).pipe(
+      map(data => RhPurgeActions.detailLoaded({ data })),
+      catchError(() => of(RhPurgeActions.detailFailed())),
+      takeUntil(this.actions$.pipe(ofType(RhPurgeActions.detailClosed, RhPurgeActions.closed,
+        RhPurgeActions.userPreviewRequested, RhPurgeActions.previewRequested, AuthActions.logoutRequested))),
+    )),
+  ));
+
   /** Ignore duplicate confirmations while the atomic server transaction is running. */
   readonly purge$ = createEffect(() => this.actions$.pipe(
     ofType(RhPurgeActions.purgeRequested, RhPurgeActions.userPurgeRequested),

@@ -1,0 +1,37 @@
+<h3>{{ row().title }} · {{ copy.reference }} {{ row().id }}</h3>
+<p>{{ labels.rhDocuments.periodExport.sheets[row().type] }} — {{ row().deleteOperation ? copy.deleteOperation : copy.keepOperation }}</p>
+<dl>
+  <dt>{{ labels.directions.field }}</dt><dd>{{ summary().direction || labels.common.empty.dash }}</dd>
+  <dt>{{ data().type === 'regular' ? labels.common.fields.period : labels.rhDocuments.fields.forecastPeriod }}</dt><dd>{{ summary().planned }}</dd>
+  @if (summary().actual; as actual) {
+    <dt>{{ labels.rhDocuments.fields.actualPeriod }}</dt><dd>{{ actual }}</dd>
+    <dt>{{ labels.common.fields.initiator }}</dt><dd>{{ summary().initiator || labels.common.empty.dash }}</dd>
+    <dt>{{ copy.manager }}</dt><dd>{{ summary().manager || labels.common.empty.dash }}</dd>
+  }
+  <dt>{{ labels.rhDocuments.periodExport.rhSent }}</dt><dd>{{ (summary().sentToRhAt | date: 'dd/MM/yyyy HH:mm') || labels.common.empty.dash }}</dd>
+  <dt>{{ labels.rhDocuments.periodExport.treatedAt }}</dt><dd>{{ summary().treatedAt | date: 'dd/MM/yyyy HH:mm' }}</dd>
+</dl>
+<p-table [value]="lines() | tableRows" [tableStyle]="{ 'min-width': '52rem' }">
+  <ng-template pTemplate="header"><tr>
+    <th scope="col">{{ copy.element }}</th>
+    <th scope="col">{{ labels.common.fields.user }}</th>
+    <th scope="col">{{ labels.common.fields.period }}</th>
+    <th scope="col">{{ labels.common.fields.ticket }}</th>
+    <th scope="col">{{ labels.common.fields.comment }}</th>
+    <th scope="col">{{ copy.visa }}</th>
+    <th scope="col">{{ copy.outcome }}</th>
+  </tr></ng-template>
+  <ng-template pTemplate="body" let-line><tr>
+    <td>{{ line.element }}</td>
+    <td>{{ line.person || labels.common.empty.dash }}</td>
+    <td>{{ line.period || labels.common.empty.dash }}</td>
+    <td>{{ line.ticket || labels.common.empty.dash }}</td>
+    <td>{{ line.notes || labels.common.empty.dash }}</td>
+    <td>
+      @if (line.visa?.signed) {
+        {{ line.visa.signedByName }} · {{ line.visa.signedAt | date: 'dd/MM/yyyy HH:mm' }}
+      } @else { {{ labels.common.statuses.notSigned }} }
+    </td>
+    <td><p-tag [severity]="line.removed ? 'danger' : 'secondary'" [value]="line.removed ? copy.removed : copy.kept" /></td>
+  </tr></ng-template>
+</p-table>

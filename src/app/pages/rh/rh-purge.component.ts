@@ -11,6 +11,7 @@ import { ModalComponent } from "../../shared/modal.component";
 import { SharedTableModule } from "../../shared/shared-table.module";
 import { TableColumnHeaderComponent } from "../../shared/table-column-header.component";
 import { TableRowsPipe, tableDate } from "../../shared/table-rows.pipe";
+import { RhPurgeDetailComponent, purgePeriodLabel } from "./rh-purge-detail.component";
 import { formatRhExportUser } from "./export-libraries/rh-export-user-label";
 import { selectCanExportRh, selectSettingsUsers } from "../../state/settings/settings.selectors";
 import { RhPurgeActions, selectRhPurge } from "../../state/rh-purge/rh-purge.state";
@@ -20,7 +21,7 @@ import { RhPurgeOperation, RhRetentionYears } from "../../types/rh-purge.models"
 @Component({
   selector: "app-rh-purge", standalone: true, changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule, FormsModule, ButtonModule, CardModule, MessageModule, SelectModule,
-    ModalComponent, SharedTableModule, TableColumnHeaderComponent, TableRowsPipe],
+    ModalComponent, RhPurgeDetailComponent, SharedTableModule, TableColumnHeaderComponent, TableRowsPipe],
   templateUrl: "./rh-purge.component.html",
   styles: [`
     .purge-controls { display: flex; flex-wrap: wrap; align-items: end; gap: var(--app-space-lg); }
@@ -49,6 +50,9 @@ export class RhPurgeComponent implements OnInit, OnDestroy {
   readonly fields = {
     typeLabel: (row: RhPurgeOperation) => APP_LABELS.rhDocuments.periodExport.sheets[row.type],
     outcome: (row: RhPurgeOperation) => row.deleteOperation ? this.userCopyLabels.deleteOperation : this.userCopyLabels.keepOperation,
+    periodLabel: (row: RhPurgeOperation) => purgePeriodLabel(row.startsAt, row.endsAt),
+    periodDate: (row: RhPurgeOperation) => tableDate(row.startsAt || row.endsAt),
+    reference: (row: RhPurgeOperation) => Number(row.id),
     treatedDate: (row: RhPurgeOperation) => tableDate(row.treatedAt),
   };
 
@@ -71,8 +75,17 @@ export class RhPurgeComponent implements OnInit, OnDestroy {
     this.store.dispatch(RhPurgeActions.previewRequested({ years }));
   }
 
+  consult(row: RhPurgeOperation): void {
+    const state = this.state();
+    const candidate = state.operations.find(item => item.type === row.type && item.id === row.id);
+    if (!this.userMode || !this.canPurge() || this.confirming() || !state.userId || state.loading || state.purging || !candidate) return;
+    this.store.dispatch(RhPurgeActions.detailRequested({ row: candidate, userId: state.userId }));
+  }
+
+  closeDetail(): void { this.store.dispatch(RhPurgeActions.detailClosed()); }
+
   openConfirmation(): void {
-    if (this.canPurge() && !this.state().loading && !this.state().purging && this.state().operations.length) this.confirming.set(true);
+    if (this.canPurge() && !this.state().detail && !this.state().loading && !this.state().purging && this.state().operations.length) this.confirming.set(true);
   }
 
   /** Confirm only the previewed snapshot; SQL locks and revalidates each treatment timestamp. */

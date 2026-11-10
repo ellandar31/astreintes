@@ -1,5 +1,5 @@
 import { RhPurgeRepository } from "./rh-purge.repository";
-import { RhPurgeOperation, RhRetentionYears } from "../../types/rh-purge.models";
+import { RhPurgeDetail, RhPurgeOperation, RhRetentionYears } from "../../types/rh-purge.models";
 import { NewApplicationUser, UserAssignmentUpdate } from "../../types/user.models";
 import { RhTreatmentOperation } from "../../types/rh-export.models";
 import { DirectionsRepository } from "./directions.repository";
@@ -117,6 +117,27 @@ export class SupabaseDomainStore {
     };
     const purge = new RhPurgeRepository(client);
     this.rhPurge = {
+      // Read the whole aggregate for one identity, never an export filtered by the selected user.
+      detail: async (row: RhPurgeOperation, userId: string): Promise<RhPurgeDetail> => {
+        const unchanged = (treatedAt?: string) => !!treatedAt && Date.parse(treatedAt) === Date.parse(row.treatedAt);
+        if (row.type === "regular") {
+          const id = numberId(row.id);
+          if (!id) throw new Error("Invalid regular operation identifier");
+          const [[period], interventions] = await Promise.all([
+            regular.fetchRegularPeriods(id), regular.fetchRegularInterventions(row.id),
+          ]);
+          if (!period || !unchanged(period.treatedAt) || period.userId !== userId || interventions.some(item => item.userId !== userId)) {
+            throw new Error("Stale purge preview");
+          }
+          return { type: "regular", period, interventions };
+        }
+        const operation = await exceptional.fetchExceptionalOperation(`${row.type === "exceptionalOnCall" ? "astreinte" : "travaux"}:${row.id}`);
+        if (!operation || !unchanged(operation.treatedAt)) throw new Error("Stale purge preview");
+        const people = [...operation.plannedUsers, ...operation.actualUsers, ...operation.interventions];
+        if (!people.some(person => person.userId === userId)
+          || people.every(person => person.userId === userId) !== row.deleteOperation) throw new Error("Stale purge preview");
+        return { type: "exceptional", operation };
+      },
       preview: (years: RhRetentionYears) => purge.preview(years),
       previewUser: (userId: string) => purge.previewUser(userId),
       purgeUser: (userId: string, operations: RhPurgeOperation[]) => observer.write(

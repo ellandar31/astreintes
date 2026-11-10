@@ -664,27 +664,32 @@ DO $$ BEGIN
  END IF;
 END; $$;
 
-CREATE OR REPLACE FUNCTION public.list_rh_user_purge_candidates(target_user_id bigint)
-RETURNS TABLE(operation_type text, operation_id bigint, title text, treated_at timestamptz, delete_operation boolean)
+-- The period identifies distinct operations that share a title and treatment timestamp.
+DROP FUNCTION IF EXISTS public.list_rh_user_purge_candidates(bigint);
+CREATE FUNCTION public.list_rh_user_purge_candidates(target_user_id bigint)
+RETURNS TABLE(operation_type text, operation_id bigint, title text, treated_at timestamptz, delete_operation boolean,
+  starts_at timestamptz, ends_at timestamptz)
 LANGUAGE plpgsql SECURITY DEFINER SET search_path = '' AS $$
 BEGIN
  IF NOT EXISTS (SELECT 1 FROM public.app_users WHERE auth_user_id=auth.uid() AND deleted_at IS NULL AND is_rh) THEN
    RAISE EXCEPTION 'RH access required' USING ERRCODE='42501';
  END IF;
  RETURN QUERY
- SELECT 'regular'::text, r.id, coalesce(t.name, nullif(u.display_name,''), u.email), r.treated_at, true
+ SELECT 'regular'::text, r.id, coalesce(t.name, nullif(u.display_name,''), u.email), r.treated_at, true, r.starts_at, r.ends_at
  FROM public.regular_on_call_periods r LEFT JOIN public.teams t ON t.id=r.team_id
  JOIN public.app_users u ON u.id=r.user_id WHERE r.treated_at IS NOT NULL AND r.user_id=target_user_id
  UNION ALL
  SELECT 'exceptionalOnCall'::text, e.id, e.title, e.treated_at,
    NOT EXISTS (SELECT 1 FROM public.exceptional_on_call_participants p WHERE p.operation_id=e.id AND p.user_id<>target_user_id)
-   AND NOT EXISTS (SELECT 1 FROM public.exceptional_on_call_interventions i WHERE i.operation_id=e.id AND i.user_id<>target_user_id)
+   AND NOT EXISTS (SELECT 1 FROM public.exceptional_on_call_interventions i WHERE i.operation_id=e.id AND i.user_id<>target_user_id),
+   coalesce(e.actual_starts_at,e.planned_starts_at), coalesce(e.actual_ends_at,e.planned_ends_at)
  FROM public.exceptional_on_calls e WHERE e.treated_at IS NOT NULL AND (
    EXISTS (SELECT 1 FROM public.exceptional_on_call_participants p WHERE p.operation_id=e.id AND p.user_id=target_user_id)
    OR EXISTS (SELECT 1 FROM public.exceptional_on_call_interventions i WHERE i.operation_id=e.id AND i.user_id=target_user_id))
  UNION ALL
  SELECT 'exceptionalWork'::text, w.id, w.title, w.treated_at,
-   NOT EXISTS (SELECT 1 FROM public.exceptional_work_participants p WHERE p.operation_id=w.id AND p.user_id<>target_user_id)
+   NOT EXISTS (SELECT 1 FROM public.exceptional_work_participants p WHERE p.operation_id=w.id AND p.user_id<>target_user_id),
+   coalesce(w.actual_starts_at,w.planned_starts_at), coalesce(w.actual_ends_at,w.planned_ends_at)
  FROM public.exceptional_works w WHERE w.treated_at IS NOT NULL AND
    EXISTS (SELECT 1 FROM public.exceptional_work_participants p WHERE p.operation_id=w.id AND p.user_id=target_user_id)
  ORDER BY 4,1,2;

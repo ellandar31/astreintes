@@ -1,6 +1,6 @@
 import { createActionGroup, createFeatureSelector, createReducer, emptyProps, on, props } from "@ngrx/store";
 import { AuthActions } from "../auth/auth.actions";
-import { RhPurgeOperation, RhRetentionYears } from "../../types/rh-purge.models";
+import { RhPurgeDetail, RhPurgeOperation, RhRetentionYears } from "../../types/rh-purge.models";
 
 export const RhPurgeActions = createActionGroup({ source: "RH Purge", events: {
   "Preview Requested": props<{ years: RhRetentionYears }>(),
@@ -10,6 +10,10 @@ export const RhPurgeActions = createActionGroup({ source: "RH Purge", events: {
   "Purge Requested": props<{ years: RhRetentionYears; operations: RhPurgeOperation[] }>(),
   "Purge Completed": props<{ count: number }>(),
   "Failed": props<{ error: string }>(),
+  "Detail Requested": props<{ row: RhPurgeOperation; userId: string }>(),
+  "Detail Loaded": props<{ data: RhPurgeDetail }>(),
+  "Detail Failed": emptyProps(),
+  "Detail Closed": emptyProps(),
   "Closed": emptyProps(),
 } });
 export interface RhPurgeState {
@@ -20,6 +24,7 @@ export interface RhPurgeState {
   purging: boolean;
   error: string;
   deletedCount: number | null;
+  detail?: { row: RhPurgeOperation; userId: string; data?: RhPurgeDetail; failed?: boolean };
 }
 const initialState: RhPurgeState = { years: 2, userId: null, operations: [], loading: false, purging: false, error: "", deletedCount: null };
 /** Preview is discarded on every retention change so stale rows can never be confirmed. */
@@ -30,6 +35,10 @@ export const rhPurgeReducer = createReducer(initialState,
   on(RhPurgeActions.purgeRequested, RhPurgeActions.userPurgeRequested, state => ({ ...state, purging: true, error: "", deletedCount: null })),
   on(RhPurgeActions.purgeCompleted, (state, { count }) => ({ ...state, operations: [], purging: false, deletedCount: count })),
   on(RhPurgeActions.failed, (state, { error }) => ({ ...state, operations: [], loading: false, purging: false, error })),
+  on(RhPurgeActions.detailRequested, (state, { row, userId }) => ({ ...state, detail: { row, userId } })),
+  on(RhPurgeActions.detailLoaded, (state, { data }) => state.detail ? { ...state, detail: { ...state.detail, data } } : state),
+  on(RhPurgeActions.detailFailed, state => state.detail ? { ...state, detail: { ...state.detail, failed: true } } : state),
+  on(RhPurgeActions.detailClosed, state => ({ ...state, detail: undefined })),
   on(RhPurgeActions.closed, AuthActions.logoutRequested, () => initialState),
 );
 export const selectRhPurge = createFeatureSelector<RhPurgeState>("rhPurge");

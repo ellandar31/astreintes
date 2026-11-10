@@ -25,13 +25,14 @@ export class ExceptionalRepository {
 
   /** Partial edits load only their family; access to the other tables is not required. */
   async fetchExceptionalOperation(identifier: string): Promise<ExceptionalOperation | undefined> {
-    const { type } = parseExceptionalId(identifier);
-    return (await this.fetchFamily(type)).find(operation => operation.id === identifier);
+    const { type, id } = parseExceptionalId(identifier);
+    return (await this.fetchFamily(type, id))[0];
   }
 
-  private async fetchFamily(type: ExceptionalOperationType): Promise<ExceptionalOperation[]> {
+  private async fetchFamily(type: ExceptionalOperationType, id?: number): Promise<ExceptionalOperation[]> {
     const tables = tablesForExceptionalType(type);
-    const { data: operations, error } = await this.client.from(tables.table).select("*");
+    const query = this.client.from(tables.table).select("*");
+    const { data: operations, error } = await (id === undefined ? query : query.eq("id", id));
     if (error) {
       throw error;
     }

@@ -10,8 +10,9 @@ export class RegularRepository {
   constructor(private readonly client: SupabaseClient, private readonly users: UsersRepository, private readonly visas: VisasRepository) { }
 
   /** Join user labels and visas in batches before publishing complete periods. */
-  async fetchRegularPeriods(): Promise<RegularOnCallPeriod[]> {
-    const { data: periods, error } = await this.client.from("regular_on_call_periods").select("*");
+  async fetchRegularPeriods(periodId?: number): Promise<RegularOnCallPeriod[]> {
+    const query = this.client.from("regular_on_call_periods").select("*");
+    const { data: periods, error } = await (periodId === undefined ? query : query.eq("id", periodId));
     if (error) {
       throw error;
     }

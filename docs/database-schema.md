@@ -148,3 +148,11 @@ est revérifié lors de la confirmation. L’astreinte régulière a un titulair
 la clé étrangère composite garantit que ses interventions lui appartiennent, y
 compris après une modification du titulaire. Une incohérence historique bloque
 la purge de la sélection au lieu de supprimer l’intervention d’un autre utilisateur.
+
+
+L’aperçu par utilisateur affiche le numéro et la période, en plus de la date de
+traitement. Deux opérations du même type portant le même titre ne sont pas
+fusionnées si leurs identifiants diffèrent. La consultation charge l’agrégat
+complet de l’opération sélectionnée et distingue les lignes qui seront retirées
+de celles conservées. Le script `02_security.sql` recrée la fonction d’aperçu
+pour lui ajouter les dates de période.

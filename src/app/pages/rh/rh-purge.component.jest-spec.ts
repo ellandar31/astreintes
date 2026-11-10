@@ -61,6 +61,41 @@ describe("RH purge preview and confirmation", () => {
     expect(dispatch).toHaveBeenCalledWith(RhPurgeActions.userPurgeRequested({ userId: "2", operations }));
   });
 
+  it("distinguishes same-title rows and shows the whole operation with its purge impact", () => {
+    const store = TestBed.inject(MockStore);
+    const dispatch = jest.spyOn(store, "dispatch");
+    const fixture = TestBed.createComponent(RhPurgeComponent);
+    fixture.componentRef.setInput("userMode", true);
+    const row = { ...state.operations[0], type: "exceptionalOnCall" as const, deleteOperation: false,
+      startsAt: "2020-01-01T12:00:00Z", endsAt: "2020-01-02T12:00:00Z" };
+    const other = { ...row, id: "8", startsAt: "2020-01-03T12:00:00Z" };
+    const preview = { ...state, userId: "2", operations: [row, other] };
+    const selection = store.overrideSelector(selectRhPurge, preview);
+    fixture.detectChanges();
+    const rows = fixture.nativeElement.querySelectorAll("tbody tr");
+    expect(rows[0].textContent).toContain("01/01/2020");
+    expect(rows[1].textContent).toContain("03/01/2020");
+    (rows[0].querySelector("button") as HTMLButtonElement).click();
+    expect(dispatch).toHaveBeenCalledWith(RhPurgeActions.detailRequested({ row, userId: "2" }));
+    const visa = { signed: false, signedAt: "", signedByName: "", signedByUid: "" };
+    const participant = { userId: "2", displayName: "Agent ciblé", email: "", startDate: row.startsAt, endDate: row.endsAt, visa };
+    selection.setResult({ ...preview, detail: { row, userId: "2", data: {
+      type: "exceptional", operation: {
+        id: "astreinte:7", type: "astreinte", title: row.title, initiatorName: "Initiateur", initiatorUid: "3",
+        operationManagerName: "Responsable", operationManagerUid: "3", startDate: row.startsAt, forecastEndDate: row.endsAt,
+        actualStartDate: row.startsAt, actualEndDate: row.endsAt, treatedAt: row.treatedAt,
+        plannedUsers: [], actualUsers: [participant, { ...participant, userId: "3", displayName: "Autre participant" }],
+        interventions: [], visas: { plannedInitiator: visa, plannedDirector: visa, actualInitiator: visa, actualDirector: visa },
+      },
+    } } });
+    store.refreshState(); fixture.detectChanges();
+    const detailRows = fixture.nativeElement.querySelectorAll("app-rh-purge-detail tbody tr");
+    expect(detailRows[0].textContent).toContain("Agent ciblé");
+    expect(detailRows[0].textContent).toContain("Sera supprimé");
+    expect(detailRows[1].textContent).toContain("Autre participant");
+    expect(detailRows[1].textContent).toContain("Sera conservé");
+  });
+
   it("discards obsolete previews on a new request, errors and closure", () => {
     const loading = rhPurgeReducer(state, RhPurgeActions.previewRequested({ years: 1 }));
     expect(loading.operations).toEqual([]); expect(loading.loading).toBe(true);

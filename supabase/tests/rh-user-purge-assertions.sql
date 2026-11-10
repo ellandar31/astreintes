@@ -37,6 +37,10 @@ SET ROLE authenticated;
 SELECT set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000002',false);
 DO $$ DECLARE preview jsonb; BEGIN
  IF (SELECT count(*) FROM public.list_rh_user_purge_candidates(2))<>3 THEN RAISE EXCEPTION 'User purge eligibility incorrect'; END IF;
+ IF NOT EXISTS (SELECT 1 FROM public.list_rh_user_purge_candidates(2)
+   WHERE operation_type='regular' AND operation_id=9750 AND starts_at='2020-01-01' AND ends_at='2020-01-02') THEN
+   RAISE EXCEPTION 'Preview period does not identify the regular operation';
+ END IF;
  IF NOT EXISTS (SELECT 1 FROM public.list_rh_user_purge_candidates(2) WHERE operation_type='exceptionalOnCall' AND NOT delete_operation) THEN
    RAISE EXCEPTION 'Shared operation marked for deletion';
  END IF;
