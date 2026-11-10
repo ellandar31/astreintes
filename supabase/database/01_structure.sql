@@ -596,4 +596,8 @@ CREATE INDEX regular_periods_treatment_idx ON public.regular_on_call_periods(tre
 CREATE INDEX exceptional_on_calls_treatment_idx ON public.exceptional_on_calls(treated_at) WHERE treated_at IS NOT NULL;
 CREATE INDEX exceptional_works_treatment_idx ON public.exceptional_works(treated_at) WHERE treated_at IS NOT NULL;
 
+CREATE UNIQUE INDEX regular_periods_id_owner_idx ON public.regular_on_call_periods(id,user_id);
+ALTER TABLE public.regular_interventions ADD CONSTRAINT regular_interventions_period_owner_fkey
+  FOREIGN KEY (regular_period_id,user_id) REFERENCES public.regular_on_call_periods(id,user_id) ON DELETE CASCADE;
+
 COMMIT;

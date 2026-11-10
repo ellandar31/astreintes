@@ -116,9 +116,6 @@ export class RegularCalendarComponent implements OnDestroy {
   readonly canManageIntervention = (intervention: { userId: string }): boolean =>
     this.canEditPlanning() || Boolean(this.currentProfile()?.role === 1 && this.currentProfile()?.id === intervention.userId);
 
-  get interventionUsers(): RegularUser[] {
-    return this.sortedUsers.filter(user => this.canManageIntervention({ userId: user.id }));
-  }
   private readonly regularError = this.store.selectSignal(selectRegularError);
   private readonly regularInterventions = this.store.selectSignal(selectRegularInterventions);
   private readonly regularPeriods = this.store.selectSignal(selectRegularPeriods);
@@ -320,6 +317,12 @@ export class RegularCalendarComponent implements OnDestroy {
 
     const currentPeriod = this.editingPeriodId ? this.periods.find((period) => period.id === this.editingPeriodId) : null;
     if (this.isPeriodArchived(currentPeriod)) {
+      return;
+    }
+
+    if (currentPeriod && currentPeriod.userId !== form.userId
+      && this.interventions.some(intervention => intervention.periodId === currentPeriod.id)) {
+      window.alert(this.labels.regular.errors.ownerWithInterventions);
       return;
     }
 

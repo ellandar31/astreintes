@@ -46,7 +46,7 @@ export class RhPurgeRepository {
   async purgeUser(userId: string, operations: RhPurgeOperation[]): Promise<number> {
     const { data, error } = await this.client.rpc("purge_rh_user_participations", {
       target_user_id: numberId(userId),
-      operations: operations.map(row => ({ id: row.id, type: row.type, treatedAt: row.treatedAt })),
+      operations: operations.map(row => ({ id: row.id, type: row.type, treatedAt: row.treatedAt, deleteOperation: row.deleteOperation })),
     });
     if (error) throw error;
     return Number(data);

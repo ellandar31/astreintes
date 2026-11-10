@@ -25,7 +25,10 @@ export class RhPurgeEffects {
     ofType(RhPurgeActions.purgeRequested, RhPurgeActions.userPurgeRequested),
     exhaustMap(action => from("userId" in action ? appStore.rhPurge.purgeUser(action.userId, action.operations) : appStore.rhPurge.purge(action.years, action.operations)).pipe(
       map(count => RhPurgeActions.purgeCompleted({ count })),
-      catchError(() => of(RhPurgeActions.failed({ error: APP_LABELS.rh.purge.purgeFailed }))),
+      catchError((error: unknown) => of(RhPurgeActions.failed({
+        error: error && typeof error === "object" && "message" in error && error.message === "REGULAR_PURGE_OWNER_MISMATCH"
+          ? APP_LABELS.rh.userPurge.inconsistentRegular : APP_LABELS.rh.purge.purgeFailed,
+      }))),
       takeUntil(this.closed$),
     )),
   ));

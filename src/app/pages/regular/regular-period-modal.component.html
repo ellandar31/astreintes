@@ -19,7 +19,7 @@
           [options]="assignableUsers"
         optionDisabled="deletedAt"
           name="regularUser"
-          [disabled]="isLocked || planningReadOnly"
+          [disabled]="isLocked || planningReadOnly || interventions.length > 0"
           [ngModel]="form.userId"
           (ngModelChange)="selectUser($event)"
           optionLabel="email"

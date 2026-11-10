@@ -1,18 +1,16 @@
-import { isUserAssignable } from "../../shared/user-availability";
 import { Component, EventEmitter, Input, Output } from "@angular/core";
 import { FormsModule, NgForm } from "@angular/forms";
 import { ButtonModule } from "primeng/button";
 import { InputTextModule } from "primeng/inputtext";
 import { MessageModule } from "primeng/message";
-import { SelectModule } from "primeng/select";
 import { APP_LABELS } from "../../i18n/labels";
 import { ModalComponent } from "../../shared/modal.component";
-import { RegularInterventionForm, RegularUser } from "./regular.models";
+import { RegularInterventionForm } from "./regular.models";
 
 @Component({
   selector: "app-regular-intervention-modal",
   standalone: true,
-  imports: [ButtonModule, FormsModule, InputTextModule, MessageModule, ModalComponent, SelectModule],
+  imports: [ButtonModule, FormsModule, InputTextModule, MessageModule, ModalComponent],
   templateUrl: "./regular-intervention-modal.component.html",
   styleUrl: "./regular-intervention-modal.component.css",
 })
@@ -29,7 +27,6 @@ export class RegularInterventionModalComponent {
   };
   @Input() error = "";
   @Input() isEditing = false;
-  @Input({ required: true }) users: RegularUser[] = [];
   @Output() closed = new EventEmitter<void>();
   @Output() saved = new EventEmitter<RegularInterventionForm>();
 
@@ -45,19 +42,4 @@ export class RegularInterventionModalComponent {
     this.saved.emit({ ...this.form, ticket: this.form.ticket.trim() });
   }
 
-  /** Keep a historical selection visible, but disabled in the dropdown. */
-  get assignableUsers() { return this.users.filter(user => isUserAssignable(user) || user.id === this.form.userId); }
-
-  selectUser(userId: string): void {
-    const selectedUser = this.users.find((user) => user.id === userId);
-
-    if (!selectedUser || !isUserAssignable(selectedUser)) return;
-    this.form.userId = userId;
-    this.form.userName = selectedUser?.displayName || selectedUser?.email || "";
-    this.form.userEmail = selectedUser?.email || "";
-  }
-
-  userLabel(user: RegularUser): string {
-    return user.displayName ? `${user.displayName} (${user.email})` : user.email;
-  }
 }

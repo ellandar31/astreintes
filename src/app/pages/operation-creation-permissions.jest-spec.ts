@@ -55,6 +55,10 @@ describe("Planning creation permissions", () => {
     view.openEditPeriodModal(period);
     view.openInterventionForCurrentPeriod();
     expect(view.isInterventionModalOpen).toBe(true);
+    fixture.detectChanges();
+    const owner = fixture.nativeElement.querySelector("#regular-intervention-user") as HTMLInputElement;
+    expect(owner.readOnly).toBe(true);
+    expect(owner.value).toBe(period.userName);
     view.saveIntervention({ userId: "7", userName: period.userName, userEmail: period.userEmail,
       startDate: "2026-10-10T19:00", endDate: "2026-10-10T20:00", comment: "Test", ticket: " INC-123 " });
     expect(dispatch).toHaveBeenCalledWith(expect.objectContaining({ type: RegularActions.interventionSaveRequested.type, form: expect.objectContaining({ ticket: "INC-123" }) }));
@@ -111,7 +115,6 @@ describe("Planning creation permissions", () => {
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('#regular-period-start-date').disabled).toBe(true);
     expect(fixture.nativeElement.querySelector('#regular-period-end-date').disabled).toBe(true);
-    expect(view.interventionUsers.every(user => user.id === '7')).toBe(true);
     const dispatch = jest.spyOn(TestBed.inject(MockStore), "dispatch").mockClear();
     view.savePeriod({ ...view.periodForm, startDate: '2026-10-10T20:00' });
     view.deletePeriod();

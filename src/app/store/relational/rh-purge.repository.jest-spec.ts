@@ -16,6 +16,21 @@ describe("RH purge persistence", () => {
     rpc.mockResolvedValue({ error: new Error("Stale preview") });
     await expect(repository.purge(2, rows)).rejects.toThrow("Stale preview");
   });
+  it("keeps the selected user and the previewed outcome in the user purge request", async () => {
+    const treatedAt = "2026-10-23T12:00:00Z";
+    const range = jest.fn().mockResolvedValue({ data: [{ operation_id: 7, operation_type: "exceptionalWork", title: "Shared", treated_at: treatedAt, delete_operation: false }], error: null });
+    const rpc = jest.fn().mockReturnValue({ range });
+    const repository = new RhPurgeRepository({ rpc } as unknown as SupabaseClient);
+    const operations = await repository.previewUser("2");
+    expect(rpc).toHaveBeenCalledWith("list_rh_user_purge_candidates", { target_user_id: 2 });
+    expect(operations[0].deleteOperation).toBe(false);
+    rpc.mockResolvedValue({ data: 1, error: null });
+    expect(await repository.purgeUser("2", operations)).toBe(1);
+    expect(rpc).toHaveBeenLastCalledWith("purge_rh_user_participations", {
+      target_user_id: 2, operations: [{ id: "7", type: "exceptionalWork", treatedAt, deleteOperation: false }],
+    });
+  });
+
   it("loads subsequent preview pages beyond the API row limit", async () => {
     const rows = Array.from({ length: 500 }, (_, index) => ({ operation_id: index, operation_type: "regular", title: "Old", treated_at: "2020-01-01" }));
     const range = jest.fn().mockResolvedValueOnce({ data: rows, error: null })

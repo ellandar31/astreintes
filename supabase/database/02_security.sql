@@ -653,4 +653,105 @@ CREATE INDEX IF NOT EXISTS regular_periods_treatment_idx ON public.regular_on_ca
 CREATE INDEX IF NOT EXISTS exceptional_on_calls_treatment_idx ON public.exceptional_on_calls(treated_at) WHERE treated_at IS NOT NULL;
 CREATE INDEX IF NOT EXISTS exceptional_works_treatment_idx ON public.exceptional_works(treated_at) WHERE treated_at IS NOT NULL;
 
+-- Keep the intervention owner tied to the period even if the parent is edited.
+-- Existing inconsistent history is preserved; new assignments must satisfy the rule.
+CREATE UNIQUE INDEX IF NOT EXISTS regular_periods_id_owner_idx ON public.regular_on_call_periods(id,user_id);
+DO $$ BEGIN
+ IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='public.regular_interventions'::regclass
+   AND conname='regular_interventions_period_owner_fkey') THEN
+   ALTER TABLE public.regular_interventions ADD CONSTRAINT regular_interventions_period_owner_fkey
+     FOREIGN KEY (regular_period_id,user_id) REFERENCES public.regular_on_call_periods(id,user_id) ON DELETE CASCADE NOT VALID;
+ END IF;
+END; $$;
+
+CREATE OR REPLACE FUNCTION public.list_rh_user_purge_candidates(target_user_id bigint)
+RETURNS TABLE(operation_type text, operation_id bigint, title text, treated_at timestamptz, delete_operation boolean)
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = '' AS $$
+BEGIN
+ IF NOT EXISTS (SELECT 1 FROM public.app_users WHERE auth_user_id=auth.uid() AND deleted_at IS NULL AND is_rh) THEN
+   RAISE EXCEPTION 'RH access required' USING ERRCODE='42501';
+ END IF;
+ RETURN QUERY
+ SELECT 'regular'::text, r.id, coalesce(t.name, nullif(u.display_name,''), u.email), r.treated_at, true
+ FROM public.regular_on_call_periods r LEFT JOIN public.teams t ON t.id=r.team_id
+ JOIN public.app_users u ON u.id=r.user_id WHERE r.treated_at IS NOT NULL AND r.user_id=target_user_id
+ UNION ALL
+ SELECT 'exceptionalOnCall'::text, e.id, e.title, e.treated_at,
+   NOT EXISTS (SELECT 1 FROM public.exceptional_on_call_participants p WHERE p.operation_id=e.id AND p.user_id<>target_user_id)
+   AND NOT EXISTS (SELECT 1 FROM public.exceptional_on_call_interventions i WHERE i.operation_id=e.id AND i.user_id<>target_user_id)
+ FROM public.exceptional_on_calls e WHERE e.treated_at IS NOT NULL AND (
+   EXISTS (SELECT 1 FROM public.exceptional_on_call_participants p WHERE p.operation_id=e.id AND p.user_id=target_user_id)
+   OR EXISTS (SELECT 1 FROM public.exceptional_on_call_interventions i WHERE i.operation_id=e.id AND i.user_id=target_user_id))
+ UNION ALL
+ SELECT 'exceptionalWork'::text, w.id, w.title, w.treated_at,
+   NOT EXISTS (SELECT 1 FROM public.exceptional_work_participants p WHERE p.operation_id=w.id AND p.user_id<>target_user_id)
+ FROM public.exceptional_works w WHERE w.treated_at IS NOT NULL AND
+   EXISTS (SELECT 1 FROM public.exceptional_work_participants p WHERE p.operation_id=w.id AND p.user_id=target_user_id)
+ ORDER BY 4,1,2;
+END; $$;
+REVOKE ALL ON FUNCTION public.list_rh_user_purge_candidates(bigint) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.list_rh_user_purge_candidates(bigint) TO authenticated;
+
+-- Root locks serialize purges with treatment changes and new child references.
+-- Child locks protect existing participations from concurrent reassignment.
+CREATE OR REPLACE FUNCTION public.purge_rh_user_participations(target_user_id bigint, operations jsonb)
+RETURNS integer LANGUAGE plpgsql SECURITY DEFINER SET search_path = '' AS $$
+DECLARE item jsonb; target_table text; target_id bigint; treatment timestamptz;
+ removed_participants integer; removed_interventions integer; empty_operation boolean; processed integer := 0;
+BEGIN
+ IF NOT EXISTS (SELECT 1 FROM public.app_users WHERE auth_user_id=auth.uid() AND deleted_at IS NULL AND is_rh) THEN
+   RAISE EXCEPTION 'RH access required' USING ERRCODE='42501';
+ END IF;
+ IF target_user_id IS NULL OR jsonb_typeof(operations) IS DISTINCT FROM 'array' THEN
+   RAISE EXCEPTION 'Invalid user or operations' USING ERRCODE='22023';
+ END IF;
+ FOR item IN SELECT value FROM jsonb_array_elements(operations) ORDER BY value->>'type', (value->>'id')::bigint LOOP
+   target_table := CASE item->>'type' WHEN 'regular' THEN 'regular_on_call_periods'
+     WHEN 'exceptionalOnCall' THEN 'exceptional_on_calls' WHEN 'exceptionalWork' THEN 'exceptional_works' END;
+   IF target_table IS NULL THEN RAISE EXCEPTION 'Invalid operation type' USING ERRCODE='22023'; END IF;
+   target_id := (item->>'id')::bigint;
+   treatment := NULL;
+   EXECUTE format('SELECT treated_at FROM public.%I WHERE id=$1 FOR UPDATE',target_table) INTO treatment USING target_id;
+   IF treatment IS NULL OR treatment IS DISTINCT FROM (item->>'treatedAt')::timestamptz THEN
+     RAISE EXCEPTION 'Purge preview is outdated' USING ERRCODE='22023';
+   END IF;
+   IF target_table='regular_on_call_periods' THEN
+     IF NOT EXISTS (SELECT 1 FROM public.regular_on_call_periods WHERE id=target_id AND user_id=target_user_id) THEN
+       RAISE EXCEPTION 'Purge preview is outdated' USING ERRCODE='22023';
+     END IF;
+     -- Do not cascade over an unrelated intervention in inconsistent legacy data.
+     PERFORM 1 FROM public.regular_interventions WHERE regular_period_id=target_id FOR UPDATE;
+     IF EXISTS (SELECT 1 FROM public.regular_interventions WHERE regular_period_id=target_id AND user_id<>target_user_id) THEN
+       RAISE EXCEPTION 'REGULAR_PURGE_OWNER_MISMATCH' USING ERRCODE='23514';
+     END IF;
+     empty_operation := true;
+   ELSIF target_table='exceptional_on_calls' THEN
+     PERFORM 1 FROM public.exceptional_on_call_participants WHERE operation_id=target_id FOR UPDATE;
+     PERFORM 1 FROM public.exceptional_on_call_interventions WHERE operation_id=target_id FOR UPDATE;
+     DELETE FROM public.exceptional_on_call_interventions WHERE operation_id=target_id AND user_id=target_user_id;
+     GET DIAGNOSTICS removed_interventions=ROW_COUNT;
+     DELETE FROM public.exceptional_on_call_participants WHERE operation_id=target_id AND user_id=target_user_id;
+     GET DIAGNOSTICS removed_participants=ROW_COUNT;
+     IF removed_participants+removed_interventions=0 THEN RAISE EXCEPTION 'Purge preview is outdated' USING ERRCODE='22023'; END IF;
+     empty_operation := NOT EXISTS (SELECT 1 FROM public.exceptional_on_call_participants WHERE operation_id=target_id)
+       AND NOT EXISTS (SELECT 1 FROM public.exceptional_on_call_interventions WHERE operation_id=target_id);
+   ELSE
+     PERFORM 1 FROM public.exceptional_work_participants WHERE operation_id=target_id FOR UPDATE;
+     DELETE FROM public.exceptional_work_participants WHERE operation_id=target_id AND user_id=target_user_id;
+     IF NOT FOUND THEN RAISE EXCEPTION 'Purge preview is outdated' USING ERRCODE='22023'; END IF;
+     empty_operation := NOT EXISTS (SELECT 1 FROM public.exceptional_work_participants WHERE operation_id=target_id);
+   END IF;
+   IF empty_operation IS DISTINCT FROM (item->>'deleteOperation')::boolean THEN
+     RAISE EXCEPTION 'Purge preview is outdated' USING ERRCODE='22023';
+   END IF;
+   IF empty_operation THEN
+     EXECUTE format('DELETE FROM public.%I WHERE id=$1',target_table) USING target_id;
+   END IF;
+   processed := processed+1;
+ END LOOP;
+ RETURN processed;
+END; $$;
+REVOKE ALL ON FUNCTION public.purge_rh_user_participations(bigint,jsonb) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.purge_rh_user_participations(bigint,jsonb) TO authenticated;
+
 COMMIT;

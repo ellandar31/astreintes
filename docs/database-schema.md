@@ -138,3 +138,13 @@ confirmés dans l’aperçu. Les lignes sont verrouillées et revérifiées ; si
 a changé, toute la transaction est annulée. Les clés étrangères en cascade retirent
 les participants, interventions et visas associés. Aucune purge automatique n’est
 planifiée. Pour une base existante, réexécuter `02_security.sql` avant déploiement.
+
+La purge par utilisateur s’applique à toute opération traitée, quelle que soit
+l’ancienneté de son traitement. Pour les opérations exceptionnelles, elle retire
+les participations prévisionnelles et réelles, les interventions et leurs visas
+pour l’utilisateur choisi. Les autres participants et les visas globaux sont
+conservés tant que l’opération n’est pas vide. Le résultat annoncé dans l’aperçu
+est revérifié lors de la confirmation. L’astreinte régulière a un titulaire unique :
+la clé étrangère composite garantit que ses interventions lui appartiennent, y
+compris après une modification du titulaire. Une incohérence historique bloque
+la purge de la sélection au lieu de supprimer l’intervention d’un autre utilisateur.

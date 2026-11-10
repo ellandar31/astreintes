@@ -1,17 +1,18 @@
 import { TestBed } from "@angular/core/testing";
 import { provideNoopAnimations } from "@angular/platform-browser/animations";
 import { MockStore, provideMockStore } from "@ngrx/store/testing";
-import { selectCanExportRh } from "../../state/settings/settings.selectors";
+import { selectCanExportRh, selectSettingsUsers } from "../../state/settings/settings.selectors";
 import { RhPurgeActions, RhPurgeState, selectRhPurge, rhPurgeReducer } from "../../state/rh-purge/rh-purge.state";
 import { RhPurgeComponent } from "./rh-purge.component";
 
-const state: RhPurgeState = { years: 2, loading: false, purging: false, error: "", deletedCount: null,
+const state: RhPurgeState = { years: 2, userId: null, loading: false, purging: false, error: "", deletedCount: null,
   operations: [{ id: "7", type: "regular", title: "Old operation", treatedAt: "2020-01-01T12:00:00Z" }] };
 
 describe("RH purge preview and confirmation", () => {
   beforeEach(() => TestBed.configureTestingModule({ imports: [RhPurgeComponent], providers: [
     provideNoopAnimations(), provideMockStore({ selectors: [
       { selector: selectCanExportRh, value: true }, { selector: selectRhPurge, value: state },
+      { selector: selectSettingsUsers, value: [{ id: "2", email: "agent@example.test", displayName: "Agent", role: 1, deletedAt: "2026-01-01" }] },
     ] }),
   ] }));
 
@@ -41,6 +42,23 @@ describe("RH purge preview and confirmation", () => {
     dispatch.mockClear(); component.refresh(); component.openConfirmation(); component.confirmPurge();
     expect(dispatch).not.toHaveBeenCalled();
     expect(fixture.nativeElement.querySelector("p-card")).toBeNull();
+  });
+
+  it("previews and confirms only the selected user's treated participations", () => {
+    const store = TestBed.inject(MockStore);
+    const dispatch = jest.spyOn(store, "dispatch");
+    const fixture = TestBed.createComponent(RhPurgeComponent);
+    fixture.componentRef.setInput("userMode", true); fixture.detectChanges();
+    const component = fixture.componentInstance;
+    expect(dispatch).not.toHaveBeenCalledWith(RhPurgeActions.previewRequested({ years: 2 }));
+    expect(component.userOptions().map(user => user.id)).toEqual(["2"]);
+    component.selectUser("2");
+    expect(dispatch).toHaveBeenCalledWith(RhPurgeActions.userPreviewRequested({ userId: "2" }));
+    const operations = [{ ...state.operations[0], type: "exceptionalWork" as const, deleteOperation: false }];
+    store.overrideSelector(selectRhPurge, { ...state, operations, userId: "2" }); store.refreshState(); fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain(component.userCopyLabels.keepOperation);
+    component.openConfirmation(); component.confirmPurge();
+    expect(dispatch).toHaveBeenCalledWith(RhPurgeActions.userPurgeRequested({ userId: "2", operations }));
   });
 
   it("discards obsolete previews on a new request, errors and closure", () => {

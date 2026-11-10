@@ -85,6 +85,7 @@ export class RegularPeriodModalComponent {
   get assignableUsers() { return this.users.filter(user => isUserAssignable(user) || user.id === this.form.userId); }
 
   selectUser(userId: string): void {
+    if (this.isLocked || this.planningReadOnly || this.interventions.length) return;
     const selectedUser = this.users.find((user) => user.id === userId);
 
     if (!selectedUser || !isUserAssignable(selectedUser)) return;

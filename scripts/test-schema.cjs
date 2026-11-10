@@ -12,4 +12,5 @@ runDatabaseTests('schema', [
   'active-assignment-assertions.sql',
   'account-preparation-assertions.sql',
   'rh-purge-assertions.sql',
+  'rh-user-purge-assertions.sql',
 ], { verifyLegacyRhUpgrade: true });

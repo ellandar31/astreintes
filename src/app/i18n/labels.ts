@@ -229,6 +229,7 @@ export const APP_LABELS = {
       noAssociatedIntervention: "Aucune intervention associée.",
     },
     errors: {
+      ownerWithInterventions: "Le titulaire ne peut pas être changé tant que des interventions sont rattachées à cette astreinte.",
       endAfterStart: "La date de fin doit être postérieure à la date de début.",
       interventionRequiresSavedPeriod: "Impossible d'ajouter une intervention : l'astreinte doit être enregistrée avant.",
       interventionOutsidePeriod: "L'intervention doit être entièrement comprise dans une période d'astreinte régulière existante pour cet utilisateur.",
@@ -327,6 +328,7 @@ export const APP_LABELS = {
       confirmText: "opération(s) concernée(s). Les participations, interventions et visas associés à cet utilisateur seront supprimés définitivement. Une opération sera supprimée uniquement si elle ne conserve aucun participant.",
       deleted: "opération(s) purgée(s) pour cet utilisateur.",
       outcome: "Résultat prévu",
+      inconsistentRegular: "Une astreinte régulière contient une intervention d’un autre utilisateur. La purge a été annulée.",
       keepOperation: "Retirer la participation",
       deleteOperation: "Supprimer l’opération devenue vide",
     },

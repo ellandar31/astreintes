@@ -6,7 +6,7 @@ import { appStore } from "../../store/app-store";
 import { RhPurgeEffects } from "./rh-purge.effects";
 import { RhPurgeActions } from "./rh-purge.state";
 
-jest.mock("../../store/app-store", () => ({ appStore: { rhPurge: { preview: jest.fn(), purge: jest.fn() } } }));
+jest.mock("../../store/app-store", () => ({ appStore: { rhPurge: { preview: jest.fn(), purge: jest.fn(), previewUser: jest.fn(), purgeUser: jest.fn() } } }));
 
 describe("RH purge effects", () => {
   let actions: Subject<Action>;
@@ -26,6 +26,21 @@ describe("RH purge effects", () => {
     result = firstValueFrom(TestBed.inject(RhPurgeEffects).preview$);
     actions.next(RhPurgeActions.previewRequested({ years: 1 }));
     expect((await result).type).toBe(RhPurgeActions.failed.type);
+  });
+
+  it("routes user requests independently of age-based purge", async () => {
+    const effects = TestBed.inject(RhPurgeEffects);
+    jest.mocked(appStore.rhPurge.previewUser).mockResolvedValue([]);
+    const preview = firstValueFrom(effects.preview$);
+    actions.next(RhPurgeActions.userPreviewRequested({ userId: "2" }));
+    expect(await preview).toEqual(RhPurgeActions.previewLoaded({ operations: [] }));
+    expect(appStore.rhPurge.previewUser).toHaveBeenCalledWith("2");
+    jest.mocked(appStore.rhPurge.purgeUser).mockResolvedValue(1);
+    const result = firstValueFrom(effects.purge$);
+    actions.next(RhPurgeActions.userPurgeRequested({ userId: "2", operations: [] }));
+    expect(await result).toEqual(RhPurgeActions.purgeCompleted({ count: 1 }));
+    expect(appStore.rhPurge.purgeUser).toHaveBeenCalledWith("2", []);
+    expect(appStore.rhPurge.purge).not.toHaveBeenCalled();
   });
 
   it("ignores repeated confirmations until the first purge finishes", async () => {

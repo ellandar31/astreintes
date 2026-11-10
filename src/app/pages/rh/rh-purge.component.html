@@ -3,12 +3,20 @@
     <div class="purge-content">
       <p>{{ copy.description }}</p>
       <div class="purge-controls">
+        @if (userMode) {
+          <label>{{ labels.common.fields.user }}
+            <p-select [options]="userOptions()" optionLabel="label" optionValue="id" [filter]="true" filterBy="label"
+              [ngModel]="state().userId" (ngModelChange)="selectUser($event)" [disabled]="state().purging"
+              [placeholder]="labels.common.users.select" [showClear]="true" appendTo="body" />
+          </label>
+        } @else {
         <label>{{ copy.retention }}
           <p-select [options]="retentions" optionLabel="label" optionValue="value"
             [ngModel]="state().years" (ngModelChange)="refresh($event)" [disabled]="state().purging" appendTo="body" />
         </label>
+        }
         <p-button [label]="copy.refresh" icon="pi pi-refresh" [loading]="state().loading"
-          [disabled]="state().purging" (onClick)="refresh()" />
+          [disabled]="state().purging || (userMode && !state().userId)" (onClick)="refresh()" />
       </div>
       @if (state().error) { <p-message severity="error" [text]="state().error" /> }
       @if (state().deletedCount !== null) { <p-message severity="success">{{ state().deletedCount }} {{ copy.deleted }}</p-message> }
@@ -18,9 +26,10 @@
           <th pSortableColumn="typeLabel"><app-table-column-header field="typeLabel" [label]="labels.common.fields.type" /></th>
           <th pSortableColumn="title"><app-table-column-header field="title" [label]="labels.rhDocuments.periodExport.operation" /></th>
           <th pSortableColumn="treatedDate"><app-table-column-header field="treatedDate" kind="date" [label]="labels.rhDocuments.periodExport.treatedAt" /></th>
+          @if (userMode) { <th pSortableColumn="outcome"><app-table-column-header field="outcome" [label]="userCopyLabels.outcome" /></th> }
         </tr></ng-template>
-        <ng-template pTemplate="body" let-row><tr><td>{{ row.typeLabel }}</td><td>{{ row.title }}</td><td>{{ row.treatedAt | date: 'dd/MM/yyyy HH:mm' }}</td></tr></ng-template>
-        <ng-template pTemplate="emptymessage"><tr><td colspan="3">{{ copy.empty }}</td></tr></ng-template>
+        <ng-template pTemplate="body" let-row><tr><td>{{ row.typeLabel }}</td><td>{{ row.title }}</td><td>{{ row.treatedAt | date: 'dd/MM/yyyy HH:mm' }}</td>@if (userMode) { <td>{{ row.outcome }}</td> }</tr></ng-template>
+        <ng-template pTemplate="emptymessage"><tr><td [attr.colspan]="userMode ? 4 : 3">{{ copy.empty }}</td></tr></ng-template>
       </p-table>
       <p-button severity="danger" icon="pi pi-trash" [label]="copy.action" [loading]="state().purging"
         [disabled]="state().loading || state().purging || !state().operations.length" (onClick)="openConfirmation()" />
